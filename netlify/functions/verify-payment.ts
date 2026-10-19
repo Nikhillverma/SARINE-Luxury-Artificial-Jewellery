@@ -53,12 +53,26 @@ export const handler: Handler = async (event) => {
 
     if (
       !orderNumber ||
-      !publicToken ||
       !razorpay_order_id ||
       !razorpay_payment_id ||
       !razorpay_signature
     ) {
       return errorResponse(400, 'Missing required payment verification parameters.');
+    }
+
+    const { db } = getFirebaseAdmin();
+    const orderRef = db.collection('orders').doc(orderNumber);
+    const initialDoc = await orderRef.get();
+
+    if (!initialDoc.exists) {
+      return errorResponse(404, 'We could not find the specified order.');
+    }
+
+    const initialData = initialDoc.data()!;
+
+    // If publicToken is provided, verify it
+    if (publicToken && !timingSafeCompare(initialData.publicToken || '', publicToken)) {
+      return errorResponse(403, 'Unauthorized access to order verification.');
     }
 
     // 1. Verify digital signature using RAZORPAY_KEY_SECRET with timing-safe check
@@ -72,27 +86,29 @@ export const handler: Handler = async (event) => {
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest('hex');
 
-    if (!timingSafeCompare(expectedSignature, razorpay_signature)) {
-      return errorResponse(400, 'Payment signature validation failed.');
-    }
+    const isSignatureValid = timingSafeCompare(expectedSignature, razorpay_signature);
+    const isOrderIdMatch = initialData.razorpayOrderId === razorpay_order_id;
 
-    // 2. Fetch order from Firestore and verify publicToken
-    const { db } = getFirebaseAdmin();
-    const orderRef = db.collection('orders').doc(orderNumber);
-    const initialDoc = await orderRef.get();
+    // If invalid, set paymentStatus 'failed' and return an error
+    if (!isSignatureValid || !isOrderIdMatch) {
+      try {
+        await orderRef.update({
+          paymentStatus: 'failed',
+          orderStatus: 'failed',
+          updatedAt: new Date().toISOString(),
+          failureReason: !isSignatureValid
+            ? 'Payment signature validation failed.'
+            : 'Razorpay order identifier does not match this order.'
+        });
+      } catch (err) {
+        console.warn('[verify-payment] Could not mark order as failed in Firestore:', err);
+      }
 
-    if (!initialDoc.exists) {
-      return errorResponse(404, 'We could not find the specified order.');
-    }
-
-    const initialData = initialDoc.data()!;
-
-    if (!timingSafeCompare(initialData.publicToken || '', publicToken)) {
-      return errorResponse(403, 'Unauthorized access to order verification.');
-    }
-
-    if (initialData.razorpayOrderId !== razorpay_order_id) {
-      return errorResponse(400, 'Razorpay order identifier does not match this order.');
+      if (!isSignatureValid) {
+        return errorResponse(400, 'Payment signature validation failed.');
+      } else {
+        return errorResponse(400, 'Razorpay order identifier does not match this order.');
+      }
     }
 
     // 3. Execute in ONE Firestore transaction
@@ -156,6 +172,7 @@ export const handler: Handler = async (event) => {
           paymentStatus: 'paid',
           orderStatus: 'confirmed',
           razorpayPaymentId: razorpay_payment_id || '',
+          razorpayOrderId: razorpay_order_id,
           razorpaySignature: razorpay_signature || '',
           paidAt: nowIso,
           updatedAt: nowIso

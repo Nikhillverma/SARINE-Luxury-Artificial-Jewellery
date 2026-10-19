@@ -13,26 +13,44 @@ let settingsConfigured = false;
 
 export function getFirebaseAdmin(): { app: App; db: Firestore } {
   if (!dbInstance) {
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY;
+    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+    let credentialCert: any = null;
 
-    if (!projectId || !clientEmail || !rawPrivateKey) {
-      throw new Error(
-        'Firebase Admin SDK is not configured on the server. Please ensure FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY are set in environment variables.'
-      );
+    if (serviceAccountJson) {
+      try {
+        const raw = serviceAccountJson.trim().startsWith('{')
+          ? serviceAccountJson
+          : Buffer.from(serviceAccountJson, 'base64').toString('utf8');
+        const parsed = JSON.parse(raw);
+        credentialCert = cert(parsed);
+      } catch (e) {
+        console.error('[FirebaseAdmin] Failed to parse FIREBASE_SERVICE_ACCOUNT JSON:', e);
+      }
     }
 
-    // Replace literal escaped \n with real newlines for PEM format
-    const privateKey = rawPrivateKey.replace(/\\n/g, '\n');
+    if (!credentialCert) {
+      const projectId = process.env.FIREBASE_PROJECT_ID;
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+      if (!projectId || !clientEmail || !rawPrivateKey) {
+        throw new Error(
+          'Firebase Admin SDK is not configured on the server. Please ensure FIREBASE_SERVICE_ACCOUNT (JSON) or FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY are set in environment variables.'
+        );
+      }
+
+      // Replace literal escaped \n with real newlines for PEM format
+      const privateKey = rawPrivateKey.replace(/\\n/g, '\n');
+      credentialCert = cert({
+        projectId,
+        clientEmail,
+        privateKey
+      });
+    }
 
     if (getApps().length === 0) {
       appInstance = initializeApp({
-        credential: cert({
-          projectId,
-          clientEmail,
-          privateKey
-        })
+        credential: credentialCert
       });
     } else {
       appInstance = getApps()[0];

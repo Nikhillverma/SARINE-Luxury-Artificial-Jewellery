@@ -242,7 +242,7 @@ export const handler: Handler = async (event) => {
         total,
         paymentMethod: 'online',
         paymentStatus: 'pending',
-        orderStatus: 'awaiting_payment',
+        orderStatus: 'pending',
         createdAt: new Date().toISOString()
       };
 
