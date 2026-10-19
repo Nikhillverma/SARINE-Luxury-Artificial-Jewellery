@@ -18,6 +18,7 @@ Premium Indian artificial/fashion jewellery D2C store. React + TypeScript, built
   - netlify/functions/verify-payment.ts: Timing-safe publicToken and HMAC-SHA256 signature verification. In a single Firestore transaction: idempotent if already paid, decrements stock atomically, sets paymentStatus 'paid' & orderStatus 'confirmed'. If stock ran out before payment finalized, sets orderStatus 'needs_refund'.
   - netlify/functions/razorpay-webhook.ts: Validates raw body signature against RAZORPAY_WEBHOOK_SECRET, handles payment.captured/order.paid with idempotent confirmation and stock decrement.
   - netlify/functions/get-order.ts: Token-authorized order retrieval; returns only safe fields.
+  - Firestore undefined value bug fixed: db.settings({ ignoreUndefinedProperties: true }) enabled once upon initialization, and optional fields (line2, notes) normalised to empty string before saving.
 - Frontend Order Service:
   - src/services/netlify/netlifyOrderService.ts implementing IOrderService via /.netlify/functions/*.
   - src/services/index.ts switches orderService to netlifyOrderService when DATA_SOURCE = 'firebase', and keeps mockOrderService when DATA_SOURCE = 'mock'.

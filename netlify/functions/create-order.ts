@@ -232,7 +232,7 @@ export const handler: Handler = async (event) => {
           fullName: shippingAddress.fullName.trim(),
           phone: cleanShippingPhone,
           line1: shippingAddress.line1.trim(),
-          line2: shippingAddress.line2?.trim() || undefined,
+          line2: (shippingAddress.line2 || '').trim(),
           city: shippingAddress.city.trim(),
           state: shippingAddress.state.trim(),
           pincode: cleanPincode
@@ -286,7 +286,7 @@ export const handler: Handler = async (event) => {
             fullName: shippingAddress.fullName.trim(),
             phone: cleanShippingPhone,
             line1: shippingAddress.line1.trim(),
-            line2: shippingAddress.line2?.trim() || undefined,
+            line2: (shippingAddress.line2 || '').trim(),
             city: shippingAddress.city.trim(),
             state: shippingAddress.state.trim(),
             pincode: cleanPincode

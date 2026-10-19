@@ -9,6 +9,7 @@ import { getFirestore, Firestore, Transaction } from 'firebase-admin/firestore';
 
 let appInstance: App | null = null;
 let dbInstance: Firestore | null = null;
+let settingsConfigured = false;
 
 export function getFirebaseAdmin(): { app: App; db: Firestore } {
   if (!dbInstance) {
@@ -37,7 +38,12 @@ export function getFirebaseAdmin(): { app: App; db: Firestore } {
       appInstance = getApps()[0];
     }
 
-    dbInstance = getFirestore();
+    const firestoreDb = getFirestore();
+    if (!settingsConfigured) {
+      firestoreDb.settings({ ignoreUndefinedProperties: true });
+      settingsConfigured = true;
+    }
+    dbInstance = firestoreDb;
   }
 
   return {

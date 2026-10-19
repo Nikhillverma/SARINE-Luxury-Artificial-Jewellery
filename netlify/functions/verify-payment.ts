@@ -155,8 +155,8 @@ export const handler: Handler = async (event) => {
         transaction.update(orderRef, {
           paymentStatus: 'paid',
           orderStatus: 'confirmed',
-          razorpayPaymentId: razorpay_payment_id,
-          razorpaySignature: razorpay_signature,
+          razorpayPaymentId: razorpay_payment_id || '',
+          razorpaySignature: razorpay_signature || '',
           paidAt: nowIso,
           updatedAt: nowIso
         });
@@ -172,8 +172,8 @@ export const handler: Handler = async (event) => {
         transaction.update(orderRef, {
           paymentStatus: 'paid',
           orderStatus: 'needs_refund',
-          razorpayPaymentId: razorpay_payment_id,
-          razorpaySignature: razorpay_signature,
+          razorpayPaymentId: razorpay_payment_id || '',
+          razorpaySignature: razorpay_signature || '',
           paidAt: nowIso,
           refundReason: 'Stock exhausted between order creation and payment authorization.',
           updatedAt: nowIso

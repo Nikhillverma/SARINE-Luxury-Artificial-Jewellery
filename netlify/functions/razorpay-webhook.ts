@@ -166,7 +166,7 @@ export const handler: Handler = async (event) => {
           transaction.update(orderRef!, {
             paymentStatus: 'paid',
             orderStatus: 'confirmed',
-            razorpayPaymentId: rpPaymentId || order.razorpayPaymentId,
+            razorpayPaymentId: rpPaymentId || order.razorpayPaymentId || '',
             paidAt: nowIso,
             webhookCaptured: true,
             updatedAt: nowIso
@@ -175,7 +175,7 @@ export const handler: Handler = async (event) => {
           transaction.update(orderRef!, {
             paymentStatus: 'paid',
             orderStatus: 'needs_refund',
-            razorpayPaymentId: rpPaymentId || order.razorpayPaymentId,
+            razorpayPaymentId: rpPaymentId || order.razorpayPaymentId || '',
             paidAt: nowIso,
             refundReason: 'Stock exhausted prior to payment completion.',
             webhookCaptured: true,
