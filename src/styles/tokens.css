@@ -1,0 +1,72 @@
+:root {
+  /* ==========================================================================
+     SARINE Design Tokens
+     Warm ivory background, champagne-gold accent, soft beige surfaces, charcoal.
+     ========================================================================== */
+
+  /* Backgrounds */
+  --color-bg-primary: #FAF8F5;       /* Warm ivory base */
+  --color-bg-surface: #F3EEE7;       /* Soft neutral beige for panels and cards */
+  --color-bg-elevated: #FFFFFF;      /* Pure white for modals, menus, and popovers */
+  --color-bg-subtle: #EFE9E0;        /* Subtle ivory tint for dividers and chips */
+
+  /* Text & Contrast */
+  --color-text-primary: #1C1917;     /* Deep charcoal */
+  --color-text-secondary: #57534E;   /* Muted charcoal for descriptions */
+  --color-text-muted: #6B635D;       /* Stone grey meeting 4.5:1 on ivory and beige */
+  --color-text-inverse: #FAF8F5;     /* Warm ivory on dark surfaces */
+
+  /* Accents & Borders */
+  --color-accent-gold: #B89758;      /* Champagne gold (accents, CTAs, borders only) */
+  --color-accent-gold-hover: #9E7F43;/* Darker gold for interaction states */
+  --color-accent-gold-soft: #F6F1E8; /* Delicate gold tint for subtle backgrounds */
+  --color-border: #E6DFD5;           /* Muted border colour */
+  --color-border-subtle: #F0EAE1;    /* Faint separator lines */
+  --color-border-strong: #8C847C;    /* For form inputs and interactive component borders (3:1 minimum) */
+
+  /* Status / Feedback */
+  --color-status-success: #2F593E;   /* Muted forest sage */
+  --color-status-error: #8C2F2F;     /* Muted burgundy red */
+  --color-status-info: #465A6E;      /* Slate blue */
+
+  /* Header & Navigation */
+  --header-height: 4.5rem;
+
+  /* Spacing Scale (4px base) */
+  --space-2xs: 0.25rem;  /* 4px */
+  --space-xs: 0.5rem;    /* 8px */
+  --space-sm: 0.75rem;   /* 12px */
+  --space-md: 1rem;      /* 16px */
+  --space-lg: 1.5rem;    /* 24px */
+  --space-xl: 2rem;      /* 32px */
+  --space-2xl: 3rem;     /* 48px */
+  --space-3xl: 4.5rem;   /* 72px */
+  --space-4xl: 6rem;     /* 96px */
+
+  /* Layout Containers */
+  --container-max-width: 1280px;
+  --container-narrow-width: 860px;
+  --container-padding: var(--space-md);
+
+  /* Border Radii (Crisp, minimal luxury feel) */
+  --radius-sharp: 0px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-subtle: 0 4px 20px -2px rgba(28, 25, 23, 0.05);
+  --shadow-elevated: 0 10px 30px -4px rgba(28, 25, 23, 0.08);
+
+  /* Transitions */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --container-padding: var(--space-xl);
+  }
+}

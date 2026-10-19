@@ -1,0 +1,6 @@
+{
+  "name": "SARINE | Luxury Artificial Jewellery",
+  "description": "SARINE is a premium Indian artificial and fashion jewellery brand offering handcrafted-style necklaces, earrings, rings, bracelets, and sets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

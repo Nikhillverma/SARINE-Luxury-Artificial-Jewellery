@@ -1,0 +1,89 @@
+:root {
+  /* Font Families with Fallbacks */
+  --font-serif: "Cormorant Garamond", Garamond, "Playfair Display", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* Body Text: minimum 16px (1rem) on mobile */
+  --text-xs: 0.8125rem;                             /* 13px (luxury metadata, labels & badges) */
+  --text-sm: 0.875rem;                              /* 14px (fine print & legal notes) */
+  --text-base: 1rem;                                 /* 16px (standard body minimum) */
+  --text-md: 1.125rem;                               /* 18px */
+
+  /* Headings: scale down gracefully on small screens via clamp() */
+  --text-h4: clamp(1.15rem, 1.8vw, 1.35rem);        /* ~18px -> ~21px */
+  --text-h3: clamp(1.35rem, 2.5vw, 1.75rem);        /* ~21px -> ~28px */
+  --text-h2: clamp(1.65rem, 3.5vw, 2.35rem);        /* ~26px -> ~38px */
+  --text-h1: clamp(2rem, 5vw, 3.25rem);             /* ~32px -> ~52px */
+  --text-display: clamp(2.5rem, 7vw, 4.25rem);      /* ~40px -> ~68px */
+
+  /* Line Heights */
+  --leading-tight: 1.15;
+  --leading-snug: 1.3;
+  --leading-normal: 1.6;
+  --leading-relaxed: 1.75;
+
+  /* Letter Spacing */
+  --tracking-tight: -0.015em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0.04em;
+  --tracking-widest: 0.12em;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  color: var(--color-text-primary);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-normal);
+  text-wrap: balance;
+  margin: 0;
+}
+
+h1 {
+  font-size: var(--text-h1);
+  font-weight: 400;
+}
+
+h2 {
+  font-size: var(--text-h2);
+}
+
+h3 {
+  font-size: var(--text-h3);
+}
+
+h4, h5, h6 {
+  font-weight: 600;
+}
+
+h4 {
+  font-size: var(--text-h4);
+}
+
+h5, h6 {
+  font-size: var(--text-base);
+}
+
+p {
+  margin: 0;
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+}
+
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+/* Uppercase subtitle / luxury metadata label */
+.text-label {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-widest);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}

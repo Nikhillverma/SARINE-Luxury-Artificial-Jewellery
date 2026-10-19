@@ -1,0 +1,15 @@
+# Netlify configuration for SARINE D2C e-commerce store
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# SPA Fallback: guarantees deep routes (e.g. /shop, /product/:slug, /order/:orderNumber) survive refresh
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

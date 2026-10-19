@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. GLOBAL DEFAULT DENY:
+    // Every collection is completely locked down unless explicitly granted below.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. CATEGORIES:
+    // Anyone (customers and visitors) can view active categories for navigation.
+    // Writes (create, update, delete) are strictly forbidden from the browser.
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // 3. PRODUCTS:
+    // Anyone can read products, BUT only if their status is 'active'.
+    // Draft and archived items remain completely inaccessible to public visitors.
+    // Writes are strictly forbidden from the browser to prevent inventory tampering.
+    match /products/{productId} {
+      allow read: if resource.data.status == 'active';
+      allow write: if false;
+    }
+
+    // 4. ORDERS & USERS:
+    // Fully locked down during this phase. Browser clients cannot read or write orders directly.
+    match /orders/{orderId} {
+      allow read, write: if false;
+    }
+
+    match /users/{userId} {
+      allow read, write: if false;
+    }
+  }
+}
