@@ -265,8 +265,8 @@ export const handler: Handler = async (event) => {
   } catch (err: any) {
     return errorResponse(
       500,
-      'Internal error processing webhook',
-      err.stack
+      'Something went wrong. Please try again.',
+      err
     );
   }
 };

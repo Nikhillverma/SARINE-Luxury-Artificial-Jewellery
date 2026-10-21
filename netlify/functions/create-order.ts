@@ -314,8 +314,8 @@ export const handler: Handler = async (event) => {
   } catch (err: any) {
     return errorResponse(
       500,
-      err.message || 'An unexpected server error occurred while creating your order.',
-      err.stack
+      'Something went wrong. Please try again.',
+      err
     );
   }
 };

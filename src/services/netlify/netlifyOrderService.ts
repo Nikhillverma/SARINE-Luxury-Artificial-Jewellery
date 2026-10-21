@@ -39,7 +39,7 @@ export class NetlifyOrderService implements IOrderService {
       });
     } catch (netErr: any) {
       throw new Error(
-        'Unable to reach the secure order server. If testing locally in preview, ensure Netlify Functions are running or switch DATA_SOURCE to "mock" in src/services/index.ts.'
+        'Unable to reach the secure order server. If testing locally in preview, ensure Netlify Functions are running.'
       );
     }
 

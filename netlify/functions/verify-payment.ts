@@ -81,6 +81,10 @@ export const handler: Handler = async (event) => {
       return errorResponse(403, 'Unauthorized access to order verification.');
     }
 
+    if (initialData.paymentMethod !== 'online') {
+      return errorResponse(400, 'This order does not require online payment.');
+    }
+
     // Load the order first. If paymentStatus is already 'paid', return success immediately (idempotent) before any other check.
     if (initialData.paymentStatus === 'paid') {
       return jsonResponse(200, {
@@ -155,7 +159,7 @@ export const handler: Handler = async (event) => {
     try {
       paymentRecord = await razorpay.payments.fetch(razorpay_payment_id);
     } catch (fetchErr: any) {
-      return errorResponse(400, 'Could not retrieve payment details from payment gateway.', fetchErr);
+      return errorResponse(500, 'Something went wrong. Please try again.', fetchErr);
     }
 
     if (!paymentRecord) {
@@ -290,8 +294,8 @@ export const handler: Handler = async (event) => {
   } catch (err: any) {
     return errorResponse(
       500,
-      err.message || 'An error occurred while verifying your payment.',
-      err.stack
+      'Something went wrong. Please try again.',
+      err
     );
   }
 };

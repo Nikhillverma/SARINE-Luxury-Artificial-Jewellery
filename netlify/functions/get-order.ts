@@ -86,6 +86,6 @@ export const handler: Handler = async (event) => {
 
     return jsonResponse(200, safeOrder);
   } catch (err: any) {
-    return errorResponse(500, "We couldn't find this order", err.stack);
+    return errorResponse(500, 'Something went wrong. Please try again.', err);
   }
 };
