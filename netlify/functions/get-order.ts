@@ -3,6 +3,7 @@
  *
  * Secure order retrieval endpoint. Requires matching the unguessable publicToken.
  * Returns only safe storefront display fields without exposing internal secrets.
+ * Also returns razorpayPaymentId only when paymentStatus is 'paid'.
  */
 
 import { Handler } from '@netlify/functions';
@@ -59,7 +60,7 @@ export const handler: Handler = async (event) => {
     }
 
     // Return only safe fields
-    const safeOrder = {
+    const safeOrder: Record<string, any> = {
       id: orderData.id || orderData.orderNumber,
       orderNumber: orderData.orderNumber,
       lines: orderData.lines || [],
@@ -77,6 +78,11 @@ export const handler: Handler = async (event) => {
       orderStatus: orderData.orderStatus || 'placed',
       createdAt: orderData.createdAt || new Date().toISOString()
     };
+
+    // Return razorpayPaymentId only when paymentStatus is 'paid'
+    if (orderData.paymentStatus === 'paid' && orderData.razorpayPaymentId) {
+      safeOrder.razorpayPaymentId = orderData.razorpayPaymentId;
+    }
 
     return jsonResponse(200, safeOrder);
   } catch (err: any) {

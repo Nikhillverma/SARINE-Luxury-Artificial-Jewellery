@@ -16,7 +16,8 @@ import {
   CreditCard,
   Printer,
   ArrowRight,
-  Clock
+  Clock,
+  AlertCircle
 } from 'lucide-react';
 
 export const OrderConfirmationPage: React.FC = () => {
@@ -31,8 +32,7 @@ export const OrderConfirmationPage: React.FC = () => {
     let isCancelled = false;
 
     async function loadOrder() {
-      // Console log at confirmation page load
-      console.log('[OrderConfirmation] Confirmation page load for order:', orderNumber, 'token present:', Boolean(token));
+      console.log('[OrderConfirmation] Page load for order:', orderNumber, 'token present:', Boolean(token));
 
       if (!orderNumber) {
         console.error('[OrderConfirmation] Could not find order: orderNumber parameter is undefined or empty.');
@@ -54,7 +54,7 @@ export const OrderConfirmationPage: React.FC = () => {
           setOrder(found);
         }
       } catch (err) {
-        console.error(`[OrderConfirmation] Could not find order: Failed to load order "${orderNumber}" due to error:`, err);
+        console.error(`[OrderConfirmation] Failed to load order "${orderNumber}" due to error:`, err);
       } finally {
         if (!isCancelled) {
           setLoading(false);
@@ -84,7 +84,7 @@ export const OrderConfirmationPage: React.FC = () => {
       <div className="min-h-screen bg-[#FAF8F5] flex flex-col items-center justify-center p-8 text-center">
         <h2 className="font-serif text-3xl text-[#1C1917]">We couldn't find this order</h2>
         <p className="text-xs sm:text-sm text-[#6B635D] mt-2 font-sans max-w-md">
-          We could not locate an order matching reference &quot;{orderNumber}&quot;. It may have been cleared from local storage or placed under a different browser session.
+          We could not locate an order matching reference &quot;{orderNumber}&quot;. Please verify the order number and secure link.
         </p>
         <Link
           to="/shop"
@@ -104,31 +104,107 @@ export const OrderConfirmationPage: React.FC = () => {
     minute: '2-digit'
   });
 
+  const isFailed = order.paymentStatus === 'failed' || order.orderStatus === 'failed';
+  const isNeedsRefund = order.orderStatus === 'needs_refund';
+  const isPendingOnline = order.paymentMethod === 'online' && order.paymentStatus === 'pending' && !isFailed && !isNeedsRefund;
+  const isConfirmedOrPlaced =
+    !isFailed &&
+    !isNeedsRefund &&
+    !isPendingOnline &&
+    (order.paymentMethod === 'cod' || (order.paymentMethod === 'online' && order.paymentStatus === 'paid'));
+
+  // Header display logic
+  let headerBadge = 'Order Confirmed';
+  let headerTitle = `Thank you, ${order.customer.name}`;
+  let headerSubtitle = `Your order has been recorded in our system under reference ${order.orderNumber}.`;
+  let headerIcon = <CheckCircle2 size={28} className="text-[#B89758]" />;
+  let headerBorderColor = 'border-[#B89758]';
+
+  if (isNeedsRefund) {
+    headerBadge = 'Order Update';
+    headerTitle = 'Payment received, but an item went out of stock. A full refund will be processed.';
+    headerSubtitle = `Your payment was received, but one or more pieces went out of stock before final authorization. Our concierge has queued an immediate full refund for order ${order.orderNumber}.`;
+    headerIcon = <AlertCircle size={28} className="text-[#8C2F2F]" />;
+    headerBorderColor = 'border-[#8C2F2F]';
+  } else if (isFailed) {
+    headerBadge = 'Payment Failed';
+    headerTitle = 'Payment failed';
+    headerSubtitle = `We were unable to verify payment for order ${order.orderNumber}. No items have been charged to your account.`;
+    headerIcon = <AlertCircle size={28} className="text-[#8C2F2F]" />;
+    headerBorderColor = 'border-[#8C2F2F]';
+  } else if (isPendingOnline) {
+    headerBadge = 'Awaiting payment confirmation';
+    headerTitle = 'Awaiting payment confirmation';
+    headerSubtitle = `We are confirming your payment with the bank for order ${order.orderNumber}. Please allow a few moments.`;
+    headerIcon = <Clock size={28} className="text-[#B89758]" />;
+    headerBorderColor = 'border-[#B89758]';
+  }
+
+  // Payment status area text
+  let paymentStatusText = 'Awaiting payment confirmation';
+  let paymentNoticeText = 'Your payment is currently being confirmed by the payment gateway.';
+
+  if (isNeedsRefund) {
+    paymentStatusText = order.razorpayPaymentId
+      ? `Paid online via Razorpay (${order.razorpayPaymentId})`
+      : 'Paid online via Razorpay';
+    paymentNoticeText = 'Payment was captured, but an item went out of stock. A full refund will be processed.';
+  } else if (isFailed) {
+    paymentStatusText = 'Payment failed';
+    paymentNoticeText = 'Payment failed. You may retry your purchase at checkout.';
+  } else if (order.paymentMethod === 'cod') {
+    paymentStatusText = 'Cash on delivery, pay when your order arrives';
+    paymentNoticeText = 'Cash on delivery, pay when your order arrives. A tracking link will be provided once your dispatch parcel is scanned by our courier partner.';
+  } else if (order.paymentStatus === 'paid') {
+    paymentStatusText = order.razorpayPaymentId
+      ? `Paid online via Razorpay (${order.razorpayPaymentId})`
+      : 'Paid online via Razorpay';
+    paymentNoticeText = `Paid online via Razorpay${order.razorpayPaymentId ? ` (Payment ID: ${order.razorpayPaymentId})` : ''}. A tracking link will be provided once your dispatch parcel is scanned by our courier partner.`;
+  } else {
+    paymentStatusText = 'Awaiting payment confirmation';
+    paymentNoticeText = 'Awaiting payment confirmation from your bank or UPI app.';
+  }
+
+  const isGreenStatusDot = order.orderStatus === 'confirmed' || order.orderStatus === 'placed';
+
   return (
     <div className="min-h-screen bg-[#FAF8F5] pb-20">
       {/* Editorial Header */}
       <div className="bg-[#F3EEE7]/50 border-b border-[#E6DFD5] py-10 px-4 text-center">
-        <div className="max-w-[700px] mx-auto">
-          <div className="w-14 h-14 bg-[#FAF8F5] border border-[#B89758] rounded-full flex items-center justify-center mx-auto mb-3 shadow-xs">
-            <CheckCircle2 size={28} className="text-[#B89758]" />
+        <div className="max-w-[760px] mx-auto">
+          <div
+            className={`w-14 h-14 bg-[#FAF8F5] border ${headerBorderColor} rounded-full flex items-center justify-center mx-auto mb-3 shadow-xs`}
+          >
+            {headerIcon}
           </div>
 
           <span className="text-xs uppercase tracking-[0.25em] text-[#B89758] font-semibold font-sans block mb-1">
-            Order Confirmed
+            {headerBadge}
           </span>
-          <h1 className="font-serif text-3xl sm:text-4xl text-[#1C1917] font-normal">
-            Thank you, {order.customer.name}
+          <h1 className="font-serif text-2xl sm:text-3xl text-[#1C1917] font-normal leading-snug">
+            {headerTitle}
           </h1>
           <p className="mt-2 text-xs sm:text-sm text-[#6B635D] font-sans">
-            Your order has been recorded in our system under reference{' '}
-            <strong className="text-[#1C1917] font-mono">{order.orderNumber}</strong>.
+            {headerSubtitle}
           </p>
+
+          {isFailed && (
+            <div className="mt-6">
+              <Link
+                to="/checkout"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#1C1917] text-[#FAF8F5] text-xs uppercase tracking-widest font-semibold hover:bg-[#B89758] transition-colors shadow-xs"
+              >
+                <span>Return to Checkout</span>
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
       <main className="max-w-[1000px] mx-auto px-4 sm:px-8 pt-8 space-y-8">
         {/* Order Meta Bar */}
-        <div className="bg-white border border-[#E6DFD5] p-5 sm:p-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-sans">
+        <div className="bg-white border border-[#E6DFD5] p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs font-sans">
           <div>
             <span className="text-[#6B635D] block uppercase tracking-wider text-[10px]">Order Number</span>
             <span className="font-mono font-semibold text-[#1C1917] text-sm mt-0.5 block">
@@ -143,17 +219,29 @@ export const OrderConfirmationPage: React.FC = () => {
 
           <div>
             <span className="text-[#6B635D] block uppercase tracking-wider text-[10px]">Order Status</span>
-            <span className="inline-flex items-center gap-1 text-[#2F593E] font-semibold capitalize mt-0.5">
-              <span className="w-2 h-2 rounded-full bg-[#2F593E]"></span>
-              {order.orderStatus}
+            <span className="inline-flex items-center gap-1.5 font-semibold capitalize mt-0.5 text-[#1C1917]">
+              {isGreenStatusDot ? (
+                <span className="w-2 h-2 rounded-full bg-[#2F593E]"></span>
+              ) : isFailed ? (
+                <span className="w-2 h-2 rounded-full bg-[#8C2F2F]"></span>
+              ) : (
+                <span className="w-2 h-2 rounded-full bg-[#B89758]"></span>
+              )}
+              <span>{order.orderStatus.replace('_', ' ')}</span>
             </span>
           </div>
 
           <div>
             <span className="text-[#6B635D] block uppercase tracking-wider text-[10px]">Payment Status</span>
-            <span className="inline-flex items-center gap-1 text-[#57534E] font-semibold capitalize mt-0.5">
-              <Clock size={12} className="text-[#B89758]" />
-              {order.paymentStatus} ({order.paymentMethod === 'online' ? 'Online' : 'COD'})
+            <span className="inline-flex items-center gap-1 font-semibold mt-0.5 text-[#1C1917]">
+              {order.paymentStatus === 'paid' ? (
+                <CheckCircle2 size={12} className="text-[#2F593E]" />
+              ) : isFailed ? (
+                <AlertCircle size={12} className="text-[#8C2F2F]" />
+              ) : (
+                <Clock size={12} className="text-[#B89758]" />
+              )}
+              <span className="capitalize">{paymentStatusText}</span>
             </span>
           </div>
         </div>
@@ -243,11 +331,7 @@ export const OrderConfirmationPage: React.FC = () => {
               </h2>
 
               <p className="text-xs text-[#57534E] leading-relaxed font-sans">
-                Payment mode selected:{' '}
-                <strong className="text-[#1C1917] capitalize">
-                  {order.paymentMethod === 'online' ? 'Online Payment (Pending Gateway)' : 'Cash on Delivery'}
-                </strong>
-                . A tracking link will be provided once your dispatch parcel is scanned by our courier partner.
+                {paymentNoticeText}
               </p>
             </div>
           </div>

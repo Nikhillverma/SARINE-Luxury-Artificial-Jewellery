@@ -38,7 +38,8 @@ export type OrderStatus =
   | 'needs_refund'
   | 'shipped'
   | 'delivered'
-  | 'cancelled';
+  | 'cancelled'
+  | 'failed';
 
 export interface Order {
   id: string;
@@ -88,5 +89,6 @@ export interface VerifyPaymentResult {
   paymentStatus?: PaymentStatus;
   orderStatus?: OrderStatus;
   needsRefund?: boolean;
+  pending?: boolean;
   message?: string;
 }

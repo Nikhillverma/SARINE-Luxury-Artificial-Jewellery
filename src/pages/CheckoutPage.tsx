@@ -209,10 +209,20 @@ export const CheckoutPage: React.FC = () => {
       console.log('[Checkout] Order created on server:', order.orderNumber, order);
 
       // Online payment via Razorpay Checkout
-      if (paymentMethod === 'online' && order.razorpayOrderId && order.keyId) {
+      if (paymentMethod === 'online') {
+        // If paymentMethod is 'online' and razorpayOrderId or keyId is missing,
+        // show "Could not start payment, please try again", keep the cart and form, and do NOT navigate. Only COD may skip Razorpay.
+        if (!order.razorpayOrderId || !order.keyId) {
+          setSubmitError('Could not start payment, please try again');
+          setIsSubmitting(false);
+          return;
+        }
+
         const isLoaded = await loadRazorpayCheckoutScript();
         if (!isLoaded) {
-          throw new Error('Unable to initialize payment gateway. Please check your network connection.');
+          setSubmitError('Payment failed or cancelled, please try again.');
+          setIsSubmitting(false);
+          return;
         }
 
         const options = {
@@ -250,8 +260,9 @@ export const CheckoutPage: React.FC = () => {
                 razorpay_signature: response.razorpay_signature
               });
 
-              if (verifyResult.success) {
-                console.log('[Checkout] Payment signature verified successfully:', order.orderNumber);
+              // If verifyPayment returns pending: true (or success: true), navigate to the order page and clear the cart
+              if (verifyResult.success || verifyResult.pending) {
+                console.log('[Checkout] Payment verification handled (success or pending):', order.orderNumber);
                 setOrderPlaced(true);
                 orderPlacedRef.current = true;
                 const targetUrl = order.publicToken
@@ -261,16 +272,11 @@ export const CheckoutPage: React.FC = () => {
                 navigate(targetUrl, { replace: true });
                 clearCart();
               } else {
-                setSubmitError(
-                  verifyResult.message ||
-                    'Payment verification could not be confirmed. If your card was charged, our concierge will reconcile or refund your order.'
-                );
+                setSubmitError('Payment failed or cancelled, please try again.');
               }
             } catch (vErr: any) {
               console.error('[Checkout] Payment verification failure:', vErr);
-              setSubmitError(
-                vErr.message || 'An error occurred while confirming your payment with the server.'
-              );
+              setSubmitError('Payment failed or cancelled, please try again.');
             } finally {
               setIsVerifyingPayment(false);
               setIsSubmitting(false);
@@ -280,9 +286,7 @@ export const CheckoutPage: React.FC = () => {
             ondismiss: () => {
               console.log('[Checkout] Razorpay checkout dismissed by shopper');
               setIsSubmitting(false);
-              setSubmitNotice(
-                'Payment was not completed. Your shopping bag has been kept intact so you can retry whenever you are ready.'
-              );
+              setSubmitError('Payment failed or cancelled, please try again.');
             }
           }
         };
@@ -291,23 +295,24 @@ export const CheckoutPage: React.FC = () => {
         rzp.on('payment.failed', (resp: any) => {
           console.error('[Checkout] Payment failed:', resp.error);
           setIsSubmitting(false);
-          setSubmitError(
-            resp.error?.description || 'Your payment was declined by the bank. Please try another card or UPI.'
-          );
+          setSubmitError('Payment failed or cancelled, please try again.');
         });
         rzp.open();
         return;
       }
 
-      // COD or Mock flow: proceed directly to confirmation
-      setOrderPlaced(true);
-      orderPlacedRef.current = true;
-      const targetUrl = order.publicToken
-        ? `/order/${order.orderNumber}?t=${order.publicToken}`
-        : `/order/${order.orderNumber}`;
-      console.log(`[Checkout] Navigating to: ${targetUrl}`);
-      navigate(targetUrl, { replace: true });
-      clearCart();
+      // Only COD may skip Razorpay
+      if (paymentMethod === 'cod') {
+        setOrderPlaced(true);
+        orderPlacedRef.current = true;
+        const targetUrl = order.publicToken
+          ? `/order/${order.orderNumber}?t=${order.publicToken}`
+          : `/order/${order.orderNumber}`;
+        console.log(`[Checkout] Navigating to: ${targetUrl}`);
+        navigate(targetUrl, { replace: true });
+        clearCart();
+        return;
+      }
     } catch (err: any) {
       console.error('Failed to place order:', err);
       setSubmitError(
@@ -367,7 +372,7 @@ export const CheckoutPage: React.FC = () => {
         {/* Dismissal Notice Banner */}
         {submitNotice && (
           <div className="mb-8 p-4 bg-[#F6F1E8] border border-[#B89758] text-xs text-[#57534E] flex items-start gap-3">
-            <CheckCircle2 size={18} className="text-[#B89758] shrink-0 mt-0.5" />
+            <CheckCircle2 size={18} className="text-[#B89758]" />
             <div className="flex-1">
               <strong className="block font-semibold text-[#1C1917] mb-0.5">Order In Progress</strong>
               <span>{submitNotice}</span>
@@ -610,7 +615,7 @@ export const CheckoutPage: React.FC = () => {
                           </span>
                         </div>
                         <p className="text-xs text-[#6B635D] mt-1 font-sans">
-                          Online payment gateway integration coming soon. Placed in test mode with pending payment status.
+                          Pay securely via Credit/Debit Cards, UPI, or Netbanking powered by Razorpay.
                         </p>
                       </div>
                     </div>

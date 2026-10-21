@@ -11,6 +11,8 @@ import crypto from 'crypto';
 import { getFirebaseAdmin, Transaction } from './utils/firebaseAdmin';
 import { timingSafeCompare, jsonResponse, errorResponse } from './utils/security';
 
+const RAZORPAY_PAYMENT_ID_REGEX = /^pay_[A-Za-z0-9]+$/;
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return jsonResponse(204, {});
@@ -65,8 +67,19 @@ export const handler: Handler = async (event) => {
       const rpOrderId = payment?.order_id;
       const rpPaymentId = payment?.id;
 
-      if (!rpOrderId) {
+      if (!rpOrderId || typeof rpOrderId !== 'string') {
+        console.warn('[Razorpay Webhook] Ignored event: missing payment.order_id');
         return jsonResponse(200, { status: 'ignored_no_order_id' });
+      }
+
+      // Require payment.id matching /^pay_/
+      if (
+        !rpPaymentId ||
+        typeof rpPaymentId !== 'string' ||
+        !RAZORPAY_PAYMENT_ID_REGEX.test(rpPaymentId)
+      ) {
+        console.warn(`[Razorpay Webhook] Ignored event: invalid payment.id format: ${rpPaymentId}`);
+        return jsonResponse(200, { status: 'ignored_invalid_payment_id' });
       }
 
       const { db } = getFirebaseAdmin();
@@ -107,7 +120,16 @@ export const handler: Handler = async (event) => {
         return jsonResponse(200, { status: 'razorpay_order_id_mismatch' });
       }
 
-      // Execute transaction with the same idempotent logic
+      // Require payment.amount === Math.round(order.total * 100) and currency 'INR' against the stored order; otherwise ignore it and log.
+      const expectedAmountPaise = Math.round(Number(orderData.total || 0) * 100);
+      if (payment.amount !== expectedAmountPaise || payment.currency !== 'INR') {
+        console.warn(
+          `[Razorpay Webhook] Amount or currency mismatch for order ${orderData.orderNumber}: expected ${expectedAmountPaise} INR, received ${payment.amount} ${payment.currency}`
+        );
+        return jsonResponse(200, { status: 'ignored_amount_currency_mismatch' });
+      }
+
+      // Execute transaction with idempotent logic (remove every `|| ''` fallback)
       await db.runTransaction(async (transaction: Transaction) => {
         const freshDoc = await transaction.get(orderRef!);
         if (!freshDoc.exists) {
@@ -166,7 +188,7 @@ export const handler: Handler = async (event) => {
           transaction.update(orderRef!, {
             paymentStatus: 'paid',
             orderStatus: 'confirmed',
-            razorpayPaymentId: rpPaymentId || order.razorpayPaymentId || '',
+            razorpayPaymentId: rpPaymentId,
             paidAt: nowIso,
             webhookCaptured: true,
             updatedAt: nowIso
@@ -175,7 +197,7 @@ export const handler: Handler = async (event) => {
           transaction.update(orderRef!, {
             paymentStatus: 'paid',
             orderStatus: 'needs_refund',
-            razorpayPaymentId: rpPaymentId || order.razorpayPaymentId || '',
+            razorpayPaymentId: rpPaymentId,
             paidAt: nowIso,
             refundReason: 'Stock exhausted prior to payment completion.',
             webhookCaptured: true,
@@ -183,9 +205,63 @@ export const handler: Handler = async (event) => {
           });
         }
       });
+
+      return jsonResponse(200, { status: 'ok' });
     }
 
-    return jsonResponse(200, { status: 'ok' });
+    // Add payment.failed: find the order by razorpayOrderId and set paymentStatus 'failed' and orderStatus 'failed' ONLY if the order is currently 'pending'. Never downgrade a 'paid' order.
+    if (eventName === 'payment.failed') {
+      const payment = payload.payload?.payment?.entity;
+      const rpOrderId = payment?.order_id;
+
+      if (!rpOrderId || typeof rpOrderId !== 'string') {
+        console.warn('[Razorpay Webhook] payment.failed event missing order_id');
+        return jsonResponse(200, { status: 'ignored_no_order_id' });
+      }
+
+      const { db } = getFirebaseAdmin();
+      let orderDoc = null;
+
+      const querySnapshot = await db
+        .collection('orders')
+        .where('razorpayOrderId', '==', rpOrderId)
+        .limit(1)
+        .get();
+
+      if (!querySnapshot.empty) {
+        orderDoc = querySnapshot.docs[0];
+      } else if (payment?.notes?.orderNumber) {
+        const directDoc = await db.collection('orders').doc(payment.notes.orderNumber).get();
+        if (directDoc.exists) {
+          orderDoc = directDoc;
+        }
+      }
+
+      if (!orderDoc || !orderDoc.exists) {
+        console.warn(`[Razorpay Webhook] payment.failed: Order not found for Razorpay order ID ${rpOrderId}`);
+        return jsonResponse(200, { status: 'order_not_found' });
+      }
+
+      const orderData = orderDoc.data();
+      // Set paymentStatus 'failed' and orderStatus 'failed' ONLY if the order is currently 'pending'. Never downgrade a 'paid' order.
+      if (orderData && orderData.paymentStatus === 'pending') {
+        await orderDoc.ref.update({
+          paymentStatus: 'failed',
+          orderStatus: 'failed',
+          updatedAt: new Date().toISOString(),
+          failureReason: payment?.error_description || 'Payment failed on gateway.'
+        });
+        console.log(`[Razorpay Webhook] Set order ${orderDoc.id} status to failed due to payment.failed event.`);
+      } else {
+        console.log(
+          `[Razorpay Webhook] Ignored payment.failed for order ${orderDoc.id}: paymentStatus is '${orderData?.paymentStatus}' (not pending)`
+        );
+      }
+
+      return jsonResponse(200, { status: 'ok' });
+    }
+
+    return jsonResponse(200, { status: 'ignored_event' });
   } catch (err: any) {
     return errorResponse(
       500,

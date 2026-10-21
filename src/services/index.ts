@@ -2,11 +2,9 @@
  * Central Service Switch for SARINE.
  * Supports switching between in-memory mock services and live Firebase Firestore.
  *
- * Current Phase Configuration:
+ * Current Configuration:
  * - Products & Categories: Swappable via DATA_SOURCE ('mock' | 'firebase').
- * - Orders: Kept strictly on MockOrderService for now per phase requirements.
- *   (Firestore orders with authenticated write rules and Razorpay webhook validation
- *   will be introduced in the checkout integration phase).
+ * - Orders: Strictly handled via NetlifyOrderService communicating with secure server endpoints.
  */
 
 import {
@@ -18,19 +16,16 @@ import {
 import { MockProductService } from './mock/mockProductService';
 import { MockCategoryService } from './mock/mockCategoryService';
 import { MockAdminProductService } from './mock/mockAdminProductService';
-import { MockOrderService } from './mock/mockOrderService';
 import { FirebaseProductService } from './firebase/firebaseProductService';
 import { FirebaseCategoryService } from './firebase/firebaseCategoryService';
-
 import { NetlifyOrderService } from './netlify/netlifyOrderService';
 
 export type DataSource = 'mock' | 'firebase';
 
 /**
  * Toggle the data source here:
- * Set to 'mock' for local in-memory operation.
- * Set to 'firebase' to read products and categories from Cloud Firestore,
- * and route orders through secure Netlify Functions.
+ * Set to 'mock' for local in-memory catalog data.
+ * Set to 'firebase' to read products and categories from Cloud Firestore.
  */
 export const DATA_SOURCE: DataSource = 'firebase';
 
@@ -38,11 +33,10 @@ export const DATA_SOURCE: DataSource = 'firebase';
 const mockProductService = new MockProductService();
 const mockCategoryService = new MockCategoryService();
 const mockAdminProductService = new MockAdminProductService(mockProductService);
-const mockOrderService = new MockOrderService(mockProductService);
+const netlifyOrderService = new NetlifyOrderService();
 
 const firebaseProductService = new FirebaseProductService();
 const firebaseCategoryService = new FirebaseCategoryService();
-const netlifyOrderService = new NetlifyOrderService();
 
 // Export active singletons
 export const productService: IProductService =
@@ -56,16 +50,12 @@ export const categoryService: ICategoryService =
     : mockCategoryService;
 
 /**
- * Order service switch:
- * - 'firebase': Routes order creation, verification, and tokenized retrieval through Netlify server functions.
- * - 'mock': Uses in-memory simulated orders in localStorage.
+ * Orders are strictly handled through Netlify server functions to guarantee
+ * authoritative pricing, inventory validation, and cryptographic payment verification.
  */
-export const orderService: IOrderService =
-  DATA_SOURCE === 'firebase'
-    ? netlifyOrderService
-    : mockOrderService;
+export const orderService: IOrderService = netlifyOrderService;
 
 export const adminProductService: IAdminProductService = mockAdminProductService;
-export { netlifyOrderService, mockOrderService };
+export { netlifyOrderService };
 
 export * from './interfaces';

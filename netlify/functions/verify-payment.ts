@@ -2,7 +2,7 @@
  * Netlify Function: verify-payment
  *
  * Verifies Razorpay HMAC-SHA256 signature and publicToken with timing-safe comparison.
- * In a single Firestore transaction:
+ * Requires publicToken, verifies payment status via Razorpay API, and in a single Firestore transaction:
  * - Returns success idempotently if order was already marked paid (e.g. by webhook).
  * - Re-checks stock and decrements inventory if available.
  * - Sets paymentStatus 'paid' and orderStatus 'confirmed'.
@@ -12,15 +12,18 @@
 import { Handler } from '@netlify/functions';
 import crypto from 'crypto';
 import { getFirebaseAdmin, Transaction } from './utils/firebaseAdmin';
+import { getRazorpay } from './utils/razorpay';
 import { timingSafeCompare, jsonResponse, errorResponse } from './utils/security';
 
 interface VerifyPaymentBody {
-  orderNumber: string;
-  publicToken: string;
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
+  orderNumber?: string;
+  publicToken?: string;
+  razorpay_order_id?: string;
+  razorpay_payment_id?: string;
+  razorpay_signature?: string;
 }
+
+const RAZORPAY_PAYMENT_ID_REGEX = /^pay_[A-Za-z0-9]+$/;
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
@@ -51,17 +54,20 @@ export const handler: Handler = async (event) => {
       razorpay_signature
     } = payload;
 
-    if (
-      !orderNumber ||
-      !razorpay_order_id ||
-      !razorpay_payment_id ||
-      !razorpay_signature
-    ) {
-      return errorResponse(400, 'Missing required payment verification parameters.');
+    // publicToken is REQUIRED. Missing or wrong token: return 403 and change nothing.
+    if (!publicToken || typeof publicToken !== 'string' || !publicToken.trim()) {
+      return errorResponse(403, 'Unauthorized access to order verification.');
     }
 
+    if (!orderNumber || typeof orderNumber !== 'string' || !orderNumber.trim()) {
+      return errorResponse(400, 'Order number is required.');
+    }
+
+    const cleanOrderNumber = orderNumber.trim();
+    const cleanPublicToken = publicToken.trim();
+
     const { db } = getFirebaseAdmin();
-    const orderRef = db.collection('orders').doc(orderNumber);
+    const orderRef = db.collection('orders').doc(cleanOrderNumber);
     const initialDoc = await orderRef.get();
 
     if (!initialDoc.exists) {
@@ -70,12 +76,40 @@ export const handler: Handler = async (event) => {
 
     const initialData = initialDoc.data()!;
 
-    // If publicToken is provided, verify it
-    if (publicToken && !timingSafeCompare(initialData.publicToken || '', publicToken)) {
+    // Validate publicToken against stored token with timing-safe comparison
+    if (!timingSafeCompare(initialData.publicToken || '', cleanPublicToken)) {
       return errorResponse(403, 'Unauthorized access to order verification.');
     }
 
-    // 1. Verify digital signature using RAZORPAY_KEY_SECRET with timing-safe check
+    // Load the order first. If paymentStatus is already 'paid', return success immediately (idempotent) before any other check.
+    if (initialData.paymentStatus === 'paid') {
+      return jsonResponse(200, {
+        success: true,
+        orderNumber: initialData.orderNumber || cleanOrderNumber,
+        paymentStatus: 'paid',
+        orderStatus: initialData.orderStatus,
+        alreadyProcessed: true
+      });
+    }
+
+    // razorpay_payment_id must match /^pay_[A-Za-z0-9]+$/. Never write '' as a payment id anywhere.
+    if (
+      !razorpay_payment_id ||
+      typeof razorpay_payment_id !== 'string' ||
+      !RAZORPAY_PAYMENT_ID_REGEX.test(razorpay_payment_id)
+    ) {
+      return errorResponse(400, 'Invalid or missing Razorpay payment ID.');
+    }
+
+    if (!razorpay_order_id || typeof razorpay_order_id !== 'string' || !razorpay_order_id.trim()) {
+      return errorResponse(400, 'Missing Razorpay order ID.');
+    }
+
+    if (!razorpay_signature || typeof razorpay_signature !== 'string' || !razorpay_signature.trim()) {
+      return errorResponse(400, 'Missing Razorpay payment signature.');
+    }
+
+    // Verify digital signature using RAZORPAY_KEY_SECRET with timing-safe comparison
     const secret = process.env.RAZORPAY_KEY_SECRET;
     if (!secret) {
       return errorResponse(500, 'Payment verification is unconfigured on the server.');
@@ -89,19 +123,22 @@ export const handler: Handler = async (event) => {
     const isSignatureValid = timingSafeCompare(expectedSignature, razorpay_signature);
     const isOrderIdMatch = initialData.razorpayOrderId === razorpay_order_id;
 
-    // If invalid, set paymentStatus 'failed' and return an error
+    // Never overwrite an order that is 'paid'. Only set paymentStatus/orderStatus 'failed'
+    // when the token is valid, the order is currently 'pending', and the signature or razorpay_order_id is wrong. Otherwise just return 400.
     if (!isSignatureValid || !isOrderIdMatch) {
-      try {
-        await orderRef.update({
-          paymentStatus: 'failed',
-          orderStatus: 'failed',
-          updatedAt: new Date().toISOString(),
-          failureReason: !isSignatureValid
-            ? 'Payment signature validation failed.'
-            : 'Razorpay order identifier does not match this order.'
-        });
-      } catch (err) {
-        console.warn('[verify-payment] Could not mark order as failed in Firestore:', err);
+      if (initialData.paymentStatus === 'pending') {
+        try {
+          await orderRef.update({
+            paymentStatus: 'failed',
+            orderStatus: 'failed',
+            updatedAt: new Date().toISOString(),
+            failureReason: !isSignatureValid
+              ? 'Payment signature validation failed.'
+              : 'Razorpay order identifier does not match this order.'
+          });
+        } catch (updateErr) {
+          console.warn('[verify-payment] Could not mark order as failed in Firestore:', updateErr);
+        }
       }
 
       if (!isSignatureValid) {
@@ -111,7 +148,49 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    // 3. Execute in ONE Firestore transaction
+    // After the signature and order-id checks pass, call razorpay.payments.fetch(razorpay_payment_id).
+    // Require payment.order_id === stored razorpayOrderId, payment.amount === Math.round(order.total * 100), payment.currency === 'INR'.
+    const razorpay = getRazorpay();
+    let paymentRecord: any;
+    try {
+      paymentRecord = await razorpay.payments.fetch(razorpay_payment_id);
+    } catch (fetchErr: any) {
+      return errorResponse(400, 'Could not retrieve payment details from payment gateway.', fetchErr);
+    }
+
+    if (!paymentRecord) {
+      return errorResponse(400, 'Payment record was not returned by gateway.');
+    }
+
+    const expectedAmountPaise = Math.round(Number(initialData.total || 0) * 100);
+
+    if (paymentRecord.order_id !== initialData.razorpayOrderId) {
+      return errorResponse(400, 'Payment does not belong to this order.');
+    }
+
+    if (paymentRecord.amount !== expectedAmountPaise) {
+      return errorResponse(400, 'Payment amount mismatch with order total.');
+    }
+
+    if (paymentRecord.currency !== 'INR') {
+      return errorResponse(400, 'Payment currency must be INR.');
+    }
+
+    // If payment.status is 'authorized' (not yet captured), do NOT mark paid; return { success: false, pending: true, message: 'Your payment is being confirmed.' }
+    if (paymentRecord.status === 'authorized') {
+      return jsonResponse(200, {
+        success: false,
+        pending: true,
+        message: 'Your payment is being confirmed.'
+      });
+    }
+
+    // If payment.status is 'captured', continue to the existing stock transaction and mark paid/confirmed. Any other status: return an error.
+    if (paymentRecord.status !== 'captured') {
+      return errorResponse(400, `Payment is in invalid status: ${paymentRecord.status}`);
+    }
+
+    // Execute in ONE Firestore transaction
     const result = await db.runTransaction(async (transaction: Transaction) => {
       const freshOrderDoc = await transaction.get(orderRef);
       if (!freshOrderDoc.exists) {
@@ -124,7 +203,7 @@ export const handler: Handler = async (event) => {
       if (order.paymentStatus === 'paid') {
         return {
           success: true,
-          orderNumber,
+          orderNumber: cleanOrderNumber,
           paymentStatus: 'paid',
           orderStatus: order.orderStatus,
           alreadyProcessed: true
@@ -167,20 +246,20 @@ export const handler: Handler = async (event) => {
           });
         }
 
-        // Mark order as paid and confirmed
+        // Mark order as paid and confirmed (never write '' as payment id; strictly valid razorpay_payment_id)
         transaction.update(orderRef, {
           paymentStatus: 'paid',
           orderStatus: 'confirmed',
-          razorpayPaymentId: razorpay_payment_id || '',
+          razorpayPaymentId: razorpay_payment_id,
           razorpayOrderId: razorpay_order_id,
-          razorpaySignature: razorpay_signature || '',
+          razorpaySignature: razorpay_signature,
           paidAt: nowIso,
           updatedAt: nowIso
         });
 
         return {
           success: true,
-          orderNumber,
+          orderNumber: cleanOrderNumber,
           paymentStatus: 'paid',
           orderStatus: 'confirmed'
         };
@@ -189,8 +268,8 @@ export const handler: Handler = async (event) => {
         transaction.update(orderRef, {
           paymentStatus: 'paid',
           orderStatus: 'needs_refund',
-          razorpayPaymentId: razorpay_payment_id || '',
-          razorpaySignature: razorpay_signature || '',
+          razorpayPaymentId: razorpay_payment_id,
+          razorpaySignature: razorpay_signature,
           paidAt: nowIso,
           refundReason: 'Stock exhausted between order creation and payment authorization.',
           updatedAt: nowIso
@@ -199,7 +278,7 @@ export const handler: Handler = async (event) => {
         return {
           success: false,
           needsRefund: true,
-          orderNumber,
+          orderNumber: cleanOrderNumber,
           orderStatus: 'needs_refund',
           message:
             'Payment was captured, but one or more pieces went out of stock before payment was finalized. Our team has flagged this order for an immediate full refund.'
