@@ -25,8 +25,8 @@ export const Footer: React.FC = () => {
             </p>
           </div>
 
-          {/* Quick Links */}
-          <div className="md:col-span-2 col-span-6">
+          {/* Collections */}
+          <div className="md:col-span-3 col-span-6">
             <h4 className="text-xs uppercase tracking-widest text-[#B89758] font-semibold mb-4 font-sans">
               Collections
             </h4>
@@ -59,39 +59,38 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Customer Care */}
-          <div className="md:col-span-2 col-span-6">
+          {/* Help & Policies */}
+          <div className="md:col-span-4 col-span-6">
             <h4 className="text-xs uppercase tracking-widest text-[#B89758] font-semibold mb-4 font-sans">
-              Client Care
+              Help & Policies
             </h4>
             <ul className="space-y-2 text-xs text-[#8C847C] font-sans">
-              <li className="hover:text-[#FAF8F5] transition-colors cursor-pointer">
-                Track Order
+              <li>
+                <Link to="/contact" className="hover:text-[#FAF8F5] transition-colors">
+                  Contact Us
+                </Link>
               </li>
-              <li className="hover:text-[#FAF8F5] transition-colors cursor-pointer">
-                Shipping & Deliveries
+              <li>
+                <Link to="/shipping-policy" className="hover:text-[#FAF8F5] transition-colors">
+                  Shipping & Delivery
+                </Link>
               </li>
-              <li className="hover:text-[#FAF8F5] transition-colors cursor-pointer">
-                Jewellery Care Guide
+              <li>
+                <Link to="/refund-policy" className="hover:text-[#FAF8F5] transition-colors">
+                  Refund, Return & Cancellation
+                </Link>
               </li>
-              <li className="hover:text-[#FAF8F5] transition-colors cursor-pointer">
-                Exchanges & Returns
+              <li>
+                <Link to="/privacy-policy" className="hover:text-[#FAF8F5] transition-colors">
+                  Privacy Policy
+                </Link>
               </li>
-              <li className="hover:text-[#FAF8F5] transition-colors cursor-pointer">
-                Contact Concierge
+              <li>
+                <Link to="/terms" className="hover:text-[#FAF8F5] transition-colors">
+                  Terms & Conditions
+                </Link>
               </li>
             </ul>
-          </div>
-
-          {/* Service Architecture Status */}
-          <div className="md:col-span-3">
-            <h4 className="text-xs uppercase tracking-widest text-[#B89758] font-semibold mb-4 font-sans">
-              Data Layer Architecture
-            </h4>
-            <div className="bg-[#292524] p-3 border border-[#37332E] text-[11px] text-[#8C847C] font-mono leading-relaxed">
-              <span className="text-[#B89758] block mb-1">DATA_SOURCE: &quot;mock&quot;</span>
-              <span>All UI views consume IProductService and ICategoryService abstractions. Ready for Firebase Firestore adapter swap.</span>
-            </div>
           </div>
         </div>
 

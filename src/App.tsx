@@ -15,6 +15,11 @@ import { ProductDetailPage } from './pages/ProductDetailPage';
 import { BagPage } from './pages/BagPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
+import { ContactPage } from './pages/ContactPage';
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
+import { TermsPage } from './pages/TermsPage';
+import { ShippingPolicyPage } from './pages/ShippingPolicyPage';
+import { RefundPolicyPage } from './pages/RefundPolicyPage';
 
 export default function App() {
   const [includeAll, setIncludeAll] = useState<boolean>(false);
@@ -55,6 +60,12 @@ export default function App() {
               <Route path="/cart" element={<Navigate to="/bag" replace />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/order/:orderNumber" element={<OrderConfirmationPage />} />
+              {/* Help & Policies */}
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/shipping-policy" element={<ShippingPolicyPage />} />
+              <Route path="/refund-policy" element={<RefundPolicyPage />} />
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
