@@ -26,8 +26,8 @@ export const BagPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#FAF8F5] pb-16">
       {/* Header */}
-      <section className="bg-[#F3EEE7]/50 border-b border-[#E6DFD5] py-8 sm:py-12 px-4 text-center">
-        <div className="max-w-[860px] mx-auto">
+      <section className="bg-[#F3EEE7]/50 border-b border-[#E6DFD5] py-8 sm:py-12 text-center">
+        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
           <div className="flex items-center justify-center gap-2 mb-2">
             <span className="h-[1px] w-8 bg-[#B89758]"></span>
             <span className="text-xs uppercase tracking-[0.25em] text-[#B89758] font-medium font-sans">
@@ -47,7 +47,7 @@ export const BagPage: React.FC = () => {
       </section>
 
       {/* Main Bag Area */}
-      <main className="max-w-[1280px] mx-auto px-4 sm:px-8 pt-8">
+      <main className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10 pt-8">
         {/* Availability Notice */}
         {availabilityNotice && (
           <div className="mb-6 bg-white border border-[#B89758] p-4 text-xs text-[#57534E] flex items-center justify-between shadow-xs">

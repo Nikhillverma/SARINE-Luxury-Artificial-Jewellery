@@ -18,11 +18,18 @@ html {
   tab-size: 4;
   scroll-behavior: smooth;
   scroll-padding-top: calc(var(--header-height) + var(--space-md));
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
 body {
+  width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
+  margin: 0;
+  padding: 0;
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
@@ -30,6 +37,38 @@ body {
   line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Reusable site container for consistent centering across all pages */
+.site-container {
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  max-width: 1280px;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+@media (min-width: 640px) {
+  .site-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .site-container {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
 }
 
 img,

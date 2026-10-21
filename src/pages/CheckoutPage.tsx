@@ -342,8 +342,8 @@ export const CheckoutPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#FAF8F5] pb-20">
       {/* Editorial Header */}
-      <div className="bg-[#F3EEE7]/50 border-b border-[#E6DFD5] py-8 px-4 text-center">
-        <div className="max-w-[860px] mx-auto">
+      <div className="bg-[#F3EEE7]/50 border-b border-[#E6DFD5] py-8 text-center">
+        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
           <div className="flex items-center justify-center gap-2 mb-2">
             <span className="h-[1px] w-8 bg-[#B89758]"></span>
             <span className="text-xs uppercase tracking-[0.25em] text-[#B89758] font-medium font-sans">
@@ -357,7 +357,7 @@ export const CheckoutPage: React.FC = () => {
         </div>
       </div>
 
-      <main className="max-w-[1280px] mx-auto px-4 sm:px-8 pt-8">
+      <main className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10 pt-8">
         {/* Navigation Breadcrumb */}
         <div className="mb-6">
           <Link

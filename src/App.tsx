@@ -1,7 +1,7 @@
 /**
  * Main application entry point for SARINE.
  * Configures React Router, CartProvider context wrapper, global CartDrawer,
- * and storefront route mappings (/shop, /product/:slug, /bag, /checkout, /order/:orderNumber).
+ * and storefront route mappings.
  */
 
 import React, { useState } from 'react';
@@ -10,6 +10,7 @@ import { CartProvider } from './context/CartContext';
 import { Navbar } from './components/Navbar';
 import { CartDrawer } from './components/CartDrawer';
 import { Footer } from './components/Footer';
+import { HomePage } from './pages/HomePage';
 import { CollectionPage } from './pages/CollectionPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { BagPage } from './pages/BagPage';
@@ -20,6 +21,13 @@ import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsPage } from './pages/TermsPage';
 import { ShippingPolicyPage } from './pages/ShippingPolicyPage';
 import { RefundPolicyPage } from './pages/RefundPolicyPage';
+import { AboutPage } from './pages/AboutPage';
+import {
+  SustainabilityPage,
+  BlogPage,
+  CareersPage,
+  CancellationPolicyPage
+} from './pages/PolicyPlaceholders';
 
 export default function App() {
   const [includeAll, setIncludeAll] = useState<boolean>(false);
@@ -31,7 +39,7 @@ export default function App() {
   return (
     <CartProvider>
       <BrowserRouter>
-        <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#1C1917] selection:bg-[#B89758]/20 selection:text-[#1C1917]">
+        <div className="min-h-screen w-full flex flex-col bg-[#F8F6F2] text-[#222222] selection:bg-[#B79A68]/20 selection:text-[#222222]">
           {/* Header Navigation */}
           <Navbar
             includeAll={includeAll}
@@ -42,11 +50,11 @@ export default function App() {
           <CartDrawer />
 
           {/* Storefront Routes */}
-          <div className="flex-1">
+          <div className="flex-1 w-full">
             <Routes>
               <Route
                 path="/"
-                element={<CollectionPage includeAll={includeAll} />}
+                element={<HomePage includeAll={includeAll} />}
               />
               <Route
                 path="/shop"
@@ -66,6 +74,12 @@ export default function App() {
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/shipping-policy" element={<ShippingPolicyPage />} />
               <Route path="/refund-policy" element={<RefundPolicyPage />} />
+              <Route path="/cancellation-policy" element={<CancellationPolicyPage />} />
+              {/* About & Brand Info */}
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/sustainability" element={<SustainabilityPage />} />
+              <Route path="/blog" element={<BlogPage />} />
+              <Route path="/careers" element={<CareersPage />} />
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
