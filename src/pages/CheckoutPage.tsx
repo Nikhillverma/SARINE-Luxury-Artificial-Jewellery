@@ -343,7 +343,7 @@ export const CheckoutPage: React.FC = () => {
     <div className="min-h-screen bg-[#FAF8F5] pb-20">
       {/* Editorial Header */}
       <div className="bg-[#F3EEE7]/50 border-b border-[#E6DFD5] py-8 text-center">
-        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+        <div className="site-container">
           <div className="flex items-center justify-center gap-2 mb-2">
             <span className="h-[1px] w-8 bg-[#B89758]"></span>
             <span className="text-xs uppercase tracking-[0.25em] text-[#B89758] font-medium font-sans">
@@ -357,7 +357,8 @@ export const CheckoutPage: React.FC = () => {
         </div>
       </div>
 
-      <main className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10 pt-8">
+      <main className="site-container pt-8">
+        <div className="max-w-[1000px] mx-auto w-full">
         {/* Navigation Breadcrumb */}
         <div className="mb-6">
           <Link
@@ -738,6 +739,7 @@ export const CheckoutPage: React.FC = () => {
               <p>Prices and stock availability are re-verified with the inventory system before final placement.</p>
             </div>
           </div>
+        </div>
         </div>
       </main>
     </div>

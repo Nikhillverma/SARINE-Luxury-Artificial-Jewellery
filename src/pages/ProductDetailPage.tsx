@@ -147,7 +147,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
       {/* Navigation Breadcrumb */}
       <div className="border-b border-[#E8E0D6]">
-        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10 py-4">
+        <div className="site-container py-4">
           <Link
             to="/shop"
             className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-[#81776D] hover:text-[#242321] transition-colors font-sans"
@@ -159,7 +159,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
       </div>
 
       {/* Product Detail Stage */}
-      <main className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10 pt-8 sm:pt-12">
+      <main className="site-container pt-8 sm:pt-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
           {/* Gallery View (Left Column - 7 cols) */}
           <div className="lg:col-span-7 flex flex-col-reverse md:flex-row gap-4">
@@ -374,10 +374,12 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               </h2>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
-              {relatedProducts.map((rel) => (
-                <ProductCard key={rel.id} product={rel} />
-              ))}
+            <div className="site-container">
+              <div className="product-grid">
+                {relatedProducts.map((rel) => (
+                  <ProductCard key={rel.id} product={rel} />
+                ))}
+              </div>
             </div>
           </section>
         )}

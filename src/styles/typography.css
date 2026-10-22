@@ -29,45 +29,45 @@
   --tracking-widest: 0.12em;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-serif);
-  color: var(--color-text-primary);
-  font-weight: 500;
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-normal);
-  text-wrap: balance;
-  margin: 0;
-}
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+    color: var(--color-text-primary);
+    font-weight: 500;
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-normal);
+    text-wrap: balance;
+  }
 
-h1 {
-  font-size: var(--text-h1);
-  font-weight: 400;
-}
+  h1 {
+    font-size: var(--text-h1);
+    font-weight: 400;
+  }
 
-h2 {
-  font-size: var(--text-h2);
-}
+  h2 {
+    font-size: var(--text-h2);
+  }
 
-h3 {
-  font-size: var(--text-h3);
-}
+  h3 {
+    font-size: var(--text-h3);
+  }
 
-h4, h5, h6 {
-  font-weight: 600;
-}
+  h4, h5, h6 {
+    font-weight: 600;
+  }
 
-h4 {
-  font-size: var(--text-h4);
-}
+  h4 {
+    font-size: var(--text-h4);
+  }
 
-h5, h6 {
-  font-size: var(--text-base);
-}
+  h5, h6 {
+    font-size: var(--text-base);
+  }
 
-p {
-  margin: 0;
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
+  p {
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+  }
 }
 
 .font-serif {

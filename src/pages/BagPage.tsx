@@ -27,7 +27,7 @@ export const BagPage: React.FC = () => {
     <div className="min-h-screen bg-[#FAF8F5] pb-16">
       {/* Header */}
       <section className="bg-[#F3EEE7]/50 border-b border-[#E6DFD5] py-8 sm:py-12 text-center">
-        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+        <div className="site-container">
           <div className="flex items-center justify-center gap-2 mb-2">
             <span className="h-[1px] w-8 bg-[#B89758]"></span>
             <span className="text-xs uppercase tracking-[0.25em] text-[#B89758] font-medium font-sans">
@@ -38,7 +38,7 @@ export const BagPage: React.FC = () => {
           <h1 className="font-serif text-3xl sm:text-4xl text-[#1C1917] font-normal">
             Shopping Bag
           </h1>
-          <p className="mt-2 text-xs sm:text-sm text-[#6B635D] font-sans">
+          <p className="mt-2 text-xs sm:text-sm text-[#666666] font-sans">
             {itemCount > 0
               ? `You have selected ${itemCount} ${itemCount === 1 ? 'piece' : 'pieces'} for review.`
               : 'Your bag is currently waiting for your handcrafted selections.'}
@@ -47,7 +47,8 @@ export const BagPage: React.FC = () => {
       </section>
 
       {/* Main Bag Area */}
-      <main className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10 pt-8">
+      <main className="site-container pt-8">
+        <div className="max-w-[1000px] mx-auto w-full">
         {/* Availability Notice */}
         {availabilityNotice && (
           <div className="mb-6 bg-white border border-[#B89758] p-4 text-xs text-[#57534E] flex items-center justify-between shadow-xs">
@@ -242,6 +243,7 @@ export const BagPage: React.FC = () => {
             </div>
           </div>
         )}
+        </div>
       </main>
     </div>
   );

@@ -145,7 +145,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     <div className="min-h-screen bg-[#FAF8F5] text-[#242321]">
       {/* Editorial Page Header */}
       <section className="border-b border-[#E8E0D6] bg-[#FAF8F5] py-12 sm:py-16 text-center">
-        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+        <div className="site-container">
           <div className="flex items-center justify-center gap-2 mb-3">
             <span className="h-[1px] w-6 bg-[#B79A68]"></span>
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#B79A68] font-sans font-medium">
@@ -165,7 +165,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
       </section>
 
       {/* Main Content Area */}
-      <main className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10 py-8 sm:py-12">
+      <main className="site-container py-8 sm:py-12">
         {/* Category Navigation Bar (Understated text tabs instead of loud pill clusters) */}
         <div className="flex items-center gap-6 overflow-x-auto pb-4 scrollbar-none border-b border-[#E8E0D6]">
           <button
@@ -270,11 +270,11 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
           {loading && <span className="text-[#B79A68] animate-pulse">Loading catalogue...</span>}
         </div>
 
-        {/* Product Grid */}
+        {/* Product Grid using plain CSS .product-grid */}
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8 mt-6">
+          <div className="product-grid mt-6">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="animate-pulse">
+              <div key={i} className="animate-pulse w-full">
                 <div className="bg-[#F2EADF] aspect-[3/4] w-full border border-[#E8E0D6]"></div>
                 <div className="h-4 bg-[#F2EADF] w-2/3 mt-3"></div>
                 <div className="h-3 bg-[#F2EADF] w-1/3 mt-2"></div>
@@ -282,7 +282,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
             ))}
           </div>
         ) : products.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8 mt-6">
+          <div className="product-grid mt-6">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

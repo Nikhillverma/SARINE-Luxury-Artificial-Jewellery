@@ -10,7 +10,7 @@ import { ArrowRight } from 'lucide-react';
 export const AboutPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F8F6F2] text-[#222222] font-sans">
-      <section className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10 py-16 sm:py-24">
+      <section className="site-container py-16 sm:py-24">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <span className="text-xs uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-3">
             Our Story

@@ -51,13 +51,13 @@ export const Navbar: React.FC<NavbarProps> = ({
       <header className="sticky top-0 z-40 bg-white shadow-xs">
         {/* 1. Announcement bar: thin beige strip */}
         <div className="bg-[#EDE3D8] text-[#222222] text-[11px] sm:text-xs py-1.5 font-sans tracking-wide">
-          <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10 text-center">
+          <div className="site-container text-center">
             <span className="font-normal">Timeless jewellery for every moment +</span>
           </div>
         </div>
 
         {/* 2. Main Header */}
-        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10 h-18 sm:h-20 flex items-center justify-between">
+        <div className="site-container h-18 sm:h-20 flex items-center justify-between">
           {/* Left: Brand Wordmark */}
           <div className="flex items-center gap-6">
             <Link to="/" className="inline-block">

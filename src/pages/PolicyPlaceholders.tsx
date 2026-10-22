@@ -9,8 +9,8 @@ import { Link } from 'react-router-dom';
 export const SustainabilityPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F8F6F2] text-[#222222] font-sans py-16 sm:py-24">
-      <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
-        <div className="max-w-[800px] mx-auto bg-white p-8 sm:p-12 border border-[#E8E0D6] rounded-xs">
+      <div className="site-container">
+        <div className="max-w-[1000px] mx-auto bg-white p-8 sm:p-12 border border-[#E8E0D6] rounded-xs">
           <span className="text-xs uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2">
             Responsibility
           </span>
@@ -37,8 +37,8 @@ export const SustainabilityPage: React.FC = () => {
 export const BlogPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F8F6F2] text-[#222222] font-sans py-16 sm:py-24">
-      <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
-        <div className="max-w-[800px] mx-auto bg-white p-8 sm:p-12 border border-[#E8E0D6] rounded-xs">
+      <div className="site-container">
+        <div className="max-w-[1000px] mx-auto bg-white p-8 sm:p-12 border border-[#E8E0D6] rounded-xs">
           <span className="text-xs uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2">
             The Journal
           </span>
@@ -67,8 +67,8 @@ export const BlogPage: React.FC = () => {
 export const CareersPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F8F6F2] text-[#222222] font-sans py-16 sm:py-24">
-      <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
-        <div className="max-w-[800px] mx-auto bg-white p-8 sm:p-12 border border-[#E8E0D6] rounded-xs">
+      <div className="site-container">
+        <div className="max-w-[1000px] mx-auto bg-white p-8 sm:p-12 border border-[#E8E0D6] rounded-xs">
           <span className="text-xs uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2">
             Careers
           </span>
@@ -93,8 +93,8 @@ export const CareersPage: React.FC = () => {
 export const CancellationPolicyPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F8F6F2] text-[#222222] font-sans py-16 sm:py-24">
-      <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
-        <div className="max-w-[800px] mx-auto bg-white p-8 sm:p-12 border border-[#E8E0D6] rounded-xs">
+      <div className="site-container">
+        <div className="max-w-[1000px] mx-auto bg-white p-8 sm:p-12 border border-[#E8E0D6] rounded-xs">
           <span className="text-xs uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2">
             Store Policy
           </span>

@@ -19,7 +19,7 @@ import {
 export const Footer: React.FC = () => {
   return (
     <footer className="bg-[#F8F6F2] text-[#222222] pt-16 pb-12 border-t border-[#E8E0D6] font-sans">
-      <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+      <div className="site-container">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-[#E8E0D6]">
           {/* Brand & Socials Column */}
           <div className="lg:col-span-4">

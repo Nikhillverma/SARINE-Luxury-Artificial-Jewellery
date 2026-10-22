@@ -171,38 +171,41 @@ export const OrderConfirmationPage: React.FC = () => {
     <div className="min-h-screen bg-[#FAF8F5] pb-20">
       {/* Editorial Header */}
       <div className="bg-[#F3EEE7]/50 border-b border-[#E6DFD5] py-10 px-4 text-center">
-        <div className="max-w-[760px] mx-auto">
-          <div
-            className={`w-14 h-14 bg-[#FAF8F5] border ${headerBorderColor} rounded-full flex items-center justify-center mx-auto mb-3 shadow-xs`}
-          >
-            {headerIcon}
-          </div>
-
-          <span className="text-xs uppercase tracking-[0.25em] text-[#B89758] font-semibold font-sans block mb-1">
-            {headerBadge}
-          </span>
-          <h1 className="font-serif text-2xl sm:text-3xl text-[#1C1917] font-normal leading-snug">
-            {headerTitle}
-          </h1>
-          <p className="mt-2 text-xs sm:text-sm text-[#6B635D] font-sans">
-            {headerSubtitle}
-          </p>
-
-          {isFailed && (
-            <div className="mt-6">
-              <Link
-                to="/checkout"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#1C1917] text-[#FAF8F5] text-xs uppercase tracking-widest font-semibold hover:bg-[#B89758] transition-colors shadow-xs"
-              >
-                <span>Return to Checkout</span>
-                <ArrowRight size={14} />
-              </Link>
+        <div className="site-container">
+          <div className="max-w-[760px] mx-auto">
+            <div
+              className={`w-14 h-14 bg-[#FAF8F5] border ${headerBorderColor} rounded-full flex items-center justify-center mx-auto mb-3 shadow-xs`}
+            >
+              {headerIcon}
             </div>
-          )}
+
+            <span className="text-xs uppercase tracking-[0.25em] text-[#B89758] font-semibold font-sans block mb-1">
+              {headerBadge}
+            </span>
+            <h1 className="font-serif text-2xl sm:text-3xl text-[#1C1917] font-normal leading-snug">
+              {headerTitle}
+            </h1>
+            <p className="mt-2 text-xs sm:text-sm text-[#666666] font-sans">
+              {headerSubtitle}
+            </p>
+
+            {isFailed && (
+              <div className="mt-6">
+                <Link
+                  to="/checkout"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#1C1917] text-[#FAF8F5] text-xs uppercase tracking-widest font-semibold hover:bg-[#B89758] transition-colors shadow-xs"
+                >
+                  <span>Return to Checkout</span>
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <main className="max-w-[1000px] mx-auto px-4 sm:px-8 pt-8 space-y-8">
+      <div className="site-container pt-8">
+        <main className="max-w-[1000px] mx-auto space-y-8">
         {/* Order Meta Bar */}
         <div className="bg-white border border-[#E6DFD5] p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs font-sans">
           <div>
@@ -357,5 +360,6 @@ export const OrderConfirmationPage: React.FC = () => {
         </div>
       </main>
     </div>
+  </div>
   );
 };

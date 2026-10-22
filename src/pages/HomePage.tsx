@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom';
 import { productService, categoryService } from '../services';
 import { Product } from '../types/product';
 import { Category } from '../types/category';
+import { ProductCard } from '../components/ProductCard';
 import { formatInr } from '../utils/currency';
 import {
   ArrowRight,
@@ -252,7 +253,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         ))}
 
         {/* Centered content overlay container */}
-        <div className="relative z-10 mx-auto w-full max-w-[1280px] h-full px-4 sm:px-6 lg:px-10 flex flex-col justify-between py-8 md:py-12 pointer-events-none">
+        <div className="site-container h-full flex flex-col justify-between py-8 md:py-12 pointer-events-none relative z-10">
           {/* Slide text in left half vertically centered */}
           <div className="my-auto max-w-xl md:max-w-lg lg:max-w-xl pointer-events-auto">
             <span className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2 sm:mb-3">
@@ -330,29 +331,34 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Category images: aspect-[3/2] object-cover
           Consistent vertical spacing: py-12 sm:py-16 lg:py-20
           ========================================================================= */}
-      <section id="categories" className="py-12 sm:py-16 lg:py-20">
-        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
-          {/* Section Heading Row */}
-          <div className="flex items-end justify-between mb-6">
-            <h2 className="font-serif text-2xl sm:text-3xl text-[#222222] font-normal leading-none">
+      <section id="categories" className="w-full py-12 sm:py-16 lg:py-20">
+        <div className="site-container">
+          {/* Centered Full-Width Section Header Block */}
+          <div className="w-full text-center mb-8 sm:mb-10">
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#222222] font-normal">
               Shop by Category
             </h2>
-            <Link
-              to="/shop"
-              className="text-xs sm:text-[13px] text-[#222222] hover:text-[#777777] font-sans font-medium inline-flex items-center gap-1.5 transition-colors leading-none"
-            >
-              <span>View All Categories</span>
-              <ArrowRight size={13} />
-            </Link>
+            <p className="mt-2 text-xs sm:text-sm text-[#666666] font-sans leading-relaxed max-w-xl mx-auto">
+              Explore our handcrafted collections curated for celebrations and everyday elegance.
+            </p>
+            <div className="mt-3">
+              <Link
+                to="/shop"
+                className="text-xs sm:text-[13px] text-[#222222] hover:text-[#777777] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
+              >
+                <span>View All Categories</span>
+                <ArrowRight size={13} />
+              </Link>
+            </div>
           </div>
 
-          {/* 5 Category Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6">
+          {/* 5 Category Cards using plain CSS .category-grid */}
+          <div className="category-grid">
             {categories.slice(0, 5).map((cat) => (
               <Link
                 key={cat.id}
                 to={`/shop?category=${cat.slug}`}
-                className="group flex flex-col w-full"
+                className="group flex flex-col items-center text-center w-full"
               >
                 {/* Landscape image wrapper: aspect-[3/2] */}
                 <div className="aspect-[3/2] w-full overflow-hidden bg-[#EDE3D8] border border-[#E8E0D6] rounded-xs relative">
@@ -364,11 +370,11 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 </div>
 
                 {/* Title & Link */}
-                <div className="pt-3">
-                  <h3 className="text-sm sm:text-base font-normal text-[#222222] font-sans">
+                <div className="pt-3 text-center flex flex-col items-center">
+                  <h3 className="text-sm sm:text-base font-normal text-[#222222] font-sans text-center">
                     {cat.name}
                   </h3>
-                  <span className="text-xs text-[#666666] group-hover:text-[#222222] transition-colors inline-flex items-center gap-1 mt-0.5 font-sans">
+                  <span className="text-xs text-[#666666] group-hover:text-[#222222] transition-colors inline-flex items-center justify-center gap-1 mt-0.5 font-sans">
                     <span>Shop Now</span>
                     <ArrowRight size={11} />
                   </span>
@@ -389,131 +395,44 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Consistent vertical spacing: py-12 sm:py-16 lg:py-20
           ========================================================================= */}
       <section className="py-12 sm:py-16 lg:py-20 border-t border-[#E8E0D6]">
-        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
-          {/* Section Heading Row */}
-          <div className="flex items-end justify-between mb-6">
-            <h2 className="font-serif text-2xl sm:text-3xl text-[#222222] font-normal leading-none">
+        <div className="site-container">
+          {/* Centered Full-Width Section Header Block */}
+          <div className="w-full text-center mb-8 sm:mb-10">
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#222222] font-normal">
               Best Sellers
             </h2>
-            <Link
-              to="/shop?sort=bestseller"
-              className="text-xs sm:text-[13px] text-[#222222] hover:text-[#777777] font-sans font-medium inline-flex items-center gap-1.5 transition-colors leading-none"
-            >
-              <span>View All</span>
-              <ArrowRight size={13} />
-            </Link>
-          </div>
-
-          {/* Carousel Relative Wrapper */}
-          <div className="relative w-full">
-            {/* Left Arrow Button */}
-            <button
-              onClick={() => scrollCarousel('left')}
-              className="absolute left-2 2xl:-left-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 border border-[#E4DACF] shadow-sm flex items-center justify-center text-[#222222] hover:bg-white transition-all cursor-pointer"
-              aria-label="Scroll left"
-            >
-              <ChevronLeft size={16} />
-            </button>
-
-            {/* Right Arrow Button */}
-            <button
-              onClick={() => scrollCarousel('right')}
-              className="absolute right-2 2xl:-right-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 border border-[#E4DACF] shadow-sm flex items-center justify-center text-[#222222] hover:bg-white transition-all cursor-pointer"
-              aria-label="Scroll right"
-            >
-              <ChevronRight size={16} />
-            </button>
-
-            {/* Cards Track inside container */}
-            <div
-              ref={carouselRef}
-              className="flex gap-4 lg:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-none pb-1"
-            >
-              {loading ? (
-                [...Array(5)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="shrink-0 snap-start w-[calc((100%-1rem)/2)] md:w-[calc((100%-3rem)/3)] lg:w-[calc((100%-6rem)/5)] flex flex-col h-full bg-white border border-[#E8E0D6] rounded-xs p-3 animate-pulse"
-                  >
-                    <div className="aspect-square bg-[#F4EDE5] w-full rounded-xs"></div>
-                    <div className="h-4 bg-[#F4EDE5] w-3/4 mt-3 rounded-xs"></div>
-                    <div className="h-3 bg-[#F4EDE5] w-1/3 mt-2 rounded-xs"></div>
-                  </div>
-                ))
-              ) : (
-                bestsellers.map((product, idx) => {
-                  const productImg = getProductImage(product);
-                  const isSaved = wishlist.has(product.id);
-                  const reviewCount = reviewCounts[idx % reviewCounts.length];
-
-                  return (
-                    <div
-                      key={product.id}
-                      className="shrink-0 snap-start w-[calc((100%-1rem)/2)] md:w-[calc((100%-3rem)/3)] lg:w-[calc((100%-6rem)/5)] flex flex-col h-full bg-white border border-[#E8E0D6] rounded-xs p-3 hover:border-[#222222]/30 transition-all justify-between"
-                    >
-                      <div>
-                        {/* Square Product Image */}
-                        <Link
-                          to={`/product/${product.slug}`}
-                          className="relative block aspect-square w-full bg-[#F4EDE5] overflow-hidden rounded-xs group"
-                        >
-                          <img
-                            src={productImg}
-                            alt={product.name}
-                            className="w-full h-full object-cover object-center group-hover:scale-104 transition-transform duration-500 ease-out"
-                          />
-
-                          {/* Wishlist Heart Icon: absolute top-3 right-3 */}
-                          <button
-                            onClick={(e) => toggleWishlist(product.id, e)}
-                            className={`absolute top-3 right-3 p-1.5 rounded-full bg-white/90 backdrop-blur-xs transition-colors cursor-pointer ${
-                              isSaved ? 'text-[#8C2F2F]' : 'text-[#555555] hover:text-[#222222]'
-                            }`}
-                            aria-label={`Save ${product.name} to wishlist`}
-                          >
-                            <Heart
-                              size={14}
-                              strokeWidth={1.5}
-                              fill={isSaved ? '#8C2F2F' : 'none'}
-                            />
-                          </button>
-                        </Link>
-
-                        {/* Product Details */}
-                        <div className="pt-3">
-                          <Link
-                            to={`/product/${product.slug}`}
-                            className="font-normal text-xs sm:text-[13px] text-[#222222] hover:text-[#666666] line-clamp-1 transition-colors block font-sans"
-                          >
-                            {product.name}
-                          </Link>
-
-                          {/* Price */}
-                          <div className="mt-1 text-xs sm:text-sm font-medium text-[#222222] font-sans">
-                            {formatInr(product.price)}
-                          </div>
-
-                          {/* Star Rating and Count */}
-                          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#555555] font-sans">
-                            <div className="flex items-center text-[#222222]">
-                              {[...Array(5)].map((_, s) => (
-                                <Star
-                                  key={s}
-                                  size={11}
-                                  className="fill-[#222222] text-[#222222]"
-                                />
-                              ))}
-                            </div>
-                            <span className="text-[#777777]">({reviewCount})</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+            <p className="mt-2 text-xs sm:text-sm text-[#666666] font-sans leading-relaxed max-w-xl mx-auto">
+              Our most cherished pieces, loved for their enduring finish and timeless beauty.
+            </p>
+            <div className="mt-3">
+              <Link
+                to="/shop?sort=bestseller"
+                className="text-xs sm:text-[13px] text-[#222222] hover:text-[#777777] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
+              >
+                <span>View All</span>
+                <ArrowRight size={13} />
+              </Link>
             </div>
           </div>
+
+          {/* Product Grid using plain CSS .product-grid */}
+          {loading ? (
+            <div className="product-grid">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="animate-pulse w-full">
+                  <div className="bg-[#F2EADF] aspect-[3/4] w-full border border-[#E8E0D6]"></div>
+                  <div className="h-4 bg-[#F2EADF] w-2/3 mt-3"></div>
+                  <div className="h-3 bg-[#F2EADF] w-1/3 mt-2"></div>
+                </div>
+              ))}
+            </div>
+          ) : bestsellers.length > 0 ? (
+            <div className="product-grid">
+              {bestsellers.slice(0, 8).map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -524,7 +443,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Consistent vertical spacing: py-12 sm:py-16 lg:py-20
           ========================================================================= */}
       <section className="bg-[#F3EDE5] border-y border-[#E8E0D6] py-12 sm:py-16 lg:py-20">
-        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+        <div className="site-container">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
             {/* Left: Large Jewellery Photo */}
             <div className="lg:col-span-5">
@@ -620,7 +539,6 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
       {/* =========================================================================
           7. EDITORIAL BANNER
-          Full-width background with centered container mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10
           ========================================================================= */}
       <section className="relative overflow-hidden bg-[#E8DDD1] border-b border-[#E8E0D6]">
         {/* Full-bleed background image */}
@@ -634,7 +552,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#EDE3D8]/65 to-[#EDE3D8]/95 sm:via-[#EDE3D8]/75 sm:to-[#EDE3D8]/95"></div>
 
         {/* Centered container with right-aligned content */}
-        <div className="relative z-10 mx-auto w-full max-w-[1280px] min-h-[320px] sm:min-h-[380px] lg:min-h-[420px] px-4 sm:px-6 lg:px-10 flex items-center justify-end">
+        <div className="site-container min-h-[320px] sm:min-h-[380px] lg:min-h-[420px] flex items-center justify-end relative z-10">
           <div className="w-full sm:w-2/3 lg:w-1/2 py-10 sm:py-14 text-left">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2 font-sans">
               EDITORIAL COLLECTION
@@ -663,11 +581,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
       {/* =========================================================================
           8. NEWSLETTER
-          Centered container mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10
-          Consistent vertical spacing: py-14 sm:py-20 lg:py-24
           ========================================================================= */}
       <section className="py-14 sm:py-20 lg:py-24 bg-[#F8F6F2]">
-        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+        <div className="site-container">
           <div className="max-w-[620px] mx-auto text-center">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2 font-sans">
               STAY IN TOUCH

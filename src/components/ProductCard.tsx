@@ -20,7 +20,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const secondaryImage = product.images[1];
 
   return (
-    <article className="group flex flex-col bg-[#FAF8F5] transition-all duration-300">
+    <article className="group flex flex-col w-full bg-[#FAF8F5] transition-all duration-300">
       {/* 3:4 Portrait Image Container */}
       <Link
         to={`/product/${product.slug}`}
