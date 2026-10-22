@@ -24,7 +24,7 @@ export const SustainabilityPage: React.FC = () => {
             Each order is shipped in reusable keepsake pouches and protective recyclable cardboard mailers designed to minimize single-use plastics.
           </p>
           <div className="mt-8 pt-6 border-t border-[#E8E0D6]">
-            <Link to="/" className="text-xs uppercase tracking-wider text-[#222222] underline underline-offset-4">
+            <Link to="/" className="text-xs uppercase tracking-wider text-[#222222] hover:text-[#B89758] transition-colors underline underline-offset-4">
               ← Return to Home
             </Link>
           </div>
@@ -106,13 +106,13 @@ export const CancellationPolicyPage: React.FC = () => {
           </p>
           <p className="text-xs sm:text-sm text-[#555555] leading-relaxed mb-4">
             Once an order has been dispatched and handed over to our courier partners, cancellation is no longer possible, but you may avail of our 7-day return assistance upon delivery in accordance with our{' '}
-            <Link to="/refund-policy" className="text-[#222222] underline">
+            <Link to="/refund-policy" className="text-[#222222] hover:text-[#B89758] transition-colors underline">
               Refund & Return Policy
             </Link>.
           </p>
           <p className="text-xs text-[#666666]">
             Last updated: 21 October 2026. For cancellation requests, email{' '}
-            <a href="mailto:care@sarinejewelry.com" className="underline font-medium text-[#222222]">
+            <a href="mailto:care@sarinejewelry.com" className="underline font-medium text-[#222222] hover:text-[#B89758] transition-colors">
               care@sarinejewelry.com
             </a>.
           </p>

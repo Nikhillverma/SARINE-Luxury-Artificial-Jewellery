@@ -70,38 +70,38 @@ export const Navbar: React.FC<NavbarProps> = ({
             <nav className="hidden lg:flex items-center space-x-7 ml-4 text-[13px] font-sans text-[#333333]">
               <Link
                 to="/"
-                className={`transition-colors hover:text-[#000000] pb-1 ${
-                  location.pathname === '/' ? 'text-[#000000] font-medium' : 'text-[#444444]'
+                className={`transition-colors hover:text-[#B89758] pb-1 ${
+                  location.pathname === '/' ? 'text-[#1C1917] font-medium border-b border-[#B89758]' : 'text-[#444444]'
                 }`}
               >
                 Home
               </Link>
               <Link
                 to="/shop"
-                className={`transition-colors hover:text-[#000000] pb-1 ${
-                  location.pathname === '/shop' ? 'text-[#000000] font-medium' : 'text-[#444444]'
+                className={`transition-colors hover:text-[#B89758] pb-1 ${
+                  location.pathname === '/shop' ? 'text-[#1C1917] font-medium border-b border-[#B89758]' : 'text-[#444444]'
                 }`}
               >
                 Shop
               </Link>
               <a
                 href="/#categories"
-                className="transition-colors hover:text-[#000000] text-[#444444] pb-1"
+                className="transition-colors hover:text-[#B89758] text-[#444444] pb-1"
               >
                 Categories
               </a>
               <Link
                 to="/about"
-                className={`transition-colors hover:text-[#000000] pb-1 ${
-                  location.pathname === '/about' ? 'text-[#000000] font-medium' : 'text-[#444444]'
+                className={`transition-colors hover:text-[#B89758] pb-1 ${
+                  location.pathname === '/about' ? 'text-[#1C1917] font-medium border-b border-[#B89758]' : 'text-[#444444]'
                 }`}
               >
                 About
               </Link>
               <Link
                 to="/contact"
-                className={`transition-colors hover:text-[#000000] pb-1 ${
-                  location.pathname === '/contact' ? 'text-[#000000] font-medium' : 'text-[#444444]'
+                className={`transition-colors hover:text-[#B89758] pb-1 ${
+                  location.pathname === '/contact' ? 'text-[#1C1917] font-medium border-b border-[#B89758]' : 'text-[#444444]'
                 }`}
               >
                 Contact
@@ -115,7 +115,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="relative hidden md:block">
               <form
                 onSubmit={handleSearchSubmit}
-                className="flex items-center bg-[#F8F6F2] border border-[#E4DACF] rounded-full px-3.5 py-1.5 w-52 lg:w-64 text-xs text-[#444444] transition-colors focus-within:border-[#222222] focus-within:bg-white"
+                className="flex items-center bg-[#F8F6F2] border border-[#E4DACF] rounded-full px-3.5 py-1.5 w-52 lg:w-64 text-xs text-[#444444] transition-colors focus-within:border-[#B89758] focus-within:bg-white"
               >
                 <Search size={14} className="text-[#777777] shrink-0 mr-2" />
                 <input
@@ -128,7 +128,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowSearchDropdown(!showSearchDropdown)}
-                  className="text-[#888888] hover:text-[#222222] ml-1 shrink-0"
+                  className="text-[#888888] hover:text-[#B89758] ml-1 shrink-0 transition-colors"
                   aria-label="Category selector"
                 >
                   <ChevronDown size={13} />
@@ -144,35 +144,35 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <Link
                     to="/shop?category=earrings"
                     onClick={() => setShowSearchDropdown(false)}
-                    className="block px-3 py-2 text-[#222222] hover:bg-[#F8F6F2]"
+                    className="block px-3 py-2 text-[#222222] hover:bg-[#F8F6F2] hover:text-[#B89758] transition-colors"
                   >
                     Earrings & Jhumkas
                   </Link>
                   <Link
                     to="/shop?category=necklaces"
                     onClick={() => setShowSearchDropdown(false)}
-                    className="block px-3 py-2 text-[#222222] hover:bg-[#F8F6F2]"
+                    className="block px-3 py-2 text-[#222222] hover:bg-[#F8F6F2] hover:text-[#B89758] transition-colors"
                   >
                     Chokers & Necklaces
                   </Link>
                   <Link
                     to="/shop?category=rings"
                     onClick={() => setShowSearchDropdown(false)}
-                    className="block px-3 py-2 text-[#222222] hover:bg-[#F8F6F2]"
+                    className="block px-3 py-2 text-[#222222] hover:bg-[#F8F6F2] hover:text-[#B89758] transition-colors"
                   >
                     Rings & Bands
                   </Link>
                   <Link
                     to="/shop?category=bracelets"
                     onClick={() => setShowSearchDropdown(false)}
-                    className="block px-3 py-2 text-[#222222] hover:bg-[#F8F6F2]"
+                    className="block px-3 py-2 text-[#222222] hover:bg-[#F8F6F2] hover:text-[#B89758] transition-colors"
                   >
                     Bracelets & Cuffs
                   </Link>
                   <Link
                     to="/shop?category=sets"
                     onClick={() => setShowSearchDropdown(false)}
-                    className="block px-3 py-2 text-[#222222] hover:bg-[#F8F6F2]"
+                    className="block px-3 py-2 text-[#222222] hover:bg-[#F8F6F2] hover:text-[#B89758] transition-colors"
                   >
                     Curated Sets
                   </Link>
@@ -183,7 +183,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* User Icon */}
             <Link
               to="/contact"
-              className="text-[#222222] hover:text-[#666666] transition-colors p-1"
+              className="text-[#222222] hover:text-[#B89758] transition-colors p-1"
               aria-label="Account & Support"
               title="Account & Support"
             >
@@ -193,7 +193,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Wishlist Heart Icon */}
             <Link
               to="/shop"
-              className="text-[#222222] hover:text-[#666666] transition-colors p-1"
+              className="text-[#222222] hover:text-[#B89758] transition-colors p-1"
               aria-label="Wishlist"
               title="Wishlist"
             >
@@ -203,12 +203,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Shopping Bag with badge */}
             <button
               onClick={openDrawer}
-              className="relative text-[#222222] hover:text-[#666666] transition-colors p-1 flex items-center"
+              className="relative text-[#222222] hover:text-[#B89758] transition-colors p-1 flex items-center"
               aria-label={`Shopping Bag with ${itemCount} items`}
               title="Shopping Bag"
             >
               <ShoppingBag size={19} strokeWidth={1.5} />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#222222] text-white text-[10px] font-sans font-medium rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#1C1917] text-[#FAF8F5] text-[10px] font-sans font-medium rounded-full flex items-center justify-center">
                 {itemCount}
               </span>
             </button>
@@ -216,7 +216,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-1 text-[#222222] hover:text-[#666666] transition-colors lg:hidden"
+              className="p-1 text-[#222222] hover:text-[#B89758] transition-colors lg:hidden"
               aria-label="Menu"
             >
               {isMobileMenuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
@@ -245,35 +245,35 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Link
                 to="/"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="py-1 border-b border-[#F0EAE1]"
+                className="py-1 border-b border-[#F0EAE1] hover:text-[#B89758] transition-colors"
               >
                 Home
               </Link>
               <Link
                 to="/shop"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="py-1 border-b border-[#F0EAE1]"
+                className="py-1 border-b border-[#F0EAE1] hover:text-[#B89758] transition-colors"
               >
                 Shop All
               </Link>
               <a
                 href="/#categories"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="py-1 border-b border-[#F0EAE1]"
+                className="py-1 border-b border-[#F0EAE1] hover:text-[#B89758] transition-colors"
               >
                 Categories
               </a>
               <Link
                 to="/about"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="py-1 border-b border-[#F0EAE1]"
+                className="py-1 border-b border-[#F0EAE1] hover:text-[#B89758] transition-colors"
               >
                 About
               </Link>
               <Link
                 to="/contact"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="py-1 border-b border-[#F0EAE1]"
+                className="py-1 border-b border-[#F0EAE1] hover:text-[#B89758] transition-colors"
               >
                 Contact
               </Link>

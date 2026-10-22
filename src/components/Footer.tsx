@@ -83,22 +83,22 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2.5 text-xs text-[#555555]">
               <li>
-                <Link to="/shop" className="hover:text-[#000000] transition-colors">
+                <Link to="/shop" className="hover:text-[#B89758] transition-colors">
                   All Products
                 </Link>
               </li>
               <li>
-                <Link to="/shop?sort=newest" className="hover:text-[#000000] transition-colors">
+                <Link to="/shop?sort=newest" className="hover:text-[#B89758] transition-colors">
                   New Arrivals
                 </Link>
               </li>
               <li>
-                <Link to="/shop?sort=bestseller" className="hover:text-[#000000] transition-colors">
+                <Link to="/shop?sort=bestseller" className="hover:text-[#B89758] transition-colors">
                   Best Sellers
                 </Link>
               </li>
               <li>
-                <a href="/#categories" className="hover:text-[#000000] transition-colors">
+                <a href="/#categories" className="hover:text-[#B89758] transition-colors">
                   Categories
                 </a>
               </li>
@@ -112,22 +112,22 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2.5 text-xs text-[#555555]">
               <li>
-                <Link to="/contact" className="hover:text-[#000000] transition-colors">
+                <Link to="/contact" className="hover:text-[#B89758] transition-colors">
                   Contact Us
                 </Link>
               </li>
               <li>
-                <Link to="/shipping-policy" className="hover:text-[#000000] transition-colors">
+                <Link to="/shipping-policy" className="hover:text-[#B89758] transition-colors">
                   Shipping Policy
                 </Link>
               </li>
               <li>
-                <Link to="/refund-policy" className="hover:text-[#000000] transition-colors">
+                <Link to="/refund-policy" className="hover:text-[#B89758] transition-colors">
                   Returns & Refunds
                 </Link>
               </li>
               <li>
-                <Link to="/cancellation-policy" className="hover:text-[#000000] transition-colors">
+                <Link to="/cancellation-policy" className="hover:text-[#B89758] transition-colors">
                   Cancellation Policy
                 </Link>
               </li>
@@ -141,22 +141,22 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2.5 text-xs text-[#555555]">
               <li>
-                <Link to="/about" className="hover:text-[#000000] transition-colors">
+                <Link to="/about" className="hover:text-[#B89758] transition-colors">
                   Our Story
                 </Link>
               </li>
               <li>
-                <Link to="/sustainability" className="hover:text-[#000000] transition-colors">
+                <Link to="/sustainability" className="hover:text-[#B89758] transition-colors">
                   Sustainability
                 </Link>
               </li>
               <li>
-                <Link to="/blog" className="hover:text-[#000000] transition-colors">
+                <Link to="/blog" className="hover:text-[#B89758] transition-colors">
                   Blog
                 </Link>
               </li>
               <li>
-                <Link to="/careers" className="hover:text-[#000000] transition-colors">
+                <Link to="/careers" className="hover:text-[#B89758] transition-colors">
                   Careers
                 </Link>
               </li>
@@ -190,11 +190,11 @@ export const Footer: React.FC = () => {
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#777777] gap-4">
           <p>© 2026 SARINE. All rights reserved.</p>
           <div className="flex items-center space-x-3">
-            <Link to="/privacy-policy" className="hover:text-[#222222] transition-colors">
+            <Link to="/privacy-policy" className="hover:text-[#B89758] transition-colors">
               Privacy Policy
             </Link>
             <span>|</span>
-            <Link to="/terms" className="hover:text-[#222222] transition-colors">
+            <Link to="/terms" className="hover:text-[#B89758] transition-colors">
               Terms & Conditions
             </Link>
           </div>

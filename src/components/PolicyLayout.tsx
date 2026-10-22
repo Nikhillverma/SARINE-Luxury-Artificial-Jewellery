@@ -72,7 +72,7 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
                   className={`whitespace-nowrap px-3.5 py-1.5 text-xs font-sans tracking-wider transition-colors uppercase ${
                     isActive
                       ? 'bg-[#1C1917] text-[#FAF8F5] font-medium'
-                      : 'text-[#6B635D] hover:text-[#1C1917] hover:bg-[#F3EEE7]'
+                      : 'text-[#6B635D] hover:text-[#B89758] hover:bg-[#F3EEE7]'
                   }`}
                 >
                   {link.label}
@@ -90,7 +90,7 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
           <div className="mb-8">
             <Link
               to="/shop"
-              className="inline-flex items-center gap-1.5 text-xs text-[#8C847C] hover:text-[#1C1917] tracking-wider uppercase font-sans transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-[#8C847C] hover:text-[#B89758] tracking-wider uppercase font-sans transition-colors"
             >
               <ArrowLeft size={13} />
               <span>Return to Collection</span>

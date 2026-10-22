@@ -30,10 +30,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           src={primaryImage}
           alt={product.name}
           loading="lazy"
-          className={`absolute inset-0 h-full w-full object-cover object-center transition-all duration-700 ease-out ${
+          className={`absolute inset-0 h-full w-full object-cover object-center transition-all duration-500 ease-out ${
             secondaryImage
               ? 'group-hover:opacity-0'
-              : 'group-hover:scale-103'
+              : 'group-hover:scale-105'
           }`}
         />
 
@@ -43,7 +43,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             src={secondaryImage}
             alt={`${product.name} detail`}
             loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover object-center opacity-0 group-hover:opacity-100 group-hover:scale-103 transition-all duration-700 ease-out"
+            className="absolute inset-0 h-full w-full object-cover object-center opacity-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 ease-out"
           />
         )}
 
@@ -64,9 +64,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         )}
 
-        {/* Quick View / Detail Link Indicator */}
-        <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-[#242321]/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-[#FAF8F5] bg-[#242321]/80 backdrop-blur-xs px-3 py-1 font-sans">
+        {/* Quick View / Detail Link Indicator (Light ivory / gold badge, no dark overlays) */}
+        <div className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center">
+          <span className="text-[10px] uppercase tracking-[0.2em] text-[#1C1917] bg-[#FAF8F5]/95 border border-[#B89758] shadow-xs px-3 py-1 font-sans">
             View Piece
           </span>
         </div>

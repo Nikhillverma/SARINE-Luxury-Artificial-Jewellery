@@ -172,8 +172,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
             onClick={() => handleCategorySelect('')}
             className={`text-xs uppercase tracking-[0.18em] whitespace-nowrap transition-colors pb-1 ${
               !selectedCategorySlug
-                ? 'text-[#242321] font-medium border-b border-[#B79A68]'
-                : 'text-[#81776D] hover:text-[#242321]'
+                ? 'text-[#242321] font-medium border-b border-[#B89758]'
+                : 'text-[#81776D] hover:text-[#B89758]'
             }`}
           >
             All Pieces
@@ -184,8 +184,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
               onClick={() => handleCategorySelect(cat.slug)}
               className={`text-xs uppercase tracking-[0.18em] whitespace-nowrap transition-colors pb-1 ${
                 selectedCategorySlug === cat.slug
-                  ? 'text-[#242321] font-medium border-b border-[#B79A68]'
-                  : 'text-[#81776D] hover:text-[#242321]'
+                  ? 'text-[#242321] font-medium border-b border-[#B89758]'
+                  : 'text-[#81776D] hover:text-[#B89758]'
               }`}
             >
               {cat.name}
@@ -297,7 +297,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
             </p>
             <button
               onClick={handleResetFilters}
-              className="mt-6 px-7 py-3 bg-[#242321] text-[#FAF8F5] text-xs uppercase tracking-[0.2em] font-sans hover:bg-[#B79A68] transition-colors"
+              className="mt-6 px-7 py-3 bg-[#1C1917] text-[#FAF8F5] text-xs uppercase tracking-[0.2em] font-sans hover:bg-[#B89758] hover:text-[#FAF8F5] transition-colors"
             >
               Reset Filters
             </button>

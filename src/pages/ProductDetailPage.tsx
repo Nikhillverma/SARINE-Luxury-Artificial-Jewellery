@@ -150,7 +150,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
         <div className="site-container py-4">
           <Link
             to="/shop"
-            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-[#81776D] hover:text-[#242321] transition-colors font-sans"
+            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-[#81776D] hover:text-[#B89758] transition-colors font-sans"
           >
             <ArrowLeft size={13} />
             <span>Back to Collection</span>
@@ -172,8 +172,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                     onClick={() => setActiveImageIndex(idx)}
                     className={`relative w-16 h-20 md:w-20 md:h-24 overflow-hidden border transition-all ${
                       activeImageIndex === idx
-                        ? 'border-[#242321] ring-1 ring-[#242321]'
-                        : 'border-[#E8E0D6] opacity-75 hover:opacity-100'
+                        ? 'border-[#B89758] ring-1 ring-[#B89758]'
+                        : 'border-[#E8E0D6] opacity-75 hover:opacity-100 hover:border-[#B89758]'
                     }`}
                   >
                     <img
@@ -279,7 +279,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 <button
                   onClick={handleAddToCart}
                   disabled={!inStock}
-                  className="flex-1 h-11 px-6 bg-[#242321] text-[#FAF8F5] text-xs uppercase tracking-[0.2em] font-medium hover:bg-[#B79A68] disabled:bg-[#E8E0D6] disabled:text-[#81776D] disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 h-11 px-6 bg-[#1C1917] text-[#FAF8F5] text-xs uppercase tracking-[0.2em] font-medium hover:bg-[#B89758] hover:text-[#FAF8F5] disabled:bg-[#E8E0D6] disabled:text-[#81776D] disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
                   <ShoppingBag size={15} />
                   <span>{inStock ? 'Add to Shopping Bag' : 'Out of Stock'}</span>

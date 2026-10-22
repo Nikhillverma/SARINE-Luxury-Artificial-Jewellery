@@ -268,14 +268,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-3">
               <Link
                 to={currentHero.shopLink}
-                className="px-6 sm:px-7 py-3 bg-[#222222] text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[#3d3d3d] transition-colors rounded-xs inline-flex items-center gap-2"
+                className="px-6 sm:px-7 py-3 bg-[#1C1917] text-[#FAF8F5] text-xs sm:text-[13px] font-sans font-medium hover:bg-[#B89758] hover:text-[#FAF8F5] transition-colors rounded-xs inline-flex items-center gap-2"
               >
-                <span>Shop Collection</span>
+                <span>Shop the Collection</span>
                 <ArrowRight size={13} />
               </Link>
               <a
                 href="#categories"
-                className="px-6 sm:px-7 py-3 border border-[#222222] text-[#222222] text-xs sm:text-[13px] font-sans font-medium hover:bg-[#222222] hover:text-white transition-colors rounded-xs"
+                className="px-6 sm:px-7 py-3 bg-transparent border border-[#1C1917] text-[#1C1917] text-xs sm:text-[13px] font-sans font-medium hover:bg-[#F3EEE7] hover:text-[#1C1917] transition-colors rounded-xs"
               >
                 Explore Categories
               </a>
@@ -292,8 +292,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                   onClick={() => setActiveSlide(idx)}
                   className={`pb-1 transition-all cursor-pointer ${
                     activeSlide === idx
-                      ? 'text-[#222222] font-semibold border-b-2 border-[#222222]'
-                      : 'hover:text-[#222222]'
+                      ? 'text-[#1C1917] font-semibold border-b-2 border-[#B89758]'
+                      : 'hover:text-[#B89758]'
                   }`}
                   aria-label={`Go to slide 0${idx + 1}`}
                 >
@@ -306,14 +306,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="flex items-center space-x-3">
               <button
                 onClick={prevSlide}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#222222]/30 bg-white/75 hover:bg-white text-[#222222] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E8E0D6] bg-white/90 hover:bg-[#F3EEE7] hover:border-[#B89758] text-[#1C1917] hover:text-[#B89758] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
                 aria-label="Previous slide"
               >
                 <ChevronLeft size={18} />
               </button>
               <button
                 onClick={nextSlide}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#222222]/30 bg-white/75 hover:bg-white text-[#222222] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E8E0D6] bg-white/90 hover:bg-[#F3EEE7] hover:border-[#B89758] text-[#1C1917] hover:text-[#B89758] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
                 aria-label="Next slide"
               >
                 <ChevronRight size={18} />
@@ -344,7 +344,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="mt-3">
               <Link
                 to="/shop"
-                className="text-xs sm:text-[13px] text-[#222222] hover:text-[#777777] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
+                className="text-xs sm:text-[13px] text-[#222222] hover:text-[#B89758] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
               >
                 <span>View All Categories</span>
                 <ArrowRight size={13} />
@@ -361,20 +361,20 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 className="group flex flex-col items-center text-center w-full"
               >
                 {/* Landscape image wrapper: aspect-[3/2] */}
-                <div className="aspect-[3/2] w-full overflow-hidden bg-[#EDE3D8] border border-[#E8E0D6] rounded-xs relative">
+                <div className="aspect-[3/2] w-full overflow-hidden bg-[#EDE3D8] border border-[#E8E0D6] rounded-xs relative group-hover:border-[#B89758]/60 transition-colors">
                   <img
                     src={cat.image}
                     alt={cat.name}
-                    className="w-full h-full object-cover object-center group-hover:scale-104 transition-transform duration-500 ease-out"
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
                   />
                 </div>
 
                 {/* Title & Link */}
                 <div className="pt-3 text-center flex flex-col items-center">
-                  <h3 className="text-sm sm:text-base font-normal text-[#222222] font-sans text-center">
+                  <h3 className="text-sm sm:text-base font-normal text-[#222222] font-sans text-center group-hover:text-[#B89758] transition-colors">
                     {cat.name}
                   </h3>
-                  <span className="text-xs text-[#666666] group-hover:text-[#222222] transition-colors inline-flex items-center justify-center gap-1 mt-0.5 font-sans">
+                  <span className="text-xs text-[#666666] group-hover:text-[#B89758] transition-colors inline-flex items-center justify-center gap-1 mt-0.5 font-sans">
                     <span>Shop Now</span>
                     <ArrowRight size={11} />
                   </span>
@@ -407,7 +407,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="mt-3">
               <Link
                 to="/shop?sort=bestseller"
-                className="text-xs sm:text-[13px] text-[#222222] hover:text-[#777777] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
+                className="text-xs sm:text-[13px] text-[#222222] hover:text-[#B89758] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
               >
                 <span>View All</span>
                 <ArrowRight size={13} />
@@ -477,7 +477,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 <div className="mt-7">
                   <Link
                     to="/about"
-                    className="px-6 py-3 bg-[#222222] text-white text-xs font-sans font-medium hover:bg-[#3d3d3d] transition-colors rounded-xs inline-flex items-center gap-2"
+                    className="px-6 py-3 bg-[#1C1917] text-[#FAF8F5] text-xs font-sans font-medium hover:bg-[#B89758] hover:text-[#FAF8F5] transition-colors rounded-xs inline-flex items-center gap-2"
                   >
                     <span>Discover SARINE</span>
                     <ArrowRight size={13} />
@@ -569,7 +569,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="mt-6">
               <Link
                 to="/shop"
-                className="px-6 py-3 bg-[#222222] text-white text-xs font-sans font-medium hover:bg-[#3d3d3d] transition-colors rounded-xs inline-flex items-center gap-2"
+                className="px-6 py-3 bg-[#1C1917] text-[#FAF8F5] text-xs font-sans font-medium hover:bg-[#B89758] hover:text-[#FAF8F5] transition-colors rounded-xs inline-flex items-center gap-2"
               >
                 <span>Explore the Collection</span>
                 <ArrowRight size={13} />
@@ -615,12 +615,12 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                     value={newsletterEmail}
                     onChange={(e) => setNewsletterEmail(e.target.value)}
                     placeholder="Enter your email address"
-                    className="flex-1 px-4 py-2.5 bg-white border border-[#DDD5CB] text-xs sm:text-sm text-[#222222] placeholder-[#888888] focus:outline-none focus:border-[#222222] rounded-xs transition-colors font-sans"
+                    className="flex-1 px-4 py-2.5 bg-white border border-[#DDD5CB] text-xs sm:text-sm text-[#222222] placeholder-[#888888] focus:outline-none focus:border-[#B89758] rounded-xs transition-colors font-sans"
                     aria-label="Email Address for newsletter"
                   />
                   <button
                     type="submit"
-                    className="px-6 py-2.5 bg-[#222222] text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[#3d3d3d] transition-colors rounded-xs shrink-0"
+                    className="px-6 py-2.5 bg-[#1C1917] text-[#FAF8F5] text-xs sm:text-[13px] font-sans font-medium hover:bg-[#B89758] hover:text-[#FAF8F5] transition-colors rounded-xs shrink-0"
                   >
                     Subscribe
                   </button>

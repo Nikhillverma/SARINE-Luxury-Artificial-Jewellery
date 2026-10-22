@@ -49,7 +49,7 @@ export const AboutPage: React.FC = () => {
         <div className="mt-14 text-center">
           <Link
             to="/shop"
-            className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#222222] text-white text-xs uppercase tracking-[0.2em] font-medium hover:bg-[#444444] transition-colors rounded-xs"
+            className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#1C1917] text-[#FAF8F5] text-xs uppercase tracking-[0.2em] font-medium hover:bg-[#B89758] hover:text-[#FAF8F5] transition-colors rounded-xs"
           >
             <span>Explore the Collection</span>
             <ArrowRight size={13} />
