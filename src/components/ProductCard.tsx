@@ -16,8 +16,18 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const inStock = isInStock(product);
-  const primaryImage = product.images[0] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80';
-  const secondaryImage = product.images[1];
+  const isAnanya = product.slug === 'ananya-temple-coin-bracelet' || product.id === 'prod-003';
+  const isZoya = product.slug === 'zoya-open-cuff-leaf-bangle' || product.id === 'prod-008';
+  const primaryImage = isAnanya
+    ? '/images/ananya-temple-coin-bracelet.jpg'
+    : isZoya
+    ? '/images/zoya-open-cuff-leaf-bangle.jpg'
+    : (product.images[0] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80');
+  const secondaryImage = isAnanya
+    ? '/src/assets/images/temple_coin_bracelet_1792768038164.jpg'
+    : isZoya
+    ? '/src/assets/images/zoya_leaf_bangle_1792768482264.jpg'
+    : product.images[1];
 
   return (
     <article className="group flex flex-col w-full bg-[#FAF8F5] transition-all duration-300">
@@ -30,6 +40,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           src={primaryImage}
           alt={product.name}
           loading="lazy"
+          referrerPolicy="no-referrer"
           className={`absolute inset-0 h-full w-full object-cover object-center transition-all duration-500 ease-out ${
             secondaryImage
               ? 'group-hover:opacity-0'
@@ -43,6 +54,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             src={secondaryImage}
             alt={`${product.name} detail`}
             loading="lazy"
+            referrerPolicy="no-referrer"
             className="absolute inset-0 h-full w-full object-cover object-center opacity-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 ease-out"
           />
         )}

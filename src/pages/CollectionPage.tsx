@@ -27,17 +27,34 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
   // Filters
   const selectedCategorySlug = searchParams.get('category') || '';
   const searchParamQuery = searchParams.get('search') || '';
+  const searchParamPrice = searchParams.get('price') || 'all';
+  const searchParamSort = searchParams.get('sort') || 'newest';
+
   const [searchQuery, setSearchQuery] = useState<string>(searchParamQuery);
-  const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc'>('newest');
-  const [pricePreset, setPricePreset] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc'>(
+    searchParamSort === 'price-asc' || searchParamSort === 'price-desc' ? searchParamSort : 'newest'
+  );
+  const [pricePreset, setPricePreset] = useState<string>(searchParamPrice);
   const [inStockOnly, setInStockOnly] = useState<boolean>(false);
 
-  // Synchronize searchQuery with searchParamQuery if URL changes
+  // Synchronize searchQuery, price, and sort with searchParams if URL changes
   useEffect(() => {
     if (searchParamQuery !== searchQuery) {
       setSearchQuery(searchParamQuery);
     }
   }, [searchParamQuery]);
+
+  useEffect(() => {
+    if (searchParamPrice && searchParamPrice !== pricePreset) {
+      setPricePreset(searchParamPrice);
+    }
+  }, [searchParamPrice]);
+
+  useEffect(() => {
+    if (searchParamSort === 'price-asc' || searchParamSort === 'price-desc' || searchParamSort === 'newest') {
+      setSortBy(searchParamSort);
+    }
+  }, [searchParamSort]);
 
   // Load categories once
   useEffect(() => {
@@ -55,12 +72,15 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
   // Compute min/max from price preset
   const priceRange = useMemo(() => {
     switch (pricePreset) {
+      case 'under-999':
+        return { minPrice: 0, maxPrice: 999 };
       case 'under-500':
         return { minPrice: 0, maxPrice: 500 };
       case '500-1000':
         return { minPrice: 500, maxPrice: 1000 };
       case '1000-2000':
-        return { minPrice: 1000, maxPrice: 2000 };
+      case '1000-1999':
+        return { minPrice: 1000, maxPrice: 1999 };
       case 'above-2000':
         return { minPrice: 2000, maxPrice: 99999 };
       default:
@@ -216,10 +236,11 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
               className="px-3 py-2 text-xs sm:text-sm bg-white border border-[#E8E0D6] text-[#242321] font-sans cursor-pointer focus:outline-none"
             >
               <option value="all">All Prices (₹299 - ₹2,499)</option>
+              <option value="under-999">Under ₹999</option>
               <option value="under-500">Under ₹500</option>
               <option value="500-1000">₹500 to ₹1,000</option>
-              <option value="1000-2000">₹1,000 to ₹2,000</option>
-              <option value="above-2000">Above ₹2,000</option>
+              <option value="1000-2000">₹1,000 to ₹1,999</option>
+              <option value="above-2000">₹2,000 and above</option>
             </select>
           </div>
 

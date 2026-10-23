@@ -13,13 +13,100 @@ import { Link } from 'react-router-dom';
 import {
   Instagram,
   Facebook,
-  Youtube
+  Youtube,
+  ShieldCheck,
+  Truck,
+  RotateCcw,
+  Headphones,
+  ArrowRight,
+  CheckCircle2
 } from 'lucide-react';
+import { COD_ENABLED } from '../config/store';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="bg-[#F8F6F2] text-[#222222] pt-16 pb-12 border-t border-[#E8E0D6] font-sans">
-      <div className="site-container">
+    <footer className="bg-[#F8F6F2] text-[#222222] border-t border-[#E8E0D6] font-sans">
+      {/* Trust Strip */}
+      <div className="w-full bg-[#FAF8F5] border-b border-[#E8E0D6] py-8 sm:py-10">
+        <div className="site-container">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
+            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white/70 border border-[#E8E0D6] rounded-xs">
+              <div className="p-2.5 bg-[#F3EDE5] rounded-xs text-[#B89758] shrink-0">
+                <ShieldCheck size={20} strokeWidth={1.5} />
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-medium text-[#1C1917] leading-tight font-sans">
+                  Secure payments
+                </h4>
+                <p className="text-[11px] text-[#666666] font-sans mt-0.5">
+                  via Razorpay
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white/70 border border-[#E8E0D6] rounded-xs">
+              <div className="p-2.5 bg-[#F3EDE5] rounded-xs text-[#B89758] shrink-0">
+                <Truck size={20} strokeWidth={1.5} />
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-medium text-[#1C1917] leading-tight font-sans">
+                  Delivery across India
+                </h4>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white/70 border border-[#E8E0D6] rounded-xs">
+              <div className="p-2.5 bg-[#F3EDE5] rounded-xs text-[#B89758] shrink-0">
+                <RotateCcw size={20} strokeWidth={1.5} />
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-medium text-[#1C1917] leading-tight font-sans">
+                  7-day returns
+                </h4>
+                <p className="text-[11px] text-[#666666] font-sans mt-0.5">
+                  for damaged or wrong items
+                </p>
+              </div>
+            </div>
+
+            <Link
+              to="/contact"
+              className="group flex items-center gap-3 p-3.5 sm:p-4 bg-white/70 border border-[#E8E0D6] hover:border-[#B89758]/60 hover:bg-[#F3EEE7] rounded-xs transition-colors"
+            >
+              <div className="p-2.5 bg-[#F3EDE5] rounded-xs text-[#B89758] shrink-0">
+                <Headphones size={20} strokeWidth={1.5} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-xs sm:text-sm font-medium text-[#1C1917] group-hover:text-[#B89758] transition-colors leading-tight font-sans inline-flex items-center gap-1">
+                  <span>Easy support</span>
+                  <ArrowRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                </h4>
+                <p className="text-[11px] text-[#666666] font-sans mt-0.5 truncate">
+                  Help when you need it
+                </p>
+              </div>
+            </Link>
+
+            {COD_ENABLED && (
+              <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white/70 border border-[#E8E0D6] rounded-xs col-span-2 md:col-span-1">
+                <div className="p-2.5 bg-[#F3EDE5] rounded-xs text-[#B89758] shrink-0">
+                  <CheckCircle2 size={20} strokeWidth={1.5} />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-medium text-[#1C1917] leading-tight font-sans">
+                    Cash on Delivery
+                  </h4>
+                  <p className="text-[11px] text-[#666666] font-sans mt-0.5">
+                    Available on eligible orders
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="site-container pt-14 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-[#E8E0D6]">
           {/* Brand & Socials Column */}
           <div className="lg:col-span-4">

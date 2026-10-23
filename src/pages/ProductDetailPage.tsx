@@ -5,7 +5,7 @@
  * and seamless shopping bag integration.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { productService, categoryService } from '../services';
 import { Product, isInStock, JEWELLERY_TYPE_LABELS } from '../types/product';
@@ -94,6 +94,19 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
     setTimeout(() => setAddedToast(false), 3000);
   };
 
+  const resolvedImages = useMemo<string[]>(() => {
+    if (!product) return [];
+    if (product.slug === 'ananya-temple-coin-bracelet' || product.id === 'prod-003') {
+      return ['/images/ananya-temple-coin-bracelet.jpg', '/src/assets/images/temple_coin_bracelet_1792768038164.jpg'];
+    }
+    if (product.slug === 'zoya-open-cuff-leaf-bangle' || product.id === 'prod-008') {
+      return ['/images/zoya-open-cuff-leaf-bangle.jpg', '/src/assets/images/zoya_leaf_bangle_1792768482264.jpg'];
+    }
+    return product.images && product.images.length > 0
+      ? product.images
+      : ['https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80'];
+  }, [product]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center p-8">
@@ -164,9 +177,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
           {/* Gallery View (Left Column - 7 cols) */}
           <div className="lg:col-span-7 flex flex-col-reverse md:flex-row gap-4">
             {/* Thumbnail Column */}
-            {product.images.length > 1 && (
+            {resolvedImages.length > 1 && (
               <div className="flex md:flex-col gap-3 overflow-x-auto md:w-20 shrink-0">
-                {product.images.map((img, idx) => (
+                {resolvedImages.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setActiveImageIndex(idx)}
@@ -179,6 +192,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                     <img
                       src={img}
                       alt={`${product.name} thumbnail ${idx + 1}`}
+                      referrerPolicy="no-referrer"
                       className="w-full h-full object-cover object-center"
                     />
                   </button>
@@ -189,8 +203,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             {/* Main Stage Image */}
             <div className="flex-1 bg-[#F2EADF] border border-[#E8E0D6] relative overflow-hidden aspect-[3/4]">
               <img
-                src={product.images[activeImageIndex] || product.images[0]}
+                src={resolvedImages[activeImageIndex] || resolvedImages[0]}
                 alt={product.name}
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover object-center transition-all duration-300"
               />
               {!inStock && (

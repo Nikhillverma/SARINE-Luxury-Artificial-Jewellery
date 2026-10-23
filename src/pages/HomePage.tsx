@@ -25,8 +25,7 @@ import {
   Star,
   Sparkles,
   ShieldCheck,
-  Gem,
-  CheckCircle2
+  Gem
 } from 'lucide-react';
 
 /* ==========================================================================
@@ -39,6 +38,7 @@ export const HOMEPAGE_IMAGES = {
   heroSlide3: '/images/hero-model-3.jpg',
   ourStory: '/images/our-story.jpg',
   editorialBanner: '/images/editorial-banner.jpg',
+  categoryBracelets: '/images/category-bracelets.jpg',
 };
 
 /* ==========================================================================
@@ -66,7 +66,36 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   // Storefront Data
   const [categories, setCategories] = useState<Category[]>([]);
   const [bestsellers, setBestsellers] = useState<Product[]>([]);
+  const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Occasions curation
+  const occasions = [
+    {
+      title: 'Daily Wear',
+      subtitle: 'Effortless everyday minimalism',
+      image: '/images/ananya-temple-coin-bracelet.jpg',
+      link: '/shop?search=everyday'
+    },
+    {
+      title: 'Festive',
+      subtitle: 'Celebratory sparkle and classic motifs',
+      image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=80',
+      link: '/shop?search=festive'
+    },
+    {
+      title: 'Wedding',
+      subtitle: 'Regal bridal sets & heritage chokers',
+      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=80',
+      link: '/shop?search=wedding'
+    },
+    {
+      title: 'Gifting',
+      subtitle: 'Precious tokens of affection',
+      image: '/images/zoya-open-cuff-leaf-bangle.jpg',
+      link: '/shop?category=bracelets'
+    }
+  ];
 
   // Hero Slider State
   const [activeSlide, setActiveSlide] = useState<number>(0);
@@ -77,11 +106,6 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   // Wishlist State (Local interactive set)
   const [wishlist, setWishlist] = useState<Set<string>>(new Set());
-
-  // Newsletter State
-  const [newsletterEmail, setNewsletterEmail] = useState<string>('');
-  const [newsletterSubmitted, setNewsletterSubmitted] = useState<boolean>(false);
-  const [newsletterError, setNewsletterError] = useState<string>('');
 
   // Hero Slides Definition
   const heroSlides = [
@@ -146,6 +170,15 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
           const bestList = featured.length >= 5 ? featured : (newest.length > 0 ? newest : featured);
           setBestsellers(bestList);
+
+          // 4 newest products sorted by createdAt descending
+          const sortedNewest = [...newest].sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA;
+          });
+          const arrivalList = sortedNewest.slice(0, 4);
+          setNewArrivals(arrivalList.length > 0 ? arrivalList : newest.slice(0, 4));
         }
       } catch (err) {
         console.error('[HomePage] Error loading storefront collections:', err);
@@ -206,20 +239,6 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   };
 
   const reviewCounts: number[] = [12, 8, 10, 15, 9, 14, 11, 7];
-
-  // 4. Newsletter Submit Handler
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanEmail = newsletterEmail.trim();
-
-    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      setNewsletterError('Please enter a valid email address.');
-      return;
-    }
-
-    setNewsletterError('');
-    setNewsletterSubmitted(true);
-  };
 
   const currentHero = heroSlides[activeSlide];
 
@@ -324,7 +343,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       </section>
 
       {/* =========================================================================
-          4. SHOP BY CATEGORY
+          SHOP BY CATEGORY
           Shared container: mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10
           Heading row: flex items-end justify-between mb-6
           Grid: grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6
@@ -354,20 +373,27 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
           {/* 5 Category Cards using plain CSS .category-grid */}
           <div className="category-grid">
-            {categories.slice(0, 5).map((cat) => (
-              <Link
-                key={cat.id}
-                to={`/shop?category=${cat.slug}`}
-                className="group flex flex-col items-center text-center w-full"
-              >
-                {/* Landscape image wrapper: aspect-[3/2] */}
-                <div className="aspect-[3/2] w-full overflow-hidden bg-[#EDE3D8] border border-[#E8E0D6] rounded-xs relative group-hover:border-[#B89758]/60 transition-colors">
-                  <img
-                    src={cat.image}
-                    alt={cat.name}
-                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
-                  />
-                </div>
+            {categories.slice(0, 5).map((cat) => {
+              const catImage =
+                cat.slug === 'bracelets' || cat.id === 'cat-bracelets'
+                  ? HOMEPAGE_IMAGES.categoryBracelets || cat.image
+                  : cat.image;
+
+              return (
+                <Link
+                  key={cat.id}
+                  to={`/shop?category=${cat.slug}`}
+                  className="group flex flex-col items-center text-center w-full"
+                >
+                  {/* Landscape image wrapper: aspect-[3/2] */}
+                  <div className="aspect-[3/2] w-full overflow-hidden bg-[#EDE3D8] border border-[#E8E0D6] rounded-xs relative group-hover:border-[#B89758]/60 transition-colors">
+                    <img
+                      src={catImage}
+                      alt={cat.name}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
+                    />
+                  </div>
 
                 {/* Title & Link */}
                 <div className="pt-3 text-center flex flex-col items-center">
@@ -380,13 +406,64 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                   </span>
                 </div>
               </Link>
-            ))}
+            );
+          })}
           </div>
         </div>
       </section>
 
       {/* =========================================================================
-          5. BEST SELLERS CAROUSEL
+          NEW ARRIVALS
+          4 newest products (sorted by createdAt descending, else the last 4 in the list),
+          same product card as Best Sellers, "View All" linking to /shop?sort=newest
+          ========================================================================= */}
+      <section className="py-12 sm:py-16 lg:py-20 border-t border-[#E8E0D6] bg-[#FAF8F5]">
+        <div className="site-container">
+          {/* Centered Full-Width Section Header Block */}
+          <div className="w-full text-center mb-8 sm:mb-10">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2 font-sans">
+              JUST ARRIVED
+            </span>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#222222] font-normal">
+              New Arrivals
+            </h2>
+            <p className="mt-2 text-xs sm:text-sm text-[#666666] font-sans leading-relaxed max-w-xl mx-auto">
+              Discover our newest handcrafted pieces, designed with delicate craftsmanship for modern grace.
+            </p>
+            <div className="mt-3">
+              <Link
+                to="/shop?sort=newest"
+                className="text-xs sm:text-[13px] text-[#222222] hover:text-[#B89758] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
+              >
+                <span>View All</span>
+                <ArrowRight size={13} />
+              </Link>
+            </div>
+          </div>
+
+          {/* Product Grid using plain CSS .product-grid */}
+          {loading ? (
+            <div className="product-grid">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="animate-pulse w-full">
+                  <div className="bg-[#F2EADF] aspect-[3/4] w-full border border-[#E8E0D6]"></div>
+                  <div className="h-4 bg-[#F2EADF] w-2/3 mt-3"></div>
+                  <div className="h-3 bg-[#F2EADF] w-1/3 mt-2"></div>
+                </div>
+              ))}
+            </div>
+          ) : newArrivals.length > 0 ? (
+            <div className="product-grid">
+              {newArrivals.slice(0, 4).map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      {/* =========================================================================
+          BEST SELLERS
           Shared container: mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10
           Heading row: flex items-end justify-between mb-6
           Scrolling track INSIDE container: gap-4 lg:gap-6 snap-x snap-mandatory
@@ -437,7 +514,107 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       </section>
 
       {/* =========================================================================
-          6. OUR STORY
+          SHOP BY OCCASION
+          4 cards: Daily Wear, Festive, Wedding, Gifting
+          Using existing product images, linking to /shop with filter queries
+          ========================================================================= */}
+      <section className="py-12 sm:py-16 lg:py-20 border-t border-[#E8E0D6] bg-[#F8F6F2]">
+        <div className="site-container">
+          <div className="w-full text-center mb-8 sm:mb-10">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2 font-sans">
+              CURATED OCCASIONS
+            </span>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#222222] font-normal">
+              Shop by Occasion
+            </h2>
+            <p className="mt-2 text-xs sm:text-sm text-[#666666] font-sans leading-relaxed max-w-xl mx-auto">
+              Adornments thoughtfully curated for festive splendour, sacred vows, and every day in between.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {occasions.map((item) => (
+              <Link
+                key={item.title}
+                to={item.link}
+                className="group flex flex-col items-center text-center w-full"
+              >
+                <div className="aspect-[4/5] w-full overflow-hidden bg-[#EDE3D8] border border-[#E8E0D6] rounded-xs relative group-hover:border-[#B89758]/60 transition-colors">
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
+                  />
+                </div>
+                <div className="pt-3 text-center flex flex-col items-center">
+                  <h3 className="text-sm sm:text-base font-normal text-[#222222] font-sans group-hover:text-[#B89758] transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-[#666666] font-sans mt-0.5">
+                    {item.subtitle}
+                  </p>
+                  <span className="text-xs text-[#666666] group-hover:text-[#B89758] transition-colors inline-flex items-center justify-center gap-1 mt-1 font-sans">
+                    <span>Shop Now</span>
+                    <ArrowRight size={11} />
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SHOP BY PRICE
+          4 pill buttons: Under ₹999, ₹1,000 to ₹1,999, ₹2,000 and above, All pieces
+          Linking to /shop with price presets
+          ========================================================================= */}
+      <section className="py-12 sm:py-16 border-t border-[#E8E0D6] bg-[#FAF8F5]">
+        <div className="site-container">
+          <div className="w-full text-center mb-8">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2 font-sans">
+              PRICE CURATION
+            </span>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#222222] font-normal">
+              Shop by Price
+            </h2>
+            <p className="mt-2 text-xs sm:text-sm text-[#666666] font-sans leading-relaxed max-w-xl mx-auto">
+              Find stunning handcrafted jewellery suited to your style and budget.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 max-w-2xl mx-auto">
+            <Link
+              to="/shop?price=under-999"
+              className="px-6 sm:px-8 py-3 bg-[#FAF8F5] border border-[#E8E0D6] hover:border-[#B89758] hover:text-[#B89758] hover:bg-[#F3EEE7] text-[#1C1917] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
+            >
+              Under ₹999
+            </Link>
+            <Link
+              to="/shop?price=1000-2000"
+              className="px-6 sm:px-8 py-3 bg-[#FAF8F5] border border-[#E8E0D6] hover:border-[#B89758] hover:text-[#B89758] hover:bg-[#F3EEE7] text-[#1C1917] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
+            >
+              ₹1,000 to ₹1,999
+            </Link>
+            <Link
+              to="/shop?price=above-2000"
+              className="px-6 sm:px-8 py-3 bg-[#FAF8F5] border border-[#E8E0D6] hover:border-[#B89758] hover:text-[#B89758] hover:bg-[#F3EEE7] text-[#1C1917] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
+            >
+              ₹2,000 and above
+            </Link>
+            <Link
+              to="/shop"
+              className="px-6 sm:px-8 py-3 bg-[#FAF8F5] border border-[#E8E0D6] hover:border-[#B89758] hover:text-[#B89758] hover:bg-[#F3EEE7] text-[#1C1917] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
+            >
+              All pieces
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          OUR STORY
           Background #F3EDE5 edge-to-edge
           Centered container mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10
           Consistent vertical spacing: py-12 sm:py-16 lg:py-20
@@ -469,9 +646,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 </h2>
 
                 <p className="mt-4 text-xs sm:text-sm text-[#555555] leading-relaxed font-sans">
-                  At SARINE, we believe jewellery is more than an accessory — it's a reflection of your story,
-                  your style and your everyday moments. Our collections are designed to help you feel confident,
-                  beautiful and effortlessly you.
+                  SARINE is a premium Indian fashion jewellery brand created to bring timeless elegance to your everyday moments. We celebrate traditional motifs through modern design, curating versatile pieces that seamlessly elevate both celebrations and daily attire.
+                </p>
+                <p className="mt-3 text-xs sm:text-sm text-[#555555] leading-relaxed font-sans">
+                  We believe in accessible luxury — exquisite craftsmanship, refined finishes, and enduring beauty at honest, direct prices. Every piece is crafted so you can express your personal grace with confidence and ease.
                 </p>
 
                 <div className="mt-7">
@@ -479,7 +657,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                     to="/about"
                     className="px-6 py-3 bg-[#1C1917] text-[#FAF8F5] text-xs font-sans font-medium hover:bg-[#B89758] hover:text-[#FAF8F5] transition-colors rounded-xs inline-flex items-center gap-2"
                   >
-                    <span>Discover SARINE</span>
+                    <span>Our Story</span>
                     <ArrowRight size={13} />
                   </Link>
                 </div>
@@ -510,10 +688,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                   </div>
                   <div>
                     <h3 className="text-xs font-medium text-[#222222] leading-snug">
-                      Skin Friendly
+                      Artisanal Heritage
                     </h3>
                     <p className="text-[11px] text-[#666666] leading-tight mt-0.5">
-                      & Comfortable
+                      & Modern Craft
                     </p>
                   </div>
                 </div>
@@ -580,7 +758,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       </section>
 
       {/* =========================================================================
-          8. NEWSLETTER
+          8. STAY IN TOUCH
           ========================================================================= */}
       <section className="py-14 sm:py-20 lg:py-24 bg-[#F8F6F2]">
         <div className="site-container">
@@ -590,49 +768,28 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </span>
 
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#222222] font-normal">
-              Be the First to Know
+              Connect With SARINE
             </h2>
 
-            <p className="mt-2.5 text-xs sm:text-sm text-[#666666] font-sans">
-              Get the latest collections, style updates and exclusive offers.
+            <p className="mt-3 text-xs sm:text-sm text-[#555555] font-sans leading-relaxed">
+              Explore new collection previews and styling stories on{' '}
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#1C1917] font-medium underline underline-offset-4 hover:text-[#B89758] transition-colors"
+              >
+                Instagram
+              </a>
+              , or connect with our customer care team on our{' '}
+              <Link
+                to="/contact"
+                className="text-[#1C1917] font-medium underline underline-offset-4 hover:text-[#B89758] transition-colors"
+              >
+                Contact page
+              </Link>
+              .
             </p>
-
-            {newsletterSubmitted ? (
-              <div className="mt-7 p-5 bg-[#EDE3D8] border border-[#DDD5CB] rounded-xs text-center animate-fadeIn">
-                <CheckCircle2 size={20} className="mx-auto text-[#222222] mb-1.5" />
-                <h3 className="font-serif text-base text-[#222222] font-normal">
-                  Thank you for subscribing!
-                </h3>
-                <p className="text-xs text-[#555555] mt-1">
-                  You will be the first to receive updates on new arrivals and private previews.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleNewsletterSubmit} className="mt-6 max-w-md mx-auto">
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    type="email"
-                    value={newsletterEmail}
-                    onChange={(e) => setNewsletterEmail(e.target.value)}
-                    placeholder="Enter your email address"
-                    className="flex-1 px-4 py-2.5 bg-white border border-[#DDD5CB] text-xs sm:text-sm text-[#222222] placeholder-[#888888] focus:outline-none focus:border-[#B89758] rounded-xs transition-colors font-sans"
-                    aria-label="Email Address for newsletter"
-                  />
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 bg-[#1C1917] text-[#FAF8F5] text-xs sm:text-[13px] font-sans font-medium hover:bg-[#B89758] hover:text-[#FAF8F5] transition-colors rounded-xs shrink-0"
-                  >
-                    Subscribe
-                  </button>
-                </div>
-
-                {newsletterError && (
-                  <p className="mt-2 text-xs text-[#8C2F2F] text-left font-sans">
-                    {newsletterError}
-                  </p>
-                )}
-              </form>
-            )}
           </div>
         </div>
       </section>
