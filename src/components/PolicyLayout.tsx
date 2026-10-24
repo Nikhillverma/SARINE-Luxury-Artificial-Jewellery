@@ -32,35 +32,35 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] pb-20">
+    <div className="min-h-screen bg-[#F7F0FA] pb-20">
       {/* Editorial Header */}
-      <section className="bg-[#F3EEE7]/60 border-b border-[#E6DFD5] py-10 sm:py-14 text-center">
+      <section className="bg-[#F0E6F4]/60 border-b border-[#E7DCEB] py-10 sm:py-14 text-center">
         <div className="site-container">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <span className="h-[1px] w-8 bg-[#B89758]"></span>
-            <span className="text-[11px] uppercase tracking-[0.28em] text-[#B89758] font-medium font-sans">
+            <span className="h-[1px] w-8 bg-[#D9B8A0]"></span>
+            <span className="text-[11px] uppercase tracking-[0.28em] text-[#563568] font-medium font-sans">
               {categoryName}
             </span>
-            <span className="h-[1px] w-8 bg-[#B89758]"></span>
+            <span className="h-[1px] w-8 bg-[#D9B8A0]"></span>
           </div>
 
-          <h1 className="font-serif text-3xl sm:text-4xl text-[#1C1917] font-normal tracking-wide">
+          <h1 className="font-serif text-3xl sm:text-4xl text-[#302438] font-normal tracking-wide">
             {title}
           </h1>
 
-          <p className="mt-3 text-xs sm:text-sm text-[#6B635D] font-sans max-w-xl mx-auto leading-relaxed">
+          <p className="mt-3 text-xs sm:text-sm text-[#6F6475] font-sans max-w-xl mx-auto leading-relaxed">
             {subtitle}
           </p>
 
-          <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-[#8C847C] font-sans">
-            <Clock size={12} className="text-[#B89758]" />
+          <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-[#6F6475] font-sans">
+            <Clock size={12} className="text-[#563568]" />
             <span>Last updated: 21 October 2026</span>
           </div>
         </div>
       </section>
 
       {/* Navigation Tabs Bar for Policies */}
-      <nav aria-label="Policy pages" className="bg-[#FAF8F5] border-b border-[#E6DFD5] sticky top-0 z-10 backdrop-blur-md bg-[#FAF8F5]/90">
+      <nav aria-label="Policy pages" className="bg-[#F7F0FA]/90 border-b border-[#E7DCEB] sticky top-0 z-10 backdrop-blur-md">
         <div className="site-container">
           <div className="flex items-center justify-start sm:justify-center overflow-x-auto py-3 gap-1 sm:gap-2 no-scrollbar">
             {POLICY_LINKS.map((link) => {
@@ -69,10 +69,10 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`whitespace-nowrap px-3.5 py-1.5 text-xs font-sans tracking-wider transition-colors uppercase ${
+                  className={`whitespace-nowrap px-3.5 py-1.5 text-xs font-sans tracking-wider transition-colors uppercase rounded-xs ${
                     isActive
-                      ? 'bg-[#1C1917] text-[#FAF8F5] font-medium'
-                      : 'text-[#6B635D] hover:text-[#B89758] hover:bg-[#F3EEE7]'
+                      ? 'bg-[#563568] text-white font-medium'
+                      : 'text-[#6F6475] hover:text-[#563568] hover:bg-[#F0E6F4]'
                   }`}
                 >
                   {link.label}
@@ -90,7 +90,7 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
           <div className="mb-8">
             <Link
               to="/shop"
-              className="inline-flex items-center gap-1.5 text-xs text-[#8C847C] hover:text-[#B89758] tracking-wider uppercase font-sans transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-[#6F6475] hover:text-[#563568] tracking-wider uppercase font-sans transition-colors"
             >
               <ArrowLeft size={13} />
               <span>Return to Collection</span>
@@ -98,7 +98,7 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
           </div>
 
           {/* Content Box */}
-          <div className="bg-white border border-[#E6DFD5] p-6 sm:p-12 shadow-xs">
+          <div className="bg-white border border-[#E7DCEB] p-6 sm:p-12 shadow-xs rounded-sm">
             {children}
           </div>
         </div>

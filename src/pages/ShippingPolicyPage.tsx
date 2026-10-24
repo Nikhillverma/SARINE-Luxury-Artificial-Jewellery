@@ -19,27 +19,27 @@ export const ShippingPolicyPage: React.FC = () => {
       subtitle="We package and dispatch each piece of jewellery with utmost care to ensure it reaches you safely, securely, and in pristine condition across India."
       categoryName="Fulfillment & Logistics"
     >
-      <div className="space-y-10 text-xs sm:text-sm text-[#57534E] leading-relaxed font-sans">
+      <div className="space-y-10 text-xs sm:text-sm text-[#6F6475] leading-relaxed font-sans">
         {/* Effective Date Note */}
-        <div className="bg-[#FAF8F5] border-l-2 border-[#B89758] p-4 text-xs text-[#6B635D]">
-          <strong className="text-[#1C1917] font-medium">Effective Date:</strong> 21 October 2026 | Applicable across all domestic shipments within India.
+        <div className="bg-[#FAF5FC] border-l-2 border-[#563568] p-4 text-xs text-[#6F6475]">
+          <strong className="text-[#302438] font-medium">Effective Date:</strong> 21 October 2026 | Applicable across all domestic shipments within India.
         </div>
 
         {/* Section 1: Coverage */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <MapPin size={16} className="text-[#B89758]" />
-            <h2 className="font-serif text-lg sm:text-xl text-[#1C1917]">
+            <MapPin size={16} className="text-[#563568]" />
+            <h2 className="font-serif text-lg sm:text-xl text-[#302438]">
               1. Delivery Coverage Across India
             </h2>
           </div>
           <p>
             SARINE delivers to almost all serviceable postal PIN codes across India through established domestic logistics partners (including Blue Dart, Delhivery, and DTDC).
           </p>
-          <div className="p-4 bg-[#FAF8F5] border border-[#E6DFD5] flex items-start gap-3">
-            <AlertCircle size={18} className="text-[#B89758] shrink-0 mt-0.5" />
-            <div className="text-xs text-[#6B635D]">
-              <strong className="text-[#1C1917] block font-medium mb-1">Domestic Delivery Only</strong>
+          <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] flex items-start gap-3 rounded-xs">
+            <AlertCircle size={18} className="text-[#563568] shrink-0 mt-0.5" />
+            <div className="text-xs text-[#6F6475]">
+              <strong className="text-[#302438] block font-medium mb-1">Domestic Delivery Only</strong>
               At this time, SARINE ships exclusively within the Republic of India. We do not support international shipments or cross-border delivery.
             </div>
           </div>
@@ -48,37 +48,37 @@ export const ShippingPolicyPage: React.FC = () => {
         {/* Section 2: Timelines */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <Clock size={16} className="text-[#B89758]" />
-            <h2 className="font-serif text-lg sm:text-xl text-[#1C1917]">
+            <Clock size={16} className="text-[#563568]" />
+            <h2 className="font-serif text-lg sm:text-xl text-[#302438]">
               2. Dispatch & Delivery Timelines
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-            <div className="p-4 bg-[#FAF8F5] border border-[#E6DFD5]">
-              <h3 className="text-xs uppercase tracking-wider text-[#1C1917] font-semibold">
+            <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs">
+              <h3 className="text-xs uppercase tracking-wider text-[#302438] font-semibold">
                 Dispatch Window
               </h3>
-              <p className="font-serif text-xl text-[#B89758] mt-1">
+              <p className="font-serif text-xl text-[#563568] mt-1">
                 2 – 3 Business Days
               </p>
-              <p className="text-xs text-[#8C847C] mt-2">
+              <p className="text-xs text-[#6F6475] mt-2">
                 Every piece undergoes a multi-point quality check, secure polishing inspection, and protective packaging prior to dispatch from our atelier.
               </p>
             </div>
 
-            <div className="p-4 bg-[#FAF8F5] border border-[#E6DFD5]">
-              <h3 className="text-xs uppercase tracking-wider text-[#1C1917] font-semibold">
+            <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs">
+              <h3 className="text-xs uppercase tracking-wider text-[#302438] font-semibold">
                 Transit & Delivery
               </h3>
-              <p className="font-serif text-xl text-[#B89758] mt-1">
+              <p className="font-serif text-xl text-[#563568] mt-1">
                 5 – 7 Business Days
               </p>
-              <p className="text-xs text-[#8C847C] mt-2">
+              <p className="text-xs text-[#6F6475] mt-2">
                 Standard transit across India takes 5 to 7 business days following dispatch. Metro areas typically arrive in 4 to 5 days.
               </p>
             </div>
           </div>
-          <p className="text-xs text-[#8C847C] mt-1">
+          <p className="text-xs text-[#6F6475] mt-1">
             * Note: Business days exclude Sundays and gazetted national holidays. Severe weather conditions, regional lockdowns, or festival peak volumes may occasionally add 1–2 days to courier transit.
           </p>
         </section>
@@ -86,26 +86,26 @@ export const ShippingPolicyPage: React.FC = () => {
         {/* Section 3: Shipping Fees */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <Truck size={16} className="text-[#B89758]" />
-            <h2 className="font-serif text-lg sm:text-xl text-[#1C1917]">
+            <Truck size={16} className="text-[#563568]" />
+            <h2 className="font-serif text-lg sm:text-xl text-[#302438]">
               3. Shipping Fees & Free Delivery
             </h2>
           </div>
           <p>
             We believe in honest, upfront pricing with no hidden charges at final payment:
           </p>
-          <div className="p-4 bg-[#FAF8F5] border border-[#E6DFD5] space-y-2 text-xs">
-            <div className="flex justify-between items-center py-1 border-b border-[#E6DFD5]">
-              <span className="text-[#6B635D]">Standard Shipping Fee:</span>
-              <span className="font-medium text-[#1C1917]">{feeDisplay}</span>
+          <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] space-y-2 text-xs rounded-xs">
+            <div className="flex justify-between items-center py-1 border-b border-[#E7DCEB]">
+              <span className="text-[#6F6475]">Standard Shipping Fee:</span>
+              <span className="font-medium text-[#302438]">{feeDisplay}</span>
             </div>
-            <div className="flex justify-between items-center py-1 border-b border-[#E6DFD5]">
-              <span className="text-[#6B635D]">Free Shipping Eligibility:</span>
-              <span className="font-medium text-[#1C1917]">
+            <div className="flex justify-between items-center py-1 border-b border-[#E7DCEB]">
+              <span className="text-[#6F6475]">Free Shipping Eligibility:</span>
+              <span className="font-medium text-[#302438]">
                 {FREE_SHIPPING_THRESHOLD !== null ? `On orders above ${thresholdDisplay}` : 'All orders across India'}
               </span>
             </div>
-            <p className="text-[#8C847C] pt-1">
+            <p className="text-[#6F6475] pt-1">
               Standard delivery is currently complimentary across all prepaid orders nationwide.
             </p>
           </div>
@@ -114,18 +114,18 @@ export const ShippingPolicyPage: React.FC = () => {
         {/* Section 4: Tracking */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <PackageCheck size={16} className="text-[#B89758]" />
-            <h2 className="font-serif text-lg sm:text-xl text-[#1C1917]">
+            <PackageCheck size={16} className="text-[#563568]" />
+            <h2 className="font-serif text-lg sm:text-xl text-[#302438]">
               4. Order Tracking & Parcel Handover
             </h2>
           </div>
           <p>
             As soon as your parcel is dispatched from our atelier:
           </p>
-          <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6B635D]">
+          <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6F6475]">
             <li>An automated notification containing your courier Airway Bill (AWB) number and direct online tracking URL will be sent to your registered email address and mobile number.</li>
             <li>You can monitor the live movement of your parcel from the logistics provider&apos;s real-time portal.</li>
-            <li>If you need assistance locating your package, contact our team at <a href="mailto:care@sarinejewelry.com" className="text-[#B89758] underline underline-offset-2">care@sarinejewelry.com</a> with your SARINE order number (e.g., SAR-000001).</li>
+            <li>If you need assistance locating your package, contact our team at <a href="mailto:care@sarinejewelry.com" className="text-[#563568] hover:text-[#A184BD] underline underline-offset-2">care@sarinejewelry.com</a> with your SARINE order number (e.g., SAR-000001).</li>
           </ul>
         </section>
       </div>

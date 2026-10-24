@@ -162,23 +162,23 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] text-[#242321]">
+    <div className="min-h-screen bg-[#F7F0FA] text-[#302438]">
       {/* Editorial Page Header */}
-      <section className="border-b border-[#E8E0D6] bg-[#FAF8F5] py-12 sm:py-16 text-center">
+      <section className="border-b border-[#E7DCEB] bg-[#F0E6F4]/50 py-12 sm:py-16 text-center">
         <div className="site-container">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <span className="h-[1px] w-6 bg-[#B79A68]"></span>
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#B79A68] font-sans font-medium">
+            <span className="h-[1px] w-6 bg-[#D9B8A0]"></span>
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#563568] font-sans font-medium">
               Curated Collection
             </span>
-            <span className="h-[1px] w-6 bg-[#B79A68]"></span>
+            <span className="h-[1px] w-6 bg-[#D9B8A0]"></span>
           </div>
-          <h1 className="font-serif text-3xl sm:text-5xl text-[#242321] tracking-tight font-normal">
+          <h1 className="font-serif text-3xl sm:text-5xl text-[#302438] tracking-tight font-normal">
             {selectedCategorySlug
               ? categories.find((c) => c.slug === selectedCategorySlug)?.name || 'Curated Collection'
               : 'The SARINE Collection'}
           </h1>
-          <p className="mt-3 text-xs sm:text-sm text-[#81776D] max-w-xl mx-auto font-sans leading-relaxed">
+          <p className="mt-3 text-xs sm:text-sm text-[#6F6475] max-w-xl mx-auto font-sans leading-relaxed">
             Meticulously detailed festive chokers, temple motifs, polki bells, and everyday minimalist adornments.
           </p>
         </div>
@@ -187,13 +187,13 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
       {/* Main Content Area */}
       <main className="site-container py-8 sm:py-12">
         {/* Category Navigation Bar (Understated text tabs instead of loud pill clusters) */}
-        <div className="flex items-center gap-6 overflow-x-auto pb-4 scrollbar-none border-b border-[#E8E0D6]">
+        <div className="flex items-center gap-6 overflow-x-auto pb-4 scrollbar-none border-b border-[#E7DCEB]">
           <button
             onClick={() => handleCategorySelect('')}
             className={`text-xs uppercase tracking-[0.18em] whitespace-nowrap transition-colors pb-1 ${
               !selectedCategorySlug
-                ? 'text-[#242321] font-medium border-b border-[#B89758]'
-                : 'text-[#81776D] hover:text-[#B89758]'
+                ? 'text-[#563568] font-medium border-b-2 border-[#B69ACF]'
+                : 'text-[#6F6475] hover:text-[#563568]'
             }`}
           >
             All Pieces
@@ -204,8 +204,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
               onClick={() => handleCategorySelect(cat.slug)}
               className={`text-xs uppercase tracking-[0.18em] whitespace-nowrap transition-colors pb-1 ${
                 selectedCategorySlug === cat.slug
-                  ? 'text-[#242321] font-medium border-b border-[#B89758]'
-                  : 'text-[#81776D] hover:text-[#B89758]'
+                  ? 'text-[#563568] font-medium border-b-2 border-[#B69ACF]'
+                  : 'text-[#6F6475] hover:text-[#563568]'
               }`}
             >
               {cat.name}
@@ -214,26 +214,26 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
         </div>
 
         {/* Filter Controls Bar */}
-        <div className="mt-6 p-4 sm:p-5 bg-[#FAF8F5] border border-[#E8E0D6] flex flex-wrap items-center justify-between gap-4">
+        <div className="mt-6 p-4 sm:p-5 bg-white border border-[#E7DCEB] rounded-sm flex flex-wrap items-center justify-between gap-4 shadow-xs">
           {/* Search Field */}
           <div className="relative flex-1 min-w-[220px]">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#81776D]" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6F6475]" />
             <input
               type="text"
               placeholder="Search motif, stone, or style..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-white border border-[#E8E0D6] text-[#242321] placeholder-[#81776D] focus:border-[#242321] transition-colors font-sans focus:outline-none"
+              className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-[#F7F0FA] border border-[#E7DCEB] text-[#302438] placeholder-[#6F6475]/60 focus:border-[#B69ACF] focus:bg-white transition-colors font-sans focus:outline-none rounded-xs"
             />
           </div>
 
           {/* Price Range Dropdown */}
           <div className="flex items-center gap-2">
-            <span className="text-xs uppercase tracking-wider text-[#81776D] font-sans font-medium hidden sm:inline">Price:</span>
+            <span className="text-xs uppercase tracking-wider text-[#6F6475] font-sans font-medium hidden sm:inline">Price:</span>
             <select
               value={pricePreset}
               onChange={(e) => setPricePreset(e.target.value)}
-              className="px-3 py-2 text-xs sm:text-sm bg-white border border-[#E8E0D6] text-[#242321] font-sans cursor-pointer focus:outline-none"
+              className="px-3 py-2 text-xs sm:text-sm bg-[#F7F0FA] border border-[#E7DCEB] text-[#302438] font-sans cursor-pointer focus:outline-none rounded-xs focus:border-[#B69ACF]"
             >
               <option value="all">All Prices (₹299 - ₹2,499)</option>
               <option value="under-999">Under ₹999</option>
@@ -246,11 +246,11 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-2">
-            <span className="text-xs uppercase tracking-wider text-[#81776D] font-sans font-medium hidden sm:inline">Sort:</span>
+            <span className="text-xs uppercase tracking-wider text-[#6F6475] font-sans font-medium hidden sm:inline">Sort:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="px-3 py-2 text-xs sm:text-sm bg-white border border-[#E8E0D6] text-[#242321] font-sans cursor-pointer focus:outline-none"
+              className="px-3 py-2 text-xs sm:text-sm bg-[#F7F0FA] border border-[#E7DCEB] text-[#302438] font-sans cursor-pointer focus:outline-none rounded-xs focus:border-[#B69ACF]"
             >
               <option value="newest">Newest First</option>
               <option value="price-asc">Price: Low to High</option>
@@ -259,12 +259,12 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
           </div>
 
           {/* In Stock Toggle */}
-          <label className="flex items-center gap-2 text-xs uppercase tracking-wider text-[#242321] cursor-pointer select-none font-sans">
+          <label className="flex items-center gap-2 text-xs uppercase tracking-wider text-[#302438] cursor-pointer select-none font-sans">
             <input
               type="checkbox"
               checked={inStockOnly}
               onChange={(e) => setInStockOnly(e.target.checked)}
-              className="w-4 h-4 accent-[#B79A68] cursor-pointer"
+              className="w-4 h-4 accent-[#563568] cursor-pointer"
             />
             <span>In Stock Only</span>
           </label>
@@ -273,7 +273,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
           {(selectedCategorySlug || searchQuery || pricePreset !== 'all' || inStockOnly) && (
             <button
               onClick={handleResetFilters}
-              className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-[#8C2F2F] hover:underline font-sans font-medium ml-auto"
+              className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-[#DC2626] hover:underline font-sans font-medium ml-auto"
             >
               <RotateCcw size={12} />
               <span>Reset</span>
@@ -282,13 +282,13 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
         </div>
 
         {/* Status / Count Bar */}
-        <div className="mt-4 flex items-center justify-between text-xs text-[#81776D] font-sans px-1">
+        <div className="mt-4 flex items-center justify-between text-xs text-[#6F6475] font-sans px-1">
           <span>
-            Showing <strong className="text-[#242321] font-medium">{products.length}</strong>{' '}
+            Showing <strong className="text-[#302438] font-medium">{products.length}</strong>{' '}
             {products.length === 1 ? 'piece' : 'pieces'}
-            {includeAll && <span className="ml-2 text-[#B79A68]">(includeAll enabled)</span>}
+            {includeAll && <span className="ml-2 text-[#563568]">(includeAll enabled)</span>}
           </span>
-          {loading && <span className="text-[#B79A68] animate-pulse">Loading catalogue...</span>}
+          {loading && <span className="text-[#563568] animate-pulse">Loading catalogue...</span>}
         </div>
 
         {/* Product Grid using plain CSS .product-grid */}
@@ -296,9 +296,9 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
           <div className="product-grid mt-6">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="animate-pulse w-full">
-                <div className="bg-[#F2EADF] aspect-[3/4] w-full border border-[#E8E0D6]"></div>
-                <div className="h-4 bg-[#F2EADF] w-2/3 mt-3"></div>
-                <div className="h-3 bg-[#F2EADF] w-1/3 mt-2"></div>
+                <div className="bg-[#F0E6F4] aspect-[3/4] w-full border border-[#E7DCEB]"></div>
+                <div className="h-4 bg-[#F0E6F4] w-2/3 mt-3"></div>
+                <div className="h-3 bg-[#F0E6F4] w-1/3 mt-2"></div>
               </div>
             ))}
           </div>
@@ -310,15 +310,15 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
           </div>
         ) : (
           /* Empty State */
-          <div className="bg-[#FAF8F5] border border-[#E8E0D6] p-12 text-center max-w-lg mx-auto my-12">
-            <SlidersHorizontal size={32} className="mx-auto text-[#B79A68] mb-3" />
-            <h3 className="font-serif text-2xl text-[#242321] font-normal">No pieces match your selection</h3>
-            <p className="text-xs text-[#81776D] mt-2 font-sans">
+          <div className="bg-white border border-[#E7DCEB] p-12 text-center max-w-lg mx-auto my-12 rounded-sm shadow-xs">
+            <SlidersHorizontal size={32} className="mx-auto text-[#B69ACF] mb-3" />
+            <h3 className="font-serif text-2xl text-[#302438] font-normal">No pieces match your selection</h3>
+            <p className="text-xs text-[#6F6475] mt-2 font-sans">
               Try adjusting your price range, clearing the search term, or browsing all jewellery silhouettes.
             </p>
             <button
               onClick={handleResetFilters}
-              className="mt-6 px-7 py-3 bg-[#1C1917] text-[#FAF8F5] text-xs uppercase tracking-[0.2em] font-sans hover:bg-[#B89758] hover:text-[#FAF8F5] transition-colors"
+              className="mt-6 px-7 py-3 bg-[#563568] text-white text-xs uppercase tracking-[0.2em] font-sans hover:bg-[#A184BD] transition-colors rounded-xs shadow-xs"
             >
               Reset Filters
             </button>

@@ -1,33 +1,44 @@
 :root {
   /* ==========================================================================
-     SARINE Design Tokens
-     Warm ivory background, champagne-gold accent, soft beige surfaces, charcoal.
+     SARINE Official Design Tokens: Lavender & Plum Purple Theme
      ========================================================================== */
+  color-scheme: light;
 
-  /* Backgrounds */
-  --color-bg-primary: #FAF8F5;       /* Warm ivory base */
-  --color-bg-surface: #F2EADF;       /* Soft cream for panels and secondary surfaces */
-  --color-bg-elevated: #FFFFFF;      /* Pure white only for product imagery or contrast */
-  --color-bg-subtle: #EDE6DC;        /* Subtle warm tint for dividers and accents */
+  /* Official Brand Palette */
+  --color-brand-primary: #563568;    /* Deep Plum */
+  --color-brand-accent: #B69ACF;     /* Lavender */
+  --color-brand-background: #F7F0FA; /* Soft Lavender Background */
+  --color-brand-gold: #D9B8A0;       /* Champagne Gold */
+
+  --color-text-primary: #302438;     /* Primary Text */
+  --color-text-secondary: #6F6475;   /* Secondary Text */
+
+  --color-surface: #FFFFFF;          /* White */
+  --color-border: #E7DCEB;           /* Subtle Border */
+  --color-hover: #A184BD;            /* Hover Lavender */
+  --color-focus: #80609A;            /* Focus Ring */
+
+  /* Backgrounds & Surfaces */
+  --color-bg-primary: #F7F0FA;       /* Soft Lavender Background */
+  --color-bg-surface: #F0E6F4;       /* Subtle plum/lavender panel background */
+  --color-bg-elevated: #FFFFFF;      /* Pure white content surface */
+  --color-bg-subtle: #EBE0F0;        /* Subtle lavender separator background */
 
   /* Text & Contrast */
-  --color-text-primary: #242321;     /* Deep charcoal */
-  --color-text-secondary: #81776D;   /* Muted taupe for descriptions and metadata */
-  --color-text-muted: #81776D;       /* Muted taupe */
-  --color-text-inverse: #FAF8F5;     /* Warm ivory on dark surfaces */
+  --color-text-muted: #6F6475;       /* Muted secondary text */
+  --color-text-inverse: #FFFFFF;     /* White text on dark surfaces */
 
   /* Accents & Borders */
-  --color-accent-gold: #B79A68;      /* Champagne gold (restrained accent only) */
-  --color-accent-gold-hover: #A38550;/* Darker gold for interaction states */
-  --color-accent-gold-soft: #F5EFE6; /* Delicate gold/cream tint */
-  --color-border: #E8E0D6;           /* Subtle border colour */
-  --color-border-subtle: #F0EAE1;    /* Faint separator lines */
-  --color-border-strong: #81776D;    /* For form inputs and interactive borders */
+  --color-accent-gold: #D9B8A0;      /* Champagne gold decorative details */
+  --color-accent-gold-hover: #C5A288;
+  --color-accent-gold-soft: #F8F1EB;
+  --color-border-subtle: #F0E8F3;    /* Faint separator lines */
+  --color-border-strong: #80609A;    /* Interactive borders and focus */
 
   /* Status / Feedback */
-  --color-status-success: #2F593E;   /* Muted forest sage */
-  --color-status-error: #8C2F2F;     /* Muted burgundy red */
-  --color-status-info: #465A6E;      /* Slate blue */
+  --color-status-success: #2E7D32;   /* Forest green */
+  --color-status-error: #C62828;     /* Rich red */
+  --color-status-info: #563568;      /* Deep Plum */
 
   /* Header & Navigation */
   --header-height: 4.5rem;
@@ -55,8 +66,8 @@
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-subtle: 0 4px 20px -2px rgba(28, 25, 23, 0.05);
-  --shadow-elevated: 0 10px 30px -4px rgba(28, 25, 23, 0.08);
+  --shadow-subtle: 0 4px 20px -2px rgba(86, 53, 104, 0.06);
+  --shadow-elevated: 0 10px 30px -4px rgba(86, 53, 104, 0.10);
 
   /* Transitions */
   --duration-fast: 150ms;

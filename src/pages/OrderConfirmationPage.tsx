@@ -71,8 +71,8 @@ export const OrderConfirmationPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center p-8">
-        <p className="text-xs uppercase tracking-widest text-[#6B635D] animate-pulse">
+      <div className="min-h-screen bg-[#F7F0FA] flex items-center justify-center p-8">
+        <p className="text-xs uppercase tracking-widest text-[#6F6475] animate-pulse">
           Retrieving order confirmation...
         </p>
       </div>
@@ -81,14 +81,14 @@ export const OrderConfirmationPage: React.FC = () => {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-[#FAF8F5] flex flex-col items-center justify-center p-8 text-center">
-        <h2 className="font-serif text-3xl text-[#1C1917]">We couldn't find this order</h2>
-        <p className="text-xs sm:text-sm text-[#6B635D] mt-2 font-sans max-w-md">
+      <div className="min-h-screen bg-[#F7F0FA] flex flex-col items-center justify-center p-8 text-center">
+        <h2 className="font-serif text-3xl text-[#302438]">We couldn't find this order</h2>
+        <p className="text-xs sm:text-sm text-[#6F6475] mt-2 font-sans max-w-md">
           We could not locate an order matching reference &quot;{orderNumber}&quot;. Please verify the order number and secure link.
         </p>
         <Link
           to="/shop"
-          className="mt-6 px-6 py-2.5 bg-[#1C1917] text-[#FAF8F5] text-xs uppercase tracking-widest hover:bg-[#B89758] transition-colors"
+          className="mt-6 px-6 py-2.5 bg-[#563568] text-white text-xs uppercase tracking-widest hover:bg-[#A184BD] transition-colors rounded-xs shadow-xs"
         >
           Return to Shop
         </Link>
@@ -117,27 +117,27 @@ export const OrderConfirmationPage: React.FC = () => {
   let headerBadge = 'Order Confirmed';
   let headerTitle = `Thank you, ${order.customer.name}`;
   let headerSubtitle = `Your order has been recorded in our system under reference ${order.orderNumber}.`;
-  let headerIcon = <CheckCircle2 size={28} className="text-[#B89758]" />;
-  let headerBorderColor = 'border-[#B89758]';
+  let headerIcon = <CheckCircle2 size={28} className="text-[#563568]" />;
+  let headerBorderColor = 'border-[#563568]';
 
   if (isNeedsRefund) {
     headerBadge = 'Order Update';
     headerTitle = 'Payment received, but an item went out of stock. A full refund will be processed.';
     headerSubtitle = `Your payment was received, but one or more pieces went out of stock before final authorization. Our concierge has queued an immediate full refund for order ${order.orderNumber}.`;
-    headerIcon = <AlertCircle size={28} className="text-[#8C2F2F]" />;
-    headerBorderColor = 'border-[#8C2F2F]';
+    headerIcon = <AlertCircle size={28} className="text-[#DC2626]" />;
+    headerBorderColor = 'border-[#DC2626]';
   } else if (isFailed) {
     headerBadge = 'Payment Failed';
     headerTitle = 'Payment failed';
     headerSubtitle = `We were unable to verify payment for order ${order.orderNumber}. No items have been charged to your account.`;
-    headerIcon = <AlertCircle size={28} className="text-[#8C2F2F]" />;
-    headerBorderColor = 'border-[#8C2F2F]';
+    headerIcon = <AlertCircle size={28} className="text-[#DC2626]" />;
+    headerBorderColor = 'border-[#DC2626]';
   } else if (isPendingOnline) {
     headerBadge = 'Awaiting payment confirmation';
     headerTitle = 'Awaiting payment confirmation';
     headerSubtitle = `We are confirming your payment with the bank for order ${order.orderNumber}. Please allow a few moments.`;
-    headerIcon = <Clock size={28} className="text-[#B89758]" />;
-    headerBorderColor = 'border-[#B89758]';
+    headerIcon = <Clock size={28} className="text-[#563568]" />;
+    headerBorderColor = 'border-[#563568]';
   }
 
   // Payment status area text
@@ -168,24 +168,24 @@ export const OrderConfirmationPage: React.FC = () => {
   const isGreenStatusDot = order.orderStatus === 'confirmed' || order.orderStatus === 'placed';
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] pb-20">
+    <div className="min-h-screen bg-[#F7F0FA] pb-20 text-[#302438]">
       {/* Editorial Header */}
-      <div className="bg-[#F3EEE7]/50 border-b border-[#E6DFD5] py-10 px-4 text-center">
+      <div className="bg-[#F0E6F4]/50 border-b border-[#E7DCEB] py-10 px-4 text-center">
         <div className="site-container">
           <div className="max-w-[760px] mx-auto">
             <div
-              className={`w-14 h-14 bg-[#FAF8F5] border ${headerBorderColor} rounded-full flex items-center justify-center mx-auto mb-3 shadow-xs`}
+              className={`w-14 h-14 bg-white border ${headerBorderColor} rounded-full flex items-center justify-center mx-auto mb-3 shadow-xs`}
             >
               {headerIcon}
             </div>
 
-            <span className="text-xs uppercase tracking-[0.25em] text-[#B89758] font-semibold font-sans block mb-1">
+            <span className="text-xs uppercase tracking-[0.25em] text-[#563568] font-semibold font-sans block mb-1">
               {headerBadge}
             </span>
-            <h1 className="font-serif text-2xl sm:text-3xl text-[#1C1917] font-normal leading-snug">
+            <h1 className="font-serif text-2xl sm:text-3xl text-[#302438] font-normal leading-snug">
               {headerTitle}
             </h1>
-            <p className="mt-2 text-xs sm:text-sm text-[#666666] font-sans">
+            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans">
               {headerSubtitle}
             </p>
 
@@ -193,7 +193,7 @@ export const OrderConfirmationPage: React.FC = () => {
               <div className="mt-6">
                 <Link
                   to="/checkout"
-                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#1C1917] text-[#FAF8F5] text-xs uppercase tracking-widest font-semibold hover:bg-[#B89758] transition-colors shadow-xs"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#563568] text-white text-xs uppercase tracking-widest font-semibold hover:bg-[#A184BD] transition-colors shadow-xs rounded-xs"
                 >
                   <span>Return to Checkout</span>
                   <ArrowRight size={14} />
@@ -207,42 +207,42 @@ export const OrderConfirmationPage: React.FC = () => {
       <div className="site-container pt-8">
         <main className="max-w-[1000px] mx-auto space-y-8">
         {/* Order Meta Bar */}
-        <div className="bg-white border border-[#E6DFD5] p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs font-sans">
+        <div className="bg-white border border-[#E7DCEB] p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs font-sans rounded-sm shadow-xs">
           <div>
-            <span className="text-[#6B635D] block uppercase tracking-wider text-[10px]">Order Number</span>
-            <span className="font-mono font-semibold text-[#1C1917] text-sm mt-0.5 block">
+            <span className="text-[#6F6475] block uppercase tracking-wider text-[10px]">Order Number</span>
+            <span className="font-mono font-semibold text-[#302438] text-sm mt-0.5 block">
               {order.orderNumber}
             </span>
           </div>
 
           <div>
-            <span className="text-[#6B635D] block uppercase tracking-wider text-[10px]">Date Placed</span>
-            <span className="text-[#1C1917] font-medium mt-0.5 block">{orderDate}</span>
+            <span className="text-[#6F6475] block uppercase tracking-wider text-[10px]">Date Placed</span>
+            <span className="text-[#302438] font-medium mt-0.5 block">{orderDate}</span>
           </div>
 
           <div>
-            <span className="text-[#6B635D] block uppercase tracking-wider text-[10px]">Order Status</span>
-            <span className="inline-flex items-center gap-1.5 font-semibold capitalize mt-0.5 text-[#1C1917]">
+            <span className="text-[#6F6475] block uppercase tracking-wider text-[10px]">Order Status</span>
+            <span className="inline-flex items-center gap-1.5 font-semibold capitalize mt-0.5 text-[#302438]">
               {isGreenStatusDot ? (
-                <span className="w-2 h-2 rounded-full bg-[#2F593E]"></span>
+                <span className="w-2 h-2 rounded-full bg-[#15803D]"></span>
               ) : isFailed ? (
-                <span className="w-2 h-2 rounded-full bg-[#8C2F2F]"></span>
+                <span className="w-2 h-2 rounded-full bg-[#DC2626]"></span>
               ) : (
-                <span className="w-2 h-2 rounded-full bg-[#B89758]"></span>
+                <span className="w-2 h-2 rounded-full bg-[#563568]"></span>
               )}
               <span>{order.orderStatus.replace('_', ' ')}</span>
             </span>
           </div>
 
           <div>
-            <span className="text-[#6B635D] block uppercase tracking-wider text-[10px]">Payment Status</span>
-            <span className="inline-flex items-center gap-1 font-semibold mt-0.5 text-[#1C1917]">
+            <span className="text-[#6F6475] block uppercase tracking-wider text-[10px]">Payment Status</span>
+            <span className="inline-flex items-center gap-1 font-semibold mt-0.5 text-[#302438]">
               {order.paymentStatus === 'paid' ? (
-                <CheckCircle2 size={12} className="text-[#2F593E]" />
+                <CheckCircle2 size={12} className="text-[#15803D]" />
               ) : isFailed ? (
-                <AlertCircle size={12} className="text-[#8C2F2F]" />
+                <AlertCircle size={12} className="text-[#DC2626]" />
               ) : (
-                <Clock size={12} className="text-[#B89758]" />
+                <Clock size={12} className="text-[#563568]" />
               )}
               <span className="capitalize">{paymentStatusText}</span>
             </span>
@@ -252,18 +252,18 @@ export const OrderConfirmationPage: React.FC = () => {
         {/* Two Columns: Ordered Items (7 cols) and Delivery Address & Summary (5 cols) */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           {/* Purchased Items Snapshot */}
-          <div className="md:col-span-7 bg-white border border-[#E6DFD5] p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#F0EAE1] pb-3">
-              <h2 className="font-serif text-xl text-[#1C1917] font-medium flex items-center gap-2">
-                <Package size={18} className="text-[#B89758]" />
+          <div className="md:col-span-7 bg-white border border-[#E7DCEB] p-6 space-y-4 rounded-sm shadow-xs">
+            <div className="flex items-center justify-between border-b border-[#E7DCEB] pb-3">
+              <h2 className="font-serif text-xl text-[#302438] font-medium flex items-center gap-2">
+                <Package size={18} className="text-[#563568]" />
                 <span>Pieces Ordered ({order.lines.length})</span>
               </h2>
             </div>
 
-            <div className="divide-y divide-[#F0EAE1]">
+            <div className="divide-y divide-[#E7DCEB]">
               {order.lines.map((line, idx) => (
                 <div key={idx} className="py-3 flex gap-3 items-center">
-                  <div className="w-16 h-20 bg-[#F3EEE7] border border-[#E6DFD5] shrink-0 overflow-hidden">
+                  <div className="w-16 h-20 bg-[#F7F0FA] border border-[#E7DCEB] shrink-0 overflow-hidden rounded-xs">
                     <img
                       src={line.image}
                       alt={line.name}
@@ -271,14 +271,14 @@ export const OrderConfirmationPage: React.FC = () => {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-serif text-base text-[#1C1917] font-medium line-clamp-1">
+                    <p className="font-serif text-base text-[#302438] font-medium line-clamp-1">
                       {line.name}
                     </p>
-                    <p className="text-xs text-[#6B635D] font-sans mt-0.5">
+                    <p className="text-xs text-[#6F6475] font-sans mt-0.5">
                       Qty: {line.quantity} × {formatInr(line.unitPrice)}
                     </p>
                   </div>
-                  <div className="text-right text-sm font-semibold text-[#1C1917]">
+                  <div className="text-right text-sm font-semibold text-[#302438]">
                     {formatInr(line.unitPrice * line.quantity)}
                   </div>
                 </div>
@@ -286,16 +286,16 @@ export const OrderConfirmationPage: React.FC = () => {
             </div>
 
             {/* Subtotal & Total breakdown */}
-            <div className="pt-4 border-t border-[#F0EAE1] space-y-2 text-xs font-sans">
-              <div className="flex justify-between text-[#57534E]">
+            <div className="pt-4 border-t border-[#E7DCEB] space-y-2 text-xs font-sans">
+              <div className="flex justify-between text-[#6F6475]">
                 <span>Items Subtotal</span>
                 <span>{formatInr(order.subtotal)}</span>
               </div>
-              <div className="flex justify-between text-[#57534E]">
+              <div className="flex justify-between text-[#6F6475]">
                 <span>Standard Delivery (India)</span>
                 <span>{order.shippingFee === 0 ? 'Complimentary' : formatInr(order.shippingFee)}</span>
               </div>
-              <div className="flex justify-between text-[#1C1917] font-semibold text-base pt-2 border-t border-[#F0EAE1]">
+              <div className="flex justify-between text-[#302438] font-semibold text-base pt-2 border-t border-[#E7DCEB]">
                 <span className="font-serif">Total Amount</span>
                 <span className="font-serif text-xl">{formatInr(order.total)}</span>
               </div>
@@ -304,36 +304,36 @@ export const OrderConfirmationPage: React.FC = () => {
 
           {/* Customer & Shipping Destination Snapshot */}
           <div className="md:col-span-5 space-y-6">
-            <div className="bg-white border border-[#E6DFD5] p-6 space-y-4">
-              <h2 className="font-serif text-lg text-[#1C1917] font-medium flex items-center gap-2 border-b border-[#F0EAE1] pb-3">
-                <MapPin size={18} className="text-[#B89758]" />
+            <div className="bg-white border border-[#E7DCEB] p-6 space-y-4 rounded-sm shadow-xs">
+              <h2 className="font-serif text-lg text-[#302438] font-medium flex items-center gap-2 border-b border-[#E7DCEB] pb-3">
+                <MapPin size={18} className="text-[#563568]" />
                 <span>Shipping Address</span>
               </h2>
 
-              <div className="text-xs font-sans text-[#57534E] space-y-1 leading-relaxed">
-                <p className="font-semibold text-[#1C1917]">{order.shippingAddress.fullName}</p>
+              <div className="text-xs font-sans text-[#6F6475] space-y-1 leading-relaxed">
+                <p className="font-semibold text-[#302438]">{order.shippingAddress.fullName}</p>
                 <p>{order.shippingAddress.line1}</p>
                 {order.shippingAddress.line2 && <p>{order.shippingAddress.line2}</p>}
                 <p>
                   {order.shippingAddress.city}, {order.shippingAddress.state} -{' '}
                   <span className="font-mono">{order.shippingAddress.pincode}</span>
                 </p>
-                <p className="pt-2 text-[#1C1917]">
+                <p className="pt-2 text-[#302438]">
                   <strong>Phone:</strong> +91 {order.shippingAddress.phone}
                 </p>
-                <p className="text-[#1C1917]">
+                <p className="text-[#302438]">
                   <strong>Email:</strong> {order.customer.email}
                 </p>
               </div>
             </div>
 
-            <div className="bg-white border border-[#E6DFD5] p-6 space-y-3">
-              <h2 className="font-serif text-lg text-[#1C1917] font-medium flex items-center gap-2 border-b border-[#F0EAE1] pb-3">
-                <CreditCard size={18} className="text-[#B89758]" />
+            <div className="bg-white border border-[#E7DCEB] p-6 space-y-3 rounded-sm shadow-xs">
+              <h2 className="font-serif text-lg text-[#302438] font-medium flex items-center gap-2 border-b border-[#E7DCEB] pb-3">
+                <CreditCard size={18} className="text-[#563568]" />
                 <span>Payment Notice</span>
               </h2>
 
-              <p className="text-xs text-[#57534E] leading-relaxed font-sans">
+              <p className="text-xs text-[#6F6475] leading-relaxed font-sans">
                 {paymentNoticeText}
               </p>
             </div>
@@ -341,10 +341,10 @@ export const OrderConfirmationPage: React.FC = () => {
         </div>
 
         {/* Action Controls */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#E6DFD5]">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#E7DCEB]">
           <button
             onClick={() => window.print()}
-            className="w-full sm:w-auto px-5 py-2.5 border border-[#8C847C] text-xs uppercase tracking-widest text-[#1C1917] hover:bg-[#F3EEE7] transition-colors inline-flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-5 py-2.5 border border-[#E7DCEB] text-xs uppercase tracking-widest text-[#302438] hover:bg-[#F7F0FA] transition-colors inline-flex items-center justify-center gap-2 rounded-xs"
           >
             <Printer size={14} />
             <span>Print Receipt</span>
@@ -352,7 +352,7 @@ export const OrderConfirmationPage: React.FC = () => {
 
           <Link
             to="/shop"
-            className="w-full sm:w-auto px-8 py-3 bg-[#1C1917] text-[#FAF8F5] text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[#B89758] transition-colors inline-flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-8 py-3 bg-[#563568] text-white text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[#A184BD] transition-colors inline-flex items-center justify-center gap-2 rounded-xs shadow-xs"
           >
             <span>Explore More Pieces</span>
             <ArrowRight size={14} />

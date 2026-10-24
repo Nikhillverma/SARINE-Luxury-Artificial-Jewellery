@@ -243,21 +243,21 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const currentHero = heroSlides[activeSlide];
 
   return (
-    <div className="w-full bg-[#F8F6F2] text-[#222222] font-sans selection:bg-[#B79A68]/20 selection:text-[#222222]">
+    <div className="w-full bg-[#F7F0FA] text-[#302438] font-sans selection:bg-[#B69ACF]/30 selection:text-[#302438]">
       {/* =========================================================================
           3. HERO SLIDER
           Fixed responsive height: h-[420px] md:h-[520px] lg:h-[600px]
           Stacked absolute slides with opacity transitions
-          Every image: object-cover object-[70%_center] on #EDE3D8
-          Text in centered container (max-w-[1280px]) with soft beige gradient overlay
+          Every image: object-cover object-[70%_center] on #F0E6F4
+          Text in centered container (max-w-[1280px]) with soft lavender gradient overlay
           Slide indicators bottom-left, arrow buttons bottom-right inside container
           ========================================================================= */}
-      <section className="relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[#EDE3D8] border-b border-[#E4DACF]">
+      <section className="relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[#F0E6F4] border-b border-[#E7DCEB]">
         {/* Stacked background slide images */}
         {heroSlides.map((slide, idx) => (
           <div
             key={slide.id}
-            className={`absolute inset-0 w-full h-full bg-[#EDE3D8] transition-opacity duration-700 ease-in-out ${
+            className={`absolute inset-0 w-full h-full bg-[#F0E6F4] transition-opacity duration-700 ease-in-out ${
               activeSlide === idx ? 'opacity-100 z-0' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
@@ -266,8 +266,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               alt={slide.heading}
               className="absolute inset-0 w-full h-full object-cover object-[70%_center]"
             />
-            {/* Soft left-to-right beige gradient overlay for text readability */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#EDE3D8] via-[#EDE3D8]/85 to-[#EDE3D8]/30 md:from-[#EDE3D8]/95 md:via-[#EDE3D8]/70 md:to-transparent pointer-events-none"></div>
+            {/* Soft left-to-right lavender gradient overlay for text readability */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#F0E6F4] via-[#F0E6F4]/85 to-[#F0E6F4]/30 md:from-[#F0E6F4]/95 md:via-[#F0E6F4]/70 md:to-transparent pointer-events-none"></div>
           </div>
         ))}
 
@@ -275,26 +275,26 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         <div className="site-container h-full flex flex-col justify-between py-8 md:py-12 pointer-events-none relative z-10">
           {/* Slide text in left half vertically centered */}
           <div className="my-auto max-w-xl md:max-w-lg lg:max-w-xl pointer-events-auto">
-            <span className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2 sm:mb-3">
+            <span className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 sm:mb-3">
               {currentHero.eyebrow}
             </span>
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-[46px] leading-[1.16] text-[#222222] font-normal tracking-tight">
+            <h1 className="font-serif text-3xl sm:text-4xl lg:text-[46px] leading-[1.16] text-[#302438] font-normal tracking-tight">
               {currentHero.heading}
             </h1>
-            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-[#555555] leading-relaxed max-w-md font-sans">
+            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-[#6F6475] leading-relaxed max-w-md font-sans">
               {currentHero.paragraph}
             </p>
             <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-3">
               <Link
                 to={currentHero.shopLink}
-                className="px-6 sm:px-7 py-3 bg-[#1C1917] text-[#FAF8F5] text-xs sm:text-[13px] font-sans font-medium hover:bg-[#B89758] hover:text-[#FAF8F5] transition-colors rounded-xs inline-flex items-center gap-2"
+                className="px-6 sm:px-7 py-3 bg-[#563568] text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[#A184BD] transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"
               >
                 <span>Shop the Collection</span>
                 <ArrowRight size={13} />
               </Link>
               <a
                 href="#categories"
-                className="px-6 sm:px-7 py-3 bg-transparent border border-[#1C1917] text-[#1C1917] text-xs sm:text-[13px] font-sans font-medium hover:bg-[#F3EEE7] hover:text-[#1C1917] transition-colors rounded-xs"
+                className="px-6 sm:px-7 py-3 bg-transparent border border-[#563568] text-[#563568] text-xs sm:text-[13px] font-sans font-medium hover:bg-[#EBDFF2] hover:text-[#563568] transition-colors rounded-xs"
               >
                 Explore Categories
               </a>
@@ -304,15 +304,15 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           {/* Bottom row inside container: 01 02 03 left, arrows right */}
           <div className="flex items-center justify-between w-full pointer-events-auto pt-4">
             {/* 01 02 03 indicators */}
-            <div className="flex items-center space-x-6 text-xs font-sans tracking-widest text-[#81776D]">
+            <div className="flex items-center space-x-6 text-xs font-sans tracking-widest text-[#6F6475]">
               {heroSlides.map((slide, idx) => (
                 <button
                   key={slide.id}
                   onClick={() => setActiveSlide(idx)}
                   className={`pb-1 transition-all cursor-pointer ${
                     activeSlide === idx
-                      ? 'text-[#1C1917] font-semibold border-b-2 border-[#B89758]'
-                      : 'hover:text-[#B89758]'
+                      ? 'text-[#563568] font-semibold border-b-2 border-[#B69ACF]'
+                      : 'hover:text-[#B69ACF]'
                   }`}
                   aria-label={`Go to slide 0${idx + 1}`}
                 >
@@ -325,14 +325,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="flex items-center space-x-3">
               <button
                 onClick={prevSlide}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E8E0D6] bg-white/90 hover:bg-[#F3EEE7] hover:border-[#B89758] text-[#1C1917] hover:text-[#B89758] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E7DCEB] bg-white/90 hover:bg-[#F0E6F4] hover:border-[#B69ACF] text-[#302438] hover:text-[#563568] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
                 aria-label="Previous slide"
               >
                 <ChevronLeft size={18} />
               </button>
               <button
                 onClick={nextSlide}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E8E0D6] bg-white/90 hover:bg-[#F3EEE7] hover:border-[#B89758] text-[#1C1917] hover:text-[#B89758] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E7DCEB] bg-white/90 hover:bg-[#F0E6F4] hover:border-[#B69ACF] text-[#302438] hover:text-[#563568] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
                 aria-label="Next slide"
               >
                 <ChevronRight size={18} />
@@ -354,16 +354,16 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-8 sm:mb-10">
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#222222] font-normal">
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
               Shop by Category
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#666666] font-sans leading-relaxed max-w-xl mx-auto">
+            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
               Explore our handcrafted collections curated for celebrations and everyday elegance.
             </p>
             <div className="mt-3">
               <Link
                 to="/shop"
-                className="text-xs sm:text-[13px] text-[#222222] hover:text-[#B89758] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
+                className="text-xs sm:text-[13px] text-[#302438] hover:text-[#563568] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
               >
                 <span>View All Categories</span>
                 <ArrowRight size={13} />
@@ -386,7 +386,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                   className="group flex flex-col items-center text-center w-full"
                 >
                   {/* Landscape image wrapper: aspect-[3/2] */}
-                  <div className="aspect-[3/2] w-full overflow-hidden bg-[#EDE3D8] border border-[#E8E0D6] rounded-xs relative group-hover:border-[#B89758]/60 transition-colors">
+                  <div className="aspect-[3/2] w-full overflow-hidden bg-[#F0E6F4] border border-[#E7DCEB] rounded-xs relative group-hover:border-[#B69ACF] transition-colors">
                     <img
                       src={catImage}
                       alt={cat.name}
@@ -397,10 +397,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
                 {/* Title & Link */}
                 <div className="pt-3 text-center flex flex-col items-center">
-                  <h3 className="text-sm sm:text-base font-normal text-[#222222] font-sans text-center group-hover:text-[#B89758] transition-colors">
+                  <h3 className="text-sm sm:text-base font-normal text-[#302438] font-sans text-center group-hover:text-[#563568] transition-colors">
                     {cat.name}
                   </h3>
-                  <span className="text-xs text-[#666666] group-hover:text-[#B89758] transition-colors inline-flex items-center justify-center gap-1 mt-0.5 font-sans">
+                  <span className="text-xs text-[#6F6475] group-hover:text-[#563568] transition-colors inline-flex items-center justify-center gap-1 mt-0.5 font-sans">
                     <span>Shop Now</span>
                     <ArrowRight size={11} />
                   </span>
@@ -417,23 +417,23 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 newest products (sorted by createdAt descending, else the last 4 in the list),
           same product card as Best Sellers, "View All" linking to /shop?sort=newest
           ========================================================================= */}
-      <section className="py-12 sm:py-16 lg:py-20 border-t border-[#E8E0D6] bg-[#FAF8F5]">
+      <section className="py-12 sm:py-16 lg:py-20 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-8 sm:mb-10">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2 font-sans">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
               JUST ARRIVED
             </span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#222222] font-normal">
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
               New Arrivals
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#666666] font-sans leading-relaxed max-w-xl mx-auto">
+            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
               Discover our newest handcrafted pieces, designed with delicate craftsmanship for modern grace.
             </p>
             <div className="mt-3">
               <Link
                 to="/shop?sort=newest"
-                className="text-xs sm:text-[13px] text-[#222222] hover:text-[#B89758] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
+                className="text-xs sm:text-[13px] text-[#302438] hover:text-[#563568] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
               >
                 <span>View All</span>
                 <ArrowRight size={13} />
@@ -446,9 +446,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="product-grid">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="animate-pulse w-full">
-                  <div className="bg-[#F2EADF] aspect-[3/4] w-full border border-[#E8E0D6]"></div>
-                  <div className="h-4 bg-[#F2EADF] w-2/3 mt-3"></div>
-                  <div className="h-3 bg-[#F2EADF] w-1/3 mt-2"></div>
+                  <div className="bg-[#F7F0FA] aspect-[3/4] w-full border border-[#E7DCEB]"></div>
+                  <div className="h-4 bg-[#F7F0FA] w-2/3 mt-3"></div>
+                  <div className="h-3 bg-[#F7F0FA] w-1/3 mt-2"></div>
                 </div>
               ))}
             </div>
@@ -471,20 +471,20 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Arrows: absolute inside relative wrapper, never pushing or overflowing
           Consistent vertical spacing: py-12 sm:py-16 lg:py-20
           ========================================================================= */}
-      <section className="py-12 sm:py-16 lg:py-20 border-t border-[#E8E0D6]">
+      <section className="py-12 sm:py-16 lg:py-20 border-t border-[#E7DCEB] bg-[#F7F0FA]">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-8 sm:mb-10">
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#222222] font-normal">
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
               Best Sellers
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#666666] font-sans leading-relaxed max-w-xl mx-auto">
+            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
               Our most cherished pieces, loved for their enduring finish and timeless beauty.
             </p>
             <div className="mt-3">
               <Link
                 to="/shop?sort=bestseller"
-                className="text-xs sm:text-[13px] text-[#222222] hover:text-[#B89758] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
+                className="text-xs sm:text-[13px] text-[#302438] hover:text-[#563568] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
               >
                 <span>View All</span>
                 <ArrowRight size={13} />
@@ -497,9 +497,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="product-grid">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="animate-pulse w-full">
-                  <div className="bg-[#F2EADF] aspect-[3/4] w-full border border-[#E8E0D6]"></div>
-                  <div className="h-4 bg-[#F2EADF] w-2/3 mt-3"></div>
-                  <div className="h-3 bg-[#F2EADF] w-1/3 mt-2"></div>
+                  <div className="bg-[#F0E6F4] aspect-[3/4] w-full border border-[#E7DCEB]"></div>
+                  <div className="h-4 bg-[#F0E6F4] w-2/3 mt-3"></div>
+                  <div className="h-3 bg-[#F0E6F4] w-1/3 mt-2"></div>
                 </div>
               ))}
             </div>
@@ -518,16 +518,16 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 cards: Daily Wear, Festive, Wedding, Gifting
           Using existing product images, linking to /shop with filter queries
           ========================================================================= */}
-      <section className="py-12 sm:py-16 lg:py-20 border-t border-[#E8E0D6] bg-[#F8F6F2]">
+      <section className="py-12 sm:py-16 lg:py-20 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
           <div className="w-full text-center mb-8 sm:mb-10">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2 font-sans">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
               CURATED OCCASIONS
             </span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#222222] font-normal">
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
               Shop by Occasion
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#666666] font-sans leading-relaxed max-w-xl mx-auto">
+            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
               Adornments thoughtfully curated for festive splendour, sacred vows, and every day in between.
             </p>
           </div>
@@ -539,7 +539,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 to={item.link}
                 className="group flex flex-col items-center text-center w-full"
               >
-                <div className="aspect-[4/5] w-full overflow-hidden bg-[#EDE3D8] border border-[#E8E0D6] rounded-xs relative group-hover:border-[#B89758]/60 transition-colors">
+                <div className="aspect-[4/5] w-full overflow-hidden bg-[#F0E6F4] border border-[#E7DCEB] rounded-xs relative group-hover:border-[#B69ACF] transition-colors">
                   <img
                     src={item.image}
                     alt={item.title}
@@ -548,13 +548,13 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                   />
                 </div>
                 <div className="pt-3 text-center flex flex-col items-center">
-                  <h3 className="text-sm sm:text-base font-normal text-[#222222] font-sans group-hover:text-[#B89758] transition-colors">
+                  <h3 className="text-sm sm:text-base font-normal text-[#302438] font-sans group-hover:text-[#563568] transition-colors">
                     {item.title}
                   </h3>
-                  <p className="text-[11px] sm:text-xs text-[#666666] font-sans mt-0.5">
+                  <p className="text-[11px] sm:text-xs text-[#6F6475] font-sans mt-0.5">
                     {item.subtitle}
                   </p>
-                  <span className="text-xs text-[#666666] group-hover:text-[#B89758] transition-colors inline-flex items-center justify-center gap-1 mt-1 font-sans">
+                  <span className="text-xs text-[#6F6475] group-hover:text-[#563568] transition-colors inline-flex items-center justify-center gap-1 mt-1 font-sans">
                     <span>Shop Now</span>
                     <ArrowRight size={11} />
                   </span>
@@ -570,16 +570,16 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 pill buttons: Under ₹999, ₹1,000 to ₹1,999, ₹2,000 and above, All pieces
           Linking to /shop with price presets
           ========================================================================= */}
-      <section className="py-12 sm:py-16 border-t border-[#E8E0D6] bg-[#FAF8F5]">
+      <section className="py-12 sm:py-16 border-t border-[#E7DCEB] bg-[#F7F0FA]">
         <div className="site-container">
           <div className="w-full text-center mb-8">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2 font-sans">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
               PRICE CURATION
             </span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#222222] font-normal">
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
               Shop by Price
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#666666] font-sans leading-relaxed max-w-xl mx-auto">
+            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
               Find stunning handcrafted jewellery suited to your style and budget.
             </p>
           </div>
@@ -587,25 +587,25 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 max-w-2xl mx-auto">
             <Link
               to="/shop?price=under-999"
-              className="px-6 sm:px-8 py-3 bg-[#FAF8F5] border border-[#E8E0D6] hover:border-[#B89758] hover:text-[#B89758] hover:bg-[#F3EEE7] text-[#1C1917] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
+              className="px-6 sm:px-8 py-3 bg-white border border-[#E7DCEB] hover:border-[#B69ACF] hover:text-[#563568] hover:bg-[#F0E6F4] text-[#302438] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
             >
               Under ₹999
             </Link>
             <Link
               to="/shop?price=1000-2000"
-              className="px-6 sm:px-8 py-3 bg-[#FAF8F5] border border-[#E8E0D6] hover:border-[#B89758] hover:text-[#B89758] hover:bg-[#F3EEE7] text-[#1C1917] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
+              className="px-6 sm:px-8 py-3 bg-white border border-[#E7DCEB] hover:border-[#B69ACF] hover:text-[#563568] hover:bg-[#F0E6F4] text-[#302438] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
             >
               ₹1,000 to ₹1,999
             </Link>
             <Link
               to="/shop?price=above-2000"
-              className="px-6 sm:px-8 py-3 bg-[#FAF8F5] border border-[#E8E0D6] hover:border-[#B89758] hover:text-[#B89758] hover:bg-[#F3EEE7] text-[#1C1917] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
+              className="px-6 sm:px-8 py-3 bg-white border border-[#E7DCEB] hover:border-[#B69ACF] hover:text-[#563568] hover:bg-[#F0E6F4] text-[#302438] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
             >
               ₹2,000 and above
             </Link>
             <Link
               to="/shop"
-              className="px-6 sm:px-8 py-3 bg-[#FAF8F5] border border-[#E8E0D6] hover:border-[#B89758] hover:text-[#B89758] hover:bg-[#F3EEE7] text-[#1C1917] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
+              className="px-6 sm:px-8 py-3 bg-white border border-[#E7DCEB] hover:border-[#B69ACF] hover:text-[#563568] hover:bg-[#F0E6F4] text-[#302438] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
             >
               All pieces
             </Link>
@@ -615,16 +615,16 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
       {/* =========================================================================
           OUR STORY
-          Background #F3EDE5 edge-to-edge
+          Background #F0E6F4 edge-to-edge
           Centered container mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10
           Consistent vertical spacing: py-12 sm:py-16 lg:py-20
           ========================================================================= */}
-      <section className="bg-[#F3EDE5] border-y border-[#E8E0D6] py-12 sm:py-16 lg:py-20">
+      <section className="bg-[#F0E6F4] border-y border-[#E7DCEB] py-12 sm:py-16 lg:py-20">
         <div className="site-container">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
             {/* Left: Large Jewellery Photo */}
             <div className="lg:col-span-5">
-              <div className="aspect-[4/3] sm:aspect-[1/1] bg-[#E8DDD1] overflow-hidden rounded-xs border border-[#E0D6CA]">
+              <div className="aspect-[4/3] sm:aspect-[1/1] bg-[#EBDFF2] overflow-hidden rounded-xs border border-[#E7DCEB]">
                 <img
                   src={HOMEPAGE_IMAGES.ourStory}
                   alt="SARINE Craftsmanship and Jewellery Details"
@@ -637,25 +637,25 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="lg:col-span-7 flex flex-col md:flex-row items-start gap-8 lg:gap-12">
               {/* Story Narrative */}
               <div className="flex-1">
-                <span className="text-[10px] uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2 font-sans">
+                <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
                   OUR STORY
                 </span>
 
-                <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#222222] font-normal leading-tight">
+                <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal leading-tight">
                   More Than Just Jewellery
                 </h2>
 
-                <p className="mt-4 text-xs sm:text-sm text-[#555555] leading-relaxed font-sans">
+                <p className="mt-4 text-xs sm:text-sm text-[#6F6475] leading-relaxed font-sans">
                   SARINE is a premium Indian fashion jewellery brand created to bring timeless elegance to your everyday moments. We celebrate traditional motifs through modern design, curating versatile pieces that seamlessly elevate both celebrations and daily attire.
                 </p>
-                <p className="mt-3 text-xs sm:text-sm text-[#555555] leading-relaxed font-sans">
+                <p className="mt-3 text-xs sm:text-sm text-[#6F6475] leading-relaxed font-sans">
                   We believe in accessible luxury — exquisite craftsmanship, refined finishes, and enduring beauty at honest, direct prices. Every piece is crafted so you can express your personal grace with confidence and ease.
                 </p>
 
                 <div className="mt-7">
                   <Link
                     to="/about"
-                    className="px-6 py-3 bg-[#1C1917] text-[#FAF8F5] text-xs font-sans font-medium hover:bg-[#B89758] hover:text-[#FAF8F5] transition-colors rounded-xs inline-flex items-center gap-2"
+                    className="px-6 py-3 bg-[#563568] text-white text-xs font-sans font-medium hover:bg-[#A184BD] transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"
                   >
                     <span>Our Story</span>
                     <ArrowRight size={13} />
@@ -664,47 +664,47 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               </div>
 
               {/* Thin Vertical Divider (Desktop) */}
-              <div className="hidden md:block w-[1px] bg-[#DDD5CB] self-stretch"></div>
+              <div className="hidden md:block w-[1px] bg-[#E7DCEB] self-stretch"></div>
 
               {/* 3 Icon Rows */}
               <div className="w-full md:w-64 space-y-5 pt-2">
                 <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-xs text-[#222222] shrink-0">
+                  <div className="p-2 rounded-xs text-[#563568] shrink-0 bg-[#FAF5FC] border border-[#E7DCEB]">
                     <Gem size={18} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h3 className="text-xs font-medium text-[#222222] leading-snug">
+                    <h3 className="text-xs font-medium text-[#302438] leading-snug">
                       Thoughtfully Designed
                     </h3>
-                    <p className="text-[11px] text-[#666666] leading-tight mt-0.5">
+                    <p className="text-[11px] text-[#6F6475] leading-tight mt-0.5">
                       for Everyday Elegance
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-xs text-[#222222] shrink-0">
+                  <div className="p-2 rounded-xs text-[#563568] shrink-0 bg-[#FAF5FC] border border-[#E7DCEB]">
                     <Sparkles size={18} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h3 className="text-xs font-medium text-[#222222] leading-snug">
+                    <h3 className="text-xs font-medium text-[#302438] leading-snug">
                       Artisanal Heritage
                     </h3>
-                    <p className="text-[11px] text-[#666666] leading-tight mt-0.5">
+                    <p className="text-[11px] text-[#6F6475] leading-tight mt-0.5">
                       & Modern Craft
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-xs text-[#222222] shrink-0">
+                  <div className="p-2 rounded-xs text-[#563568] shrink-0 bg-[#FAF5FC] border border-[#E7DCEB]">
                     <ShieldCheck size={18} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h3 className="text-xs font-medium text-[#222222] leading-snug">
+                    <h3 className="text-xs font-medium text-[#302438] leading-snug">
                       Accessible Luxury
                     </h3>
-                    <p className="text-[11px] text-[#666666] leading-tight mt-0.5">
+                    <p className="text-[11px] text-[#6F6475] leading-tight mt-0.5">
                       for Every You
                     </p>
                   </div>
@@ -718,7 +718,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           7. EDITORIAL BANNER
           ========================================================================= */}
-      <section className="relative overflow-hidden bg-[#E8DDD1] border-b border-[#E8E0D6]">
+      <section className="relative overflow-hidden bg-[#EBDFF2] border-b border-[#E7DCEB]">
         {/* Full-bleed background image */}
         <img
           src={HOMEPAGE_IMAGES.editorialBanner}
@@ -727,27 +727,27 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         />
 
         {/* Gradient Overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#EDE3D8]/65 to-[#EDE3D8]/95 sm:via-[#EDE3D8]/75 sm:to-[#EDE3D8]/95"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#F0E6F4]/75 to-[#F0E6F4]/95 sm:via-[#F0E6F4]/80 sm:to-[#F0E6F4]/95"></div>
 
         {/* Centered container with right-aligned content */}
         <div className="site-container min-h-[320px] sm:min-h-[380px] lg:min-h-[420px] flex items-center justify-end relative z-10">
           <div className="w-full sm:w-2/3 lg:w-1/2 py-10 sm:py-14 text-left">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2 font-sans">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
               EDITORIAL COLLECTION
             </span>
 
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#222222] font-normal leading-tight">
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal leading-tight">
               The Art of Everyday Elegance
             </h2>
 
-            <p className="mt-3 text-xs sm:text-sm text-[#555555] leading-relaxed max-w-md font-sans">
+            <p className="mt-3 text-xs sm:text-sm text-[#6F6475] leading-relaxed max-w-md font-sans">
               A curated collection that blends classic beauty with modern sensibilities.
             </p>
 
             <div className="mt-6">
               <Link
                 to="/shop"
-                className="px-6 py-3 bg-[#1C1917] text-[#FAF8F5] text-xs font-sans font-medium hover:bg-[#B89758] hover:text-[#FAF8F5] transition-colors rounded-xs inline-flex items-center gap-2"
+                className="px-6 py-3 bg-[#563568] text-white text-xs font-sans font-medium hover:bg-[#A184BD] transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"
               >
                 <span>Explore the Collection</span>
                 <ArrowRight size={13} />
@@ -760,31 +760,22 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           8. STAY IN TOUCH
           ========================================================================= */}
-      <section className="py-14 sm:py-20 lg:py-24 bg-[#F8F6F2]">
+      <section className="py-14 sm:py-20 lg:py-24 bg-[#F7F0FA]">
         <div className="site-container">
           <div className="max-w-[620px] mx-auto text-center">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#81776D] font-medium block mb-2 font-sans">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
               STAY IN TOUCH
             </span>
 
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#222222] font-normal">
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
               Connect With SARINE
             </h2>
 
-            <p className="mt-3 text-xs sm:text-sm text-[#555555] font-sans leading-relaxed">
-              Explore new collection previews and styling stories on{' '}
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#1C1917] font-medium underline underline-offset-4 hover:text-[#B89758] transition-colors"
-              >
-                Instagram
-              </a>
-              , or connect with our customer care team on our{' '}
+            <p className="mt-3 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed">
+              Have questions about styling, care, or your order? Connect with our customer care team on our{' '}
               <Link
                 to="/contact"
-                className="text-[#1C1917] font-medium underline underline-offset-4 hover:text-[#B89758] transition-colors"
+                className="text-[#563568] font-medium underline underline-offset-4 hover:text-[#B69ACF] transition-colors"
               >
                 Contact page
               </Link>

@@ -11,7 +11,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Instagram,
   Facebook,
   Youtube,
   ShieldCheck,
@@ -25,45 +24,45 @@ import { COD_ENABLED } from '../config/store';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="bg-[#F8F6F2] text-[#222222] border-t border-[#E8E0D6] font-sans">
+    <footer className="bg-[#563568] text-[#F7F0FA] border-t border-[#E7DCEB] font-sans">
       {/* Trust Strip */}
-      <div className="w-full bg-[#FAF8F5] border-b border-[#E8E0D6] py-8 sm:py-10">
+      <div className="w-full bg-[#F7F0FA] text-[#302438] border-b border-[#E7DCEB] py-8 sm:py-10">
         <div className="site-container">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
-            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white/70 border border-[#E8E0D6] rounded-xs">
-              <div className="p-2.5 bg-[#F3EDE5] rounded-xs text-[#B89758] shrink-0">
+            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[#E7DCEB] rounded-md shadow-xs">
+              <div className="p-2.5 bg-[#F0E6F4] rounded-md text-[#563568] shrink-0">
                 <ShieldCheck size={20} strokeWidth={1.5} />
               </div>
               <div>
-                <h4 className="text-xs sm:text-sm font-medium text-[#1C1917] leading-tight font-sans">
+                <h4 className="text-xs sm:text-sm font-medium text-[#302438] leading-tight font-sans">
                   Secure payments
                 </h4>
-                <p className="text-[11px] text-[#666666] font-sans mt-0.5">
+                <p className="text-[11px] text-[#6F6475] font-sans mt-0.5">
                   via Razorpay
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white/70 border border-[#E8E0D6] rounded-xs">
-              <div className="p-2.5 bg-[#F3EDE5] rounded-xs text-[#B89758] shrink-0">
+            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[#E7DCEB] rounded-md shadow-xs">
+              <div className="p-2.5 bg-[#F0E6F4] rounded-md text-[#563568] shrink-0">
                 <Truck size={20} strokeWidth={1.5} />
               </div>
               <div>
-                <h4 className="text-xs sm:text-sm font-medium text-[#1C1917] leading-tight font-sans">
+                <h4 className="text-xs sm:text-sm font-medium text-[#302438] leading-tight font-sans">
                   Delivery across India
                 </h4>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white/70 border border-[#E8E0D6] rounded-xs">
-              <div className="p-2.5 bg-[#F3EDE5] rounded-xs text-[#B89758] shrink-0">
+            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[#E7DCEB] rounded-md shadow-xs">
+              <div className="p-2.5 bg-[#F0E6F4] rounded-md text-[#563568] shrink-0">
                 <RotateCcw size={20} strokeWidth={1.5} />
               </div>
               <div>
-                <h4 className="text-xs sm:text-sm font-medium text-[#1C1917] leading-tight font-sans">
+                <h4 className="text-xs sm:text-sm font-medium text-[#302438] leading-tight font-sans">
                   7-day returns
                 </h4>
-                <p className="text-[11px] text-[#666666] font-sans mt-0.5">
+                <p className="text-[11px] text-[#6F6475] font-sans mt-0.5">
                   for damaged or wrong items
                 </p>
               </div>
@@ -71,32 +70,32 @@ export const Footer: React.FC = () => {
 
             <Link
               to="/contact"
-              className="group flex items-center gap-3 p-3.5 sm:p-4 bg-white/70 border border-[#E8E0D6] hover:border-[#B89758]/60 hover:bg-[#F3EEE7] rounded-xs transition-colors"
+              className="group flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[#E7DCEB] hover:border-[#B69ACF] hover:bg-[#FAF5FC] rounded-md transition-colors shadow-xs"
             >
-              <div className="p-2.5 bg-[#F3EDE5] rounded-xs text-[#B89758] shrink-0">
+              <div className="p-2.5 bg-[#F0E6F4] rounded-md text-[#563568] group-hover:bg-[#EBDFF2] shrink-0 transition-colors">
                 <Headphones size={20} strokeWidth={1.5} />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-xs sm:text-sm font-medium text-[#1C1917] group-hover:text-[#B89758] transition-colors leading-tight font-sans inline-flex items-center gap-1">
+                <h4 className="text-xs sm:text-sm font-medium text-[#302438] group-hover:text-[#563568] transition-colors leading-tight font-sans inline-flex items-center gap-1">
                   <span>Easy support</span>
-                  <ArrowRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ArrowRight size={12} className="opacity-0 group-hover:opacity-100 text-[#563568] transition-opacity" />
                 </h4>
-                <p className="text-[11px] text-[#666666] font-sans mt-0.5 truncate">
+                <p className="text-[11px] text-[#6F6475] font-sans mt-0.5 truncate">
                   Help when you need it
                 </p>
               </div>
             </Link>
 
             {COD_ENABLED && (
-              <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white/70 border border-[#E8E0D6] rounded-xs col-span-2 md:col-span-1">
-                <div className="p-2.5 bg-[#F3EDE5] rounded-xs text-[#B89758] shrink-0">
+              <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[#E7DCEB] rounded-md shadow-xs col-span-2 md:col-span-1">
+                <div className="p-2.5 bg-[#F0E6F4] rounded-md text-[#563568] shrink-0">
                   <CheckCircle2 size={20} strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h4 className="text-xs sm:text-sm font-medium text-[#1C1917] leading-tight font-sans">
+                  <h4 className="text-xs sm:text-sm font-medium text-[#302438] leading-tight font-sans">
                     Cash on Delivery
                   </h4>
-                  <p className="text-[11px] text-[#666666] font-sans mt-0.5">
+                  <p className="text-[11px] text-[#6F6475] font-sans mt-0.5">
                     Available on eligible orders
                   </p>
                 </div>
@@ -107,34 +106,25 @@ export const Footer: React.FC = () => {
       </div>
 
       <div className="site-container pt-14 pb-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-[#E8E0D6]">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-[#6E4682]">
           {/* Brand & Socials Column */}
           <div className="lg:col-span-4">
             <Link to="/" className="inline-block">
-              <span className="font-serif text-2xl tracking-[0.25em] text-[#222222] font-normal uppercase">
+              <span className="font-serif text-2xl tracking-[0.25em] text-white font-normal uppercase hover:text-[#D9B8A0] transition-colors">
                 SARINE
               </span>
             </Link>
-            <p className="text-xs text-[#666666] mt-2">
+            <p className="text-xs text-[#E7DCEB] mt-2">
               Timeless jewellery for every you.
             </p>
 
             {/* Social Icons */}
-            <div className="flex items-center space-x-4 mt-5 text-[#333333]">
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-[#B79A68] transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram size={17} strokeWidth={1.5} />
-              </a>
+            <div className="flex items-center space-x-4 mt-5 text-[#E7DCEB]">
               <a
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-[#B79A68] transition-colors"
+                className="hover:text-[#D9B8A0] transition-colors p-1"
                 aria-label="Facebook"
               >
                 <Facebook size={17} strokeWidth={1.5} />
@@ -144,7 +134,7 @@ export const Footer: React.FC = () => {
                 href="https://pinterest.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-[#B79A68] transition-colors"
+                className="hover:text-[#D9B8A0] transition-colors p-1"
                 aria-label="Pinterest"
               >
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
@@ -155,7 +145,7 @@ export const Footer: React.FC = () => {
                 href="https://youtube.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-[#B79A68] transition-colors"
+                className="hover:text-[#D9B8A0] transition-colors p-1"
                 aria-label="YouTube"
               >
                 <Youtube size={17} strokeWidth={1.5} />
@@ -165,27 +155,27 @@ export const Footer: React.FC = () => {
 
           {/* Column 1: Shop */}
           <div className="lg:col-span-2 col-span-1">
-            <h4 className="text-xs uppercase tracking-wider text-[#222222] font-semibold mb-4">
+            <h4 className="text-xs uppercase tracking-wider text-[#D9B8A0] font-semibold mb-4">
               Shop
             </h4>
-            <ul className="space-y-2.5 text-xs text-[#555555]">
+            <ul className="space-y-2.5 text-xs text-[#E7DCEB]">
               <li>
-                <Link to="/shop" className="hover:text-[#B89758] transition-colors">
+                <Link to="/shop" className="hover:text-[#D9B8A0] transition-colors">
                   All Products
                 </Link>
               </li>
               <li>
-                <Link to="/shop?sort=newest" className="hover:text-[#B89758] transition-colors">
+                <Link to="/shop?sort=newest" className="hover:text-[#D9B8A0] transition-colors">
                   New Arrivals
                 </Link>
               </li>
               <li>
-                <Link to="/shop?sort=bestseller" className="hover:text-[#B89758] transition-colors">
+                <Link to="/shop?sort=bestseller" className="hover:text-[#D9B8A0] transition-colors">
                   Best Sellers
                 </Link>
               </li>
               <li>
-                <a href="/#categories" className="hover:text-[#B89758] transition-colors">
+                <a href="/#categories" className="hover:text-[#D9B8A0] transition-colors">
                   Categories
                 </a>
               </li>
@@ -194,27 +184,32 @@ export const Footer: React.FC = () => {
 
           {/* Column 2: Customer Care */}
           <div className="lg:col-span-2 col-span-1">
-            <h4 className="text-xs uppercase tracking-wider text-[#222222] font-semibold mb-4">
+            <h4 className="text-xs uppercase tracking-wider text-[#D9B8A0] font-semibold mb-4">
               Customer Care
             </h4>
-            <ul className="space-y-2.5 text-xs text-[#555555]">
+            <ul className="space-y-2.5 text-xs text-[#E7DCEB]">
               <li>
-                <Link to="/contact" className="hover:text-[#B89758] transition-colors">
+                <Link to="/contact" className="hover:text-[#D9B8A0] transition-colors">
                   Contact Us
                 </Link>
               </li>
               <li>
-                <Link to="/shipping-policy" className="hover:text-[#B89758] transition-colors">
+                <Link to="/track-order" className="hover:text-[#D9B8A0] transition-colors">
+                  Track Order
+                </Link>
+              </li>
+              <li>
+                <Link to="/shipping-policy" className="hover:text-[#D9B8A0] transition-colors">
                   Shipping Policy
                 </Link>
               </li>
               <li>
-                <Link to="/refund-policy" className="hover:text-[#B89758] transition-colors">
+                <Link to="/refund-policy" className="hover:text-[#D9B8A0] transition-colors">
                   Returns & Refunds
                 </Link>
               </li>
               <li>
-                <Link to="/cancellation-policy" className="hover:text-[#B89758] transition-colors">
+                <Link to="/cancellation-policy" className="hover:text-[#D9B8A0] transition-colors">
                   Cancellation Policy
                 </Link>
               </li>
@@ -223,27 +218,27 @@ export const Footer: React.FC = () => {
 
           {/* Column 3: About */}
           <div className="lg:col-span-2 col-span-1">
-            <h4 className="text-xs uppercase tracking-wider text-[#222222] font-semibold mb-4">
+            <h4 className="text-xs uppercase tracking-wider text-[#D9B8A0] font-semibold mb-4">
               About
             </h4>
-            <ul className="space-y-2.5 text-xs text-[#555555]">
+            <ul className="space-y-2.5 text-xs text-[#E7DCEB]">
               <li>
-                <Link to="/about" className="hover:text-[#B89758] transition-colors">
+                <Link to="/about" className="hover:text-[#D9B8A0] transition-colors">
                   Our Story
                 </Link>
               </li>
               <li>
-                <Link to="/sustainability" className="hover:text-[#B89758] transition-colors">
+                <Link to="/sustainability" className="hover:text-[#D9B8A0] transition-colors">
                   Sustainability
                 </Link>
               </li>
               <li>
-                <Link to="/blog" className="hover:text-[#B89758] transition-colors">
+                <Link to="/blog" className="hover:text-[#D9B8A0] transition-colors">
                   Blog
                 </Link>
               </li>
               <li>
-                <Link to="/careers" className="hover:text-[#B89758] transition-colors">
+                <Link to="/careers" className="hover:text-[#D9B8A0] transition-colors">
                   Careers
                 </Link>
               </li>
@@ -252,21 +247,21 @@ export const Footer: React.FC = () => {
 
           {/* Column 4: Payment Methods */}
           <div className="lg:col-span-2 col-span-1">
-            <h4 className="text-xs uppercase tracking-wider text-[#222222] font-semibold mb-4">
+            <h4 className="text-xs uppercase tracking-wider text-[#D9B8A0] font-semibold mb-4">
               Payment Methods
             </h4>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-1 text-[11px] font-bold tracking-wider uppercase border border-[#DDD5CB] bg-white text-[#222222] rounded-xs">
+              <span className="px-2.5 py-1 text-[11px] font-bold tracking-wider uppercase border border-[#E7DCEB] bg-white text-[#302438] rounded-xs shadow-xs">
                 UPI
               </span>
-              <span className="px-2.5 py-1 text-[11px] font-bold tracking-wider uppercase border border-[#DDD5CB] bg-white text-[#1A1F71] rounded-xs">
+              <span className="px-2.5 py-1 text-[11px] font-bold tracking-wider uppercase border border-[#E7DCEB] bg-white text-[#1A1F71] rounded-xs shadow-xs">
                 VISA
               </span>
-              <span className="px-2 py-1 flex items-center border border-[#DDD5CB] bg-white rounded-xs">
+              <span className="px-2 py-1 flex items-center border border-[#E7DCEB] bg-white rounded-xs shadow-xs">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#EB001B] inline-block -mr-1 opacity-90"></span>
                 <span className="w-2.5 h-2.5 rounded-full bg-[#F79E1B] inline-block opacity-90"></span>
               </span>
-              <span className="px-2.5 py-1 text-[11px] font-bold tracking-wider uppercase border border-[#DDD5CB] bg-white text-[#222222] rounded-xs">
+              <span className="px-2.5 py-1 text-[11px] font-bold tracking-wider uppercase border border-[#E7DCEB] bg-white text-[#302438] rounded-xs shadow-xs">
                 RuPay
               </span>
             </div>
@@ -274,14 +269,14 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#777777] gap-4">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#E7DCEB]/80 gap-4">
           <p>© 2026 SARINE. All rights reserved.</p>
           <div className="flex items-center space-x-3">
-            <Link to="/privacy-policy" className="hover:text-[#B89758] transition-colors">
+            <Link to="/privacy-policy" className="hover:text-[#D9B8A0] transition-colors">
               Privacy Policy
             </Link>
             <span>|</span>
-            <Link to="/terms" className="hover:text-[#B89758] transition-colors">
+            <Link to="/terms" className="hover:text-[#D9B8A0] transition-colors">
               Terms & Conditions
             </Link>
           </div>

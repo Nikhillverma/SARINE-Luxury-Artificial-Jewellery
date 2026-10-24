@@ -22,6 +22,7 @@ import { TermsPage } from './pages/TermsPage';
 import { ShippingPolicyPage } from './pages/ShippingPolicyPage';
 import { RefundPolicyPage } from './pages/RefundPolicyPage';
 import { AboutPage } from './pages/AboutPage';
+import { TrackOrderPage } from './pages/TrackOrderPage';
 import {
   SustainabilityPage,
   BlogPage,
@@ -39,7 +40,7 @@ export default function App() {
   return (
     <CartProvider>
       <BrowserRouter>
-        <div className="min-h-screen w-full flex flex-col bg-[#F8F6F2] text-[#222222] selection:bg-[#B79A68]/20 selection:text-[#222222]">
+        <div className="min-h-screen w-full flex flex-col bg-[#F7F0FA] text-[#302438] selection:bg-[#B69ACF]/30 selection:text-[#302438]">
           {/* Header Navigation */}
           <Navbar
             includeAll={includeAll}
@@ -68,6 +69,7 @@ export default function App() {
               <Route path="/cart" element={<Navigate to="/bag" replace />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/order/:orderNumber" element={<OrderConfirmationPage />} />
+              <Route path="/track-order" element={<TrackOrderPage />} />
               {/* Help & Policies */}
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
