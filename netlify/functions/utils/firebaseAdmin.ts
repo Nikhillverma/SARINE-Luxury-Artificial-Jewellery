@@ -6,12 +6,14 @@
 
 import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getFirestore, Firestore, Transaction } from 'firebase-admin/firestore';
+import { getAuth, Auth } from 'firebase-admin/auth';
 
 let appInstance: App | null = null;
 let dbInstance: Firestore | null = null;
+let authInstance: Auth | null = null;
 let settingsConfigured = false;
 
-export function getFirebaseAdmin(): { app: App; db: Firestore } {
+export function getFirebaseAdmin(): { app: App; db: Firestore; auth: Auth } {
   if (!dbInstance) {
     const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
     let credentialCert: any = null;
@@ -62,12 +64,14 @@ export function getFirebaseAdmin(): { app: App; db: Firestore } {
       settingsConfigured = true;
     }
     dbInstance = firestoreDb;
+    authInstance = getAuth(appInstance!);
   }
 
   return {
     app: appInstance!,
-    db: dbInstance
+    db: dbInstance,
+    auth: authInstance!
   };
 }
 
-export type { Firestore, Transaction };
+export type { Firestore, Transaction, Auth };

@@ -6,6 +6,7 @@
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore } from 'firebase/firestore';
+import { getAuth, Auth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyA4xyqoFxRpLOEkp3ReG6kOp_IdtdbjRCs",
@@ -30,6 +31,7 @@ export function isFirebaseConfigured(): boolean {
 
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
+let auth: Auth | null = null;
 
 if (isFirebaseConfigured()) {
   try {
@@ -59,4 +61,23 @@ export function getDb(): Firestore {
   return db;
 }
 
-export { app, db };
+/**
+ * Returns the initialized Firebase Auth instance.
+ */
+export function getFirebaseAuth(): Auth {
+  if (!auth) {
+    if (!app && isFirebaseConfigured()) {
+      app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    }
+    if (app) {
+      auth = getAuth(app);
+      return auth;
+    }
+    throw new Error(
+      'Firebase Auth is not configured. Please set VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID, and VITE_FIREBASE_APP_ID.'
+    );
+  }
+  return auth;
+}
+
+export { app, db, auth };

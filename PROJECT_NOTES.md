@@ -67,12 +67,18 @@ service cloud.firestore {
 - includeAll is ignored under Firebase (rules only allow active products). Admin access comes later with login.
 - Netlify Functions execute on deployed Netlify environments or with "netlify dev". In AI Studio's standalone preview, DATA_SOURCE = 'mock' can be used for end-to-end simulated ordering without a server.
 
+- Private Admin Orders Management Section (DONE):
+  - Shared helper `netlify/functions/utils/adminAuth.ts`: verifies Firebase ID token via Admin SDK and enforces `ADMIN_EMAILS` allowlist.
+  - `netlify/functions/admin-list-orders.ts`: GET endpoint returning orders sorted by createdAt desc, with status/payment filters, pagination (limit, startAfter), and safe fields only (never publicToken or razorpaySignature).
+  - `netlify/functions/admin-update-order.ts`: POST endpoint strictly supporting "mark_shipped", "mark_delivered" (updates COD to paid with cod_collected), "cancel" (with atomic stock restoration for paid/COD orders and refundNeeded flag), and "add_note" (max 500 chars).
+  - Frontend admin routes: `/admin/login` (Firebase Auth sign-in) and `/admin/orders` (guarded orders ledger with filters, search, load more, order drawer, tracking update form, cancel dialog, and Razorpay dashboard refund instructions).
+
 ## Still TODO (in order)
-1. Deploy to Netlify and add server environment variables (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET).
+1. Deploy to Netlify and add server environment variables (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, ADMIN_EMAILS, RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET).
 2. Configure Razorpay Webhook in Razorpay Dashboard pointing to https://<your-site>.netlify.app/.netlify/functions/razorpay-webhook with secret RAZORPAY_WEBHOOK_SECRET for payment.captured.
 3. Order confirmation email (via serverless email service).
 4. Remove "Seed Firestore (Dev)" button and seedFirestore.ts before launch.
-5. Firebase Auth (customer accounts) and admin area with an admin-only role.
+5. Customer accounts / order history (optional future release).
 6. Launch tidy-up: remove test notices, host the site, configure custom domain.
 7. Razorpay live mode needs business KYC.
 
