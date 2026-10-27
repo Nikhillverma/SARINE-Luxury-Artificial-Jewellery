@@ -1,14 +1,16 @@
 /**
  * Main application entry point for SARINE.
- * Configures React Router, CartProvider context wrapper, global CartDrawer,
- * and storefront route mappings.
+ * Configures React Router, CartProvider & WishlistProvider context wrappers,
+ * global CartDrawer & WishlistDrawer, customer storefront routes, and extended atelier admin suite.
  */
 
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
 import { Navbar } from './components/Navbar';
 import { CartDrawer } from './components/CartDrawer';
+import { WishlistDrawer } from './components/WishlistDrawer';
 import { Footer } from './components/Footer';
 import { HomePage } from './pages/HomePage';
 import { CollectionPage } from './pages/CollectionPage';
@@ -23,8 +25,12 @@ import { ShippingPolicyPage } from './pages/ShippingPolicyPage';
 import { RefundPolicyPage } from './pages/RefundPolicyPage';
 import { AboutPage } from './pages/AboutPage';
 import { TrackOrderPage } from './pages/TrackOrderPage';
+import { AccountPage } from './pages/AccountPage';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
+import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
+import { AdminInventoryPage } from './pages/admin/AdminInventoryPage';
+import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
 import {
   SustainabilityPage,
   BlogPage,
@@ -43,7 +49,7 @@ function MainAppShell() {
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-[#F7F0FA] text-[#302438] selection:bg-[#B69ACF]/30 selection:text-[#302438]">
-      {/* Public Storefront Navigation & Slide-in Drawer */}
+      {/* Public Storefront Navigation & Slide-in Drawers */}
       {!isAdminRoute && (
         <>
           <Navbar
@@ -51,6 +57,7 @@ function MainAppShell() {
             onToggleIncludeAll={handleToggleIncludeAll}
           />
           <CartDrawer />
+          <WishlistDrawer />
         </>
       )}
 
@@ -74,11 +81,15 @@ function MainAppShell() {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order/:orderNumber" element={<OrderConfirmationPage />} />
           <Route path="/track-order" element={<TrackOrderPage />} />
+          <Route path="/account" element={<AccountPage />} />
 
           {/* Private Admin Management Routes */}
           <Route path="/admin" element={<Navigate to="/admin/orders" replace />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/admin/orders" element={<AdminOrdersPage />} />
+          <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+          <Route path="/admin/inventory" element={<AdminInventoryPage />} />
+          <Route path="/admin/settings" element={<AdminSettingsPage />} />
 
           {/* Help & Policies */}
           <Route path="/contact" element={<ContactPage />} />
@@ -107,10 +118,12 @@ function MainAppShell() {
 
 export default function App() {
   return (
-    <CartProvider>
-      <BrowserRouter>
-        <MainAppShell />
-      </BrowserRouter>
-    </CartProvider>
+    <WishlistProvider>
+      <CartProvider>
+        <BrowserRouter>
+          <MainAppShell />
+        </BrowserRouter>
+      </CartProvider>
+    </WishlistProvider>
   );
 }

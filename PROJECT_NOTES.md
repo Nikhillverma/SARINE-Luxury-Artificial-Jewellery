@@ -78,7 +78,7 @@ service cloud.firestore {
 2. Configure Razorpay Webhook in Razorpay Dashboard pointing to https://<your-site>.netlify.app/.netlify/functions/razorpay-webhook with secret RAZORPAY_WEBHOOK_SECRET for payment.captured.
 3. Order confirmation email (via serverless email service).
 4. Remove "Seed Firestore (Dev)" button and seedFirestore.ts before launch.
-5. Customer accounts / order history (optional future release).
+5. Customer accounts / order history (DONE - Customer Account portal with 8 sections, purchase statistics, orders list, details modal, invoices, cancellation, and return requests).
 6. Launch tidy-up: remove test notices, host the site, configure custom domain.
 7. Razorpay live mode needs business KYC.
 

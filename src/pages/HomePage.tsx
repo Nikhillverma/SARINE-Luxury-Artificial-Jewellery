@@ -756,7 +756,60 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       </section>
 
       {/* =========================================================================
-          8. STAY IN TOUCH
+          8. JEWELLERY CARE & PRESERVATION GUIDE
+          ========================================================================= */}
+      <section className="py-14 sm:py-20 border-t border-[#E7DCEB] bg-white">
+        <div className="site-container">
+          <div className="max-w-[720px] mx-auto text-center mb-10">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
+              ATELIER CARE PHILOSOPHY
+            </span>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
+              The Art of Jewellery Preservation
+            </h2>
+            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed">
+              Every SARINE piece is crafted with protective seals and demi-fine gold plating. Follow these four timeless steps to preserve its radiant shine for generations.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="p-5 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-center space-y-2">
+              <span className="w-8 h-8 rounded-full bg-[#563568] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">1</span>
+              <h3 className="font-serif text-base text-[#302438]">The Last Touch</h3>
+              <p className="text-xs text-[#6F6475] leading-relaxed">
+                Put your jewellery on last after perfumes, lotions, and hair styling sprays have dried completely.
+              </p>
+            </div>
+
+            <div className="p-5 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-center space-y-2">
+              <span className="w-8 h-8 rounded-full bg-[#563568] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">2</span>
+              <h3 className="font-serif text-base text-[#302438]">Air-Tight Storage</h3>
+              <p className="text-xs text-[#6F6475] leading-relaxed">
+                Store each piece in its individual velvet pouch or zip bag to prevent moisture and accidental scratches.
+              </p>
+            </div>
+
+            <div className="p-5 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-center space-y-2">
+              <span className="w-8 h-8 rounded-full bg-[#563568] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">3</span>
+              <h3 className="font-serif text-base text-[#302438]">Gentle Cleaning</h3>
+              <p className="text-xs text-[#6F6475] leading-relaxed">
+                Wipe gently with a dry soft microfiber cloth after wear to remove skin oils before returning to storage.
+              </p>
+            </div>
+
+            <div className="p-5 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-center space-y-2">
+              <span className="w-8 h-8 rounded-full bg-[#563568] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">4</span>
+              <h3 className="font-serif text-base text-[#302438]">Moisture Barrier</h3>
+              <p className="text-xs text-[#6F6475] leading-relaxed">
+                Keep pieces away from steam, pool chlorine, and water basins to maintain pristine prong tension.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          9. STAY IN TOUCH
           ========================================================================= */}
       <section className="py-14 sm:py-20 lg:py-24 bg-[#F7F0FA]">
         <div className="site-container">

@@ -1,14 +1,16 @@
 /**
  * ProductCard component for SARINE.
  * Luxury art-directed jewellery card following zero-pill discipline,
- * 3:4 editorial portrait presentation, subtle hover interaction,
- * and elegant typography aligned with Mejuri and Monica Vinader caliber.
+ * 3:4 editorial portrait presentation, interactive wishlist toggle,
+ * and elegant typography.
  */
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Product, isInStock, JEWELLERY_TYPE_LABELS } from '../types/product';
+import { Product, isInStock, JEWELLERY_TYPE_LABELS, getDiscountPercent } from '../types/product';
 import { formatInr } from '../utils/currency';
+import { useWishlist } from '../context/WishlistContext';
+import { Heart } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
@@ -16,6 +18,10 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const inStock = isInStock(product);
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const wishlisted = isInWishlist(product.id);
+  const discountPercent = getDiscountPercent(product);
+
   const isAnanya = product.slug === 'ananya-temple-coin-bracelet' || product.id === 'prod-003';
   const isZoya = product.slug === 'zoya-open-cuff-leaf-bangle' || product.id === 'prod-008';
   const primaryImage = isAnanya
@@ -29,37 +35,54 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     ? '/src/assets/images/zoya_leaf_bangle_1792768482264.jpg'
     : product.images[1];
 
-  return (
-    <article className="group flex flex-col w-full bg-white p-2 sm:p-2.5 border border-[#E7DCEB] rounded-md transition-all duration-300 hover:border-[#B69ACF] hover:shadow-sm">
-      {/* 3:4 Portrait Image Container */}
-      <Link
-        to={`/product/${product.slug}`}
-        className="relative block w-full overflow-hidden bg-[#F7F0FA] aspect-[3/4] border border-[#E7DCEB] rounded-xs group-hover:border-[#B69ACF]/60 transition-colors"
-      >
-        <img
-          src={primaryImage}
-          alt={product.name}
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          className={`absolute inset-0 h-full w-full object-cover object-center transition-all duration-500 ease-out ${
-            secondaryImage
-              ? 'group-hover:opacity-0'
-              : 'group-hover:scale-105'
-          }`}
-        />
+  const handleWishlistClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist(product);
+  };
 
-        {/* Secondary editorial image reveal on hover if available */}
-        {secondaryImage && (
+  return (
+    <article className="group flex flex-col w-full bg-white p-2 sm:p-2.5 border border-[#E7DCEB] rounded-md transition-all duration-300 hover:border-[#B69ACF] hover:shadow-xs relative">
+      {/* 3:4 Portrait Image Container */}
+      <div className="relative block w-full overflow-hidden bg-[#F7F0FA] aspect-[3/4] border border-[#E7DCEB] rounded-xs group-hover:border-[#B69ACF]/60 transition-colors">
+        <Link to={`/product/${product.slug}`} className="block w-full h-full">
           <img
-            src={secondaryImage}
-            alt={`${product.name} detail`}
+            src={primaryImage}
+            alt={product.name}
             loading="lazy"
             referrerPolicy="no-referrer"
-            className="absolute inset-0 h-full w-full object-cover object-center opacity-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 ease-out"
+            className={`absolute inset-0 h-full w-full object-cover object-center transition-all duration-500 ease-out ${
+              secondaryImage ? 'group-hover:opacity-0' : 'group-hover:scale-105'
+            }`}
           />
-        )}
 
-        {/* Understated Status Tag (Zero-Pill: pure typography with hairline border) */}
+          {/* Secondary editorial image reveal on hover if available */}
+          {secondaryImage && (
+            <img
+              src={secondaryImage}
+              alt={`${product.name} detail`}
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              className="absolute inset-0 h-full w-full object-cover object-center opacity-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 ease-out"
+            />
+          )}
+        </Link>
+
+        {/* Wishlist Heart Button (Top Right) */}
+        <button
+          onClick={handleWishlistClick}
+          aria-label={wishlisted ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
+          className="absolute top-2.5 right-2.5 z-20 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-[#302438] flex items-center justify-center border border-[#E7DCEB] transition-all cursor-pointer shadow-2xs backdrop-blur-xs"
+        >
+          <Heart
+            size={16}
+            className={`transition-colors ${
+              wishlisted ? 'fill-[#563568] text-[#563568]' : 'text-[#6F6475] hover:text-[#563568]'
+            }`}
+          />
+        </button>
+
+        {/* Understated Status Tag */}
         {!inStock && (
           <div className="absolute top-2.5 left-2.5 z-10">
             <span className="text-[10px] uppercase tracking-[0.2em] px-2 py-0.5 bg-white/95 text-[#6F6475] border border-[#E7DCEB] font-sans font-medium rounded-xs">
@@ -68,21 +91,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         )}
 
-        {product.status !== 'active' && (
-          <div className="absolute top-2.5 right-2.5 z-10">
-            <span className="text-[10px] uppercase tracking-[0.2em] px-2 py-0.5 bg-white/95 text-[#6F6475] border border-[#E7DCEB] font-sans font-medium rounded-xs">
-              {product.status}
+        {discountPercent && inStock && (
+          <div className="absolute top-2.5 left-2.5 z-10">
+            <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#563568] text-white font-sans font-medium rounded-xs">
+              {discountPercent}% OFF
             </span>
           </div>
         )}
 
-        {/* Quick View / Detail Link Indicator (Lavender border, Deep Plum text) */}
-        <div className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center">
+        {/* Quick View / Detail Link Indicator */}
+        <Link
+          to={`/product/${product.slug}`}
+          className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center"
+        >
           <span className="text-[10px] uppercase tracking-[0.2em] text-[#563568] bg-white/95 border border-[#B69ACF] shadow-xs px-3 py-1 font-sans font-medium rounded-xs">
             View Piece
           </span>
-        </div>
-      </Link>
+        </Link>
+      </div>
 
       {/* Editorial Content */}
       <div className="pt-3 pb-1 flex flex-col flex-grow">

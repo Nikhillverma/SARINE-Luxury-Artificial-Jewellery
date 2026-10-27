@@ -9,6 +9,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { orderService } from '../services';
+import { customerOrderService } from '../services/customerOrderService';
 import { formatInr } from '../utils/currency';
 import { COD_ENABLED, calculateShippingFee } from '../config/store';
 import { PaymentMethod } from '../types/order';
@@ -265,6 +266,44 @@ export const CheckoutPage: React.FC = () => {
                 console.log('[Checkout] Payment verification handled (success or pending):', order.orderNumber);
                 setOrderPlaced(true);
                 orderPlacedRef.current = true;
+
+                // Save full order snapshot for Customer Account My Orders
+                customerOrderService.saveNewOrder(
+                  {
+                    ...order,
+                    lines: items.map((it) => ({
+                      productId: it.productId,
+                      name: it.product.name,
+                      unitPrice: it.product.price,
+                      quantity: it.quantity,
+                      image: it.product.images[0] || '',
+                      sku: `SAR-${it.productId.slice(0, 6).toUpperCase()}`
+                    })),
+                    customer: {
+                      name: fullName.trim(),
+                      email: email.trim().toLowerCase(),
+                      phone: phone.replace(/\D/g, '')
+                    },
+                    shippingAddress: {
+                      fullName: fullName.trim(),
+                      phone: phone.replace(/\D/g, ''),
+                      line1: line1.trim(),
+                      line2: line2.trim() || undefined,
+                      city: city.trim(),
+                      state: state.trim(),
+                      pincode: pincode.trim()
+                    },
+                    subtotal,
+                    shippingFee,
+                    total,
+                    paymentMethod: 'online',
+                    paymentStatus: 'paid',
+                    orderStatus: 'confirmed',
+                    createdAt: new Date().toISOString()
+                  },
+                  email.trim().toLowerCase()
+                );
+
                 const targetUrl = order.publicToken
                   ? `/order/${order.orderNumber}?t=${order.publicToken}`
                   : `/order/${order.orderNumber}`;
@@ -305,6 +344,44 @@ export const CheckoutPage: React.FC = () => {
       if (paymentMethod === 'cod') {
         setOrderPlaced(true);
         orderPlacedRef.current = true;
+
+        // Save full order snapshot for Customer Account My Orders
+        customerOrderService.saveNewOrder(
+          {
+            ...order,
+            lines: items.map((it) => ({
+              productId: it.productId,
+              name: it.product.name,
+              unitPrice: it.product.price,
+              quantity: it.quantity,
+              image: it.product.images[0] || '',
+              sku: `SAR-${it.productId.slice(0, 6).toUpperCase()}`
+            })),
+            customer: {
+              name: fullName.trim(),
+              email: email.trim().toLowerCase(),
+              phone: phone.replace(/\D/g, '')
+            },
+            shippingAddress: {
+              fullName: fullName.trim(),
+              phone: phone.replace(/\D/g, ''),
+              line1: line1.trim(),
+              line2: line2.trim() || undefined,
+              city: city.trim(),
+              state: state.trim(),
+              pincode: pincode.trim()
+            },
+            subtotal,
+            shippingFee,
+            total,
+            paymentMethod: 'cod',
+            paymentStatus: 'pending',
+            orderStatus: 'placed',
+            createdAt: new Date().toISOString()
+          },
+          email.trim().toLowerCase()
+        );
+
         const targetUrl = order.publicToken
           ? `/order/${order.orderNumber}?t=${order.publicToken}`
           : `/order/${order.orderNumber}`;

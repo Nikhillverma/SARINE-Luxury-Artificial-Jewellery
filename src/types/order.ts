@@ -19,24 +19,28 @@ export interface OrderLine {
   unitPrice: number;
   quantity: number;
   image: string;
+  sku?: string;
 }
 
 export interface OrderCustomer {
   name: string;
   email: string;
   phone: string;
+  userId?: string;
 }
 
 export type PaymentMethod = 'online' | 'cod';
 
-export type PaymentStatus = 'pending' | 'paid' | 'failed';
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded';
 
 export type OrderStatus =
   | 'placed'
   | 'awaiting_payment'
   | 'confirmed'
+  | 'processing'
   | 'needs_refund'
   | 'shipped'
+  | 'out_for_delivery'
   | 'delivered'
   | 'cancelled'
   | 'failed';
@@ -61,6 +65,23 @@ export interface Order {
   razorpayPaymentId?: string;
   amount?: number; // amount in paise for Razorpay
   keyId?: string; // Razorpay Key ID
+
+  // Fulfillment & tracking metadata
+  courierName?: string;
+  trackingNumber?: string;
+  trackingUrl?: string;
+  shippedAt?: string;
+  deliveredAt?: string;
+  estimatedDelivery?: string;
+
+  // Cancellation & Returns metadata
+  cancelledAt?: string;
+  cancellationReason?: string;
+  refundNeeded?: boolean;
+  refundAmount?: number;
+  returnStatus?: 'none' | 'return_requested' | 'return_approved' | 'returned' | 'exchange_requested';
+  returnReason?: string;
+  returnNotes?: string;
 }
 
 /**

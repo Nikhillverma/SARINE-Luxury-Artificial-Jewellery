@@ -8,7 +8,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { getFirebaseAuth, isFirebaseConfigured } from '../../lib/firebase';
-import { ShieldCheck, LogOut, Package, ExternalLink, AlertCircle } from 'lucide-react';
+import { ShieldCheck, LogOut, Package, ExternalLink, AlertCircle, TrendingUp, Boxes, Settings } from 'lucide-react';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -104,10 +104,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               </Link>
 
               {/* Navigation Tabs */}
-              <nav className="flex items-center gap-2">
+              <nav className="flex items-center gap-1.5 sm:gap-2">
                 <Link
                   to="/admin/orders"
-                  className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-xs transition-colors ${
+                  className={`flex items-center gap-1.5 text-xs font-medium px-2.5 sm:px-3 py-1.5 rounded-xs transition-colors ${
                     location.pathname === '/admin/orders'
                       ? 'bg-[#563568] text-white'
                       : 'text-[#6F6475] hover:bg-[#FAF5FC] hover:text-[#563568]'
@@ -115,6 +115,39 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 >
                   <Package size={14} />
                   <span>Orders</span>
+                </Link>
+                <Link
+                  to="/admin/analytics"
+                  className={`flex items-center gap-1.5 text-xs font-medium px-2.5 sm:px-3 py-1.5 rounded-xs transition-colors ${
+                    location.pathname === '/admin/analytics'
+                      ? 'bg-[#563568] text-white'
+                      : 'text-[#6F6475] hover:bg-[#FAF5FC] hover:text-[#563568]'
+                  }`}
+                >
+                  <TrendingUp size={14} />
+                  <span className="hidden sm:inline">Analytics</span>
+                </Link>
+                <Link
+                  to="/admin/inventory"
+                  className={`flex items-center gap-1.5 text-xs font-medium px-2.5 sm:px-3 py-1.5 rounded-xs transition-colors ${
+                    location.pathname === '/admin/inventory'
+                      ? 'bg-[#563568] text-white'
+                      : 'text-[#6F6475] hover:bg-[#FAF5FC] hover:text-[#563568]'
+                  }`}
+                >
+                  <Boxes size={14} />
+                  <span className="hidden sm:inline">Inventory</span>
+                </Link>
+                <Link
+                  to="/admin/settings"
+                  className={`flex items-center gap-1.5 text-xs font-medium px-2.5 sm:px-3 py-1.5 rounded-xs transition-colors ${
+                    location.pathname === '/admin/settings'
+                      ? 'bg-[#563568] text-white'
+                      : 'text-[#6F6475] hover:bg-[#FAF5FC] hover:text-[#563568]'
+                  }`}
+                >
+                  <Settings size={14} />
+                  <span className="hidden sm:inline">Settings</span>
                 </Link>
               </nav>
             </div>
