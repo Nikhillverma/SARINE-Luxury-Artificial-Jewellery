@@ -264,10 +264,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <img
               src={slide.image}
               alt={slide.heading}
-              className="absolute inset-0 w-full h-full object-cover object-[70%_center]"
+              className="absolute inset-0 w-full h-full object-cover object-[70%_center] shadow-none"
             />
-            {/* Soft left-to-right lavender gradient overlay for text readability */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#F0E6F4] via-[#F0E6F4]/85 to-[#F0E6F4]/30 md:from-[#F0E6F4]/95 md:via-[#F0E6F4]/70 md:to-transparent pointer-events-none"></div>
           </div>
         ))}
 
