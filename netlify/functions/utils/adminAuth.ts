@@ -24,7 +24,7 @@ export async function verifyAdminRequest(event: {
   if (!authHeader || typeof authHeader !== 'string') {
     return {
       authorized: false,
-      response: errorResponse(401, 'Unauthorized: Authentication required.')
+      response: errorResponse(401, 'Unauthorized: Authentication required.', undefined, event)
     };
   }
 
@@ -32,7 +32,7 @@ export async function verifyAdminRequest(event: {
   if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') {
     return {
       authorized: false,
-      response: errorResponse(401, 'Unauthorized: Invalid authentication format.')
+      response: errorResponse(401, 'Unauthorized: Invalid authentication format.', undefined, event)
     };
   }
 
@@ -40,7 +40,7 @@ export async function verifyAdminRequest(event: {
   if (!idToken) {
     return {
       authorized: false,
-      response: errorResponse(401, 'Unauthorized: Token missing.')
+      response: errorResponse(401, 'Unauthorized: Token missing.', undefined, event)
     };
   }
 
@@ -53,7 +53,7 @@ export async function verifyAdminRequest(event: {
       console.warn('[adminAuth] Token valid but contains no email address for uid:', decoded.uid);
       return {
         authorized: false,
-        response: errorResponse(403, 'Forbidden: Admin access denied.')
+        response: errorResponse(403, 'Forbidden: Admin access denied.', undefined, event)
       };
     }
 
@@ -67,7 +67,7 @@ export async function verifyAdminRequest(event: {
       console.error('[adminAuth] ADMIN_EMAILS server environment variable is not configured.');
       return {
         authorized: false,
-        response: errorResponse(403, 'Forbidden: Admin access not configured.')
+        response: errorResponse(403, 'Forbidden: Admin access not configured.', undefined, event)
       };
     }
 
@@ -75,7 +75,7 @@ export async function verifyAdminRequest(event: {
       console.warn(`[adminAuth] Access denied for user "${email}". Not in ADMIN_EMAILS list.`);
       return {
         authorized: false,
-        response: errorResponse(403, 'Forbidden: Admin access denied.')
+        response: errorResponse(403, 'Forbidden: Admin access denied.', undefined, event)
       };
     }
 
@@ -87,7 +87,7 @@ export async function verifyAdminRequest(event: {
     console.error('[adminAuth] Failed to verify ID token:', err);
     return {
       authorized: false,
-      response: errorResponse(401, 'Unauthorized: Session invalid or expired.')
+      response: errorResponse(401, 'Unauthorized: Session invalid or expired.', err, event)
     };
   }
 }

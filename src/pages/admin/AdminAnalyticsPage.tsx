@@ -8,6 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { getFirebaseAuth, isFirebaseConfigured } from '../../lib/firebase';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { formatInr } from '../../utils/currency';
+import { getApiEndpoint } from '../../config/api';
 import {
   TrendingUp,
   DollarSign,
@@ -72,7 +73,7 @@ export const AdminAnalyticsPage: React.FC = () => {
         }
 
         const token = await user.getIdToken();
-        const res = await fetch('/.netlify/functions/admin-list-orders?limit=100', {
+        const res = await fetch(getApiEndpoint('admin-list-orders?limit=100'), {
           headers: {
             Authorization: `Bearer ${token}`
           }

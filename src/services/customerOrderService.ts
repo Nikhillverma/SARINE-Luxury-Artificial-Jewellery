@@ -9,6 +9,7 @@
  */
 
 import { Order } from '../types/order';
+import { getApiEndpoint } from '../config/api';
 
 const ORDER_CACHE_PREFIX = 'sarine_customer_orders_';
 
@@ -129,7 +130,7 @@ class CustomerOrderService {
     const cacheKey = this.getCacheKey(customerEmail);
 
     try {
-      const res = await fetch('/.netlify/functions/customer-orders', {
+      const res = await fetch(getApiEndpoint('customer-orders'), {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${idToken}`,
@@ -183,7 +184,7 @@ class CustomerOrderService {
     const cacheKey = this.getCacheKey(customerEmail);
 
     try {
-      const res = await fetch('/.netlify/functions/customer-cancel-order', {
+      const res = await fetch(getApiEndpoint('customer-cancel-order'), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${idToken}`,
@@ -239,7 +240,7 @@ class CustomerOrderService {
     const cacheKey = this.getCacheKey(customerEmail);
 
     try {
-      const res = await fetch('/.netlify/functions/customer-return-request', {
+      const res = await fetch(getApiEndpoint('customer-return-request'), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${idToken}`,

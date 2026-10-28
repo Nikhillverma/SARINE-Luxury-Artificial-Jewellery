@@ -74,18 +74,20 @@ service cloud.firestore {
   - Frontend admin routes: `/admin/login` (Firebase Auth sign-in) and `/admin/orders` (guarded orders ledger with filters, search, load more, order drawer, tracking update form, cancel dialog, and Razorpay dashboard refund instructions).
 
 ## Still TODO (in order)
-1. Deploy to Netlify and add server environment variables (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, ADMIN_EMAILS, RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET).
-2. Configure Razorpay Webhook in Razorpay Dashboard pointing to https://<your-site>.netlify.app/.netlify/functions/razorpay-webhook with secret RAZORPAY_WEBHOOK_SECRET for payment.captured.
+1. Add server environment variables in backend provider (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, ADMIN_EMAILS, RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET).
+2. Configure Razorpay Webhook in Razorpay Dashboard pointing to https://<your-functions-host>/.netlify/functions/razorpay-webhook with secret RAZORPAY_WEBHOOK_SECRET for payment.captured.
 3. Order confirmation email (via serverless email service).
 4. Remove "Seed Firestore (Dev)" button and seedFirestore.ts before launch.
 5. Customer accounts / order history (DONE - Customer Account portal with 8 sections, purchase statistics, orders list, details modal, invoices, cancellation, and return requests).
-6. Launch tidy-up: remove test notices, host the site, configure custom domain.
-7. Razorpay live mode needs business KYC.
+6. Firebase Hosting setup (DONE - firebase.json, .firebaserc, SPA rewrites, Cache-Control headers, GitHub Actions workflow, dynamic API resolver).
+7. Connect custom domain via Firebase Console > Hosting.
+8. Razorpay live mode needs business KYC.
 
 ## Accounts and decisions
 - Razorpay account: created. Use TEST mode keys until KYC is done.
 - Node.js 22 installed on the user's Windows PC.
-- User wants the FREE plan (no Firebase Blaze). Plan: GitHub + Netlify free plan for hosting and server functions.
+- Hosting: Migrated to Firebase Hosting for the frontend SPA (free SSL, global CDN, custom domains).
+- Functions: Serverless functions run on Netlify Free Tier or Firebase Cloud Functions (requires Blaze for Razorpay outbound network calls). Frontend uses dynamic `src/config/api.ts` resolver with `VITE_API_BASE_URL`.
 - Undecided: shipping fee/free-shipping threshold, Cash on Delivery yes/no (both are set in src/config/store.ts and netlify/functions/utils/storeConfig.ts).
 
 ## How to resume

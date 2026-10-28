@@ -10,7 +10,7 @@
 import { Handler } from '@netlify/functions';
 import crypto from 'crypto';
 import { getFirebaseAdmin } from './utils/firebaseAdmin';
-import { timingSafeCompare, jsonResponse, errorResponse } from './utils/security';
+import { timingSafeCompare, jsonResponse, errorResponse, handlePreflight } from './utils/security';
 
 const RATE_LIMIT_COLLECTION = '_rate_limits';
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
@@ -19,7 +19,7 @@ const GENERIC_NOT_FOUND = "We couldn't find an order with those details.";
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
-    return jsonResponse(204, {});
+    return handlePreflight(event);
   }
 
   if (event.httpMethod !== 'POST') {

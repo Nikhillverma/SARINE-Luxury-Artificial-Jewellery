@@ -8,6 +8,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatInr } from '../utils/currency';
+import { getApiEndpoint } from '../config/api';
 import {
   Package,
   Search,
@@ -84,7 +85,7 @@ export const TrackOrderPage: React.FC = () => {
     setOrder(null);
 
     try {
-      const res = await fetch('/.netlify/functions/track-order', {
+      const res = await fetch(getApiEndpoint('track-order'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

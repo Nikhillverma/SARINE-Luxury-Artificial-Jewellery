@@ -10,6 +10,7 @@ import { signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { getFirebaseAuth, isFirebaseConfigured } from '../../lib/firebase';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { formatInr } from '../../utils/currency';
+import { getApiEndpoint } from '../../config/api';
 import {
   Package,
   Search,
@@ -154,7 +155,7 @@ export const AdminOrdersPage: React.FC = () => {
           queryParams.set('startAfter', nextCursor);
         }
 
-        const res = await fetch(`/.netlify/functions/admin-list-orders?${queryParams.toString()}`, {
+        const res = await fetch(getApiEndpoint(`admin-list-orders?${queryParams.toString()}`), {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${idToken}`,
@@ -244,7 +245,7 @@ export const AdminOrdersPage: React.FC = () => {
 
     try {
       const idToken = await user.getIdToken();
-      const res = await fetch('/.netlify/functions/admin-update-order', {
+      const res = await fetch(getApiEndpoint('admin-update-order'), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${idToken}`,

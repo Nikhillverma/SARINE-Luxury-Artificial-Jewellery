@@ -8,11 +8,11 @@
 
 import { Handler } from '@netlify/functions';
 import { getFirebaseAdmin } from './utils/firebaseAdmin';
-import { timingSafeCompare, jsonResponse, errorResponse } from './utils/security';
+import { timingSafeCompare, jsonResponse, errorResponse, handlePreflight } from './utils/security';
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
-    return jsonResponse(204, {});
+    return handlePreflight(event);
   }
 
   if (event.httpMethod !== 'GET' && event.httpMethod !== 'POST') {

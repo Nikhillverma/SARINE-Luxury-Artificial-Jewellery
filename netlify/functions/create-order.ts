@@ -12,7 +12,7 @@ import crypto from 'crypto';
 import { getFirebaseAdmin, Transaction } from './utils/firebaseAdmin';
 import { getRazorpay } from './utils/razorpay';
 import { COD_ENABLED, calculateShippingFee } from './utils/storeConfig';
-import { jsonResponse, errorResponse } from './utils/security';
+import { jsonResponse, errorResponse, handlePreflight } from './utils/security';
 
 interface CreateOrderRequestBody {
   items: Array<{ productId: string; quantity: number }>;
@@ -35,7 +35,7 @@ interface CreateOrderRequestBody {
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
-    return jsonResponse(204, {});
+    return handlePreflight(event);
   }
 
   if (event.httpMethod !== 'POST') {

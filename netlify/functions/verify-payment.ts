@@ -13,7 +13,7 @@ import { Handler } from '@netlify/functions';
 import crypto from 'crypto';
 import { getFirebaseAdmin, Transaction } from './utils/firebaseAdmin';
 import { getRazorpay } from './utils/razorpay';
-import { timingSafeCompare, jsonResponse, errorResponse } from './utils/security';
+import { timingSafeCompare, jsonResponse, errorResponse, handlePreflight } from './utils/security';
 
 interface VerifyPaymentBody {
   orderNumber?: string;
@@ -27,7 +27,7 @@ const RAZORPAY_PAYMENT_ID_REGEX = /^pay_[A-Za-z0-9]+$/;
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
-    return jsonResponse(204, {});
+    return handlePreflight(event);
   }
 
   if (event.httpMethod !== 'POST') {

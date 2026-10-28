@@ -13,6 +13,7 @@ import {
   VerifyPaymentInput,
   VerifyPaymentResult
 } from '../../types/order';
+import { getApiEndpoint } from '../../config/api';
 
 export class NetlifyOrderService implements IOrderService {
   /**
@@ -22,7 +23,7 @@ export class NetlifyOrderService implements IOrderService {
   async createOrder(input: CreateOrderInput): Promise<Order> {
     let res: Response;
     try {
-      res = await fetch('/.netlify/functions/create-order', {
+      res = await fetch(getApiEndpoint('create-order'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -85,7 +86,7 @@ export class NetlifyOrderService implements IOrderService {
   async verifyPayment(input: VerifyPaymentInput): Promise<VerifyPaymentResult> {
     let res: Response;
     try {
-      res = await fetch('/.netlify/functions/verify-payment', {
+      res = await fetch(getApiEndpoint('verify-payment'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -118,9 +119,11 @@ export class NetlifyOrderService implements IOrderService {
     }
 
     try {
-      const url = `/.netlify/functions/get-order?orderNumber=${encodeURIComponent(
-        orderNumber.trim()
-      )}&t=${encodeURIComponent(publicToken.trim())}`;
+      const url = getApiEndpoint(
+        `get-order?orderNumber=${encodeURIComponent(
+          orderNumber.trim()
+        )}&t=${encodeURIComponent(publicToken.trim())}`
+      );
 
       const res = await fetch(url, {
         method: 'GET',
