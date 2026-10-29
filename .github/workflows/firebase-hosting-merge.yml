@@ -52,4 +52,4 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SARINE_CBCCE }}
           channelId: live
           projectId: sarine-cbcce
-
+# Retry deployment after configuring Firebase credentials
