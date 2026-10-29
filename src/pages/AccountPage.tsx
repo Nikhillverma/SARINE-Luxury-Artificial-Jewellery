@@ -1,12 +1,23 @@
 /**
- * Customer Account & My Orders Portal for SARINE.
- * Complete, professional customer dashboard featuring:
- * - 8-section account navigation: Profile, Orders, Addresses, Wishlist, Returns, Notifications, Security, Logout
- * - Comprehensive My Orders dashboard with purchase statistics (Orders, Units, Spend, In-Progress, Delivered)
- * - Order search & status/date filters
- * - Rich order cards distinguishing distinct product types vs total units
- * - Full Order Details modal with itemized snapshots, tracking timeline, invoice download, cancel & return flows
- * - Integration with Firebase Authentication and secure Netlify customer endpoints
+ * Customer Account & Concierge Portal for SARINE.
+ * Inspired by modern Indian fine jewellery brands.
+ *
+ * Architecture:
+ * - Customer profile summary at the top
+ * - MAIN MENU:
+ *   1. Order History (real authenticated orders, filters, item snapshots, live tracking & details)
+ *   2. Plan of Purchase (10+1 monthly savings simulator & verified governance framework; coming-soon)
+ *   3. Wishlist (saved demi-fine pieces, move to bag, remove, persistent)
+ *   4. SARINE Wallet (verified zero balance, ledger breakdown, coming-soon)
+ *   5. Delivery Addresses (CRUD with validation, default toggle, safe deletion, per-UID storage)
+ * - OTHERS:
+ *   6. SARINE Support Center (official contact, concierge hours, order ticket inquiry)
+ *   7. How to Earn (points, birthday perks, patron referral code generator)
+ *   8. How to Redeem (1:1 rupee parity, checkout rules, minimum threshold)
+ *   9. FAQs (categorized, searchable accordions across 8 domains)
+ *   10. Privacy Policy (zero payment-card retention guarantee)
+ * - BOTTOM:
+ *   11. Sign Out (safe confirmation modal, session reset, redirect)
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -23,65 +34,46 @@ import { getFirebaseAuth, isFirebaseConfigured } from '../lib/firebase';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import { customerOrderService } from '../services/customerOrderService';
-import { Order, OrderStatus } from '../types/order';
+import { Order } from '../types/order';
 import { formatInr } from '../utils/currency';
+
+// Modular Account Subcomponents
+import { AccountSidebar, AccountSection } from '../components/account/AccountSidebar';
+import { PlanOfPurchaseSection } from '../components/account/PlanOfPurchaseSection';
+import { WalletSection } from '../components/account/WalletSection';
+import { SupportSection } from '../components/account/SupportSection';
+import { RewardsEarnSection } from '../components/account/RewardsEarnSection';
+import { RewardsRedeemSection } from '../components/account/RewardsRedeemSection';
+import { FaqsSection } from '../components/account/FaqsSection';
+import { PrivacySection } from '../components/account/PrivacySection';
+import { AddressesSection } from '../components/account/AddressesSection';
+import { ProfileSection } from '../components/account/ProfileSection';
 import { OrderDetailsModal } from '../components/account/OrderDetailsModal';
+
 import {
-  User as UserIcon,
   Package,
   Heart,
-  LogOut,
-  MapPin,
-  RotateCcw,
-  Bell,
-  Shield,
-  Search,
-  Filter,
+  Truck,
   CheckCircle2,
   Clock,
-  Truck,
   AlertCircle,
-  FileText,
   ShoppingBag,
-  ExternalLink,
-  ChevronRight,
+  Search,
   ArrowRight,
-  Sparkles,
-  Lock,
-  Mail,
-  Phone,
+  ChevronRight,
   RefreshCw,
-  Plus,
+  LogOut,
+  Sparkles,
   Trash2,
-  Check
+  Menu,
+  X
 } from 'lucide-react';
-
-type AccountSection =
-  | 'orders'
-  | 'profile'
-  | 'addresses'
-  | 'wishlist'
-  | 'returns'
-  | 'notifications'
-  | 'security';
-
-interface SavedAddress {
-  id: string;
-  fullName: string;
-  phone: string;
-  line1: string;
-  line2?: string;
-  city: string;
-  state: string;
-  pincode: string;
-  isDefault: boolean;
-}
 
 export const AccountPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { wishlistProducts, count: wishlistCount, openWishlist, removeFromWishlist } = useWishlist();
-  const { itemCount, openDrawer, addItem } = useCart();
+  const { addItem, openDrawer } = useCart();
 
   // Authentication State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -90,10 +82,28 @@ export const AccountPage: React.FC = () => {
     return searchParams.get('tab') === 'track' ? 'track' : 'signin';
   });
 
-  // Active Account Tab
+  // Active Account Tab with aliases
   const [activeSection, setActiveSection] = useState<AccountSection>(() => {
-    const sectionParam = searchParams.get('section') as AccountSection;
-    return sectionParam || 'orders';
+    const rawSection = searchParams.get('section');
+    if (rawSection === 'returns') return 'orders';
+    if (rawSection === 'notifications' || rawSection === 'security') return 'profile';
+    const validSections: AccountSection[] = [
+      'orders',
+      'plan-of-purchase',
+      'wishlist',
+      'wallet',
+      'addresses',
+      'support',
+      'how-to-earn',
+      'how-to-redeem',
+      'faqs',
+      'privacy',
+      'profile'
+    ];
+    if (rawSection && validSections.includes(rawSection as AccountSection)) {
+      return rawSection as AccountSection;
+    }
+    return 'orders';
   });
 
   // Orders State
@@ -120,50 +130,8 @@ export const AccountPage: React.FC = () => {
   const [orderLookupNum, setOrderLookupNum] = useState('');
   const [orderLookupPhone, setOrderLookupPhone] = useState('');
 
-  // Profile Edit State
-  const [profileName, setProfileName] = useState('');
-  const [profilePhone, setProfilePhone] = useState('');
-  const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
-
-  // Saved Addresses State
-  const [addresses, setAddresses] = useState<SavedAddress[]>([
-    {
-      id: 'addr-1',
-      fullName: 'Aarohi Patel',
-      phone: '9876543210',
-      line1: 'Flat 402, Lotus Grand Residences',
-      line2: 'Jubilee Hills, Road No. 36',
-      city: 'Hyderabad',
-      state: 'Telangana',
-      pincode: '500033',
-      isDefault: true
-    }
-  ]);
-  const [showAddressForm, setShowAddressForm] = useState(false);
-  const [newAddress, setNewAddress] = useState<Omit<SavedAddress, 'id'>>({
-    fullName: '',
-    phone: '',
-    line1: '',
-    line2: '',
-    city: '',
-    state: '',
-    pincode: '',
-    isDefault: false
-  });
-
-  // Notification Preferences
-  const [notifPreferences, setNotifPreferences] = useState({
-    smsDispatch: true,
-    whatsappUpdates: true,
-    emailInvoices: true,
-    atelierDrops: false
-  });
-
-  // Security State
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [securityMessage, setSecurityMessage] = useState<string | null>(null);
-  const [securityError, setSecurityError] = useState<string | null>(null);
+  // Mobile Navigation Menu Toggle
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Logout Dialog State
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -179,9 +147,6 @@ export const AccountPage: React.FC = () => {
       const auth = getFirebaseAuth();
       const unsub = onAuthStateChanged(auth, (user) => {
         setCurrentUser(user);
-        if (user) {
-          setProfileName(user.displayName || user.email?.split('@')[0] || '');
-        }
         setLoadingAuth(false);
       });
       return () => unsub();
@@ -222,19 +187,21 @@ export const AccountPage: React.FC = () => {
   const handleSelectSection = (sec: AccountSection) => {
     setActiveSection(sec);
     setSearchParams({ section: sec });
+    setMobileMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // 3. Purchase Statistics Calculations
   const purchaseStats = useMemo(() => {
     const totalOrders = orders.length;
 
-    // Total product units purchased across all orders
+    // Total product units purchased
     const totalUnits = orders.reduce((sum, order) => {
       const orderUnits = order.lines.reduce((lSum, line) => lSum + (line.quantity || 1), 0);
       return sum + orderUnits;
     }, 0);
 
-    // Total spent on completed, non-cancelled purchases (excludes cancelled orders; handles refunds)
+    // Total spent on completed, non-cancelled purchases
     const totalSpend = orders.reduce((sum, order) => {
       if (order.orderStatus === 'cancelled') return sum;
       if (order.paymentStatus === 'refunded') return sum;
@@ -267,7 +234,6 @@ export const AccountPage: React.FC = () => {
   // 4. Filtered Orders
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
-      // Search by order number or product name
       if (orderSearchQuery.trim()) {
         const query = orderSearchQuery.toLowerCase().trim();
         const matchesNumber = order.orderNumber.toLowerCase().includes(query);
@@ -275,7 +241,6 @@ export const AccountPage: React.FC = () => {
         if (!matchesNumber && !matchesProduct) return false;
       }
 
-      // Status filter
       if (statusFilter !== 'all') {
         if (statusFilter === 'in_progress') {
           const inProgress = ['placed', 'pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery'];
@@ -287,7 +252,6 @@ export const AccountPage: React.FC = () => {
         }
       }
 
-      // Date Range filter
       if (dateRangeFilter !== 'all') {
         const orderTime = new Date(order.createdAt).getTime();
         const now = Date.now();
@@ -363,13 +327,12 @@ export const AccountPage: React.FC = () => {
   const handleCancelOrder = async (orderNumber: string, reason: string) => {
     if (!currentUser) return;
     const idToken = await currentUser.getIdToken();
-    const res = await customerOrderService.cancelOrder(
+    await customerOrderService.cancelOrder(
       idToken,
       orderNumber,
       reason,
       currentUser.email || ''
     );
-    // Reload local orders
     await loadOrders();
     if (selectedOrder && selectedOrder.orderNumber === orderNumber) {
       setSelectedOrder((prev) =>
@@ -416,59 +379,6 @@ export const AccountPage: React.FC = () => {
     }
   };
 
-  // 7. Profile Save Handler
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentUser) return;
-    setProfileSuccess(null);
-    try {
-      await updateProfile(currentUser, { displayName: profileName.trim() });
-      setProfileSuccess('Profile details updated successfully.');
-      setTimeout(() => setProfileSuccess(null), 3000);
-    } catch (err) {
-      console.error('Failed to update profile', err);
-    }
-  };
-
-  // 8. Address Handlers
-  const handleAddAddress = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newAddress.fullName || !newAddress.line1 || !newAddress.city || !newAddress.pincode) return;
-    const added: SavedAddress = {
-      ...newAddress,
-      id: `addr-${Date.now()}`
-    };
-    if (added.isDefault) {
-      setAddresses((prev) => prev.map((a) => ({ ...a, isDefault: false })).concat(added));
-    } else {
-      setAddresses((prev) => [...prev, added]);
-    }
-    setShowAddressForm(false);
-    setNewAddress({
-      fullName: '',
-      phone: '',
-      line1: '',
-      line2: '',
-      city: '',
-      state: '',
-      pincode: '',
-      isDefault: false
-    });
-  };
-
-  const handleDeleteAddress = (id: string) => {
-    setAddresses((prev) => prev.filter((a) => a.id !== id));
-  };
-
-  const handleSetDefaultAddress = (id: string) => {
-    setAddresses((prev) =>
-      prev.map((a) => ({
-        ...a,
-        isDefault: a.id === id
-      }))
-    );
-  };
-
   if (loadingAuth) {
     return (
       <div className="min-h-screen bg-[#F7F0FA] flex items-center justify-center p-8">
@@ -512,7 +422,7 @@ export const AccountPage: React.FC = () => {
                   setAuthMode('signin');
                   setAuthError(null);
                 }}
-                className={`flex-1 py-3 text-center border-b-2 cursor-pointer transition-colors ${
+                className={`min-h-[44px] flex-1 py-3 text-center border-b-2 cursor-pointer transition-colors ${
                   authMode === 'signin'
                     ? 'border-[#563568] text-[#563568] font-semibold'
                     : 'border-transparent text-[#6F6475] hover:text-[#302438]'
@@ -526,7 +436,7 @@ export const AccountPage: React.FC = () => {
                   setAuthMode('signup');
                   setAuthError(null);
                 }}
-                className={`flex-1 py-3 text-center border-b-2 cursor-pointer transition-colors ${
+                className={`min-h-[44px] flex-1 py-3 text-center border-b-2 cursor-pointer transition-colors ${
                   authMode === 'signup'
                     ? 'border-[#563568] text-[#563568] font-semibold'
                     : 'border-transparent text-[#6F6475] hover:text-[#302438]'
@@ -540,7 +450,7 @@ export const AccountPage: React.FC = () => {
                   setAuthMode('track');
                   setAuthError(null);
                 }}
-                className={`flex-1 py-3 text-center border-b-2 cursor-pointer transition-colors ${
+                className={`min-h-[44px] flex-1 py-3 text-center border-b-2 cursor-pointer transition-colors ${
                   authMode === 'track'
                     ? 'border-[#563568] text-[#563568] font-semibold'
                     : 'border-transparent text-[#6F6475] hover:text-[#302438]'
@@ -575,7 +485,7 @@ export const AccountPage: React.FC = () => {
                     value={orderLookupNum}
                     onChange={(e) => setOrderLookupNum(e.target.value.toUpperCase())}
                     placeholder="e.g. SAR-000108"
-                    className="w-full p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#563568] rounded-xs focus:outline-none uppercase"
+                    className="w-full min-h-[44px] p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#563568] rounded-xs focus:outline-none uppercase"
                   />
                 </div>
 
@@ -586,14 +496,14 @@ export const AccountPage: React.FC = () => {
                     value={orderLookupPhone}
                     onChange={(e) => setOrderLookupPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                     placeholder="e.g. 9876543210"
-                    className="w-full p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#563568] rounded-xs focus:outline-none"
+                    className="w-full min-h-[44px] p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#563568] rounded-xs focus:outline-none"
                   />
                 </div>
 
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="w-full py-3 bg-[#563568] text-white hover:bg-[#80609A] text-xs uppercase tracking-[0.2em] font-medium rounded-xs transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full min-h-[44px] py-3 bg-[#563568] text-white hover:bg-[#80609A] text-xs uppercase tracking-[0.2em] font-medium rounded-xs transition-colors shadow-xs cursor-pointer flex items-center justify-center gap-2"
                   >
                     <Truck size={14} />
                     <span>Track Order Status</span>
@@ -611,7 +521,7 @@ export const AccountPage: React.FC = () => {
                       value={authFullName}
                       onChange={(e) => setAuthFullName(e.target.value)}
                       placeholder="e.g. Aarohi Patel"
-                      className="w-full p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#563568] rounded-xs focus:outline-none"
+                      className="w-full min-h-[44px] p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#563568] rounded-xs focus:outline-none"
                     />
                   </div>
                 )}
@@ -624,7 +534,7 @@ export const AccountPage: React.FC = () => {
                     value={authEmail}
                     onChange={(e) => setAuthEmail(e.target.value)}
                     placeholder="name@example.com"
-                    className="w-full p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#563568] rounded-xs focus:outline-none"
+                    className="w-full min-h-[44px] p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#563568] rounded-xs focus:outline-none"
                   />
                 </div>
 
@@ -636,7 +546,7 @@ export const AccountPage: React.FC = () => {
                     value={authPassword}
                     onChange={(e) => setAuthPassword(e.target.value)}
                     placeholder="At least 6 characters"
-                    className="w-full p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#563568] rounded-xs focus:outline-none"
+                    className="w-full min-h-[44px] p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#563568] rounded-xs focus:outline-none"
                   />
                 </div>
 
@@ -644,7 +554,7 @@ export const AccountPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={isAuthSubmitting}
-                    className="w-full py-3 bg-[#563568] text-white hover:bg-[#80609A] disabled:opacity-50 text-xs uppercase tracking-[0.2em] font-medium rounded-xs transition-colors shadow-xs cursor-pointer"
+                    className="w-full min-h-[44px] py-3 bg-[#563568] text-white hover:bg-[#80609A] disabled:opacity-50 text-xs uppercase tracking-[0.2em] font-medium rounded-xs transition-colors shadow-xs cursor-pointer"
                   >
                     {isAuthSubmitting
                       ? 'Verifying...'
@@ -672,37 +582,39 @@ export const AccountPage: React.FC = () => {
   }
 
   // =========================================================================
-  // AUTHENTICATED SCREEN (Full 8-Section Customer Portal)
+  // AUTHENTICATED SCREEN (Full Customer Portal with Upgraded Navigation)
   // =========================================================================
   return (
     <div className="min-h-screen bg-[#F7F0FA] pb-24 text-[#302438] font-sans">
-      {/* Header */}
-      <section className="bg-white border-b border-[#E7DCEB] py-6 sm:py-10">
+      {/* Header Banner */}
+      <section className="bg-white border-b border-[#E7DCEB] py-6 sm:py-8">
         <div className="site-container flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-1">
-              CUSTOMER CONCIERGE & ORDERS
+              CUSTOMER CONCIERGE & ATELIER PORTAL
             </span>
             <h1 className="font-serif text-2xl sm:text-3xl text-[#302438] font-normal">
-              Welcome back, {currentUser.displayName || currentUser.email?.split('@')[0]}
+              Namaste, {currentUser.displayName || currentUser.email?.split('@')[0]}
             </h1>
             <p className="text-xs text-[#6F6475] mt-1">
-              Member account: <span className="font-mono text-[#563568]">{currentUser.email}</span>
+              Patron membership: <span className="font-mono text-[#563568]">{currentUser.email}</span>
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={loadOrders}
-              className="px-3 py-1.5 bg-[#FAF5FC] hover:bg-[#F0E6F4] text-[#563568] border border-[#E7DCEB] text-xs font-medium rounded-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="min-h-[44px] px-3.5 py-2 bg-[#FAF5FC] hover:bg-[#F0E6F4] text-[#563568] border border-[#E7DCEB] text-xs font-medium rounded-xs transition-colors flex items-center gap-1.5 cursor-pointer"
               title="Refresh Orders"
             >
               <RefreshCw size={13} className={loadingOrders ? 'animate-spin' : ''} />
               <span>Refresh Orders</span>
             </button>
             <button
+              type="button"
               onClick={() => setShowLogoutConfirm(true)}
-              className="px-3 py-1.5 border border-[#DC2626]/30 text-[#DC2626] hover:bg-[#DC2626]/5 text-xs font-medium rounded-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="min-h-[44px] px-3.5 py-2 border border-[#DC2626]/30 text-[#DC2626] hover:bg-[#DC2626]/5 text-xs font-medium rounded-xs transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <LogOut size={13} />
               <span>Sign Out</span>
@@ -711,164 +623,72 @@ export const AccountPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Main Container: 8-Section Navigation & Content */}
-      <div className="site-container pt-8 sm:pt-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* LEFT: 8-Item Navigation Sidebar (3 Cols) */}
-          <div className="lg:col-span-3 bg-white border border-[#E7DCEB] rounded-xs shadow-xs overflow-hidden">
-            {/* User Mini Card */}
-            <div className="p-5 border-b border-[#E7DCEB] bg-[#FAF5FC]/60 flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-[#563568] text-white flex items-center justify-center font-serif text-base shrink-0">
-                {(currentUser.displayName || currentUser.email || 'S')[0].toUpperCase()}
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-xs text-[#302438] truncate">
-                  {currentUser.displayName || currentUser.email?.split('@')[0]}
-                </p>
-                <p className="text-[10px] text-[#6F6475] truncate">{currentUser.email}</p>
-                <span className="inline-block mt-1 text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-[#D9B8A0]/25 text-[#563568] font-bold rounded-xs">
-                  Atelier Patron
-                </span>
-              </div>
-            </div>
-
-            {/* Navigation List */}
-            <nav className="p-2 space-y-0.5 text-xs font-medium">
-              <button
-                onClick={() => handleSelectSection('orders')}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xs transition-colors cursor-pointer ${
-                  activeSection === 'orders'
-                    ? 'bg-[#563568] text-white'
-                    : 'text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568]'
-                }`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <Package size={15} />
-                  <span>My Orders</span>
-                </span>
-                {orders.length > 0 && (
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                      activeSection === 'orders' ? 'bg-[#B69ACF] text-[#302438]' : 'bg-[#E7DCEB] text-[#563568]'
-                    }`}
-                  >
-                    {orders.length}
-                  </span>
-                )}
-              </button>
-
-              <button
-                onClick={() => handleSelectSection('profile')}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xs transition-colors cursor-pointer ${
-                  activeSection === 'profile'
-                    ? 'bg-[#563568] text-white'
-                    : 'text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568]'
-                }`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <UserIcon size={15} />
-                  <span>My Profile</span>
-                </span>
-              </button>
-
-              <button
-                onClick={() => handleSelectSection('addresses')}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xs transition-colors cursor-pointer ${
-                  activeSection === 'addresses'
-                    ? 'bg-[#563568] text-white'
-                    : 'text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568]'
-                }`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <MapPin size={15} />
-                  <span>My Addresses</span>
-                </span>
-                <span className="text-[10px] text-[#6F6475]">{addresses.length}</span>
-              </button>
-
-              <button
-                onClick={() => handleSelectSection('wishlist')}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xs transition-colors cursor-pointer ${
-                  activeSection === 'wishlist'
-                    ? 'bg-[#563568] text-white'
-                    : 'text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568]'
-                }`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <Heart size={15} />
-                  <span>My Wishlist</span>
-                </span>
-                {wishlistCount > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-[#B69ACF] text-[#302438]">
-                    {wishlistCount}
-                  </span>
-                )}
-              </button>
-
-              <button
-                onClick={() => handleSelectSection('returns')}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xs transition-colors cursor-pointer ${
-                  activeSection === 'returns'
-                    ? 'bg-[#563568] text-white'
-                    : 'text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568]'
-                }`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <RotateCcw size={15} />
-                  <span>Returns & Exchanges</span>
-                </span>
-              </button>
-
-              <button
-                onClick={() => handleSelectSection('notifications')}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xs transition-colors cursor-pointer ${
-                  activeSection === 'notifications'
-                    ? 'bg-[#563568] text-white'
-                    : 'text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568]'
-                }`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <Bell size={15} />
-                  <span>Notifications</span>
-                </span>
-              </button>
-
-              <button
-                onClick={() => handleSelectSection('security')}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xs transition-colors cursor-pointer ${
-                  activeSection === 'security'
-                    ? 'bg-[#563568] text-white'
-                    : 'text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568]'
-                }`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <Shield size={15} />
-                  <span>Account Security</span>
-                </span>
-              </button>
-
-              <div className="pt-2 border-t border-[#E7DCEB]">
-                <button
-                  onClick={() => setShowLogoutConfirm(true)}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[#DC2626] hover:bg-[#DC2626]/5 rounded-xs transition-colors cursor-pointer"
-                >
-                  <LogOut size={15} />
-                  <span>Logout</span>
-                </button>
-              </div>
-            </nav>
+      {/* Mobile Menu Bar / Drawer Toggle (Screens < lg) */}
+      <div className="lg:hidden site-container pt-4">
+        <div className="bg-white p-3 border border-[#E7DCEB] rounded-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase font-bold text-[#6F6475] tracking-wider">
+              Viewing:
+            </span>
+            <span className="text-xs font-serif font-medium text-[#563568] capitalize">
+              {activeSection.replace(/-/g, ' ')}
+            </span>
           </div>
 
-          {/* RIGHT: Active Tab Content (9 Cols) */}
-          <div className="lg:col-span-9 space-y-6">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="min-h-[44px] px-3 py-1.5 bg-[#FAF5FC] border border-[#E7DCEB] text-[#563568] rounded-xs text-xs font-medium flex items-center gap-1.5 cursor-pointer"
+          >
+            {mobileMenuOpen ? <X size={15} /> : <Menu size={15} />}
+            <span>Account Menu</span>
+          </button>
+        </div>
+
+        {/* Mobile Dropdown Menu Drawer */}
+        {mobileMenuOpen && (
+          <div className="mt-2 bg-white border border-[#E7DCEB] rounded-xs p-3 shadow-lg animate-fadeIn">
+            <AccountSidebar
+              currentUser={currentUser}
+              activeSection={activeSection}
+              onSelectSection={handleSelectSection}
+              onTriggerLogout={() => {
+                setMobileMenuOpen(false);
+                setShowLogoutConfirm(true);
+              }}
+              ordersCount={orders.length}
+              wishlistCount={wishlistCount}
+              addressesCount={1}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Main Grid: Desktop Sidebar & Active Content */}
+      <div className="site-container pt-6 sm:pt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* LEFT: DESKTOP SIDEBAR (4 Cols on LG, 3 Cols on XL) */}
+          <div className="hidden lg:block lg:col-span-4 xl:col-span-3 sticky top-24">
+            <AccountSidebar
+              currentUser={currentUser}
+              activeSection={activeSection}
+              onSelectSection={handleSelectSection}
+              onTriggerLogout={() => setShowLogoutConfirm(true)}
+              ordersCount={orders.length}
+              wishlistCount={wishlistCount}
+              addressesCount={1}
+            />
+          </div>
+
+          {/* RIGHT: ACTIVE SECTION CONTENT (8 Cols on LG, 9 Cols on XL) */}
+          <div className="lg:col-span-8 xl:col-span-9 space-y-6">
             {/* ===============================================================
-                TAB 1: MY ORDERS DASHBOARD
+                1. ORDER HISTORY
                =============================================================== */}
             {activeSection === 'orders' && (
               <div className="space-y-6 animate-fadeIn">
-                {/* 1. Purchase Statistics Banner */}
+                {/* Purchase Statistics Banner */}
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                  {/* Total Orders */}
                   <div className="p-4 bg-white border border-[#E7DCEB] rounded-xs shadow-2xs">
                     <span className="text-[10px] uppercase tracking-wider text-[#6F6475] block mb-1">
                       Total Orders
@@ -879,7 +699,6 @@ export const AccountPage: React.FC = () => {
                     <span className="text-[10px] text-[#6F6475]">Placed to date</span>
                   </div>
 
-                  {/* Total Units Purchased */}
                   <div className="p-4 bg-white border border-[#E7DCEB] rounded-xs shadow-2xs">
                     <span className="text-[10px] uppercase tracking-wider text-[#6F6475] block mb-1">
                       Units Acquired
@@ -890,7 +709,6 @@ export const AccountPage: React.FC = () => {
                     <span className="text-[10px] text-[#6F6475]">Jewellery pieces</span>
                   </div>
 
-                  {/* Total Net Spend */}
                   <div className="p-4 bg-white border border-[#E7DCEB] rounded-xs shadow-2xs col-span-2 sm:col-span-1">
                     <span className="text-[10px] uppercase tracking-wider text-[#6F6475] block mb-1">
                       Total Spend
@@ -901,7 +719,6 @@ export const AccountPage: React.FC = () => {
                     <span className="text-[10px] text-[#047857]">Excludes cancelled</span>
                   </div>
 
-                  {/* In Progress */}
                   <div className="p-4 bg-white border border-[#E7DCEB] rounded-xs shadow-2xs">
                     <span className="text-[10px] uppercase tracking-wider text-[#6F6475] block mb-1">
                       In Progress
@@ -912,7 +729,6 @@ export const AccountPage: React.FC = () => {
                     <span className="text-[10px] text-[#735135]">Active dispatches</span>
                   </div>
 
-                  {/* Delivered */}
                   <div className="p-4 bg-white border border-[#E7DCEB] rounded-xs shadow-2xs">
                     <span className="text-[10px] uppercase tracking-wider text-[#6F6475] block mb-1">
                       Delivered
@@ -924,9 +740,8 @@ export const AccountPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 2. Controls & Search Bar */}
+                {/* Search & Filter Controls */}
                 <div className="bg-white p-4 border border-[#E7DCEB] rounded-xs shadow-2xs flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-                  {/* Search by Order ID or Product Name */}
                   <div className="relative flex-1">
                     <Search
                       size={14}
@@ -937,7 +752,7 @@ export const AccountPage: React.FC = () => {
                       value={orderSearchQuery}
                       onChange={(e) => setOrderSearchQuery(e.target.value)}
                       placeholder="Search by order ID (e.g. SAR-000108) or jewellery name..."
-                      className="w-full pl-9 pr-3 py-2 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#563568] rounded-xs text-xs focus:outline-none"
+                      className="w-full min-h-[44px] pl-9 pr-3 py-2 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#563568] rounded-xs text-xs focus:outline-none"
                     />
                     {orderSearchQuery && (
                       <button
@@ -949,12 +764,11 @@ export const AccountPage: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Filters */}
                   <div className="flex items-center gap-2 text-xs">
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="py-2 px-3 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:border-[#563568] focus:outline-none cursor-pointer"
+                      className="min-h-[44px] py-2 px-3 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:border-[#563568] focus:outline-none cursor-pointer"
                     >
                       <option value="all">All Statuses</option>
                       <option value="in_progress">In Progress</option>
@@ -965,7 +779,7 @@ export const AccountPage: React.FC = () => {
                     <select
                       value={dateRangeFilter}
                       onChange={(e) => setDateRangeFilter(e.target.value)}
-                      className="py-2 px-3 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:border-[#563568] focus:outline-none cursor-pointer"
+                      className="min-h-[44px] py-2 px-3 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:border-[#563568] focus:outline-none cursor-pointer"
                     >
                       <option value="all">All Time</option>
                       <option value="30days">Last 30 Days</option>
@@ -975,7 +789,7 @@ export const AccountPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 3. Orders List or Skeletons or Empty State */}
+                {/* Orders List / Loading / Empty */}
                 {loadingOrders ? (
                   <div className="space-y-4">
                     {[1, 2].map((n) => (
@@ -1013,14 +827,14 @@ export const AccountPage: React.FC = () => {
                           setStatusFilter('all');
                           setDateRangeFilter('all');
                         }}
-                        className="px-4 py-2 border border-[#563568] text-[#563568] text-xs font-medium rounded-xs hover:bg-[#FAF5FC] transition-colors cursor-pointer"
+                        className="min-h-[44px] px-4 py-2 border border-[#563568] text-[#563568] text-xs font-medium rounded-xs hover:bg-[#FAF5FC] transition-colors cursor-pointer"
                       >
                         Clear Filters
                       </button>
                     ) : (
                       <Link
                         to="/shop"
-                        className="inline-flex items-center gap-1.5 px-6 py-2.5 bg-[#563568] hover:bg-[#80609A] text-white text-xs font-medium rounded-xs transition-colors shadow-xs"
+                        className="inline-flex items-center gap-1.5 min-h-[44px] px-6 py-2.5 bg-[#563568] hover:bg-[#80609A] text-white text-xs font-medium rounded-xs transition-colors shadow-xs"
                       >
                         <span>Start Shopping</span>
                         <ArrowRight size={13} />
@@ -1103,10 +917,9 @@ export const AccountPage: React.FC = () => {
                             </div>
                           </div>
 
-                          {/* Card Body: Items Preview & Distinct Counts */}
+                          {/* Card Body */}
                           <div className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div className="flex items-center gap-3 min-w-0">
-                              {/* Product Thumbnails Gallery */}
                               <div className="flex items-center -space-x-2 shrink-0">
                                 {order.lines.slice(0, 3).map((line, idx) => (
                                   <img
@@ -1151,19 +964,20 @@ export const AccountPage: React.FC = () => {
                               </div>
                             </div>
 
-                            {/* Card Action Buttons */}
+                            {/* Card Actions */}
                             <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E7DCEB]">
                               <Link
                                 to={`/track-order?orderNumber=${order.orderNumber}`}
-                                className="flex-1 sm:flex-none px-3.5 py-2 border border-[#E7DCEB] hover:border-[#563568] text-[#563568] text-xs font-medium rounded-xs transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
+                                className="min-h-[44px] flex-1 sm:flex-none px-3.5 py-2 border border-[#E7DCEB] hover:border-[#563568] text-[#563568] text-xs font-medium rounded-xs transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
                               >
                                 <Truck size={13} />
                                 <span>Track</span>
                               </Link>
 
                               <button
+                                type="button"
                                 onClick={() => setSelectedOrder(order)}
-                                className="flex-1 sm:flex-none px-4 py-2 bg-[#563568] hover:bg-[#80609A] text-white text-xs font-medium rounded-xs transition-colors flex items-center justify-center gap-1 shadow-xs cursor-pointer"
+                                className="min-h-[44px] flex-1 sm:flex-none px-4 py-2 bg-[#563568] hover:bg-[#80609A] text-white text-xs font-medium rounded-xs transition-colors flex items-center justify-center gap-1 shadow-xs cursor-pointer"
                               >
                                 <span>View Details</span>
                                 <ChevronRight size={13} />
@@ -1179,290 +993,44 @@ export const AccountPage: React.FC = () => {
             )}
 
             {/* ===============================================================
-                TAB 2: MY PROFILE
+                2. PLAN OF PURCHASE (Coming Soon & Simulator)
                =============================================================== */}
-            {activeSection === 'profile' && (
-              <div className="bg-white p-6 sm:p-8 border border-[#E7DCEB] rounded-xs shadow-xs space-y-6 animate-fadeIn">
-                <div>
-                  <h3 className="font-serif text-xl text-[#302438]">My Profile</h3>
-                  <p className="text-xs text-[#6F6475] mt-0.5">
-                    Manage your personal details, contact preferences, and membership records.
-                  </p>
-                </div>
-
-                {profileSuccess && (
-                  <div className="p-3 bg-[#10B981]/10 border border-[#10B981]/30 text-[#047857] text-xs rounded-xs flex items-center gap-2">
-                    <CheckCircle2 size={14} />
-                    <span>{profileSuccess}</span>
-                  </div>
-                )}
-
-                <form onSubmit={handleSaveProfile} className="space-y-4 max-w-lg text-xs font-sans">
-                  <div>
-                    <label className="block text-[#6F6475] mb-1 font-medium">Full Name</label>
-                    <input
-                      type="text"
-                      value={profileName}
-                      onChange={(e) => setProfileName(e.target.value)}
-                      placeholder="Your full name"
-                      className="w-full p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#563568] rounded-xs focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[#6F6475] mb-1 font-medium">Email Address</label>
-                    <input
-                      type="email"
-                      disabled
-                      value={currentUser.email || ''}
-                      className="w-full p-2.5 bg-gray-100 border border-[#E7DCEB] text-gray-500 rounded-xs cursor-not-allowed"
-                    />
-                    <span className="text-[10px] text-[#6F6475] mt-1 block">
-                      Email address is linked to your order records and cannot be changed directly.
-                    </span>
-                  </div>
-
-                  <div>
-                    <label className="block text-[#6F6475] mb-1 font-medium">
-                      Mobile Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      value={profilePhone}
-                      onChange={(e) => setProfilePhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                      placeholder="10-digit Indian mobile (e.g. 9876543210)"
-                      className="w-full p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#563568] rounded-xs focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="pt-2">
-                    <button
-                      type="submit"
-                      className="px-5 py-2.5 bg-[#563568] hover:bg-[#80609A] text-white font-medium rounded-xs transition-colors shadow-xs cursor-pointer"
-                    >
-                      Save Profile Changes
-                    </button>
-                  </div>
-                </form>
-              </div>
+            {activeSection === 'plan-of-purchase' && (
+              <PlanOfPurchaseSection userEmail={currentUser.email} />
             )}
 
             {/* ===============================================================
-                TAB 3: MY ADDRESSES
-               =============================================================== */}
-            {activeSection === 'addresses' && (
-              <div className="bg-white p-6 sm:p-8 border border-[#E7DCEB] rounded-xs shadow-xs space-y-6 animate-fadeIn">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-serif text-xl text-[#302438]">Saved Addresses</h3>
-                    <p className="text-xs text-[#6F6475] mt-0.5">
-                      Delivery destinations used for swift checkout and express courier dispatch.
-                    </p>
-                  </div>
-                  {!showAddressForm && (
-                    <button
-                      onClick={() => setShowAddressForm(true)}
-                      className="px-3.5 py-2 bg-[#563568] hover:bg-[#80609A] text-white text-xs font-medium rounded-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-                    >
-                      <Plus size={14} />
-                      <span>Add New Address</span>
-                    </button>
-                  )}
-                </div>
-
-                {/* Address Form */}
-                {showAddressForm && (
-                  <form
-                    onSubmit={handleAddAddress}
-                    className="p-5 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs space-y-3 text-xs"
-                  >
-                    <h4 className="font-medium text-[#302438]">Add New Delivery Address</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[#6F6475] mb-1">Full Name</label>
-                        <input
-                          type="text"
-                          required
-                          value={newAddress.fullName}
-                          onChange={(e) => setNewAddress({ ...newAddress, fullName: e.target.value })}
-                          className="w-full p-2 bg-white border border-[#E7DCEB] focus:border-[#563568] rounded-xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[#6F6475] mb-1">Phone Number (10 digits)</label>
-                        <input
-                          type="tel"
-                          required
-                          value={newAddress.phone}
-                          onChange={(e) =>
-                            setNewAddress({
-                              ...newAddress,
-                              phone: e.target.value.replace(/\D/g, '').slice(0, 10)
-                            })
-                          }
-                          className="w-full p-2 bg-white border border-[#E7DCEB] focus:border-[#563568] rounded-xs"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[#6F6475] mb-1">House / Flat / Street (Line 1)</label>
-                      <input
-                        type="text"
-                        required
-                        value={newAddress.line1}
-                        onChange={(e) => setNewAddress({ ...newAddress, line1: e.target.value })}
-                        className="w-full p-2 bg-white border border-[#E7DCEB] focus:border-[#563568] rounded-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[#6F6475] mb-1">Landmark / Area (Line 2)</label>
-                      <input
-                        type="text"
-                        value={newAddress.line2 || ''}
-                        onChange={(e) => setNewAddress({ ...newAddress, line2: e.target.value })}
-                        className="w-full p-2 bg-white border border-[#E7DCEB] focus:border-[#563568] rounded-xs"
-                      />
-                    </div>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-[#6F6475] mb-1">City</label>
-                        <input
-                          type="text"
-                          required
-                          value={newAddress.city}
-                          onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-                          className="w-full p-2 bg-white border border-[#E7DCEB] focus:border-[#563568] rounded-xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[#6F6475] mb-1">State</label>
-                        <input
-                          type="text"
-                          required
-                          value={newAddress.state}
-                          onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })}
-                          className="w-full p-2 bg-white border border-[#E7DCEB] focus:border-[#563568] rounded-xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[#6F6475] mb-1">PIN Code (6 digits)</label>
-                        <input
-                          type="text"
-                          required
-                          value={newAddress.pincode}
-                          onChange={(e) =>
-                            setNewAddress({
-                              ...newAddress,
-                              pincode: e.target.value.replace(/\D/g, '').slice(0, 6)
-                            })
-                          }
-                          className="w-full p-2 bg-white border border-[#E7DCEB] focus:border-[#563568] rounded-xs"
-                        />
-                      </div>
-                    </div>
-                    <label className="flex items-center gap-2 pt-1 text-[#6F6475] cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={newAddress.isDefault}
-                        onChange={(e) => setNewAddress({ ...newAddress, isDefault: e.target.checked })}
-                        className="accent-[#563568]"
-                      />
-                      <span>Set as default shipping address</span>
-                    </label>
-                    <div className="pt-2 flex items-center gap-3">
-                      <button
-                        type="submit"
-                        className="px-4 py-2 bg-[#563568] text-white rounded-xs font-medium cursor-pointer"
-                      >
-                        Save Address
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowAddressForm(false)}
-                        className="px-4 py-2 border border-[#E7DCEB] text-[#6F6475] rounded-xs cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                )}
-
-                {/* Address Cards Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {addresses.map((addr) => (
-                    <div
-                      key={addr.id}
-                      className={`p-4 border rounded-xs relative space-y-1.5 text-xs ${
-                        addr.isDefault ? 'border-[#563568] bg-[#FAF5FC]/40' : 'border-[#E7DCEB] bg-white'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-[#302438]">{addr.fullName}</span>
-                        {addr.isDefault && (
-                          <span className="text-[10px] uppercase font-bold text-[#563568] bg-[#B69ACF]/20 px-2 py-0.5 rounded-xs">
-                            Default
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[#6F6475]">
-                        {addr.line1}
-                        {addr.line2 ? `, ${addr.line2}` : ''}
-                      </p>
-                      <p className="text-[#6F6475]">
-                        {addr.city}, {addr.state} — {addr.pincode}
-                      </p>
-                      <p className="text-[#6F6475]">Phone: +91 {addr.phone}</p>
-                      <div className="pt-2 flex items-center justify-between border-t border-[#E7DCEB] mt-2">
-                        {!addr.isDefault ? (
-                          <button
-                            onClick={() => handleSetDefaultAddress(addr.id)}
-                            className="text-[#563568] text-[11px] underline hover:text-[#80609A] cursor-pointer"
-                          >
-                            Set as Default
-                          </button>
-                        ) : (
-                          <span className="text-[11px] text-[#047857] flex items-center gap-1">
-                            <Check size={11} /> Primary Delivery Address
-                          </span>
-                        )}
-                        <button
-                          onClick={() => handleDeleteAddress(addr.id)}
-                          className="text-[#DC2626] hover:text-[#B91C1C] p-1 cursor-pointer"
-                          title="Delete address"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* ===============================================================
-                TAB 4: MY WISHLIST
+                3. WISHLIST
                =============================================================== */}
             {activeSection === 'wishlist' && (
               <div className="bg-white p-6 sm:p-8 border border-[#E7DCEB] rounded-xs shadow-xs space-y-6 animate-fadeIn">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-serif text-xl text-[#302438]">My Wishlist</h3>
-                    <p className="text-xs text-[#6F6475] mt-0.5">
+                    <h3 className="font-serif text-xl sm:text-2xl text-[#302438]">My Wishlist</h3>
+                    <p className="text-xs sm:text-sm text-[#6F6475] mt-1">
                       Curated pieces you have saved for celebratory occasions and everyday luxury.
                     </p>
                   </div>
-                  <span className="text-xs text-[#6F6475] font-medium">{wishlistCount} Saved</span>
+                  <span className="text-xs text-[#563568] font-bold px-2.5 py-1 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs">
+                    {wishlistCount} Saved {wishlistCount === 1 ? 'Piece' : 'Pieces'}
+                  </span>
                 </div>
 
                 {wishlistProducts.length === 0 ? (
-                  <div className="p-10 border border-[#E7DCEB] rounded-xs text-center space-y-3">
+                  <div className="p-12 border border-[#E7DCEB] rounded-xs text-center space-y-4 bg-[#FAF5FC]/40">
                     <Heart size={32} className="mx-auto text-[#B69ACF]" strokeWidth={1.5} />
-                    <p className="text-sm font-serif text-[#302438]">Your wishlist is currently empty</p>
+                    <div className="max-w-sm mx-auto">
+                      <h4 className="text-sm font-serif text-[#302438]">Your wishlist is currently empty</h4>
+                      <p className="text-xs text-[#6F6475] mt-1">
+                        Explore our handcrafted 925 sterling silver, vermeil rings, and bridal chokers.
+                      </p>
+                    </div>
                     <Link
                       to="/shop"
-                      className="inline-block px-5 py-2 bg-[#563568] text-white text-xs font-medium rounded-xs hover:bg-[#80609A]"
+                      className="inline-flex items-center gap-1.5 min-h-[44px] px-6 py-2.5 bg-[#563568] text-white text-xs font-medium rounded-xs hover:bg-[#80609A] transition-colors"
                     >
-                      Explore Catalogue
+                      <span>Explore Collection</span>
+                      <ArrowRight size={13} />
                     </Link>
                   </div>
                 ) : (
@@ -1470,31 +1038,49 @@ export const AccountPage: React.FC = () => {
                     {wishlistProducts.map((item) => (
                       <div
                         key={item.id}
-                        className="border border-[#E7DCEB] rounded-xs p-3 space-y-2 bg-[#F7F0FA]/30 relative"
+                        className="border border-[#E7DCEB] hover:border-[#B69ACF] rounded-xs p-3.5 space-y-2.5 bg-white transition-all flex flex-col justify-between"
                       >
-                        <img
-                          src={item.images[0] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=300&q=80'}
-                          alt={item.name}
-                          className="w-full h-36 object-cover rounded-xs border border-[#E7DCEB] bg-white"
-                        />
-                        <h4 className="font-serif text-xs text-[#302438] truncate">{item.name}</h4>
-                        <p className="font-semibold text-xs text-[#563568]">{formatInr(item.price)}</p>
-                        <div className="pt-2 flex items-center gap-2">
+                        <div>
+                          <Link to={`/product/${item.slug || item.id}`}>
+                            <img
+                              src={
+                                item.images[0] ||
+                                'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=400&q=80'
+                              }
+                              alt={item.name}
+                              className="w-full h-44 object-cover rounded-xs border border-[#E7DCEB] bg-[#FAF5FC]"
+                            />
+                          </Link>
+                          <h4 className="font-serif text-xs sm:text-sm text-[#302438] truncate mt-2">
+                            {item.name}
+                          </h4>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="font-semibold text-xs text-[#563568]">
+                              {formatInr(item.price)}
+                            </span>
+                            <span className="text-[10px] text-[#047857] font-medium">In Stock</span>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 flex items-center gap-2 border-t border-[#E7DCEB]">
                           <button
+                            type="button"
                             onClick={() => {
                               addItem(item);
                               openDrawer();
                             }}
-                            className="flex-1 py-1.5 bg-[#563568] hover:bg-[#80609A] text-white text-xs rounded-xs flex items-center justify-center gap-1 cursor-pointer"
+                            className="min-h-[44px] flex-1 py-2 bg-[#563568] hover:bg-[#80609A] text-white text-xs font-medium rounded-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                           >
-                            <ShoppingBag size={12} />
+                            <ShoppingBag size={13} />
                             <span>Move to Bag</span>
                           </button>
                           <button
+                            type="button"
                             onClick={() => removeFromWishlist(item.id)}
-                            className="p-1.5 border border-[#E7DCEB] text-[#6F6475] hover:text-[#DC2626] rounded-xs cursor-pointer"
+                            className="min-h-[44px] min-w-[44px] p-2 border border-[#E7DCEB] text-[#6F6475] hover:text-[#DC2626] hover:bg-[#DC2626]/5 rounded-xs flex items-center justify-center cursor-pointer"
+                            title="Remove from wishlist"
                           >
-                            <Trash2 size={13} />
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </div>
@@ -1505,176 +1091,56 @@ export const AccountPage: React.FC = () => {
             )}
 
             {/* ===============================================================
-                TAB 5: RETURNS & EXCHANGES
+                4. SARINE WALLET (Coming Soon & Zero Balance Ledger)
                =============================================================== */}
-            {activeSection === 'returns' && (
-              <div className="bg-white p-6 sm:p-8 border border-[#E7DCEB] rounded-xs shadow-xs space-y-6 animate-fadeIn">
-                <div>
-                  <h3 className="font-serif text-xl text-[#302438]">Returns & Exchanges</h3>
-                  <p className="text-xs text-[#6F6475] mt-0.5">
-                    Track existing return requests or review SARINE’s 7-day atelier policy.
-                  </p>
-                </div>
-
-                {/* Returns List */}
-                {orders.filter((o) => o.returnStatus && o.returnStatus !== 'none').length > 0 ? (
-                  <div className="space-y-3">
-                    <span className="text-[10px] uppercase tracking-wider text-[#563568] font-semibold">
-                      Active Return Requests
-                    </span>
-                    {orders
-                      .filter((o) => o.returnStatus && o.returnStatus !== 'none')
-                      .map((o) => (
-                        <div
-                          key={o.orderNumber}
-                          className="p-4 border border-[#E7DCEB] bg-[#FAF5FC]/50 rounded-xs flex items-center justify-between text-xs"
-                        >
-                          <div>
-                            <span className="font-semibold text-[#302438]">Order #{o.orderNumber}</span>
-                            <p className="text-[#6F6475] text-[11px] mt-0.5">
-                              Type: {o.returnStatus?.replace('_', ' ').toUpperCase()} • Reason: {o.returnReason}
-                            </p>
-                          </div>
-                          <span className="px-2.5 py-1 bg-[#D9B8A0]/30 text-[#735135] text-[11px] font-semibold rounded-xs">
-                            Under Atelier Review
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-                ) : (
-                  <div className="p-6 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs space-y-2 text-xs text-[#6F6475]">
-                    <span className="font-semibold text-[#563568] block">No Active Returns or Exchanges</span>
-                    <p>
-                      All delivered pieces can be returned or exchanged within 7 days of delivery.
-                      To initiate a return, navigate to <strong>My Orders</strong>, choose a delivered order, and click <strong>Return / Exchange</strong>.
-                    </p>
-                  </div>
-                )}
-
-                {/* Policy Guide */}
-                <div className="pt-4 border-t border-[#E7DCEB] space-y-3 text-xs text-[#6F6475]">
-                  <h4 className="font-serif text-sm text-[#302438]">The SARINE 7-Day Guarantee</h4>
-                  <ul className="list-disc pl-5 space-y-1.5">
-                    <li>Complimentary doorstep reverse pickup across all serviced pin codes in India.</li>
-                    <li>Items must be unworn, in original velvet presentation packaging with product tag intact.</li>
-                    <li>Full refunds for prepaid orders are credited back within 5–7 business days upon receipt.</li>
-                  </ul>
-                </div>
-              </div>
+            {activeSection === 'wallet' && (
+              <WalletSection userEmail={currentUser.email} />
             )}
 
             {/* ===============================================================
-                TAB 6: NOTIFICATIONS
+                5. DELIVERY ADDRESSES (Persistent CRUD per UID)
                =============================================================== */}
-            {activeSection === 'notifications' && (
-              <div className="bg-white p-6 sm:p-8 border border-[#E7DCEB] rounded-xs shadow-xs space-y-6 animate-fadeIn">
-                <div>
-                  <h3 className="font-serif text-xl text-[#302438]">Notification Preferences</h3>
-                  <p className="text-xs text-[#6F6475] mt-0.5">
-                    Choose how and when you receive courier dispatch updates and atelier announcements.
-                  </p>
-                </div>
-
-                <div className="space-y-4 text-xs font-sans">
-                  <label className="flex items-start justify-between p-3.5 border border-[#E7DCEB] rounded-xs cursor-pointer hover:bg-[#F7F0FA]/50 transition-colors">
-                    <div>
-                      <span className="font-medium text-[#302438] block">SMS Courier Dispatch Alerts</span>
-                      <span className="text-[11px] text-[#6F6475]">
-                        Receive real-time tracking numbers and delivery verification OTPs.
-                      </span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={notifPreferences.smsDispatch}
-                      onChange={(e) =>
-                        setNotifPreferences({ ...notifPreferences, smsDispatch: e.target.checked })
-                      }
-                      className="accent-[#563568] mt-1"
-                    />
-                  </label>
-
-                  <label className="flex items-start justify-between p-3.5 border border-[#E7DCEB] rounded-xs cursor-pointer hover:bg-[#F7F0FA]/50 transition-colors">
-                    <div>
-                      <span className="font-medium text-[#302438] block">WhatsApp Concierge Updates</span>
-                      <span className="text-[11px] text-[#6F6475]">
-                        Get direct order milestones and customer concierge styling assistance on WhatsApp.
-                      </span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={notifPreferences.whatsappUpdates}
-                      onChange={(e) =>
-                        setNotifPreferences({ ...notifPreferences, whatsappUpdates: e.target.checked })
-                      }
-                      className="accent-[#563568] mt-1"
-                    />
-                  </label>
-
-                  <label className="flex items-start justify-between p-3.5 border border-[#E7DCEB] rounded-xs cursor-pointer hover:bg-[#F7F0FA]/50 transition-colors">
-                    <div>
-                      <span className="font-medium text-[#302438] block">Email Order Tax Invoices</span>
-                      <span className="text-[11px] text-[#6F6475]">
-                        Receive PDF copies of computer-generated invoices upon order confirmation.
-                      </span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={notifPreferences.emailInvoices}
-                      onChange={(e) =>
-                        setNotifPreferences({ ...notifPreferences, emailInvoices: e.target.checked })
-                      }
-                      className="accent-[#563568] mt-1"
-                    />
-                  </label>
-                </div>
-              </div>
+            {activeSection === 'addresses' && (
+              <AddressesSection userId={currentUser.uid} />
             )}
 
             {/* ===============================================================
-                TAB 7: ACCOUNT SECURITY
+                6. SARINE SUPPORT CENTER (Real details & Inquiry Form)
                =============================================================== */}
-            {activeSection === 'security' && (
-              <div className="bg-white p-6 sm:p-8 border border-[#E7DCEB] rounded-xs shadow-xs space-y-6 animate-fadeIn">
-                <div>
-                  <h3 className="font-serif text-xl text-[#302438]">Account Security</h3>
-                  <p className="text-xs text-[#6F6475] mt-0.5">
-                    Manage your credentials, active login sessions, and data protection settings.
-                  </p>
-                </div>
-
-                {securityMessage && (
-                  <div className="p-3 bg-[#10B981]/10 border border-[#10B981]/30 text-[#047857] text-xs rounded-xs flex items-center gap-2">
-                    <CheckCircle2 size={14} />
-                    <span>{securityMessage}</span>
-                  </div>
-                )}
-
-                {securityError && (
-                  <div className="p-3 bg-[#DC2626]/5 border border-[#DC2626]/20 text-[#DC2626] text-xs rounded-xs">
-                    {securityError}
-                  </div>
-                )}
-
-                <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs space-y-1.5 text-xs">
-                  <span className="font-semibold text-[#563568] block">Firebase Authentication Guard</span>
-                  <p className="text-[#6F6475]">
-                    Your account is protected with encrypted token verification. Never share OTPs or authentication secrets with anyone.
-                  </p>
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    onClick={() => {
-                      setSecurityMessage('Security audit passed: No suspicious logins detected.');
-                      setTimeout(() => setSecurityMessage(null), 4000);
-                    }}
-                    className="px-4 py-2 border border-[#563568] text-[#563568] text-xs font-medium rounded-xs hover:bg-[#FAF5FC] transition-colors cursor-pointer"
-                  >
-                    Run Security Check
-                  </button>
-                </div>
-              </div>
+            {activeSection === 'support' && (
+              <SupportSection
+                userEmail={currentUser.email}
+                orders={orders}
+                onNavigateToFaqs={() => handleSelectSection('faqs')}
+              />
             )}
+
+            {/* ===============================================================
+                7. HOW TO EARN REWARDS
+               =============================================================== */}
+            {activeSection === 'how-to-earn' && (
+              <RewardsEarnSection userId={currentUser.uid} userEmail={currentUser.email} />
+            )}
+
+            {/* ===============================================================
+                8. HOW TO REDEEM POINTS
+               =============================================================== */}
+            {activeSection === 'how-to-redeem' && <RewardsRedeemSection />}
+
+            {/* ===============================================================
+                9. FAQS (Categorized & Searchable)
+               =============================================================== */}
+            {activeSection === 'faqs' && <FaqsSection />}
+
+            {/* ===============================================================
+                10. PRIVACY POLICY
+               =============================================================== */}
+            {activeSection === 'privacy' && <PrivacySection />}
+
+            {/* ===============================================================
+                11. PROFILE & PREFERENCES
+               =============================================================== */}
+            {activeSection === 'profile' && <ProfileSection currentUser={currentUser} />}
           </div>
         </div>
       </div>
@@ -1694,18 +1160,20 @@ export const AccountPage: React.FC = () => {
           <div className="bg-white border border-[#E7DCEB] rounded-xs shadow-2xl p-6 max-w-sm w-full space-y-4 animate-fadeIn">
             <h3 className="font-serif text-lg text-[#302438]">Confirm Sign Out</h3>
             <p className="text-xs text-[#6F6475] leading-relaxed">
-              Are you sure you want to sign out from your SARINE customer account?
+              Are you sure you want to sign out from your SARINE customer account? Your cart and saved pieces remain securely stored.
             </p>
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
+                type="button"
                 onClick={() => setShowLogoutConfirm(false)}
-                className="px-4 py-2 border border-[#E7DCEB] text-xs text-[#6F6475] hover:text-[#302438] rounded-xs cursor-pointer"
+                className="min-h-[44px] px-4 py-2 border border-[#E7DCEB] text-xs text-[#6F6475] hover:text-[#302438] rounded-xs cursor-pointer"
               >
                 Stay Signed In
               </button>
               <button
+                type="button"
                 onClick={handleSignOut}
-                className="px-4 py-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-medium rounded-xs transition-colors cursor-pointer"
+                className="min-h-[44px] px-4 py-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-medium rounded-xs transition-colors cursor-pointer"
               >
                 Sign Out
               </button>

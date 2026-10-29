@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   ShoppingBag,
   Search,
@@ -24,7 +24,12 @@ import {
   ArrowRight,
   ShieldCheck,
   Gem,
-  Award
+  Award,
+  Package,
+  Wallet,
+  MapPin,
+  HelpCircle,
+  SlidersHorizontal
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -57,6 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleIncludeAll
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { itemCount, openDrawer } = useCart();
   const { count: wishlistCount, openWishlist } = useWishlist();
 
@@ -181,371 +187,548 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <>
       <header
-        className="sticky top-0 z-40 bg-white border-b border-[#E7DCEB] shadow-xs"
+        className="sticky top-0 z-40 bg-[#FAF5FC] border-b border-[#D9B8A0]/30 shadow-xs"
         onMouseLeave={handleMouseLeave}
       >
-        {/* 1. Rotating Announcement Bar */}
-        <div className="bg-[#563568] text-[#F7F0FA] text-[11px] sm:text-xs py-1.5 font-sans tracking-wide">
-          <div className="site-container flex items-center justify-between">
-            <button
-              onClick={() =>
-                setActiveAnnouncement(
-                  (prev) => (prev - 1 + ANNOUNCEMENT_MESSAGES.length) % ANNOUNCEMENT_MESSAGES.length
-                )
-              }
-              className="text-[#B69ACF] hover:text-white px-2 py-0.5 text-xs hidden sm:inline-block cursor-pointer transition-colors"
-              aria-label="Previous announcement"
-            >
-              ‹
-            </button>
-            <div className="text-center flex-1 truncate transition-all duration-300">
-              <span className="font-normal inline-flex items-center gap-1.5">
-                <Sparkles size={11} className="text-[#D9B8A0] shrink-0" />
-                <span>{ANNOUNCEMENT_MESSAGES[activeAnnouncement]}</span>
+        {/* TIER 1: TOP UTILITY BAR (Deep-Plum #563568 Strip ~36-40px) */}
+        <div className="bg-[#563568] text-[#FAF5FC] text-[11px] sm:text-xs font-sans tracking-wide">
+          <div className="site-container flex items-center justify-between min-h-[36px] sm:min-h-[40px] py-1">
+            {/* Desktop Left: Trust & Delivery Commitments */}
+            <div className="hidden lg:flex items-center space-x-3 text-[12px] font-normal text-[#FAF5FC]/90">
+              <span className="inline-flex items-center gap-1.5">
+                <Truck size={14} className="text-[#D9B8A0] shrink-0" />
+                <span>Free Shipping Above ₹1,999</span>
+              </span>
+              <span className="w-[1px] h-3.5 bg-white/20 inline-block" />
+              <span className="inline-flex items-center gap-1.5">
+                <ShieldCheck size={14} className="text-[#D9B8A0] shrink-0" />
+                <span>7-Day Easy Returns</span>
+              </span>
+              <span className="w-[1px] h-3.5 bg-white/20 inline-block" />
+              <span className="inline-flex items-center gap-1.5">
+                <Sparkles size={14} className="text-[#D9B8A0] shrink-0" />
+                <span>Trusted by 1L+ Happy Customers</span>
               </span>
             </div>
-            <button
-              onClick={() =>
-                setActiveAnnouncement((prev) => (prev + 1) % ANNOUNCEMENT_MESSAGES.length)
-              }
-              className="text-[#B69ACF] hover:text-white px-2 py-0.5 text-xs hidden sm:inline-block cursor-pointer transition-colors"
-              aria-label="Next announcement"
-            >
-              ›
-            </button>
+
+            {/* Mobile / Tablet: Rotating Announcement Banner */}
+            <div className="flex lg:hidden items-center justify-between w-full">
+              <button
+                onClick={() =>
+                  setActiveAnnouncement(
+                    (prev) => (prev - 1 + ANNOUNCEMENT_MESSAGES.length) % ANNOUNCEMENT_MESSAGES.length
+                  )
+                }
+                className="text-[#D9B8A0] hover:text-white px-2 py-0.5 text-xs cursor-pointer transition-colors"
+                aria-label="Previous announcement"
+              >
+                ‹
+              </button>
+              <div className="text-center flex-1 truncate px-2 text-[11px] font-normal text-[#FAF5FC]">
+                <span className="inline-flex items-center gap-1.5">
+                  <Sparkles size={11} className="text-[#D9B8A0] shrink-0" />
+                  <span>{ANNOUNCEMENT_MESSAGES[activeAnnouncement]}</span>
+                </span>
+              </div>
+              <button
+                onClick={() => setActiveAnnouncement((prev) => (prev + 1) % ANNOUNCEMENT_MESSAGES.length)}
+                className="text-[#D9B8A0] hover:text-white px-2 py-0.5 text-xs cursor-pointer transition-colors"
+                aria-label="Next announcement"
+              >
+                ›
+              </button>
+            </div>
+
+            {/* Desktop Right: Customer Utility Links */}
+            <div className="hidden lg:flex items-center space-x-3 text-[12px] text-[#FAF5FC]/90">
+              <Link
+                to="/track-order"
+                className="hover:text-white transition-colors cursor-pointer py-1"
+              >
+                Track Order
+              </Link>
+              <span className="w-[1px] h-3.5 bg-white/20 inline-block" />
+              <Link
+                to="/account?section=faqs"
+                className="hover:text-white transition-colors cursor-pointer py-1"
+              >
+                Help
+              </Link>
+              <span className="w-[1px] h-3.5 bg-white/20 inline-block" />
+              <Link
+                to="/account?section=support"
+                className="hover:text-white transition-colors cursor-pointer py-1"
+              >
+                Support
+              </Link>
+            </div>
           </div>
         </div>
 
-        {/* 2. Main Navigation Bar */}
-        <div className="site-container h-18 sm:h-20 flex items-center justify-between relative">
-          {/* Left: Brand Wordmark */}
-          <div className="flex items-center gap-8">
-            <Link to="/" className="inline-block shrink-0">
-              <span className="font-serif text-2xl sm:text-[28px] tracking-[0.22em] text-[#563568] font-normal uppercase transition-colors hover:text-[#80609A]">
-                SARINE
-              </span>
-            </Link>
-
-            {/* Desktop Navigation Links */}
-            <nav
-              className="hidden lg:flex items-center space-x-6 xl:space-x-8 text-[13px] font-sans"
-              aria-label="Main Navigation"
-            >
-              {/* New Arrivals */}
-              <div
-                className="relative py-6"
-                onMouseEnter={() => handleMouseEnter('new-arrivals')}
+        {/* TIER 2: MAIN BRAND HEADER (Warm Pale Ivory/Lavender #FAF5FC) */}
+        <div className="bg-[#FAF5FC]">
+          <div className="site-container py-3 sm:py-4 flex items-center justify-between gap-4">
+            {/* Left: SARINE Wordmark with Diamond Star Motif & Tagline */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-1.5 text-[#302438] hover:text-[#563568] transition-colors lg:hidden cursor-pointer rounded-xs"
+                aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
               >
-                <Link
-                  to="/shop?sort=newest"
-                  className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
-                    activeDropdown === 'new-arrivals' || location.search.includes('sort=newest')
-                      ? 'text-[#563568] font-medium'
-                      : 'text-[#6F6475]'
-                  }`}
-                  aria-expanded={activeDropdown === 'new-arrivals'}
-                  aria-haspopup="true"
-                >
-                  <span>New Arrivals</span>
-                  <ChevronDown
-                    size={13}
-                    className={`transition-transform duration-200 ${
-                      activeDropdown === 'new-arrivals' ? 'rotate-180 text-[#563568]' : 'text-[#6F6475]'
-                    }`}
-                  />
-                </Link>
-              </div>
+                {isMobileMenuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
+              </button>
 
-              {/* Bestsellers */}
-              <div
-                className="relative py-6"
-                onMouseEnter={() => handleMouseEnter('bestsellers')}
-              >
-                <Link
-                  to="/shop?sort=bestseller"
-                  className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
-                    activeDropdown === 'bestsellers' || location.search.includes('sort=bestseller')
-                      ? 'text-[#563568] font-medium'
-                      : 'text-[#6F6475]'
-                  }`}
-                  aria-expanded={activeDropdown === 'bestsellers'}
-                  aria-haspopup="true"
-                >
-                  <span>Bestsellers</span>
-                  <ChevronDown
-                    size={13}
-                    className={`transition-transform duration-200 ${
-                      activeDropdown === 'bestsellers' ? 'rotate-180 text-[#563568]' : 'text-[#6F6475]'
-                    }`}
-                  />
-                </Link>
-              </div>
-
-              {/* Shop by Category (Mega-Menu) */}
-              <div
-                className="relative py-6"
-                onMouseEnter={() => handleMouseEnter('categories')}
-              >
-                <Link
-                  to="/shop"
-                  className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
-                    activeDropdown === 'categories' || location.pathname === '/shop'
-                      ? 'text-[#563568] font-medium'
-                      : 'text-[#6F6475]'
-                  }`}
-                  aria-expanded={activeDropdown === 'categories'}
-                  aria-haspopup="true"
-                >
-                  <span>Shop by Category</span>
-                  <ChevronDown
-                    size={13}
-                    className={`transition-transform duration-200 ${
-                      activeDropdown === 'categories' ? 'rotate-180 text-[#563568]' : 'text-[#6F6475]'
-                    }`}
-                  />
-                </Link>
-              </div>
-
-              {/* Shop by Occasion */}
-              <div
-                className="relative py-6"
-                onMouseEnter={() => handleMouseEnter('occasions')}
-              >
-                <Link
-                  to="/shop"
-                  className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
-                    activeDropdown === 'occasions' || location.search.includes('occasion=')
-                      ? 'text-[#563568] font-medium'
-                      : 'text-[#6F6475]'
-                  }`}
-                  aria-expanded={activeDropdown === 'occasions'}
-                  aria-haspopup="true"
-                >
-                  <span>Shop by Occasion</span>
-                  <ChevronDown
-                    size={13}
-                    className={`transition-transform duration-200 ${
-                      activeDropdown === 'occasions' ? 'rotate-180 text-[#563568]' : 'text-[#6F6475]'
-                    }`}
-                  />
-                </Link>
-              </div>
-
-              {/* Gifts */}
-              <div
-                className="relative py-6"
-                onMouseEnter={() => handleMouseEnter('gifts')}
-              >
-                <Link
-                  to="/shop?occasion=gifting"
-                  className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
-                    activeDropdown === 'gifts' || location.search.includes('gifting')
-                      ? 'text-[#563568] font-medium'
-                      : 'text-[#6F6475]'
-                  }`}
-                  aria-expanded={activeDropdown === 'gifts'}
-                  aria-haspopup="true"
-                >
-                  <span>Gifts</span>
-                  <ChevronDown
-                    size={13}
-                    className={`transition-transform duration-200 ${
-                      activeDropdown === 'gifts' ? 'rotate-180 text-[#563568]' : 'text-[#6F6475]'
-                    }`}
-                  />
-                </Link>
-              </div>
-
-              {/* Collections */}
-              <div
-                className="relative py-6"
-                onMouseEnter={() => handleMouseEnter('collections')}
-              >
-                <Link
-                  to="/shop"
-                  className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
-                    activeDropdown === 'collections'
-                      ? 'text-[#563568] font-medium'
-                      : 'text-[#6F6475]'
-                  }`}
-                  aria-expanded={activeDropdown === 'collections'}
-                  aria-haspopup="true"
-                >
-                  <span>Collections</span>
-                  <ChevronDown
-                    size={13}
-                    className={`transition-transform duration-200 ${
-                      activeDropdown === 'collections' ? 'rotate-180 text-[#563568]' : 'text-[#6F6475]'
-                    }`}
-                  />
-                </Link>
-              </div>
-
-              {/* About SARINE */}
-              <div
-                className="relative py-6"
-                onMouseEnter={() => handleMouseEnter('about')}
-              >
-                <Link
-                  to="/about"
-                  className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
-                    activeDropdown === 'about' || location.pathname === '/about'
-                      ? 'text-[#563568] font-medium'
-                      : 'text-[#6F6475]'
-                  }`}
-                  aria-expanded={activeDropdown === 'about'}
-                  aria-haspopup="true"
-                >
-                  <span>About SARINE</span>
-                  <ChevronDown
-                    size={13}
-                    className={`transition-transform duration-200 ${
-                      activeDropdown === 'about' ? 'rotate-180 text-[#563568]' : 'text-[#6F6475]'
-                    }`}
-                  />
-                </Link>
-              </div>
-            </nav>
-          </div>
-
-          {/* Right Action Controls */}
-          <div className="flex items-center space-x-2.5 sm:space-x-4">
-            {/* Quick Search Button / Search Pill */}
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="flex items-center bg-[#F7F0FA] hover:bg-[#F0E6F4] border border-[#E7DCEB] hover:border-[#B69ACF] rounded-full px-3 py-1.5 w-32 sm:w-48 lg:w-56 text-xs text-[#6F6475] transition-all cursor-pointer"
-              aria-label="Open search modal"
-            >
-              <Search size={14} className="text-[#563568] shrink-0 mr-2" />
-              <span className="truncate">Search jewellery...</span>
-            </button>
-
-            {/* Customer Account & Orders Dropdown */}
-            <div
-              className="relative"
-              onMouseEnter={handleAccountMouseEnter}
-              onMouseLeave={handleAccountMouseLeave}
-            >
-              <Link
-                to="/account"
-                className="text-[#302438] hover:text-[#563568] transition-colors p-1.5 rounded-full hover:bg-[#F7F0FA] flex items-center gap-1.5 cursor-pointer"
-                aria-label="Customer Account & Orders"
-                title="Customer Account & Orders"
-              >
-                <User size={19} strokeWidth={1.5} />
+              <Link to="/" className="flex flex-col items-center group">
+                <span className="font-serif text-[26px] sm:text-[34px] tracking-[0.24em] text-[#563568] uppercase font-normal leading-tight group-hover:text-[#80609A] transition-colors">
+                  SARINE
+                </span>
+                <div className="flex items-center justify-center w-full my-0.5 gap-2 px-1">
+                  <div className="h-[1px] flex-1 bg-[#D9B8A0]/70" />
+                  <svg
+                    className="w-2.5 h-2.5 text-[#D9B8A0] shrink-0"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" />
+                  </svg>
+                  <div className="h-[1px] flex-1 bg-[#D9B8A0]/70" />
+                </div>
+                <span className="text-[8px] sm:text-[9px] tracking-[0.32em] text-[#563568]/80 uppercase font-sans font-medium whitespace-nowrap">
+                  LUXURY ARTIFICIAL JEWELLERY
+                </span>
               </Link>
+            </div>
 
-              {/* Account & Orders Dropdown Menu */}
+            {/* Centre: Wide Rounded Search Bar (Desktop) */}
+            <div className="hidden lg:flex flex-1 max-w-xl mx-4 xl:mx-8">
               <div
-                className={`absolute right-0 top-full mt-2 w-64 bg-white border border-[#E7DCEB] shadow-xl py-2 z-50 transition-all duration-200 rounded-xs ${
-                  isAccountMenuOpen
-                    ? 'opacity-100 translate-y-0 visible pointer-events-auto'
-                    : 'opacity-0 -translate-y-1 invisible pointer-events-none'
-                }`}
-                onMouseEnter={() => {
-                  if (accountTimerRef.current) {
-                    clearTimeout(accountTimerRef.current);
-                    accountTimerRef.current = null;
+                onClick={() => setIsSearchOpen(true)}
+                className="w-full flex items-center bg-white border border-[#D9B8A0] hover:border-[#563568] rounded-full px-4 py-2 cursor-pointer shadow-2xs transition-all group"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setIsSearchOpen(true);
                   }
                 }}
-                onMouseLeave={handleAccountMouseLeave}
+                aria-label="Search for jewellery, collections, or more..."
               >
-                <div className="px-4 py-2 border-b border-[#E7DCEB]">
-                  <p className="text-[10px] uppercase tracking-wider text-[#563568] font-semibold">
-                    Customer Account & Orders
-                  </p>
-                  <p className="text-[11px] text-[#6F6475] mt-0.5">
-                    Track shipments & manage account
-                  </p>
-                </div>
-
-                <div className="py-1 text-xs">
-                  {/* Shifted Track Order */}
-                  <Link
-                    to="/track-order"
-                    onClick={() => setIsAccountMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
-                  >
-                    <Truck size={15} className="text-[#563568] shrink-0" />
-                    <div>
-                      <span className="font-medium block text-xs group-hover:text-[#563568]">Track My Order</span>
-                      <span className="text-[10px] text-[#6F6475]">Check live delivery status</span>
-                    </div>
-                  </Link>
-
-                  {/* Customer Account & Sign In */}
-                  <Link
-                    to="/account"
-                    onClick={() => setIsAccountMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
-                  >
-                    <User size={15} className="text-[#563568] shrink-0" />
-                    <div>
-                      <span className="font-medium block text-xs group-hover:text-[#563568]">My Account & Orders</span>
-                      <span className="text-[10px] text-[#6F6475]">Sign in & order history</span>
-                    </div>
-                  </Link>
-
-                  {/* Saved Wishlist */}
-                  <button
-                    onClick={() => {
-                      setIsAccountMenuOpen(false);
-                      openWishlist();
-                    }}
-                    className="flex items-center gap-3 px-4 py-2.5 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors w-full text-left cursor-pointer group"
-                  >
-                    <Heart size={15} className="text-[#563568] shrink-0" />
-                    <div>
-                      <span className="font-medium block text-xs group-hover:text-[#563568]">Saved Wishlist</span>
-                      <span className="text-[10px] text-[#6F6475]">{wishlistCount} saved pieces</span>
-                    </div>
-                  </button>
-                </div>
+                <Search size={16} className="text-[#563568] shrink-0 mr-3" strokeWidth={1.75} />
+                <span className="text-[13px] text-[#6F6475] italic tracking-wide flex-1 select-none">
+                  Search for jewellery, collections, or more...
+                </span>
+                <span className="w-[1px] h-4 bg-[#E7DCEB] mx-2.5 shrink-0" />
+                <span
+                  title="Search Filters"
+                  className="p-1 text-[#563568] hover:text-[#80609A] transition-colors"
+                >
+                  <SlidersHorizontal size={15} strokeWidth={1.75} />
+                </span>
               </div>
             </div>
 
-            {/* Wishlist Heart Icon with Count Badge */}
-            <button
-              onClick={openWishlist}
-              className="relative text-[#302438] hover:text-[#563568] transition-colors p-1.5 rounded-full hover:bg-[#F7F0FA] cursor-pointer"
-              aria-label={`Wishlist with ${wishlistCount} saved pieces`}
-              title="View Wishlist"
-            >
-              <Heart size={19} strokeWidth={1.5} />
-              {wishlistCount > 0 && (
-                <span className="absolute 0 top-0.5 right-0.5 w-4 h-4 bg-[#B69ACF] text-[#302438] text-[10px] font-sans font-semibold rounded-full flex items-center justify-center">
-                  {wishlistCount}
+            {/* Right: Account, Wishlist, Bag */}
+            <div className="flex items-center space-x-1.5 sm:space-x-3">
+              {/* Mobile Quick Search Button */}
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                className="p-2 text-[#302438] hover:text-[#563568] transition-colors lg:hidden cursor-pointer rounded-full hover:bg-white/60"
+                aria-label="Open search"
+              >
+                <Search size={20} strokeWidth={1.5} />
+              </button>
+
+              {/* Customer Account & Orders Dropdown */}
+              <div
+                className="relative"
+                onMouseEnter={handleAccountMouseEnter}
+                onMouseLeave={handleAccountMouseLeave}
+              >
+                <Link
+                  to="/account"
+                  className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer group"
+                  aria-label="Customer Account & Orders"
+                  title="Customer Account & Orders"
+                >
+                  <User size={19} strokeWidth={1.5} className="text-[#563568] shrink-0" />
+                  <span className="text-[13px] font-medium text-[#302438] group-hover:text-[#563568]">
+                    Account
+                  </span>
+                  <ChevronDown
+                    size={13}
+                    className={`text-[#563568] transition-transform duration-200 ${
+                      isAccountMenuOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </Link>
+
+                {/* Mobile Account Icon Only */}
+                <Link
+                  to="/account"
+                  className="sm:hidden p-2 text-[#302438] hover:text-[#563568] transition-colors rounded-full hover:bg-white/60 flex items-center"
+                  aria-label="Account"
+                >
+                  <User size={19} strokeWidth={1.5} className="text-[#563568]" />
+                </Link>
+
+                {/* Account & Orders Dropdown Menu */}
+                <div
+                  className={`absolute right-0 top-full mt-1.5 w-68 bg-white border border-[#E7DCEB] shadow-xl py-2 z-50 transition-all duration-200 rounded-xs ${
+                    isAccountMenuOpen
+                      ? 'opacity-100 translate-y-0 visible pointer-events-auto'
+                      : 'opacity-0 -translate-y-1 invisible pointer-events-none'
+                  }`}
+                  onMouseEnter={() => {
+                    if (accountTimerRef.current) {
+                      clearTimeout(accountTimerRef.current);
+                      accountTimerRef.current = null;
+                    }
+                  }}
+                  onMouseLeave={handleAccountMouseLeave}
+                >
+                  <div className="px-4 py-2 border-b border-[#E7DCEB]">
+                    <p className="text-[10px] uppercase tracking-wider text-[#563568] font-semibold">
+                      Customer Account & Orders
+                    </p>
+                    <p className="text-[11px] text-[#6F6475] mt-0.5">
+                      Track shipments & manage account
+                    </p>
+                  </div>
+
+                  <div className="py-1 text-xs">
+                    {/* Track Order */}
+                    <Link
+                      to="/track-order"
+                      onClick={() => setIsAccountMenuOpen(false)}
+                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
+                    >
+                      <Truck size={15} className="text-[#563568] shrink-0" />
+                      <div>
+                        <span className="font-medium block text-xs group-hover:text-[#563568]">Track My Order</span>
+                        <span className="text-[10px] text-[#6F6475]">Check live delivery status</span>
+                      </div>
+                    </Link>
+
+                    {/* Order History */}
+                    <Link
+                      to="/account?section=orders"
+                      onClick={() => setIsAccountMenuOpen(false)}
+                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
+                    >
+                      <Package size={15} className="text-[#563568] shrink-0" />
+                      <div>
+                        <span className="font-medium block text-xs group-hover:text-[#563568]">Order History</span>
+                        <span className="text-[10px] text-[#6F6475]">Purchases, invoices & tracking</span>
+                      </div>
+                    </Link>
+
+                    {/* Plan of Purchase */}
+                    <Link
+                      to="/account?section=plan-of-purchase"
+                      onClick={() => setIsAccountMenuOpen(false)}
+                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
+                    >
+                      <Sparkles size={15} className="text-[#563568] shrink-0" />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium text-xs group-hover:text-[#563568]">Plan of Purchase</span>
+                          <span className="text-[9px] uppercase font-bold px-1.5 py-0.2 bg-[#D9B8A0]/30 text-[#563568] rounded-xs">Plan</span>
+                        </div>
+                        <span className="text-[10px] text-[#6F6475]">10+1 Monthly Jewellery Savings</span>
+                      </div>
+                    </Link>
+
+                    {/* Saved Wishlist */}
+                    <button
+                      onClick={() => {
+                        setIsAccountMenuOpen(false);
+                        openWishlist();
+                      }}
+                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors w-full text-left cursor-pointer group"
+                    >
+                      <Heart size={15} className="text-[#563568] shrink-0" />
+                      <div className="flex-1 flex items-center justify-between">
+                        <div>
+                          <span className="font-medium block text-xs group-hover:text-[#563568]">Saved Wishlist</span>
+                          <span className="text-[10px] text-[#6F6475]">All your favourite pieces</span>
+                        </div>
+                        {wishlistCount > 0 && (
+                          <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-[#B69ACF] text-[#302438]">
+                            {wishlistCount}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+
+                    {/* SARINE Wallet */}
+                    <Link
+                      to="/account?section=wallet"
+                      onClick={() => setIsAccountMenuOpen(false)}
+                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
+                    >
+                      <Wallet size={15} className="text-[#563568] shrink-0" />
+                      <div>
+                        <span className="font-medium block text-xs group-hover:text-[#563568]">SARINE Wallet</span>
+                        <span className="text-[10px] text-[#6F6475]">Balance, cashback & credits</span>
+                      </div>
+                    </Link>
+
+                    {/* Delivery Addresses */}
+                    <Link
+                      to="/account?section=addresses"
+                      onClick={() => setIsAccountMenuOpen(false)}
+                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
+                    >
+                      <MapPin size={15} className="text-[#563568] shrink-0" />
+                      <div>
+                        <span className="font-medium block text-xs group-hover:text-[#563568]">Delivery Addresses</span>
+                        <span className="text-[10px] text-[#6F6475]">Manage shipping destinations</span>
+                      </div>
+                    </Link>
+
+                    {/* Concierge & Support */}
+                    <div className="border-t border-[#E7DCEB] mt-1 pt-1">
+                      <Link
+                        to="/account?section=support"
+                        onClick={() => setIsAccountMenuOpen(false)}
+                        className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
+                      >
+                        <HelpCircle size={15} className="text-[#563568] shrink-0" />
+                        <div>
+                          <span className="font-medium block text-xs group-hover:text-[#563568]">Support & Concierge</span>
+                          <span className="text-[10px] text-[#6F6475]">Help, inquiries & FAQs</span>
+                        </div>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Subtle divider */}
+              <span className="w-[1px] h-5 bg-[#E7DCEB] hidden sm:block" />
+
+              {/* Wishlist Button with Label & Numeric Badge */}
+              <button
+                onClick={openWishlist}
+                className="relative flex items-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer group rounded-xs hover:bg-white/60"
+                aria-label={`Wishlist with ${wishlistCount} saved pieces`}
+                title="View Wishlist"
+              >
+                <div className="relative">
+                  <Heart size={20} strokeWidth={1.5} className="text-[#563568]" />
+                  <span className="absolute -top-2 -right-2 min-w-4 h-4 px-1 bg-[#563568] text-white text-[10px] font-sans font-medium rounded-full flex items-center justify-center">
+                    {wishlistCount}
+                  </span>
+                </div>
+                <span className="text-[13px] font-medium text-[#302438] group-hover:text-[#563568] hidden sm:inline">
+                  Wishlist
                 </span>
-              )}
-            </button>
+              </button>
 
-            {/* Shopping Bag with badge */}
-            <button
-              onClick={openDrawer}
-              className="relative text-[#302438] hover:text-[#563568] transition-colors p-1.5 rounded-full hover:bg-[#F7F0FA] cursor-pointer flex items-center"
-              aria-label={`Shopping Bag with ${itemCount} items`}
-              title="Shopping Bag"
-            >
-              <ShoppingBag size={20} strokeWidth={1.5} />
-              <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-[#563568] text-white text-[10px] font-sans font-medium rounded-full flex items-center justify-center">
-                {itemCount}
-              </span>
-            </button>
+              {/* Subtle divider */}
+              <span className="w-[1px] h-5 bg-[#E7DCEB] hidden sm:block" />
 
-            {/* Mobile Menu Hamburger Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-1.5 text-[#302438] hover:text-[#563568] transition-colors lg:hidden cursor-pointer rounded-sm"
-              aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-            >
-              {isMobileMenuOpen ? (
-                <X size={22} strokeWidth={1.5} />
-              ) : (
-                <Menu size={22} strokeWidth={1.5} />
-              )}
-            </button>
+              {/* Bag Button with Label & Numeric Badge */}
+              <button
+                onClick={openDrawer}
+                className="relative flex items-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer group rounded-xs hover:bg-white/60"
+                aria-label={`Shopping Bag with ${itemCount} items`}
+                title="Shopping Bag"
+              >
+                <div className="relative">
+                  <ShoppingBag size={20} strokeWidth={1.5} className="text-[#563568]" />
+                  <span className="absolute -top-2 -right-2 min-w-4 h-4 px-1 bg-[#563568] text-white text-[10px] font-sans font-medium rounded-full flex items-center justify-center">
+                    {itemCount}
+                  </span>
+                </div>
+                <span className="text-[13px] font-medium text-[#302438] group-hover:text-[#563568] hidden sm:inline">
+                  Bag
+                </span>
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* TIER 3: SECONDARY NAVIGATION BAR (Pale Ivory/Lavender #FAF5FC with Delicate Champagne Gold Borders) */}
+        <nav
+          className="hidden lg:block bg-[#FAF5FC] border-t border-[#D9B8A0]/30 border-b border-[#D9B8A0]/30"
+          aria-label="Main Category Navigation"
+        >
+          <div className="site-container flex items-center justify-center space-x-6 xl:space-x-8 text-[13px] font-sans">
+            {/* 1. Home */}
+            <div className="py-3.5">
+              <Link
+                to="/"
+                className={`relative inline-flex items-center pb-1 transition-colors hover:text-[#563568] ${
+                  location.pathname === '/' && !location.search
+                    ? 'text-[#563568] font-medium border-b-2 border-[#D9B8A0]'
+                    : 'text-[#302438]'
+                }`}
+              >
+                <span>Home</span>
+              </Link>
+            </div>
+
+            {/* 2. New Arrivals */}
+            <div
+              className="relative py-3.5"
+              onMouseEnter={() => handleMouseEnter('new-arrivals')}
+            >
+              <Link
+                to="/shop?sort=newest"
+                className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
+                  activeDropdown === 'new-arrivals' || location.search.includes('sort=newest')
+                    ? 'text-[#563568] font-medium'
+                    : 'text-[#302438]'
+                }`}
+                aria-expanded={activeDropdown === 'new-arrivals'}
+                aria-haspopup="true"
+              >
+                <span>New Arrivals</span>
+                <ChevronDown
+                  size={12}
+                  className={`transition-transform duration-200 text-[#563568] ${
+                    activeDropdown === 'new-arrivals' ? 'rotate-180' : ''
+                  }`}
+                />
+              </Link>
+            </div>
+
+            {/* 3. Bestsellers */}
+            <div
+              className="relative py-3.5"
+              onMouseEnter={() => handleMouseEnter('bestsellers')}
+            >
+              <Link
+                to="/shop?sort=bestseller"
+                className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
+                  activeDropdown === 'bestsellers' || location.search.includes('sort=bestseller')
+                    ? 'text-[#563568] font-medium'
+                    : 'text-[#302438]'
+                }`}
+                aria-expanded={activeDropdown === 'bestsellers'}
+                aria-haspopup="true"
+              >
+                <span>Bestsellers</span>
+                <ChevronDown
+                  size={12}
+                  className={`transition-transform duration-200 text-[#563568] ${
+                    activeDropdown === 'bestsellers' ? 'rotate-180' : ''
+                  }`}
+                />
+              </Link>
+            </div>
+
+            {/* 4. Shop by Category */}
+            <div
+              className="relative py-3.5"
+              onMouseEnter={() => handleMouseEnter('categories')}
+            >
+              <Link
+                to="/shop"
+                className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
+                  activeDropdown === 'categories' || location.pathname === '/shop'
+                    ? 'text-[#563568] font-medium'
+                    : 'text-[#302438]'
+                }`}
+                aria-expanded={activeDropdown === 'categories'}
+                aria-haspopup="true"
+              >
+                <span>Shop by Category</span>
+                <ChevronDown
+                  size={12}
+                  className={`transition-transform duration-200 text-[#563568] ${
+                    activeDropdown === 'categories' ? 'rotate-180' : ''
+                  }`}
+                />
+              </Link>
+            </div>
+
+            {/* 5. Shop by Occasion */}
+            <div
+              className="relative py-3.5"
+              onMouseEnter={() => handleMouseEnter('occasions')}
+            >
+              <Link
+                to="/shop"
+                className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
+                  activeDropdown === 'occasions' || location.search.includes('occasion=')
+                    ? 'text-[#563568] font-medium'
+                    : 'text-[#302438]'
+                }`}
+                aria-expanded={activeDropdown === 'occasions'}
+                aria-haspopup="true"
+              >
+                <span>Shop by Occasion</span>
+                <ChevronDown
+                  size={12}
+                  className={`transition-transform duration-200 text-[#563568] ${
+                    activeDropdown === 'occasions' ? 'rotate-180' : ''
+                  }`}
+                />
+              </Link>
+            </div>
+
+            {/* 6. Gifts */}
+            <div
+              className="relative py-3.5"
+              onMouseEnter={() => handleMouseEnter('gifts')}
+            >
+              <Link
+                to="/shop?occasion=gifting"
+                className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
+                  activeDropdown === 'gifts' || location.search.includes('gifting')
+                    ? 'text-[#563568] font-medium'
+                    : 'text-[#302438]'
+                }`}
+                aria-expanded={activeDropdown === 'gifts'}
+                aria-haspopup="true"
+              >
+                <span>Gifts</span>
+              </Link>
+            </div>
+
+            {/* 7. Collections */}
+            <div
+              className="relative py-3.5"
+              onMouseEnter={() => handleMouseEnter('collections')}
+            >
+              <Link
+                to="/shop"
+                className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
+                  activeDropdown === 'collections'
+                    ? 'text-[#563568] font-medium'
+                    : 'text-[#302438]'
+                }`}
+                aria-expanded={activeDropdown === 'collections'}
+                aria-haspopup="true"
+              >
+                <span>Collections</span>
+              </Link>
+            </div>
+
+            {/* 8. About SARINE */}
+            <div
+              className="relative py-3.5"
+              onMouseEnter={() => handleMouseEnter('about')}
+            >
+              <Link
+                to="/about"
+                className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
+                  activeDropdown === 'about' || location.pathname === '/about'
+                    ? 'text-[#563568] font-medium'
+                    : 'text-[#302438]'
+                }`}
+                aria-expanded={activeDropdown === 'about'}
+                aria-haspopup="true"
+              >
+                <span>About SARINE</span>
+              </Link>
+            </div>
+          </div>
+        </nav>
 
         {/* 3. Desktop Dropdown Panels Container */}
         {/* Absolute full width container directly below header */}
