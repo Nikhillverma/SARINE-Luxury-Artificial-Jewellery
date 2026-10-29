@@ -89,7 +89,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     };
   }, []);
 
-  // Listen to Firebase auth state with demo session support
+  // Listen to Firebase auth state
   useEffect(() => {
     if (!isFirebaseConfigured()) {
       setLoading(false);
@@ -101,9 +101,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
         setUser(currentUser);
         setLoading(false);
-        // If not logged in and not in demo mode and not on login page
-        const isDemo = localStorage.getItem('sarine_admin_demo_session') === 'true';
-        if (!currentUser && !isDemo && location.pathname !== '/admin/login') {
+        // If not logged in and not on login page, redirect to admin login
+        if (!currentUser && location.pathname !== '/admin/login') {
           navigate('/admin/login', { replace: true });
         }
       });
@@ -116,7 +115,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const handleSignOut = async () => {
     try {
-      localStorage.removeItem('sarine_admin_demo_session');
       if (isFirebaseConfigured()) {
         const auth = getFirebaseAuth();
         await signOut(auth);
@@ -489,7 +487,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 />
                 <div className="hidden sm:flex flex-col text-left">
                   <span className="text-xs font-semibold text-[#2C1838] leading-tight">
-                    Priya Sharma
+                    {user?.displayName || 'Priya Sharma'}
                   </span>
                   <span className="text-[10px] text-[#8E769E] leading-tight">
                     Admin
@@ -502,8 +500,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               {profileDropdownOpen && (
                 <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[#E7DCEB] rounded-xl shadow-xl py-2 z-50 text-xs">
                   <div className="px-4 py-2 border-b border-[#E7DCEB]">
-                    <p className="font-semibold text-[#2C1838]">Priya Sharma</p>
-                    <p className="text-[10px] text-[#8E769E]">{user?.email || 'priya@sarinejewelry.com'}</p>
+                    <p className="font-semibold text-[#2C1838]">{user?.displayName || 'Priya Sharma'}</p>
+                    <p className="text-[10px] text-[#8E769E] truncate">{user?.email || 'admin@sarinejewelry.com'}</p>
                     <span className="inline-block mt-1 text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-[#FAF5FC] text-[#563568] border border-[#E7DCEB]">
                       Role: Super Admin
                     </span>

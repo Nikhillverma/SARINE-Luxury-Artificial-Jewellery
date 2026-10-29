@@ -115,22 +115,16 @@ export const AdminOrdersPage: React.FC = () => {
 
   // 1. Monitor Auth State
   useEffect(() => {
-    const isDemo = localStorage.getItem('sarine_admin_demo_session') === 'true';
     if (!isFirebaseConfigured()) {
-      if (isDemo) {
-        setUser({ email: 'priya@sarinejewelry.com', displayName: 'Priya Sharma' } as any);
-      }
       setLoading(false);
       return;
     }
     const auth = getFirebaseAuth();
     const unsub = onAuthStateChanged(auth, (curr) => {
-      if (!curr && !isDemo) {
+      if (!curr) {
         navigate('/admin/login', { replace: true });
-      } else if (curr) {
+      } else {
         setUser(curr);
-      } else if (isDemo) {
-        setUser({ email: 'priya@sarinejewelry.com', displayName: 'Priya Sharma' } as any);
       }
     });
     return () => unsub();
