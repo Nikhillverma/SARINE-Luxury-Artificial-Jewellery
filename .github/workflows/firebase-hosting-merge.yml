@@ -53,3 +53,4 @@ jobs:
           channelId: live
           projectId: sarine-cbcce
 # Retry deployment after configuring Firebase credentials
+# Retry Firebase deployment after IAM permission update
