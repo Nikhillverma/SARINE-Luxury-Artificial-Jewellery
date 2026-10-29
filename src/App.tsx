@@ -27,10 +27,16 @@ import { RefundPolicyPage } from './pages/RefundPolicyPage';
 import { AboutPage } from './pages/AboutPage';
 import { TrackOrderPage } from './pages/TrackOrderPage';
 import { AccountPage } from './pages/AccountPage';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
+import { AdminProductsPage } from './pages/admin/AdminProductsPage';
 import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
-import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
 import { AdminInventoryPage } from './pages/admin/AdminInventoryPage';
+import { AdminCustomersPage } from './pages/admin/AdminCustomersPage';
+import { AdminMarketingPage } from './pages/admin/AdminMarketingPage';
+import { AdminStorefrontPage } from './pages/admin/AdminStorefrontPage';
+import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
+import { AdminCopilotPage } from './pages/admin/AdminCopilotPage';
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
 import {
   SustainabilityPage,
@@ -85,11 +91,17 @@ function MainAppShell() {
           <Route path="/account" element={<AccountPage />} />
 
           {/* Private Admin Management Routes */}
-          <Route path="/admin" element={<Navigate to="/admin/orders" replace />} />
+          <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route path="/admin/products" element={<AdminProductsPage />} />
           <Route path="/admin/orders" element={<AdminOrdersPage />} />
-          <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           <Route path="/admin/inventory" element={<AdminInventoryPage />} />
+          <Route path="/admin/customers" element={<AdminCustomersPage />} />
+          <Route path="/admin/marketing" element={<AdminMarketingPage />} />
+          <Route path="/admin/storefront" element={<AdminStorefrontPage />} />
+          <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+          <Route path="/admin/copilot" element={<AdminCopilotPage />} />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />
 
           {/* Help & Policies */}

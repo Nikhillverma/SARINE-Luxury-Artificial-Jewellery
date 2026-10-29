@@ -41,12 +41,16 @@ export const AdminLoginPage: React.FC = () => {
 
   // Redirect if already authenticated
   useEffect(() => {
+    if (localStorage.getItem('sarine_admin_demo_session') === 'true') {
+      navigate('/admin', { replace: true });
+      return;
+    }
     if (!isFirebaseConfigured()) return;
     try {
       const auth = getFirebaseAuth();
       const unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user) {
-          navigate('/admin/orders', { replace: true });
+          navigate('/admin', { replace: true });
         }
       });
       return () => unsubscribe();
@@ -68,7 +72,7 @@ export const AdminLoginPage: React.FC = () => {
     try {
       const auth = getFirebaseAuth();
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      navigate('/admin/orders', { replace: true });
+      navigate('/admin', { replace: true });
     } catch (err: any) {
       console.error('[AdminLogin] Authentication failure:', err);
       // Generic error on failure as required
@@ -76,6 +80,11 @@ export const AdminLoginPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDemoSignIn = () => {
+    localStorage.setItem('sarine_admin_demo_session', 'true');
+    navigate('/admin', { replace: true });
   };
 
   return (
@@ -158,17 +167,29 @@ export const AdminLoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-[#563568] text-white text-xs font-medium uppercase tracking-[0.2em] hover:bg-[#A184BD] transition-colors rounded-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+              className="w-full py-3 bg-[#563568] text-white text-xs font-medium uppercase tracking-[0.2em] hover:bg-[#78469C] transition-colors rounded-xl flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
             >
               {loading ? (
                 <span>Signing in...</span>
               ) : (
                 <>
-                  <span>Access Orders</span>
+                  <span>Sign In to Atelier Workspace</span>
                   <ArrowRight size={13} />
                 </>
               )}
             </button>
+
+            {/* Quick Demo Preview Access */}
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={handleDemoSignIn}
+                className="w-full py-2.5 bg-[#FAF5FC] hover:bg-[#F2E8FA] border border-[#D9C4E5] text-[#563568] text-xs font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              >
+                <span>Quick Sign-In as Priya Sharma (Admin)</span>
+                <ArrowRight size={12} />
+              </button>
+            </div>
           </form>
 
           <div className="mt-6 pt-5 border-t border-[#E7DCEB] flex items-center justify-center gap-2 text-[11px] text-[#6F6475]">

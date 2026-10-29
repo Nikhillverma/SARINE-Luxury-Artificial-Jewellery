@@ -1,0 +1,672 @@
+# SARINE — Production-Grade Database-Integrated Admin Panel Implementation
+
+## 1. Your Role
+
+Act as a senior full-stack engineer, UI/UX designer, Firebase architect, ecommerce operations specialist and security engineer.
+
+Upgrade my existing SARINE luxury artificial jewellery ecommerce website by implementing a complete, production-oriented, database-integrated admin panel. The design must closely follow the provided SARINE admin dashboard reference image.
+
+**This is an upgrade to my existing application, not a new project.**
+
+Do not start by rebuilding the application. First inspect the repository, understand the existing architecture, identify reusable services and database structures, and create an implementation plan. Then implement the approved functionality while preserving working features.
+
+## 2. Existing Project — Critical Constraints
+
+My existing project uses the following infrastructure:
+
+- Brand: SARINE
+- Existing Firebase project ID: `sarine-cbcce`
+- Frontend: React, TypeScript and Vite
+- Database: existing Cloud Firestore
+- Authentication: existing Firebase Authentication
+- Media storage: Firebase Storage
+- Hosting: Firebase Hosting
+- Existing backend: Netlify Functions
+- Payment integration: Razorpay
+- Existing Netlify backend base URL: `https://kaleidoscopic-hamster-db5f9b.netlify.app/.netlify/functions`
+- Existing live website: `https://sarine-cbcce.web.app`
+- Existing repository: `https://github.com/Nikhillverma/SARINE-Luxury-Artificial-Jewellery`
+
+These details describe the existing project and must be verified against the actual source code before implementation.
+
+### Non-negotiable rules
+
+1. Preserve the existing Firebase project and reuse the current Firestore schema wherever practical.
+2. Preserve Firebase Authentication, existing customer accounts, orders, checkout, tracking and order history.
+3. Preserve the existing Netlify Functions and Razorpay payment integration.
+4. Do not migrate or replace the payment backend with a new system.
+5. Do not create duplicate collections, competing service layers or duplicate order records without a documented technical reason.
+6. Do not overwrite environment configuration, secrets, Firebase configuration or deployment workflows unnecessarily.
+7. Do not expose service-account keys, Razorpay secrets, private credentials, passwords or OTPs.
+8. Do not fabricate business data, sales, customer records, reviews, payment confirmations or profit figures.
+9. Avoid new dependencies unless they are genuinely necessary and compatible with the existing stack.
+10. Maintain TypeScript safety, accessible interactions, responsive layouts and consistent error handling.
+
+If an existing feature already works, preserve it. Make the smallest safe changes necessary to integrate the new admin functionality.
+
+## 3. Visual Design — Match the Reference Image
+
+Create a premium, professional jewellery-business admin dashboard with the following appearance.
+
+### Brand colour palette
+
+- Deep plum: `#563568`
+- Lavender accent: `#B69ACF`
+- Soft lilac background: `#F7F0FA`
+- Champagne gold: `#D9B8A0`
+- White: `#FFFFFF`
+- Dark plum text with accessible contrast
+- Muted lavender-grey for secondary text
+
+Use deep plum for the sidebar, active navigation and important accents. Use white or soft-lilac surfaces for cards and tables, lavender for charts and interactive states, and champagne gold sparingly for premium highlights.
+
+### Layout
+
+Create a desktop-first admin interface with:
+
+**A. Left sidebar**
+
+Display the SARINE logo and the following navigation:
+
+1. Overview
+2. Products & Catalogue
+3. Inventory & Suppliers
+4. Orders & Fulfilment
+5. Customers & Loyalty
+6. Marketing & Offers
+7. Storefront Studio
+8. Analytics & Profit
+9. AI Business Copilot
+10. Settings & Security
+
+Use clean line icons, readable labels, active-page highlighting, expandable submenus and notification badges where appropriate.
+
+**B. Top navigation bar**
+
+Include:
+
+- Global search for products, orders and customers
+- Notifications
+- Help or documentation access
+- Authenticated admin profile
+- Role-aware account menu
+- Date-range selector where relevant
+
+**C. Main content area**
+
+Use generous spacing, rounded white cards, subtle borders and shadows, restrained animations, clean tables and elegant charts.
+
+The overall appearance should feel like a premium jewellery brand's internal business platform, not a generic template.
+
+### Design requirements
+
+- Match the reference image's visual hierarchy and dashboard composition.
+- Use responsive layouts for desktop, tablet and mobile.
+- Support loading, empty, error, permission-denied and success states.
+- Use proper form validation and confirmation dialogs for destructive actions.
+- Provide accessible labels, keyboard navigation, visible focus states and appropriately sized touch targets.
+- Respect reduced-motion preferences.
+- Use real product images from existing records and Firebase Storage where available.
+- Do not fill the interface with excessive gradients, oversized icons or decorative elements.
+- Use skeleton loading states rather than fake live metrics.
+- Do not display the reference image's example data as actual SARINE business data.
+
+## 4. Overview Dashboard
+
+Build a database-driven dashboard with:
+
+### KPI cards
+
+- Total sales
+- Total orders
+- Total customers
+- Low-stock alerts
+- Average order value
+- Estimated contribution profit
+- Pending orders
+- Pending returns or refunds
+
+Provide date filters for Today, 7 days, 30 days, 90 days and a custom range.
+
+Show comparison percentages only when comparable historical data exists.
+
+### Dashboard sections
+
+1. Sales overview line chart.
+2. Order status distribution.
+3. Recent activity feed.
+4. Top-selling products.
+5. Recent orders table.
+6. Upcoming campaigns and festivals.
+7. Low-stock products.
+8. Sales forecast for the next 30 days, when sufficient data exists.
+9. AI Business Copilot panel.
+10. Quick actions for adding products, managing orders, creating offers, uploading banners and generating reports.
+
+All figures must come from existing database records or verified calculations. If there is insufficient data, display a clear empty state or an explicitly labelled estimate.
+
+## 5. Products & Catalogue
+
+Implement complete product lifecycle management.
+
+### Product operations
+
+- Create, view, edit, duplicate, archive, publish and unpublish products.
+- Manage categories, collections, tags and featured products.
+- Search, filter, sort and bulk-select products.
+- Support bulk updates for price, category, visibility, stock thresholds and tags.
+- Import and export products using CSV.
+- Validate CSV columns, data types, duplicate SKUs, variant relationships and required fields.
+- Show row-level errors and provide a downloadable error report.
+- Preview bulk changes before committing them.
+
+### Product information
+
+Support existing product fields and add missing fields only after auditing the schema:
+
+- Product name and slug
+- SKU
+- Description
+- Category and collection
+- Material and care instructions
+- Dimensions and other supported specifications
+- Cost price
+- Selling price
+- Sale price
+- Applicable tax configuration
+- Product images
+- Variant information
+- Stock information
+- SEO title and description
+- Publication status
+
+Do not invent product materials, plating details, durability guarantees or certifications.
+
+### Variants and images
+
+Support colour and size variants where applicable, with variant-specific SKU, pricing, stock and images.
+
+Use Firebase Storage for media uploads. Store relevant image references, ordering and metadata in Firestore.
+
+Provide image upload progress, preview, replacement, removal, ordering and validation.
+
+### Historical integrity
+
+Editing a product must not rewrite historical order item names, prices, quantities or other transaction snapshots.
+
+Deleting or archiving a catalogue record must not accidentally delete historical orders.
+
+## 6. Inventory & Suppliers
+
+Implement:
+
+- Stock quantities per product and variant
+- Available and reserved stock where supported
+- Low-stock thresholds
+- Stock movement history
+- Manual adjustments with mandatory reasons
+- Staff identity and timestamps for adjustments
+- Stock-count reconciliation
+- Supplier records
+- Supplier product costs and lead times
+- Purchase orders
+- Expected delivery dates
+- Partial and complete stock receipts
+- Purchase-order status tracking
+- CSV inventory import/export
+- Low-stock and delayed-purchase-order alerts
+
+### Stock forecasting
+
+Estimate future stock requirements using actual sales velocity, available inventory, reserved stock and supplier lead times.
+
+Use seasonal factors only where sufficient evidence exists. Label predictions as estimates and explain their assumptions.
+
+### Overselling prevention
+
+Use Firestore transactions or an appropriate trusted backend mechanism for concurrent stock changes. Do not rely exclusively on frontend quantity checks.
+
+Inventory changes resulting from order creation, cancellation, return or refund workflows must be coordinated to prevent duplicate or inconsistent adjustments.
+
+## 7. Orders & Fulfilment
+
+Build a searchable, filterable order-management workspace.
+
+Show:
+
+- Order number and creation date
+- Customer and delivery address
+- Original order item snapshots
+- Quantities and item prices
+- Discounts, taxes, shipping and final total
+- Payment method and verified payment status
+- Transaction references
+- Fulfilment and courier status
+- Tracking number and tracking information
+- Cancellation and return status
+- Invoice and relevant documents
+
+Support legitimate order-state transitions, dispatch updates, tracking, cancellation eligibility, return requests and refund processing.
+
+Retain the existing order-creation and Razorpay integration.
+
+Never mark an order as paid solely because the frontend reports success. Use trusted backend verification and verified payment-provider events.
+
+Implement idempotency and appropriate concurrency controls for payment processing, refunds, inventory updates and order transitions.
+
+## 8. COD Risk, Payment Reconciliation and Returns
+
+### COD risk management
+
+Flag configurable risk indicators such as repeated delivery refusals, unusual order patterns and repeated failed delivery attempts.
+
+Provide a manual-review queue and configurable verification rules for selected COD orders.
+
+Risk indicators must be explainable and must not automatically establish that a customer is fraudulent.
+
+### Payment reconciliation
+
+Where supported by existing backend records and provider APIs, compare:
+
+- Orders
+- Verified payment transactions
+- Failed and pending payments
+- Refunds
+- Payment-provider settlement records
+- Fees and settlement differences
+
+Never expose payment secrets or store sensitive card credentials.
+
+### Returns and refunds
+
+Track:
+
+- Return eligibility
+- Customer reason
+- Requested items and quantities
+- Approval or rejection
+- Inspection results
+- Return shipment
+- Refund amount and status
+- Restocked, damaged or rejected inventory
+- Staff actions and timestamps
+
+Use the existing published return policy and payment backend. Do not invent automatic refund capabilities if the existing integration does not support them.
+
+## 9. Customers & Loyalty
+
+Create a customer-management workspace showing authorized information:
+
+- Profile
+- Contact details
+- Addresses
+- Order history
+- Total completed purchases
+- Lifetime spend based on clearly defined rules
+- Return and refund history
+- Customer support history where available
+- Loyalty balance and transaction ledger
+- Relevant preferences and consent status
+
+### Customer segmentation
+
+Support configurable segments such as:
+
+- First-time customers
+- Repeat customers
+- High-value customers
+- Inactive customers
+- Customers interested in selected categories
+- Customers eligible for a campaign
+
+Only use data that the business is permitted to process for these purposes.
+
+### Loyalty programme
+
+Support configurable points, rewards, referral codes, birthday benefits and VIP tiers.
+
+Maintain a transaction ledger for earned, redeemed, expired and reversed points. Prevent duplicate rewards and unauthorized balance changes.
+
+### Product recommendations
+
+Recommend relevant jewellery combinations and complementary items using catalogue attributes and reliable purchase patterns.
+
+Measure recommendation impressions, clicks and attributable purchases where suitable event tracking is available.
+
+## 10. Marketing & Offers
+
+Implement a full promotion-management system.
+
+### Coupon rules
+
+Support:
+
+- Percentage discounts
+- Fixed discounts
+- Minimum order value
+- Maximum discount
+- Product/category eligibility
+- Start and expiry times
+- Total redemption limits
+- Per-customer limits
+- Customer-segment eligibility
+- Configurable stacking rules
+- Excluded products
+- Redemption reporting
+
+### Promotions
+
+Support:
+
+- Flash sales
+- Bundles
+- Quantity discounts
+- Featured collections
+- Festival campaigns
+- Wedding-season campaigns
+- Custom campaign events
+- Scheduled start and expiry
+- Draft, preview, scheduled, active, paused and archived states
+
+Use `Asia/Kolkata` for the admin's campaign scheduling interface and handle date storage consistently.
+
+### Promotion simulator
+
+Before publishing a promotion, calculate example basket totals, discount cost and estimated contribution margin.
+
+Show products that fall below configurable margin thresholds and clearly state assumptions.
+
+This simulator must not promise actual sales outcomes. Final discount eligibility must be recalculated by trusted checkout logic.
+
+## 11. Abandoned-Cart Recovery
+
+Implement abandoned-cart recovery using the existing cart and customer/session architecture.
+
+Where supported, provide:
+
+- Configurable inactivity thresholds
+- Eligible abandoned-cart records
+- Recovery campaign scheduling
+- Email or WhatsApp provider integration
+- Delivery and failure status
+- Recovery links
+- Recovered-order attribution
+- Frequency limits
+- Consent and opt-out enforcement
+- Retry handling
+
+Do not expose cart details to unauthorized users or send marketing messages without the required permissions and consent.
+
+If a messaging provider or background scheduler is missing, identify it as an implementation dependency rather than simulating a successful message.
+
+## 12. Storefront Studio
+
+Create a section-based visual editor that controls the live SARINE storefront.
+
+Allow authorized users to:
+
+- Edit homepage section order
+- Show or hide sections
+- Upload and reorder hero banners
+- Configure separate desktop and mobile artwork
+- Edit headings, subtitles, CTA labels and destination URLs
+- Select featured products and collections
+- Manage promotional strips
+- Create festival landing-page configurations
+- Edit supported SEO metadata
+- Preview changes
+- Save drafts
+- Schedule content publication
+- Publish or pause content
+- Review prior versions
+- Restore a previous configuration
+
+Store the appropriate configuration and publication state in Firestore and media in Firebase Storage.
+
+The storefront must explicitly consume the published configuration. Draft changes must not unexpectedly appear to customers.
+
+Normal content changes should not require a frontend redeployment after this functionality is fully implemented.
+
+Validate destination URLs, permissions, media files and publication dates.
+
+## 13. Analytics, Profit and Forecasting
+
+Build reports for:
+
+- Revenue and net sales
+- Orders and average order value
+- Product and variant performance
+- Category performance
+- Gross profit and contribution profit
+- Campaign profitability
+- Coupon redemption and discount cost
+- Refunds and cancellations
+- Return-to-origin costs
+- Inventory ageing
+- Stock sell-through
+- Repeat-customer performance
+- Customer acquisition and retention, when reliable data exists
+
+### Profit calculation
+
+Account for the applicable cost components, including:
+
+- Product cost
+- Packaging
+- Shipping
+- Payment processing fees
+- Discounts
+- Refunds
+- Relevant taxes and other recorded costs
+
+Document calculation definitions and avoid double-counting.
+
+Distinguish revenue, gross profit, contribution profit and net profit. Do not label contribution profit as net profit.
+
+If required costs are missing, display incomplete-data warnings rather than assuming missing expenses are zero.
+
+Support date filters, CSV export and reproducible report calculations.
+
+### Sales forecasting
+
+Use actual historical sales data and explain the forecast period, assumptions and limitations.
+
+Do not generate apparently precise forecasts when the business lacks enough reliable history.
+
+## 14. A/B Testing
+
+Create a controlled experimentation module for supported storefront elements, including:
+
+- Hero banners
+- Headlines
+- Product placements
+- Promotional messaging
+
+Support variant configuration, preview, controlled visitor assignment, consistent experiment identification and measurement of relevant events.
+
+Where tracking supports it, measure clicks, add-to-cart events and purchases.
+
+Show sample size, test duration and uncertainty. Do not claim statistical significance when it has not been established.
+
+Require authorized approval before applying a winning variant to the live storefront.
+
+## 15. AI Business Copilot
+
+Add an AI assistant panel within the admin dashboard.
+
+Example questions:
+
+- Which products generated the highest contribution profit this month?
+- Which items need restocking?
+- Which campaigns produced the strongest attributable sales?
+- Which products have high sales but weak margins?
+- Draft a campaign for eligible customers who purchased necklaces.
+- Draft SEO descriptions for selected products.
+
+### AI requirements
+
+- Use an approved AI integration and protect API credentials.
+- Restrict access to authorized business data.
+- Ground calculations in actual database records.
+- Explain data sources and assumptions.
+- Identify missing data.
+- Provide useful error states when the AI provider is unavailable.
+- Save generated product descriptions and campaign content as drafts.
+- Require human approval before publishing generated content.
+- Never invent product facts, verified reviews, certifications or financial results.
+- Never allow AI to independently change privileged roles, issue refunds or perform other high-impact actions.
+
+Do not expose private customer information to external AI providers unless the integration and data-processing rules explicitly permit it.
+
+## 16. Staff Roles, Audit Logs and Security
+
+Use the existing authentication system and implement backend-enforced role-based authorization.
+
+Suggested roles:
+
+- Owner / Super Admin
+- Catalogue Manager
+- Order Manager
+- Marketing Manager
+- Read-only Analyst
+
+Support staff invitations, authorized role changes, access revocation and permission-aware navigation.
+
+A public admin registration page must not grant administrative privileges.
+
+### Audit logging
+
+Record significant events such as:
+
+- Product creation and price changes
+- Stock adjustments
+- Coupon and campaign changes
+- Order status changes
+- Return and refund approvals
+- Staff role changes
+- Storefront publication
+- Sensitive exports
+- Backup and restore operations where applicable
+
+Include actor, timestamp, action and relevant record identifiers. Do not store unnecessary sensitive data in logs.
+
+### Approvals
+
+Allow the owner to configure second-person approval for selected high-impact actions, such as large refunds, bulk price changes and sensitive role modifications.
+
+Enforce approval requirements in trusted logic, not just in the UI.
+
+### Privileged-account protection
+
+Use Firebase Authentication and supported stronger authentication options for privileged accounts. Require reauthentication where appropriate for sensitive actions.
+
+Apply least-privilege Firebase rules and backend access controls. Test direct unauthorized database and API requests.
+
+## 17. Backup and Recovery
+
+Implement or document a dependable recovery process for the data and media within scope.
+
+Requirements:
+
+- Scheduled database backups where supported.
+- Appropriate retention rules.
+- Secure storage and restricted access.
+- Coverage for necessary media assets and configuration data.
+- Restore procedures.
+- Periodic restoration testing.
+- Clear backup status and failure alerts.
+- Protection against accidental destructive changes.
+
+Do not claim backups are operational until the underlying process is configured and verified.
+
+## 18. Database and Architecture Rules
+
+Before adding data structures:
+
+1. Inspect the existing Firestore collections and document shapes.
+2. Inspect existing repository models, interfaces and service functions.
+3. Inspect Firebase Security Rules and Storage Rules.
+4. Inspect Netlify Functions, Razorpay verification and order creation.
+5. Identify existing indexes, data duplication and transaction boundaries.
+6. Map each requested feature to existing records and services.
+7. Propose only necessary schema changes.
+8. Document any required migration, compatibility and rollback plan.
+
+Prefer reusing the existing application architecture.
+
+Use atomic operations or trusted backend logic for stock reservations, coupon limits, loyalty ledger updates and other concurrency-sensitive operations.
+
+Maintain idempotency for retryable jobs and payment-related workflows.
+
+Separate draft and published states for storefront content and scheduled campaigns.
+
+Avoid storing derived analytics redundantly unless there is a documented reason and a strategy for keeping them consistent.
+
+## 19. Implementation and Quality Assurance
+
+Work in controlled stages:
+
+**Stage 1 — Audit and foundation**
+- Inspect the complete repository.
+- Map routes, data models, Firebase configuration, services, Storage and security rules.
+- Verify the Netlify Functions and Razorpay integration.
+- Identify existing features and gaps.
+- Produce a concise implementation plan.
+
+**Stage 2 — Core admin**
+- Implement dashboard layout and navigation.
+- Add staff permissions and audit logging.
+- Build products, variants, CSV operations, inventory, suppliers and purchase orders.
+
+**Stage 3 — Orders and finance**
+- Implement order management, COD review, reconciliation, returns, cost records and profitability reports.
+
+**Stage 4 — Marketing and storefront**
+- Implement promotions, simulation, campaign scheduling, loyalty, customer segmentation and visual storefront editing.
+
+**Stage 5 — Advanced capabilities**
+- Implement recovery automation, recommendations, forecasting, A/B testing and AI features with appropriate integrations.
+
+**Stage 6 — Security and release**
+- Run regression, authorization, concurrency, financial-calculation and recovery tests.
+- Verify production build and deployment.
+- Confirm the existing payment flow still works.
+
+Do not claim a stage is complete until its acceptance criteria have been tested.
+
+## 20. Required Acceptance Tests
+
+Verify at minimum:
+
+1. Creating and editing a product persists after refresh.
+2. Publishing a product updates the correct live storefront pages.
+3. Product and banner images upload to Firebase Storage and display correctly.
+4. CSV import validates records and reports failures without silently corrupting data.
+5. Bulk changes are previewed and authorized.
+6. Concurrent orders cannot silently oversell inventory.
+7. Historical order snapshots remain unchanged after catalogue edits.
+8. Coupons and promotion limits are enforced by trusted checkout logic.
+9. Staff cannot perform unauthorized actions through direct database/API requests.
+10. Payment reconciliation uses verified transaction records.
+11. Refund and return operations cannot be duplicated through retries.
+12. Profit reports use documented formulas and actual cost data.
+13. Campaign scheduling and expiration work with the intended timezone.
+14. Abandoned-cart recovery and loyalty workflows handle retries safely.
+15. A/B tests do not report unsupported conclusions.
+16. AI-generated content remains a draft until approved.
+17. Backup restoration is tested.
+18. Customer login, accounts, checkout, payment, order tracking and order history remain functional.
+19. The existing Netlify Functions and Razorpay payment flow remain intact.
+20. Firebase Hosting deployment completes without breaking the live website.
+
+## 21. Final Instruction
+
+First audit the current codebase and produce the implementation plan. Then implement the admin panel in controlled stages, reusing existing services and data structures wherever practical.
+
+Prioritize functional correctness, security, database integrity and payment-flow preservation over decorative features.
+
+The finished admin panel should visually match the supplied SARINE reference image and operate as a genuine business-management system—not a static dashboard, prototype or mock-data demonstration.
+
+If an integration, provider credential or backend capability is missing, clearly identify the dependency and implement the appropriate integration boundary without pretending it works.
+
+Do not remove existing functionality to make the new admin panel easier to implement. Do not claim production readiness until the relevant tests have passed.

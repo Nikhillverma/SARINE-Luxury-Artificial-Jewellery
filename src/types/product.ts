@@ -31,6 +31,8 @@ export interface Product {
   price: number;
   /** Optional comparison MRP/original price for discount display */
   compareAtPrice?: number;
+  /** Optional manufacturing / procurement cost price in INR */
+  costPrice?: number;
   /** Array of product photo URLs */
   images: string[];
   /** Foreign key pointing to Category.id */
