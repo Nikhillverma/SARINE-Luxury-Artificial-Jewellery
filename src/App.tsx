@@ -9,6 +9,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { Navbar } from './components/Navbar';
+import { ScrollToTop } from './components/ScrollToTop';
 import { CartDrawer } from './components/CartDrawer';
 import { WishlistDrawer } from './components/WishlistDrawer';
 import { Footer } from './components/Footer';
@@ -121,6 +122,7 @@ export default function App() {
     <WishlistProvider>
       <CartProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <MainAppShell />
         </BrowserRouter>
       </CartProvider>
