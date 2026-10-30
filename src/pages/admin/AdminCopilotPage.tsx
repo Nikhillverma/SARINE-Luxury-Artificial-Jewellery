@@ -29,7 +29,7 @@ const INITIAL_MESSAGES: ChatMessage[] = [
   {
     id: 'm1',
     sender: 'copilot',
-    text: 'Good morning, Priya! I am your SARINE AI Business Copilot. I have synchronized with your Firestore product catalogue, order velocity, and supplier costs. How can I assist with your store operations today?',
+    text: 'Welcome! I am your SARINE AI Business Copilot. I have synchronized with your Firestore product catalogue, order velocity, and store metrics. How can I assist with your store operations today?',
     timestamp: 'Just now'
   }
 ];

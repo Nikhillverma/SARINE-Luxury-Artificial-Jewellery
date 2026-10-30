@@ -4,9 +4,11 @@
  * and loyalty reward tier management.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { formatInr } from '../../utils/currency';
+import { getDb, isFirebaseConfigured } from '../../lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 import {
   Users,
   Search,
@@ -36,86 +38,73 @@ interface CustomerProfile {
   city: string;
 }
 
-const INITIAL_CUSTOMERS: CustomerProfile[] = [
-  {
-    id: 'CUST-1001',
-    name: 'Priya Sharma',
-    email: 'priya.sharma@example.com',
-    phone: '+91 98765 43210',
-    segment: 'VIP Gold',
-    totalOrders: 6,
-    lifetimeSpend: 18450,
-    loyaltyPoints: 1250,
-    lastOrderDate: '24 Oct 2025',
-    city: 'Mumbai'
-  },
-  {
-    id: 'CUST-1002',
-    name: 'Neha Gupta',
-    email: 'neha.gupta@example.com',
-    phone: '+91 98220 11445',
-    segment: 'Repeat Patron',
-    totalOrders: 3,
-    lifetimeSpend: 7890,
-    loyaltyPoints: 640,
-    lastOrderDate: '24 Oct 2025',
-    city: 'Delhi NCR'
-  },
-  {
-    id: 'CUST-1003',
-    name: 'Riya Patel',
-    email: 'riya.patel@example.com',
-    phone: '+91 99041 88992',
-    segment: 'VIP Gold',
-    totalOrders: 5,
-    lifetimeSpend: 14200,
-    loyaltyPoints: 980,
-    lastOrderDate: '23 Oct 2025',
-    city: 'Ahmedabad'
-  },
-  {
-    id: 'CUST-1004',
-    name: 'Sneha Reddy',
-    email: 'sneha.reddy@example.com',
-    phone: '+91 97000 33441',
-    segment: 'New Customer',
-    totalOrders: 1,
-    lifetimeSpend: 1299,
-    loyaltyPoints: 130,
-    lastOrderDate: '23 Oct 2025',
-    city: 'Hyderabad'
-  },
-  {
-    id: 'CUST-1005',
-    name: 'Anjali Mehta',
-    email: 'anjali.mehta@example.com',
-    phone: '+91 98112 77884',
-    segment: 'Repeat Patron',
-    totalOrders: 2,
-    lifetimeSpend: 5498,
-    loyaltyPoints: 450,
-    lastOrderDate: '22 Oct 2025',
-    city: 'Bengaluru'
-  },
-  {
-    id: 'CUST-1006',
-    name: 'Anita Verma',
-    email: 'anita@example.com',
-    phone: '+91 94250 88991',
-    segment: 'New Customer',
-    totalOrders: 1,
-    lifetimeSpend: 2499,
-    loyaltyPoints: 250,
-    lastOrderDate: '20 Oct 2025',
-    city: 'Jaipur'
-  }
-];
-
 export const AdminCustomersPage: React.FC = () => {
-  const [customers, setCustomers] = useState<CustomerProfile[]>(INITIAL_CUSTOMERS);
+  const [customers, setCustomers] = useState<CustomerProfile[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSegment, setSelectedSegment] = useState<string>('all');
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerProfile | null>(null);
+
+  useEffect(() => {
+    async function loadCustomers() {
+      if (!isFirebaseConfigured()) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const db = getDb();
+        const snap = await getDocs(collection(db, 'orders'));
+        const custMap = new Map<string, CustomerProfile>();
+
+        snap.forEach((docSnap) => {
+          const d = docSnap.data();
+          const email = d.customer?.email?.toLowerCase().trim();
+          if (!email) return;
+
+          const existing = custMap.get(email) || {
+            id: `CUST-${custMap.size + 1}`,
+            name: d.customer?.name || (email ? email.split('@')[0] : 'Customer'),
+            email,
+            phone: d.customer?.phone || d.shippingAddress?.phone || '—',
+            segment: 'New Customer' as const,
+            totalOrders: 0,
+            lifetimeSpend: 0,
+            loyaltyPoints: 0,
+            lastOrderDate: d.createdAt
+              ? new Date(d.createdAt).toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric'
+                })
+              : 'Recent',
+            city: d.shippingAddress?.city || 'India'
+          };
+
+          existing.totalOrders += 1;
+          const orderTotal = Number(d.total) || 0;
+          existing.lifetimeSpend += orderTotal;
+          existing.loyaltyPoints += Math.round(orderTotal * 0.1);
+
+          if (existing.totalOrders >= 5 || existing.lifetimeSpend >= 10000) {
+            existing.segment = 'VIP Gold';
+          } else if (existing.totalOrders >= 2) {
+            existing.segment = 'Repeat Patron';
+          }
+
+          custMap.set(email, existing);
+        });
+
+        setCustomers(Array.from(custMap.values()));
+      } catch (err) {
+        console.warn('[AdminCustomersPage] Failed to load customers from Firestore:', err);
+        setCustomers([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadCustomers();
+  }, []);
 
   const filteredCustomers = customers.filter((c) => {
     if (searchTerm.trim()) {
@@ -218,54 +207,66 @@ export const AdminCustomersPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F5EDF8]">
-                {filteredCustomers.map((c) => (
-                  <tr
-                    key={c.id}
-                    onClick={() => setSelectedCustomer(c)}
-                    className="hover:bg-[#FAF5FC] transition-colors cursor-pointer"
-                  >
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-[#FAF5FC] border border-[#E7DCEB] text-[#563568] flex items-center justify-center font-bold text-xs">
-                          {c.name.charAt(0)}
-                        </div>
-                        <div>
-                          <span className="font-semibold text-[#2C1838] block">{c.name}</span>
-                          <span className="text-[10px] text-[#8E769E]">{c.city}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-[#5D5068]">
-                      <div>{c.email}</div>
-                      <div className="text-[10px] text-[#8E769E]">{c.phone}</div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
-                          c.segment === 'VIP Gold'
-                            ? 'bg-[#FEF9C3] text-[#A16207]'
-                            : c.segment === 'Repeat Patron'
-                            ? 'bg-[#F3E8FF] text-[#78469C]'
-                            : 'bg-[#E0F2FE] text-[#0284C7]'
-                        }`}
-                      >
-                        {c.segment}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-center font-bold text-[#2C1838]">
-                      {c.totalOrders}
-                    </td>
-                    <td className="py-3 px-4 font-semibold text-[#2C1838]">
-                      {formatInr(c.lifetimeSpend)}
-                    </td>
-                    <td className="py-3 px-4 text-center font-medium text-[#78469C]">
-                      {c.loyaltyPoints} pts
-                    </td>
-                    <td className="py-3 px-4 text-right text-[#705E7B]">
-                      {c.lastOrderDate}
+                {filteredCustomers.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-xs text-[#8E769E]">
+                      <Users size={28} className="mx-auto mb-2 text-[#78469C]/40" />
+                      <p className="font-semibold text-[#2C1838]">No customer profiles found</p>
+                      <p className="text-[11px] text-[#705E7B] mt-0.5">
+                        Customer profiles and purchase velocity will appear here as orders are placed.
+                      </p>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredCustomers.map((c) => (
+                    <tr
+                      key={c.id}
+                      onClick={() => setSelectedCustomer(c)}
+                      className="hover:bg-[#FAF5FC] transition-colors cursor-pointer"
+                    >
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-[#FAF5FC] border border-[#E7DCEB] text-[#563568] flex items-center justify-center font-bold text-xs">
+                            {c.name.charAt(0)}
+                          </div>
+                          <div>
+                            <span className="font-semibold text-[#2C1838] block">{c.name}</span>
+                            <span className="text-[10px] text-[#8E769E]">{c.city}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-[#5D5068]">
+                        <div>{c.email}</div>
+                        <div className="text-[10px] text-[#8E769E]">{c.phone}</div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                            c.segment === 'VIP Gold'
+                              ? 'bg-[#FEF9C3] text-[#A16207]'
+                              : c.segment === 'Repeat Patron'
+                              ? 'bg-[#F3E8FF] text-[#78469C]'
+                              : 'bg-[#E0F2FE] text-[#0284C7]'
+                          }`}
+                        >
+                          {c.segment}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center font-bold text-[#2C1838]">
+                        {c.totalOrders}
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-[#2C1838]">
+                        {formatInr(c.lifetimeSpend)}
+                      </td>
+                      <td className="py-3 px-4 text-center font-medium text-[#78469C]">
+                        {c.loyaltyPoints} pts
+                      </td>
+                      <td className="py-3 px-4 text-right text-[#705E7B]">
+                        {c.lastOrderDate}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

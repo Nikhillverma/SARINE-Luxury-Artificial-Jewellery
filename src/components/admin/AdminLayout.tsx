@@ -7,9 +7,9 @@
  * - Deep plum sidebar (#201026) with golden lotus crest & serif SARINE branding
  * - 10 navigation tabs with exact labels, icons, and status badges
  * - Quick Actions section with 4 pill outline buttons
- * - Top header with global search, notifications badge, help trigger, and Priya Sharma admin profile
+ * - Top header with global search, notifications badge, help trigger, and authenticated admin profile
  * - Responsive mobile navigation drawer
- * - Session verification with demo fallback for seamless preview inspection
+ * - Session verification with admin access controls
  */
 
 import React, { useEffect, useState } from 'react';
@@ -203,6 +203,30 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       </div>
     );
   }
+
+  // Derived Admin Identity
+  const adminDisplayName = user?.displayName?.trim()
+    ? user.displayName.trim()
+    : user?.email
+    ? user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1)
+    : 'Admin';
+
+  const adminInitials = (() => {
+    if (user?.displayName && user.displayName.trim()) {
+      const parts = user.displayName.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+      }
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    if (user?.email && user.email.trim()) {
+      const prefix = user.email.split('@')[0];
+      return prefix.slice(0, 2).toUpperCase();
+    }
+    return 'AD';
+  })();
+
+  const adminEmail = user?.email || 'admin@sarinejewelry.com';
 
   return (
     <div className="min-h-screen bg-[#F8F3FA] text-[#302438] font-sans flex">
@@ -413,9 +437,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 aria-label="Store Notifications"
               >
                 <Bell size={18} strokeWidth={1.75} />
-                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#E53E3E] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                  5
-                </span>
               </button>
 
               {/* Notification Popover */}
@@ -423,31 +444,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-[#E7DCEB] rounded-xl shadow-xl py-3 z-50 text-xs">
                   <div className="px-4 pb-2 border-b border-[#E7DCEB] flex items-center justify-between">
                     <span className="font-semibold text-[#2C1838]">Notifications</span>
-                    <span className="text-[10px] bg-[#FAF5FC] text-[#563568] font-bold px-2 py-0.5 rounded-full border border-[#E7DCEB]">
-                      5 New
+                    <span className="text-[10px] bg-[#FAF5FC] text-[#563568] font-medium px-2 py-0.5 rounded-full border border-[#E7DCEB]">
+                      System Live
                     </span>
                   </div>
-                  <div className="divide-y divide-[#F5EDF8] max-h-72 overflow-y-auto">
-                    <div className="p-3 hover:bg-[#FAF5FC] transition-colors">
-                      <p className="font-medium text-[#2C1838]">New order #ORD-1042</p>
-                      <p className="text-[11px] text-[#705E7B]">Priya Sharma placed ₹2,499 order • 2m ago</p>
-                    </div>
-                    <div className="p-3 hover:bg-[#FAF5FC] transition-colors">
-                      <p className="font-medium text-[#D97706]">Low stock alert</p>
-                      <p className="text-[11px] text-[#705E7B]">Crystal Earrings has 3 pieces remaining</p>
-                    </div>
-                    <div className="p-3 hover:bg-[#FAF5FC] transition-colors">
-                      <p className="font-medium text-[#2C1838]">Order shipped #ORD-1038</p>
-                      <p className="text-[11px] text-[#705E7B]">Anjali Mehta • Delhivery AWB generated</p>
-                    </div>
-                    <div className="p-3 hover:bg-[#FAF5FC] transition-colors">
-                      <p className="font-medium text-[#2C1838]">Customer registered</p>
-                      <p className="text-[11px] text-[#705E7B]">anita@example.com created a new profile</p>
-                    </div>
-                    <div className="p-3 hover:bg-[#FAF5FC] transition-colors">
-                      <p className="font-medium text-[#16A34A]">New 5-star review</p>
-                      <p className="text-[11px] text-[#705E7B]">"Stunning polish, feels like real gold!"</p>
-                    </div>
+                  <div className="p-6 text-center text-xs text-[#8E769E]">
+                    <CheckCircle2 size={24} className="mx-auto mb-2 text-[#78469C]/40" />
+                    <p className="font-medium text-[#2C1838]">Store is operating smoothly</p>
+                    <p className="text-[11px] text-[#705E7B] mt-0.5">Real-time alerts for incoming orders and inventory will appear here.</p>
                   </div>
                   <div className="px-3 pt-2 border-t border-[#E7DCEB] text-center">
                     <button
@@ -463,7 +467,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
             {/* Help Circle */}
             <button
-              onClick={() => alert('SARINE Atelier Admin Support: contact technical team at atelier@sarinejewelry.com')}
+              onClick={() => alert('SARINE Atelier Admin Support: Contact administrator team at atelier@sarinejewelry.com')}
               className="p-2 text-[#563568] hover:bg-[#FAF5FC] rounded-full transition-colors cursor-pointer"
               title="Help & Documentation"
             >
@@ -480,14 +484,20 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 className="flex items-center gap-2.5 p-1 hover:bg-[#FAF5FC] rounded-full sm:rounded-lg transition-colors cursor-pointer"
                 aria-label="Admin Profile Menu"
               >
-                <img
-                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&h=120&q=80"
-                  alt="Priya Sharma"
-                  className="w-8 h-8 rounded-full object-cover border border-[#E7DCEB]"
-                />
+                {user?.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt={adminDisplayName}
+                    className="w-8 h-8 rounded-full object-cover border border-[#E7DCEB]"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[#563568] text-[#E8C59A] border border-[#78469C] flex items-center justify-center text-xs font-semibold tracking-wider select-none shrink-0">
+                    {adminInitials}
+                  </div>
+                )}
                 <div className="hidden sm:flex flex-col text-left">
                   <span className="text-xs font-semibold text-[#2C1838] leading-tight">
-                    {user?.displayName || 'Priya Sharma'}
+                    {adminDisplayName}
                   </span>
                   <span className="text-[10px] text-[#8E769E] leading-tight">
                     Admin
@@ -500,10 +510,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               {profileDropdownOpen && (
                 <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[#E7DCEB] rounded-xl shadow-xl py-2 z-50 text-xs">
                   <div className="px-4 py-2 border-b border-[#E7DCEB]">
-                    <p className="font-semibold text-[#2C1838]">{user?.displayName || 'Priya Sharma'}</p>
-                    <p className="text-[10px] text-[#8E769E] truncate">{user?.email || 'admin@sarinejewelry.com'}</p>
+                    <p className="font-semibold text-[#2C1838]">{adminDisplayName}</p>
+                    <p className="text-[10px] text-[#8E769E] truncate">{adminEmail}</p>
                     <span className="inline-block mt-1 text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-[#FAF5FC] text-[#563568] border border-[#E7DCEB]">
-                      Role: Super Admin
+                      Role: Store Administrator
                     </span>
                   </div>
 

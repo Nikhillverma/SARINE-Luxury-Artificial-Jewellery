@@ -2,37 +2,128 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 1. GLOBAL DEFAULT DENY:
+    // =========================================================================
+    // AUTHORIZATION HELPERS
+    // =========================================================================
+
+    // Checks if the request is from an authenticated user.
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Checks if the authenticated user is a verified administrator.
+    //
+    // Security guarantees:
+    // 1. Firebase Admin SDK-managed Custom Claims:
+    //    'admin: true' or 'role: admin' in the cryptographically signed auth token.
+    //    Tokens cannot be altered or self-assigned from the browser.
+    // 2. Server-controlled role document in /admins/{uid}:
+    //    Checked via exists(). Client writes to /admins are blocked.
+    // 3. Authenticated Admin Email Check:
+    //    Requires a verified email (email_verified == true), non-null email,
+    //    and matches 'nikhilvermav1999@gmail.com' in lowercase.
+    //
+    // STRICT GUARANTEE: Never trusts /users/{uid}.role or client-editable fields.
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        request.auth.token.role == 'admin' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (request.auth.token.email_verified == true &&
+         request.auth.token.email != null &&
+         request.auth.token.email.lower() == 'nikhilvermav1999@gmail.com')
+      );
+    }
+
+    // Checks if the authenticated customer owns the given order.
+    //
+    // Defensive type guarding:
+    // Strictly verifies ('customer' in data && data.customer is map) before inspecting
+    // data.customer.userId or data.customer.email, preventing runtime evaluation errors
+    // if customer is missing, null, or a non-map type.
+    //
+    // Security guarantees:
+    // 1. Matched by Firebase Auth UID in customer.userId or top-level userId.
+    // 2. If matched by email, strictly requires a verified Firebase email
+    //    (request.auth.token.email_verified == true) to prevent account spoofing.
+    function isOrderOwner(data) {
+      return isAuthenticated() && (
+        ('userId' in data && data.userId == request.auth.uid) ||
+        ('customer' in data && data.customer is map && (
+          ('userId' in data.customer && data.customer.userId == request.auth.uid) ||
+          (request.auth.token.email_verified == true &&
+           request.auth.token.email != null &&
+           'email' in data.customer &&
+           data.customer.email is string &&
+           data.customer.email.lower() == request.auth.token.email.lower())
+        ))
+      );
+    }
+
+    // Checks if the authenticated customer owns the user document.
+    function isUserOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // =========================================================================
+    // 1. GLOBAL DEFAULT DENY
     // Every collection is completely locked down unless explicitly granted below.
+    // =========================================================================
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // 2. CATEGORIES:
-    // Anyone (customers and visitors) can view active categories for navigation.
-    // Writes (create, update, delete) are strictly forbidden from the browser.
+    // =========================================================================
+    // 2. CATEGORIES
+    // - Public read for storefront navigation and catalog browsing.
+    // - No client-side writes.
+    // =========================================================================
     match /categories/{categoryId} {
       allow read: if true;
       allow write: if false;
     }
 
-    // 3. PRODUCTS:
-    // Anyone can read products, BUT only if their status is 'active'.
-    // Draft and archived items remain completely inaccessible to public visitors.
-    // Writes are strictly forbidden from the browser to prevent inventory tampering.
+    // =========================================================================
+    // 3. PRODUCTS
+    // - Public users and customers can read active products.
+    // - Only verified administrators can read inactive/draft products.
+    // - No client-side writes to prevent catalog or price tampering.
+    // =========================================================================
     match /products/{productId} {
-      allow read: if resource.data.status == 'active';
+      allow read: if ('status' in resource.data && resource.data.status == 'active') || isAdmin();
       allow write: if false;
     }
 
-    // 4. ORDERS & USERS:
-    // Fully locked down during this phase. Browser clients cannot read or write orders directly.
+    // =========================================================================
+    // 4. ORDERS
+    // - Customers can read only their own orders (matching customer.userId or verified email).
+    // - Verified administrators can read all orders for fulfillment and reporting.
+    // - No client-side writes; order lifecycle handled by serverless functions.
+    // =========================================================================
     match /orders/{orderId} {
-      allow read, write: if false;
+      allow read: if isOrderOwner(resource.data) || isAdmin();
+      allow write: if false;
     }
 
+    // =========================================================================
+    // 5. USERS
+    // - Customers can read only their own user document.
+    // - Verified administrators can read all user documents for dashboard metrics.
+    // - No client-side writes; user profiles are server-managed.
+    // =========================================================================
     match /users/{userId} {
-      allow read, write: if false;
+      allow read: if isUserOwner(userId) || isAdmin();
+      allow write: if false;
+    }
+
+    // =========================================================================
+    // 6. ADMINS COLLECTION (Server-controlled role registry)
+    // - Only verified administrators can read admin records.
+    // - Strictly no client-side writes under any circumstance.
+    // =========================================================================
+    match /admins/{adminId} {
+      allow read: if isAdmin();
+      allow write: if false;
     }
   }
 }
