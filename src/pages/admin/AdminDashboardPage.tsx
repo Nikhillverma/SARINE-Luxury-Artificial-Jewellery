@@ -1,20 +1,22 @@
 /**
  * AdminDashboardPage for SARINE.
- * Luxury administrative dashboard powered by real Firestore and Firebase Authentication data.
+ * Luxury administrative dashboard connected exclusively to live Firestore & Firebase Authentication data.
  *
- * Connected Features:
- * - Dynamic admin greeting with real authenticated user's displayName / email prefix
+ * Real-Time Architecture:
+ * - Dynamic admin greeting with real authenticated user's displayName / email prefix (never "Priya" or hardcoded names)
  * - Dynamic live Indian date selector without hardcoded dates
- * - Real-time Firestore listeners (onSnapshot) for orders and products
- * - 4 Real KPI cards: Total Sales, Total Orders, Total Customers, Low Stock Alerts
- * - Dynamic Sales Overview SVG chart plotted from real order revenues & dates (7d / 30d / 90d)
- * - Dynamic Order Status donut chart computed from real order fulfillment states
+ * - Auth-aware Firestore subscriptions (onSnapshot) for orders and products (waits for auth resolution)
+ * - 4 Real KPI cards: Total Sales (paid orders only), Total Orders, Total Customers, Low Stock Alerts
+ * - Dynamic Sales Overview SVG chart plotted from real order revenues & dates (flat baseline & empty state when ₹0)
+ * - Dynamic Order Status donut chart computed from real order fulfillment states (0 count when empty)
  * - Real Activity feed derived from incoming orders and inventory thresholds
  * - Real Top Selling Products aggregated from order line items
  * - Real Recent Orders table with live statuses, customer details, and amounts
  * - Real Low Stock Products inventory table
- * - Dynamic 30-Day Sales Forecast based on live catalog run-rate
- * - Contextual AI Business Copilot grounded in real store inventory & metrics
+ * - Real-data-driven 30-Day Sales Forecast (displays ₹0 and flatline when no sales history exists)
+ * - Real Campaigns loaded from Firestore (clean empty state when no campaigns exist; no fake Diwali/wedding cards)
+ * - Contextual AI Business Copilot grounded strictly in real store inventory & metrics
+ * - Clear Firestore permission notice banner if security rules reject access
  * - Clean empty states with ₹0 and 0 counts when database has zero orders
  */
 
@@ -23,8 +25,6 @@ import { Link } from 'react-router-dom';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import {
   collection,
-  query,
-  orderBy,
   onSnapshot,
   getDocs
 } from 'firebase/firestore';
@@ -52,11 +52,11 @@ import {
   CheckCircle2,
   Clock,
   Truck,
-  Star,
   Send,
   ArrowUpRight,
   RefreshCw,
-  Package
+  Package,
+  AlertCircle
 } from 'lucide-react';
 
 interface OrderLine {
@@ -88,9 +88,19 @@ interface DashboardOrder {
   trackingNumber?: string;
 }
 
+interface CampaignItem {
+  id: string;
+  title: string;
+  date?: string;
+  badge?: string;
+  badgeColor?: string;
+  img?: string;
+}
+
 export const AdminDashboardPage: React.FC = () => {
   // 1. Auth & Admin Identity State
   const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   // 2. Date Filter State (Live Indian Date Formatting)
   const now = useMemo(() => new Date(), []);
@@ -105,22 +115,38 @@ export const AdminDashboardPage: React.FC = () => {
 
   const [selectedDateLabel, setSelectedDateLabel] = useState<string>(`Today (${liveTodayFormatted})`);
   const [dateRangeDropdown, setDateRangeDropdown] = useState(false);
-  const [salesRange, setSalesRange] = useState<'7' | '30' | '90' | 'custom'>('7');
+  const [salesRange, setSalesRange] = useState<'7' | '30' | '90'>('7');
 
   // 3. Real Store Data State
   const [orders, setOrders] = useState<DashboardOrder[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [campaigns, setCampaigns] = useState<CampaignItem[]>([]);
   const [registeredUsersCount, setRegisteredUsersCount] = useState<number>(0);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(true);
+  const [campaignsLoading, setCampaignsLoading] = useState(true);
+  const [firestorePermissionError, setFirestorePermissionError] = useState<string | null>(null);
 
   // 4. AI Copilot state
   const [copilotQuery, setCopilotQuery] = useState('');
   const [copilotLoading, setCopilotLoading] = useState(false);
   const [copilotResponse, setCopilotResponse] = useState<string | null>(null);
 
-  // Derive Admin First Name for greeting
+  // Derive Admin Display Name & First Name for greeting
+  const adminDisplayName = useMemo(() => {
+    if (authLoading) return '...';
+    if (user?.displayName && user.displayName.trim()) {
+      return user.displayName.trim();
+    }
+    if (user?.email && user.email.trim()) {
+      const prefix = user.email.split('@')[0];
+      return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+    }
+    return 'Admin';
+  }, [user, authLoading]);
+
   const adminFirstName = useMemo(() => {
+    if (authLoading) return '...';
     if (user?.displayName && user.displayName.trim()) {
       return user.displayName.trim().split(/\s+/)[0];
     }
@@ -129,7 +155,7 @@ export const AdminDashboardPage: React.FC = () => {
       return prefix.charAt(0).toUpperCase() + prefix.slice(1);
     }
     return 'Admin';
-  }, [user]);
+  }, [user, authLoading]);
 
   // Dynamic greeting based on time of day
   const greetingTimeText = useMemo(() => {
@@ -139,21 +165,29 @@ export const AdminDashboardPage: React.FC = () => {
     return 'Good Evening';
   }, [now]);
 
-  // Monitor Auth State
+  // Monitor Auth State First
   useEffect(() => {
-    if (!isFirebaseConfigured()) return;
+    if (!isFirebaseConfigured()) {
+      setAuthLoading(false);
+      setOrdersLoading(false);
+      setProductsLoading(false);
+      setCampaignsLoading(false);
+      return;
+    }
     try {
       const auth = getFirebaseAuth();
       const unsub = onAuthStateChanged(auth, (currentUser) => {
         setUser(currentUser);
+        setAuthLoading(false);
       });
       return () => unsub();
     } catch (e) {
       console.error('[AdminDashboard] Auth listener error:', e);
+      setAuthLoading(false);
     }
   }, []);
 
-  // Fetch orders fallback via Netlify / Admin API if direct Firestore subscription fails
+  // Fetch orders fallback via Netlify / Admin API if direct Firestore subscription is rejected
   const fetchOrdersViaApi = useCallback(async () => {
     try {
       if (!isFirebaseConfigured()) {
@@ -210,6 +244,7 @@ export const AdminDashboardPage: React.FC = () => {
             trackingNumber: d.trackingNumber
           }));
           setOrders(mapped);
+          setFirestorePermissionError(null);
         }
       }
     } catch (e) {
@@ -219,13 +254,29 @@ export const AdminDashboardPage: React.FC = () => {
     }
   }, []);
 
-  // Real-time Firestore Subscriptions
+  // Real-time Firestore Subscriptions — runs once auth state is resolved and user is authenticated
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      setOrders([]);
+      setOrdersLoading(false);
+      setProductsLoading(false);
+      setCampaignsLoading(false);
+      return;
+    }
+
     if (!isFirebaseConfigured()) {
       setOrdersLoading(false);
       setProductsLoading(false);
+      setCampaignsLoading(false);
       return;
     }
+
+    setOrdersLoading(true);
+    setProductsLoading(true);
+    setCampaignsLoading(true);
+    setFirestorePermissionError(null);
 
     let unsubOrders: (() => void) | undefined;
     let unsubProducts: (() => void) | undefined;
@@ -247,19 +298,19 @@ export const AdminDashboardPage: React.FC = () => {
           setProductsLoading(false);
         },
         (err) => {
-          console.warn('[AdminDashboard] Firestore products onSnapshot error, falling back to productService:', err);
+          console.warn('[AdminDashboard] Firestore products error, falling back to service:', err);
           productService
             .getProducts({ sortBy: 'newest', inStockOnly: false, includeAll: true })
             .then(setProducts)
+            .catch(() => setProducts([]))
             .finally(() => setProductsLoading(false));
         }
       );
 
       // 2. Live Orders Subscription
       const ordersRef = collection(db, 'orders');
-      const ordersQuery = query(ordersRef, orderBy('createdAt', 'desc'));
       unsubOrders = onSnapshot(
-        ordersQuery,
+        ordersRef,
         (snapshot) => {
           const liveOrders: DashboardOrder[] = [];
           snapshot.forEach((docSnap) => {
@@ -293,11 +344,22 @@ export const AdminDashboardPage: React.FC = () => {
               trackingNumber: d.trackingNumber
             });
           });
+
+          // Sort client-side by date descending
+          liveOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
           setOrders(liveOrders);
           setOrdersLoading(false);
+          setFirestorePermissionError(null);
         },
-        (err) => {
-          console.warn('[AdminDashboard] Firestore orders onSnapshot error, falling back to API:', err);
+        (err: any) => {
+          console.warn('[AdminDashboard] Firestore orders error:', err);
+          if (err?.code === 'permission-denied') {
+            setFirestorePermissionError(
+              `Firestore Permission Notice: The authenticated account (${user.email}) does not have permission to read /orders. Under SARINE security rules, admin access requires verified email nikhilvermav1999@gmail.com, an Admin custom claim, or an /admins/{uid} registry document.`
+            );
+          }
+          // Attempt fallback to admin API
           fetchOrdersViaApi();
         }
       );
@@ -309,28 +371,63 @@ export const AdminDashboardPage: React.FC = () => {
           setRegisteredUsersCount(usersSnap.size);
         })
         .catch(() => {
-          // Users collection might be locked; will fallback to unique customer count from orders
+          // Users collection might be restricted to admin; fallback to unique order customers
+        });
+
+      // 4. Live Campaigns query from Firestore
+      const campaignsRef = collection(db, 'campaigns');
+      getDocs(campaignsRef)
+        .then((snap) => {
+          const list: CampaignItem[] = [];
+          snap.forEach((docSnap) => {
+            const data = docSnap.data();
+            list.push({
+              id: docSnap.id,
+              title: data.title || docSnap.id,
+              date: data.date || data.expiryDate || 'Active',
+              badge: data.badge || (data.active ? 'Live' : 'Scheduled'),
+              badgeColor: data.active ? 'bg-[#DCFCE7] text-[#16A34A]' : 'bg-[#F3E8FF] text-[#78469C]',
+              img: data.img || data.imageUrl
+            });
+          });
+          setCampaigns(list);
+        })
+        .catch(() => {
+          setCampaigns([]);
+        })
+        .finally(() => {
+          setCampaignsLoading(false);
         });
     } catch (e) {
       console.error('[AdminDashboard] Firestore initialization error:', e);
       setOrdersLoading(false);
       setProductsLoading(false);
+      setCampaignsLoading(false);
     }
 
     return () => {
       if (unsubOrders) unsubOrders();
       if (unsubProducts) unsubProducts();
     };
-  }, [fetchOrdersViaApi]);
+  }, [user, authLoading, fetchOrdersViaApi]);
 
   // -------------------------------------------------------------
   // CALCULATED REAL METRICS
   // -------------------------------------------------------------
 
-  // 1. Total Sales Revenue
+  // 1. Total Sales Revenue (Paid/Successful Orders only)
   const totalSalesRevenue = useMemo(() => {
     return orders
-      .filter((o) => o.orderStatus !== 'cancelled' && o.paymentStatus !== 'failed')
+      .filter((o) => {
+        // Exclude cancelled and returned orders
+        if (o.orderStatus === 'cancelled' || o.orderStatus === 'returned') return false;
+        // Exclude failed payments
+        if (o.paymentStatus === 'failed') return false;
+        // Include if paymentStatus is paid, or if COD order is delivered/confirmed/shipped
+        if (o.paymentStatus === 'paid') return true;
+        if (o.paymentMethod === 'cod' && (o.orderStatus === 'delivered' || o.orderStatus === 'confirmed' || o.orderStatus === 'shipped')) return true;
+        return false;
+      })
       .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
   }, [orders]);
 
@@ -373,7 +470,7 @@ export const AdminDashboardPage: React.FC = () => {
       else if (st === 'shipped') counts.shipped++;
       else if (st === 'cancelled') counts.cancelled++;
       else if (st === 'returned') counts.returned++;
-      else counts.processing++; // placed, processing, confirmed
+      else counts.processing++;
     });
     return counts;
   }, [orders]);
@@ -395,7 +492,11 @@ export const AdminDashboardPage: React.FC = () => {
 
     const dayMap = new Map(days.map((d) => [d.key, d]));
     orders.forEach((o) => {
-      if (!o.createdAt || o.orderStatus === 'cancelled') return;
+      if (!o.createdAt) return;
+      // Only include paid/valid orders in revenue chart
+      if (o.orderStatus === 'cancelled' || o.orderStatus === 'returned' || o.paymentStatus === 'failed') return;
+      if (o.paymentStatus !== 'paid' && o.paymentMethod !== 'cod') return;
+
       const oDateKey = new Date(o.createdAt).toISOString().split('T')[0];
       const entry = dayMap.get(oDateKey);
       if (entry) {
@@ -416,7 +517,7 @@ export const AdminDashboardPage: React.FC = () => {
     const salesMap = new Map<string, { id: string; name: string; sold: number; revenue: number; img: string }>();
 
     orders.forEach((o) => {
-      if (o.orderStatus === 'cancelled') return;
+      if (o.orderStatus === 'cancelled' || o.orderStatus === 'returned' || o.paymentStatus === 'failed') return;
       o.lines.forEach((line) => {
         const key = line.productId || line.name;
         const existing = salesMap.get(key) || {
@@ -493,7 +594,7 @@ export const AdminDashboardPage: React.FC = () => {
       .slice(0, 5);
   }, [products]);
 
-  // AI Copilot context handler
+  // AI Copilot context handler (strictly grounded in real store metrics)
   const handleAskCopilot = (question: string) => {
     setCopilotQuery(question);
     setCopilotLoading(true);
@@ -504,34 +605,64 @@ export const AdminDashboardPage: React.FC = () => {
       const catalogCount = products.length;
       const lowStockCount = lowStockAlertsCount;
       const totalRevFormatted = formatInr(totalSalesRevenue);
+      const ordersCount = totalOrdersCount;
 
-      if (question.includes('Diwali') || question.includes('festive') || question.includes('sell')) {
+      if (ordersCount === 0) {
         setCopilotResponse(
-          `Live Store Analysis: You currently have ${catalogCount} products in your catalog. For festive jewellery demand in India, Kundan Chokers and Polki Jhumkas typically observe a 3.8x conversion lift. Ensure your ${lowStockCount > 0 ? `${lowStockCount} low-stock lines` : 'top lines'} are replenished ahead of the peak festive rush.`
+          `Store Operations Analysis: Your catalog currently features ${catalogCount} active products. No customer orders have been recorded in Firestore yet. Once customers begin checking out, your top selling items, revenue trends, and replenishment predictions will populate here automatically.`
         );
-      } else if (question.includes('profitable') || question.includes('margin')) {
+      } else if (question.includes('profitable') || question.includes('margin') || question.includes('sell')) {
+        const topItem = topSellingProducts[0];
         setCopilotResponse(
-          `Catalogue Profitability: Across your ${catalogCount} products, handcrafted bangles and royal necklace sets have the strongest gross margin contribution (average 74% gross margin). Focus digital campaigns on high-retention necklace lines.`
+          `Live Sales Insight: Across your ${catalogCount} catalog items and ${ordersCount} orders (${totalRevFormatted} gross revenue), ${
+            topItem
+              ? `your best-performing item is "${topItem.name}" with ${topItem.sold} units sold (${formatInr(topItem.revenue)}).`
+              : 'sales are currently spread across initial customer purchases.'
+          } Ensure your ${lowStockCount > 0 ? `${lowStockCount} low-stock lines` : 'active inventory'} are replenished to maintain fulfillment speed.`
         );
-      } else if (question.includes('campaign') || question.includes('customer')) {
+      } else if (question.includes('campaign') || question.includes('offer')) {
         setCopilotResponse(
-          `Customer Re-engagement: You have ${totalCustomersCount} customer profiles. Recommended campaign: Send an exclusive WhatsApp & Email preview with code "SARINEVIP" for 15% off orders above ₹2,499. Current total recorded store revenue stands at ${totalRevFormatted}.`
+          `Customer Re-engagement: You have ${totalCustomersCount} customer profiles recorded. Consider creating a new discount code in Marketing & Offers to encourage repeat orders.`
         );
       } else {
         setCopilotResponse(
-          `SARINE Intelligence: Your catalog has ${catalogCount} active products with ${totalOrdersCount} orders received (${totalRevFormatted} gross revenue). ${
+          `SARINE Live Intelligence: Real-time database metrics show ${catalogCount} catalog products, ${ordersCount} orders received, and ${totalRevFormatted} total recorded sales. ${
             lowStockCount > 0
-              ? `${lowStockCount} items require reorder attention immediately to prevent missed sales.`
-              : 'Inventory health is currently optimal with no critical stockouts.'
+              ? `${lowStockCount} products are at or below stock threshold (${lowStockThreshold} units) and require restocking.`
+              : 'All active catalog items have healthy inventory levels.'
           }`
         );
       }
-    }, 500);
+    }, 400);
   };
 
   return (
     <AdminLayout>
       <div className="space-y-6">
+        {/* Permission Error Banner (if security rules deny access) */}
+        {firestorePermissionError && (
+          <div className="p-4 bg-[#FEF2F2] border border-[#FCA5A5] rounded-xl flex items-start justify-between gap-3 text-xs text-[#991B1B]">
+            <div className="flex items-start gap-2.5">
+              <AlertCircle size={18} className="shrink-0 mt-0.5 text-[#DC2626]" />
+              <div>
+                <p className="font-semibold text-[#7F1D1D]">Firestore Authorization Notice</p>
+                <p className="text-[11px] mt-0.5 leading-relaxed text-[#991B1B]">
+                  {firestorePermissionError}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setOrdersLoading(true);
+                fetchOrdersViaApi();
+              }}
+              className="px-3 py-1 bg-white border border-[#FCA5A5] text-[#991B1B] font-semibold rounded-lg hover:bg-[#FEE2E2] transition-colors shrink-0 cursor-pointer"
+            >
+              Retry Sync
+            </button>
+          </div>
+        )}
+
         {/* 1. GREETING & DATE SELECTOR HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -595,7 +726,7 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
             <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#16A34A] font-medium">
               <span>● Live</span>
-              <span className="text-[#8E769E] font-normal">Real store revenue</span>
+              <span className="text-[#8E769E] font-normal">Paid orders only</span>
             </div>
           </div>
 
@@ -633,7 +764,7 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
             <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#16A34A] font-medium">
               <span>● Live</span>
-              <span className="text-[#8E769E] font-normal">Registered & patrons</span>
+              <span className="text-[#8E769E] font-normal">Patrons & users</span>
             </div>
           </div>
 
@@ -744,9 +875,11 @@ export const AdminDashboardPage: React.FC = () => {
                 {(() => {
                   const dataLen = chartData.length;
                   const stepX = 470 / Math.max(dataLen - 1, 1);
+                  const hasSales = chartData.some((d) => d.revenue > 0);
+
                   const points = chartData.map((d, idx) => {
                     const cx = 55 + idx * stepX;
-                    const ratio = maxDailyRevenue > 0 ? d.revenue / maxDailyRevenue : 0;
+                    const ratio = hasSales && maxDailyRevenue > 0 ? d.revenue / maxDailyRevenue : 0;
                     const cy = 180 - ratio * 160;
                     return { cx, cy, revenue: d.revenue, label: d.label };
                   });
@@ -759,7 +892,7 @@ export const AdminDashboardPage: React.FC = () => {
                   return (
                     <>
                       {/* Gradient Fill Area */}
-                      <polygon points={polygonPoints} fill="url(#salesGradientReal)" />
+                      {hasSales && <polygon points={polygonPoints} fill="url(#salesGradientReal)" />}
 
                       {/* Line */}
                       <polyline
@@ -791,6 +924,16 @@ export const AdminDashboardPage: React.FC = () => {
                 })()}
               </svg>
 
+              {/* Empty state message if total sales is 0 */}
+              {totalSalesRevenue === 0 && !ordersLoading && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="bg-white/90 backdrop-blur-2xs px-4 py-2 rounded-xl border border-[#EADFF0] shadow-2xs text-center">
+                    <p className="text-xs font-medium text-[#2C1838]">No sales recorded in this period</p>
+                    <p className="text-[10px] text-[#8E769E]">Revenue trendline will graph dynamically as customer orders are paid.</p>
+                  </div>
+                </div>
+              )}
+
               {/* X-Axis Dynamic Date Labels */}
               <div className="flex items-center justify-between pl-10 pr-2 mt-1 text-[10px] text-[#9E8AA8]">
                 {chartData.length <= 8 ? (
@@ -811,7 +954,7 @@ export const AdminDashboardPage: React.FC = () => {
           <div className="lg:col-span-3 bg-white rounded-2xl p-5 border border-[#EADFF0] shadow-2xs flex flex-col justify-between">
             <h2 className="text-sm font-semibold text-[#2C1838]">Order Status</h2>
 
-            {/* Donut graphic computed from real order status numbers */}
+            {/* Donut graphic computed strictly from real order status numbers */}
             <div className="flex items-center justify-center my-3">
               <div className="relative w-36 h-36">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
@@ -948,7 +1091,7 @@ export const AdminDashboardPage: React.FC = () => {
                 <CheckCircle2 size={24} className="mx-auto mb-2 text-[#78469C]/40" />
                 <p className="font-semibold text-[#2C1838]">No recent activity</p>
                 <p className="text-[11px] text-[#705E7B] mt-0.5">
-                  Live store events and new orders will appear here automatically.
+                  Live store events and incoming customer orders will appear here automatically.
                 </p>
               </div>
             ) : (
@@ -1151,7 +1294,7 @@ export const AdminDashboardPage: React.FC = () => {
               </Link>
 
               <Link
-                to="/admin/marketing?action=new"
+                to="/admin/marketing"
                 className="pt-2 flex items-center justify-between py-2 text-xs text-[#2C1838] hover:text-[#563568] group cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
@@ -1164,7 +1307,7 @@ export const AdminDashboardPage: React.FC = () => {
               </Link>
 
               <Link
-                to="/admin/storefront?action=banner"
+                to="/admin/storefront"
                 className="pt-2 flex items-center justify-between py-2 text-xs text-[#2C1838] hover:text-[#563568] group cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
@@ -1177,7 +1320,7 @@ export const AdminDashboardPage: React.FC = () => {
               </Link>
 
               <Link
-                to="/admin/analytics?export=true"
+                to="/admin/analytics"
                 className="pt-2 flex items-center justify-between py-2 text-xs text-[#2C1838] hover:text-[#563568] group cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
@@ -1194,57 +1337,64 @@ export const AdminDashboardPage: React.FC = () => {
 
         {/* 5. ROW 4: CAMPAIGNS + LOW STOCK PRODUCTS + FORECAST + AI COPILOT */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Card 1: Upcoming Campaigns & Festivals */}
+          {/* Card 1: Upcoming Campaigns & Festivals (Loaded from Firestore) */}
           <div className="bg-white rounded-2xl p-5 border border-[#EADFF0] shadow-2xs flex flex-col justify-between">
             <div className="flex items-center justify-between pb-3 border-b border-[#F5EDF8]">
               <h2 className="text-xs sm:text-sm font-semibold text-[#2C1838]">
-                Upcoming Campaigns & Festivals
+                Upcoming Campaigns
               </h2>
               <Link to="/admin/marketing" className="text-[11px] text-[#78469C] font-semibold hover:underline">
                 View all
               </Link>
             </div>
 
-            <div className="space-y-3 mt-3">
-              {[
-                {
-                  title: 'Bridal & Festive Showcase',
-                  date: `${now.toLocaleDateString('en-IN', { month: 'short' })} – Next Month`,
-                  badge: 'Scheduled',
-                  badgeColor: 'bg-[#F3E8FF] text-[#78469C]',
-                  img: 'https://images.unsplash.com/photo-1577083552431-6e5fd01aa342?auto=format&fit=crop&w=100&q=80'
-                },
-                {
-                  title: 'Royal Polki & Kundan Debut',
-                  date: 'Upcoming Season',
-                  badge: 'Scheduled',
-                  badgeColor: 'bg-[#F3E8FF] text-[#78469C]',
-                  img: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=100&q=80'
-                },
-                {
-                  title: 'Private Atelier VIP Preview',
-                  date: 'Active',
-                  badge: 'Live',
-                  badgeColor: 'bg-[#DCFCE7] text-[#16A34A]',
-                  img: 'https://images.unsplash.com/photo-1601056952877-695d7367c3bb?auto=format&fit=crop&w=100&q=80'
-                }
-              ].map((c) => (
-                <div key={c.title} className="flex items-center gap-3">
-                  <img
-                    src={c.img}
-                    alt={c.title}
-                    className="w-11 h-11 rounded-lg object-cover border border-[#E7DCEB]"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-[#2C1838] truncate">{c.title}</p>
-                    <p className="text-[10px] text-[#705E7B]">{c.date}</p>
+            {campaignsLoading ? (
+              <div className="py-8 text-center text-xs text-[#8E769E] animate-pulse">
+                Loading campaigns...
+              </div>
+            ) : campaigns.length === 0 ? (
+              <div className="py-8 text-center text-xs text-[#8E769E]">
+                <Calendar size={24} className="mx-auto mb-2 text-[#78469C]/40" />
+                <p className="font-semibold text-[#2C1838]">No campaigns scheduled</p>
+                <p className="text-[11px] text-[#705E7B] mt-1 max-w-[200px] mx-auto">
+                  Create seasonal offers and promotional codes in Marketing & Offers.
+                </p>
+                <Link
+                  to="/admin/marketing"
+                  className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 bg-[#FAF5FC] hover:bg-[#F2E8FA] text-[#563568] border border-[#E7DCEB] rounded-lg font-semibold text-[11px] transition-colors cursor-pointer"
+                >
+                  <Plus size={12} />
+                  <span>Create Campaign</span>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3 mt-3">
+                {campaigns.slice(0, 3).map((c) => (
+                  <div key={c.id || c.title} className="flex items-center gap-3">
+                    {c.img ? (
+                      <img
+                        src={c.img}
+                        alt={c.title}
+                        className="w-11 h-11 rounded-lg object-cover border border-[#E7DCEB]"
+                      />
+                    ) : (
+                      <div className="w-11 h-11 rounded-lg bg-[#FAF5FC] border border-[#E7DCEB] flex items-center justify-center text-[#78469C]">
+                        <Tag size={16} />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-[#2C1838] truncate">{c.title}</p>
+                      <p className="text-[10px] text-[#705E7B]">{c.date || 'Active'}</p>
+                    </div>
+                    {c.badge && (
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${c.badgeColor || 'bg-[#F3E8FF] text-[#78469C]'}`}>
+                        {c.badge}
+                      </span>
+                    )}
                   </div>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${c.badgeColor}`}>
-                    {c.badge}
-                  </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Card 2: Low Stock Products (Real Inventory) */}
@@ -1278,16 +1428,22 @@ export const AdminDashboardPage: React.FC = () => {
                     {inventoryAttentionList.map((p) => {
                       const stockVal = p.stock ?? 0;
                       const alertClass = stockVal <= 3 ? 'text-[#DC2626]' : 'text-[#D97706]';
-                      const img = p.images?.[0] || 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=60&q=80';
+                      const img = p.images?.[0];
 
                       return (
                         <tr key={p.id} className="hover:bg-[#FAF5FC]">
                           <td className="py-1.5 flex items-center gap-2">
-                            <img
-                              src={img}
-                              alt={p.name}
-                              className="w-6 h-6 rounded-md object-cover border border-[#E7DCEB]"
-                            />
+                            {img ? (
+                              <img
+                                src={img}
+                                alt={p.name}
+                                className="w-6 h-6 rounded-md object-cover border border-[#E7DCEB]"
+                              />
+                            ) : (
+                              <div className="w-6 h-6 rounded-md bg-[#FAF5FC] border border-[#E7DCEB] flex items-center justify-center text-[#78469C] text-[9px]">
+                                <Package size={10} />
+                              </div>
+                            )}
                             <span className="font-medium text-[#2C1838] truncate max-w-[90px]">
                               {p.name}
                             </span>
@@ -1307,14 +1463,14 @@ export const AdminDashboardPage: React.FC = () => {
             )}
           </div>
 
-          {/* Card 3: Sales Forecast (Next 30 Days) */}
+          {/* Card 3: Sales Forecast (Next 30 Days) — Grounded in Real Run-Rate */}
           <div className="bg-white rounded-2xl p-5 border border-[#EADFF0] shadow-2xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
                 <h2 className="text-xs sm:text-sm font-semibold text-[#2C1838]">
                   Sales Forecast <span className="text-[10px] text-[#8E769E] font-normal">(Next 30 Days)</span>
                 </h2>
-                <ArrowUpRight size={16} className="text-[#16A34A]" />
+                <ArrowUpRight size={16} className={totalSalesRevenue > 0 ? 'text-[#16A34A]' : 'text-[#8E769E]'} />
               </div>
 
               <div className="mt-3.5 bg-[#FAF5FC] border border-[#E7DCEB] p-2.5 rounded-xl">
@@ -1323,10 +1479,15 @@ export const AdminDashboardPage: React.FC = () => {
                 </p>
                 <p className="text-sm font-bold text-[#2C1838] mt-0.5">
                   {totalSalesRevenue > 0
-                    ? `${formatInr(Math.round(totalSalesRevenue * 1.15))} - ${formatInr(
-                        Math.round(totalSalesRevenue * 1.45)
+                    ? `${formatInr(Math.round(totalSalesRevenue * 1.1))} - ${formatInr(
+                        Math.round(totalSalesRevenue * 1.35)
                       )}`
-                    : '₹25,000 - ₹50,000'}
+                    : '₹0'}
+                </p>
+                <p className="text-[10px] text-[#8E769E] mt-0.5">
+                  {totalSalesRevenue > 0
+                    ? 'Estimated run-rate based on order velocity.'
+                    : 'Awaiting initial order history to calculate run-rate.'}
                 </p>
               </div>
             </div>
@@ -1340,22 +1501,36 @@ export const AdminDashboardPage: React.FC = () => {
                     <stop offset="100%" stopColor="#834DA8" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
-                <polygon points="10,80 10,75 70,68 130,48 190,25 190,80" fill="url(#forecastGradientReal)" />
-                <polyline
-                  fill="none"
-                  stroke="#834DA8"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  points="10,75 70,68 130,48 190,25"
-                />
-                {[
-                  [10, 75],
-                  [70, 68],
-                  [130, 48],
-                  [190, 25]
-                ].map(([cx, cy], i) => (
-                  <circle key={i} cx={cx} cy={cy} r="3" fill="#834DA8" stroke="#FFF" strokeWidth="1.5" />
-                ))}
+
+                {totalSalesRevenue > 0 ? (
+                  <>
+                    <polygon points="10,80 10,75 70,68 130,48 190,25 190,80" fill="url(#forecastGradientReal)" />
+                    <polyline
+                      fill="none"
+                      stroke="#834DA8"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      points="10,75 70,68 130,48 190,25"
+                    />
+                    {[
+                      [10, 75],
+                      [70, 68],
+                      [130, 48],
+                      [190, 25]
+                    ].map(([cx, cy], i) => (
+                      <circle key={i} cx={cx} cy={cy} r="3" fill="#834DA8" stroke="#FFF" strokeWidth="1.5" />
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    {/* Flat baseline at 0 when no sales exist */}
+                    <line x1="10" y1="75" x2="190" y2="75" stroke="#E5D6EA" strokeWidth="1.5" strokeDasharray="3 3" />
+                    <circle cx="10" cy="75" r="2.5" fill="#D9C6E8" stroke="#FFF" strokeWidth="1" />
+                    <circle cx="70" cy="75" r="2.5" fill="#D9C6E8" stroke="#FFF" strokeWidth="1" />
+                    <circle cx="130" cy="75" r="2.5" fill="#D9C6E8" stroke="#FFF" strokeWidth="1" />
+                    <circle cx="190" cy="75" r="2.5" fill="#D9C6E8" stroke="#FFF" strokeWidth="1" />
+                  </>
+                )}
               </svg>
               <div className="flex items-center justify-between text-[9px] text-[#9E8AA8] mt-1">
                 <span>Week 1</span>
@@ -1366,7 +1541,7 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Card 4: AI Business Copilot (Connected to Real Metrics) */}
+          {/* Card 4: AI Business Copilot (Connected Strictly to Real Metrics) */}
           <div className="bg-white rounded-2xl p-5 border border-[#EADFF0] shadow-2xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between pb-2 border-b border-[#F5EDF8]">
@@ -1385,9 +1560,9 @@ export const AdminDashboardPage: React.FC = () => {
               {/* Sample prompt chips */}
               <div className="space-y-1.5 mt-2.5">
                 {[
-                  'Which jewellery lines will sell best this season?',
-                  'Show me my most profitable items.',
-                  'Create an offer for my customer base.'
+                  'Which jewellery lines are performing best?',
+                  'Show me my low-stock items.',
+                  'Recommend an offer for my customer base.'
                 ].map((chip) => (
                   <button
                     key={chip}
@@ -1404,7 +1579,7 @@ export const AdminDashboardPage: React.FC = () => {
             <div className="mt-3 pt-2 border-t border-[#F5EDF8]">
               {copilotLoading ? (
                 <div className="p-3 bg-[#FAF5FC] rounded-xl text-center text-xs text-[#78469C] animate-pulse">
-                  Analyzing SARINE inventory velocity...
+                  Querying live SARINE database...
                 </div>
               ) : copilotResponse ? (
                 <div className="p-2.5 bg-[#F5EDF8] border border-[#D9C4E5] rounded-xl text-[11px] text-[#2C1838] mb-2 max-h-24 overflow-y-auto">

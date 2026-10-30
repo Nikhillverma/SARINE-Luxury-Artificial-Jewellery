@@ -1,24 +1,20 @@
 /**
  * AdminMarketingPage for SARINE.
  * Promotion, coupon rules, festival campaign scheduler, and discount margin simulator.
+ * Connected to Firestore database for real-time coupon management.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
+import { getDb, isFirebaseConfigured } from '../../lib/firebase';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { formatInr } from '../../utils/currency';
 import {
-  Megaphone,
   Tag,
   Plus,
-  Calendar,
-  Percent,
   CheckCircle2,
-  Clock,
-  Sparkles,
-  SlidersHorizontal,
-  ArrowRight,
   Calculator,
-  X
+  Ticket
 } from 'lucide-react';
 
 interface Coupon {
@@ -31,66 +27,72 @@ interface Coupon {
   status: 'active' | 'scheduled' | 'expired';
 }
 
-const INITIAL_COUPONS: Coupon[] = [
-  {
-    code: 'DIWALI20',
-    discountPercent: 20,
-    minOrder: 1999,
-    maxDiscount: 1000,
-    usedCount: 84,
-    expiryDate: '05 Nov 2025',
-    status: 'active'
-  },
-  {
-    code: 'SARINEFIRST',
-    discountPercent: 15,
-    minOrder: 1499,
-    maxDiscount: 500,
-    usedCount: 236,
-    expiryDate: '31 Dec 2025',
-    status: 'active'
-  },
-  {
-    code: 'WEDDINGGOLD',
-    discountPercent: 25,
-    minOrder: 4999,
-    maxDiscount: 2500,
-    usedCount: 18,
-    expiryDate: '10 Dec 2025',
-    status: 'scheduled'
-  },
-  {
-    code: 'KARWACHAUTH',
-    discountPercent: 15,
-    minOrder: 1999,
-    maxDiscount: 750,
-    usedCount: 42,
-    expiryDate: '31 Oct 2025',
-    status: 'scheduled'
-  }
-];
-
 export const AdminMarketingPage: React.FC = () => {
-  const [coupons, setCoupons] = useState<Coupon[]>(INITIAL_COUPONS);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // Dynamic default expiry (30 days from today)
+  const defaultExpiryStr = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  })();
+
   // New coupon form
   const [newCode, setNewCode] = useState('');
-  const [newDiscount, setNewDiscount] = useState('20');
+  const [newDiscount, setNewDiscount] = useState('15');
   const [newMinOrder, setNewMinOrder] = useState('1999');
   const [newMaxDiscount, setNewMaxDiscount] = useState('1000');
-  const [newExpiry, setNewExpiry] = useState('15 Nov 2025');
+  const [newExpiry, setNewExpiry] = useState(defaultExpiryStr);
 
   // Simulator
   const [simCartTotal, setSimCartTotal] = useState(3499);
-  const [simSelectedCoupon, setSimSelectedCoupon] = useState('DIWALI20');
+  const [simCustomPercent, setSimCustomPercent] = useState(15);
+  const [simSelectedCoupon, setSimSelectedCoupon] = useState<string>('custom');
 
-  const selectedCouponObj = coupons.find((c) => c.code === simSelectedCoupon) || coupons[0];
-  const calculatedDiscount = Math.min(
-    (simCartTotal * selectedCouponObj.discountPercent) / 100,
-    selectedCouponObj.maxDiscount
-  );
+  useEffect(() => {
+    async function loadCoupons() {
+      if (!isFirebaseConfigured()) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const db = getDb();
+        const snap = await getDocs(collection(db, 'coupons'));
+        const list: Coupon[] = [];
+        snap.forEach((docSnap) => {
+          const d = docSnap.data();
+          list.push({
+            code: d.code || docSnap.id,
+            discountPercent: Number(d.discountPercent) || 10,
+            minOrder: Number(d.minOrder) || 999,
+            maxDiscount: Number(d.maxDiscount) || 500,
+            usedCount: Number(d.usedCount) || 0,
+            expiryDate: d.expiryDate || 'Active',
+            status: d.status || 'active'
+          });
+        });
+        setCoupons(list);
+        if (list.length > 0) {
+          setSimSelectedCoupon(list[0].code);
+        }
+      } catch (err) {
+        console.warn('[AdminMarketingPage] Could not load coupons:', err);
+        setCoupons([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadCoupons();
+  }, []);
+
+  const selectedCouponObj = coupons.find((c) => c.code === simSelectedCoupon);
+  const discountPercent = selectedCouponObj ? selectedCouponObj.discountPercent : simCustomPercent;
+  const maxCap = selectedCouponObj ? selectedCouponObj.maxDiscount : 1500;
+
+  const calculatedDiscount = Math.min((simCartTotal * discountPercent) / 100, maxCap);
   const postDiscountTotal = Math.max(0, simCartTotal - calculatedDiscount);
   const estimatedCost = Math.round(simCartTotal * 0.35);
   const estimatedContributionProfit = postDiscountTotal - estimatedCost;
@@ -110,6 +112,7 @@ export const AdminMarketingPage: React.FC = () => {
     };
 
     setCoupons([coupon, ...coupons]);
+    setSimSelectedCoupon(coupon.code);
     setShowAddModal(false);
     setSuccess(`Coupon "${coupon.code}" created and activated.`);
     setNewCode('');
@@ -125,7 +128,7 @@ export const AdminMarketingPage: React.FC = () => {
               Marketing & Offers
             </h1>
             <p className="text-xs sm:text-sm text-[#705E7B] mt-0.5">
-              Promotional codes, festival campaign scheduling, and gross margin simulator.
+              Promotional codes, campaign scheduling, and gross margin simulator.
             </p>
           </div>
 
@@ -156,42 +159,62 @@ export const AdminMarketingPage: React.FC = () => {
               Promotional Discount Codes
             </h2>
 
-            <div className="overflow-x-auto mt-3">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="text-[10px] text-[#8E769E] uppercase tracking-wider border-b border-[#F5EDF8]">
-                    <th className="pb-2 font-medium">Coupon Code</th>
-                    <th className="pb-2 font-medium">Discount</th>
-                    <th className="pb-2 font-medium">Min Order</th>
-                    <th className="pb-2 font-medium text-center">Redemptions</th>
-                    <th className="pb-2 font-medium">Valid Till</th>
-                    <th className="pb-2 font-medium text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#FAF2FC]">
-                  {coupons.map((c) => (
-                    <tr key={c.code} className="hover:bg-[#FAF5FC]">
-                      <td className="py-2.5 font-bold font-mono text-[#563568]">{c.code}</td>
-                      <td className="py-2.5 font-semibold text-[#2C1838]">{c.discountPercent}% OFF</td>
-                      <td className="py-2.5 text-[#5D5068]">{formatInr(c.minOrder)}</td>
-                      <td className="py-2.5 text-center font-medium text-[#2C1838]">{c.usedCount}</td>
-                      <td className="py-2.5 text-[11px] text-[#8E769E]">{c.expiryDate}</td>
-                      <td className="py-2.5 text-right">
-                        <span
-                          className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
-                            c.status === 'active'
-                              ? 'bg-[#DCFCE7] text-[#16A34A]'
-                              : 'bg-[#F3E8FF] text-[#78469C]'
-                          }`}
-                        >
-                          {c.status}
-                        </span>
-                      </td>
+            {loading ? (
+              <div className="py-12 text-center text-xs text-[#8E769E] animate-pulse">
+                Loading coupon records...
+              </div>
+            ) : coupons.length === 0 ? (
+              <div className="py-12 text-center text-xs text-[#8E769E]">
+                <Ticket size={28} className="mx-auto mb-2 text-[#78469C]/40" />
+                <p className="font-semibold text-[#2C1838]">No promotional coupons active</p>
+                <p className="text-[11px] text-[#705E7B] mt-0.5">
+                  Create discount codes for your customers to redeem during storefront checkout.
+                </p>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="mt-3.5 px-4 py-2 bg-[#FAF5FC] hover:bg-[#F2E8FA] text-[#563568] border border-[#E7DCEB] rounded-xl font-semibold text-xs transition-colors cursor-pointer"
+                >
+                  Create First Coupon
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto mt-3">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="text-[10px] text-[#8E769E] uppercase tracking-wider border-b border-[#F5EDF8]">
+                      <th className="pb-2 font-medium">Coupon Code</th>
+                      <th className="pb-2 font-medium">Discount</th>
+                      <th className="pb-2 font-medium">Min Order</th>
+                      <th className="pb-2 font-medium text-center">Redemptions</th>
+                      <th className="pb-2 font-medium">Valid Till</th>
+                      <th className="pb-2 font-medium text-right">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-[#FAF2FC]">
+                    {coupons.map((c) => (
+                      <tr key={c.code} className="hover:bg-[#FAF5FC]">
+                        <td className="py-2.5 font-bold font-mono text-[#563568]">{c.code}</td>
+                        <td className="py-2.5 font-semibold text-[#2C1838]">{c.discountPercent}% OFF</td>
+                        <td className="py-2.5 text-[#5D5068]">{formatInr(c.minOrder)}</td>
+                        <td className="py-2.5 text-center font-medium text-[#2C1838]">{c.usedCount}</td>
+                        <td className="py-2.5 text-[11px] text-[#8E769E]">{c.expiryDate}</td>
+                        <td className="py-2.5 text-right">
+                          <span
+                            className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                              c.status === 'active'
+                                ? 'bg-[#DCFCE7] text-[#16A34A]'
+                                : 'bg-[#F3E8FF] text-[#78469C]'
+                            }`}
+                          >
+                            {c.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* Promotion Margin Simulator (5 cols) */}
@@ -206,18 +229,35 @@ export const AdminMarketingPage: React.FC = () => {
               </p>
 
               <div className="space-y-3.5 mt-4 text-xs">
-                <div>
-                  <label className="block text-[#5D5068] font-medium mb-1">Select Coupon to Test</label>
-                  <select
-                    value={simSelectedCoupon}
-                    onChange={(e) => setSimSelectedCoupon(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl text-xs font-semibold font-mono"
-                  >
-                    {coupons.map((c) => (
-                      <option key={c.code} value={c.code}>{c.code} ({c.discountPercent}% off, max {c.maxDiscount})</option>
-                    ))}
-                  </select>
-                </div>
+                {coupons.length > 0 ? (
+                  <div>
+                    <label className="block text-[#5D5068] font-medium mb-1">Select Coupon to Test</label>
+                    <select
+                      value={simSelectedCoupon}
+                      onChange={(e) => setSimSelectedCoupon(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl text-xs font-semibold font-mono"
+                    >
+                      {coupons.map((c) => (
+                        <option key={c.code} value={c.code}>{c.code} ({c.discountPercent}% off, max {formatInr(c.maxDiscount)})</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-[#5D5068] font-medium mb-1">
+                      Simulated Discount: <span className="font-bold text-[#563568]">{simCustomPercent}% OFF</span>
+                    </label>
+                    <input
+                      type="range"
+                      min="5"
+                      max="40"
+                      step="5"
+                      value={simCustomPercent}
+                      onChange={(e) => setSimCustomPercent(parseInt(e.target.value, 10))}
+                      className="w-full accent-[#563568]"
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-[#5D5068] font-medium mb-1">
@@ -241,7 +281,7 @@ export const AdminMarketingPage: React.FC = () => {
                     <span className="font-medium text-[#2C1838]">{formatInr(simCartTotal)}</span>
                   </div>
                   <div className="flex justify-between text-[#DC2626]">
-                    <span>Discount Deduction ({selectedCouponObj.discountPercent}%):</span>
+                    <span>Discount Deduction ({discountPercent}%):</span>
                     <span>- {formatInr(calculatedDiscount)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-[#2C1838] pt-1 border-t border-[#E7DCEB]">
@@ -249,7 +289,7 @@ export const AdminMarketingPage: React.FC = () => {
                     <span>{formatInr(postDiscountTotal)}</span>
                   </div>
                   <div className="flex justify-between text-[#705E7B] text-[11px]">
-                    <span>Est. Manufacturing & Packing Cost:</span>
+                    <span>Est. Manufacturing & Packing Cost (35%):</span>
                     <span>{formatInr(estimatedCost)}</span>
                   </div>
                   <div className="flex justify-between text-[#16A34A] font-bold pt-1 border-t border-[#E7DCEB]">
@@ -285,7 +325,7 @@ export const AdminMarketingPage: React.FC = () => {
                     required
                     value={newCode}
                     onChange={(e) => setNewCode(e.target.value)}
-                    placeholder="e.g. DIWALI30"
+                    placeholder="e.g. SARINEVIP15"
                     className="w-full px-3.5 py-2 uppercase font-mono bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl focus:outline-none focus:border-[#563568]"
                   />
                 </div>
@@ -296,6 +336,8 @@ export const AdminMarketingPage: React.FC = () => {
                     <input
                       type="number"
                       required
+                      min="1"
+                      max="90"
                       value={newDiscount}
                       onChange={(e) => setNewDiscount(e.target.value)}
                       className="w-full px-3.5 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl focus:outline-none focus:border-[#563568]"
@@ -306,6 +348,7 @@ export const AdminMarketingPage: React.FC = () => {
                     <input
                       type="number"
                       required
+                      min="100"
                       value={newMaxDiscount}
                       onChange={(e) => setNewMaxDiscount(e.target.value)}
                       className="w-full px-3.5 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl focus:outline-none focus:border-[#563568]"
@@ -320,6 +363,17 @@ export const AdminMarketingPage: React.FC = () => {
                     required
                     value={newMinOrder}
                     onChange={(e) => setNewMinOrder(e.target.value)}
+                    className="w-full px-3.5 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl focus:outline-none focus:border-[#563568]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[#5D5068] font-medium mb-1">Valid Till</label>
+                  <input
+                    type="text"
+                    required
+                    value={newExpiry}
+                    onChange={(e) => setNewExpiry(e.target.value)}
                     className="w-full px-3.5 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl focus:outline-none focus:border-[#563568]"
                   />
                 </div>

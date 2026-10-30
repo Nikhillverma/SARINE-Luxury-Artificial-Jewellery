@@ -13,105 +13,7 @@ import { getApiEndpoint } from '../config/api';
 
 const ORDER_CACHE_PREFIX = 'sarine_customer_orders_';
 
-// Curated demo orders generated if a customer signs in in dev preview with zero orders
-function generateDemoOrders(customerEmail: string, customerName: string): Order[] {
-  const emailPrefix = customerEmail.split('@')[0];
-  const name = customerName || (emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1));
 
-  return [
-    {
-      id: 'SAR-000108',
-      orderNumber: 'SAR-000108',
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-      customer: {
-        name,
-        email: customerEmail,
-        phone: '9876543210'
-      },
-      shippingAddress: {
-        fullName: name,
-        phone: '9876543210',
-        line1: 'Flat 402, Lotus Grand Residences',
-        line2: 'Jubilee Hills, Road No. 36',
-        city: 'Hyderabad',
-        state: 'Telangana',
-        pincode: '500033'
-      },
-      lines: [
-        {
-          productId: 'p-meera-choker',
-          name: 'Meera Royal Polki Choker Set with Pearl Drops',
-          unitPrice: 2499,
-          quantity: 1,
-          image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=80',
-          sku: 'SAR-NK-001'
-        },
-        {
-          productId: 'p-zoya-cuff',
-          name: 'Zoya Open-Cuff Leaf Bangle in 18K Polish',
-          unitPrice: 999,
-          quantity: 2,
-          image: 'https://images.unsplash.com/photo-1611591475855-4673fb39847e?auto=format&fit=crop&w=600&q=80',
-          sku: 'SAR-BR-004'
-        }
-      ],
-      subtotal: 4497,
-      shippingFee: 0,
-      total: 4497,
-      paymentMethod: 'online',
-      paymentStatus: 'paid',
-      orderStatus: 'shipped',
-      publicToken: 'a1b2c3d4e5f6789012345678abcdef01',
-      razorpayPaymentId: 'pay_Nz82Kx9281aBcD',
-      courierName: 'Blue Dart Express',
-      trackingNumber: 'BD-847291039',
-      trackingUrl: 'https://www.bluedart.com',
-      shippedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      estimatedDelivery: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: 'SAR-000084',
-      orderNumber: 'SAR-000084',
-      createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), // 2 weeks ago
-      customer: {
-        name,
-        email: customerEmail,
-        phone: '9876543210'
-      },
-      shippingAddress: {
-        fullName: name,
-        phone: '9876543210',
-        line1: 'Flat 402, Lotus Grand Residences',
-        line2: 'Jubilee Hills, Road No. 36',
-        city: 'Hyderabad',
-        state: 'Telangana',
-        pincode: '500033'
-      },
-      lines: [
-        {
-          productId: 'p-ananya-temple-coin',
-          name: 'Ananya Temple Coin Bracelet in Antique Gold',
-          unitPrice: 1299,
-          quantity: 1,
-          image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80',
-          sku: 'SAR-BR-002'
-        }
-      ],
-      subtotal: 1299,
-      shippingFee: 0,
-      total: 1299,
-      paymentMethod: 'cod',
-      paymentStatus: 'paid',
-      orderStatus: 'delivered',
-      publicToken: 'f9e8d7c6b5a4321098765432fedcba98',
-      courierName: 'Delhivery Surface',
-      trackingNumber: 'DEL-928172039',
-      trackingUrl: 'https://www.delhivery.com',
-      shippedAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-      deliveredAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString()
-    }
-  ];
-}
 
 class CustomerOrderService {
   private getCacheKey(customerEmail: string): string {
@@ -158,17 +60,13 @@ class CustomerOrderService {
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
         const parsed: Order[] = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed;
         }
       }
-
-      // If no orders found in local cache, seed realistic orders for dev testing
-      const seeded = generateDemoOrders(customerEmail, customerName || '');
-      localStorage.setItem(cacheKey, JSON.stringify(seeded));
-      return seeded;
+      return [];
     } catch {
-      return generateDemoOrders(customerEmail, customerName || '');
+      return [];
     }
   }
 

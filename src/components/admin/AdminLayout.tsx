@@ -126,7 +126,16 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     }
   };
 
-  const navItems = [
+interface NavItem {
+  name: string;
+  path: string;
+  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
+  badge?: string;
+  badgeColor?: string;
+  match: (p: string) => boolean;
+}
+
+  const navItems: NavItem[] = [
     {
       name: 'Dashboard',
       path: '/admin',
@@ -149,8 +158,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: 'Orders & Fulfilment',
       path: '/admin/orders',
       icon: ShoppingBag,
-      badge: '3',
-      badgeColor: 'bg-[#E5A93C] text-black font-semibold',
       match: (p: string) => p.startsWith('/admin/orders')
     },
     {
@@ -181,8 +188,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: 'AI Business Copilot',
       path: '/admin/copilot',
       icon: Sparkles,
-      badge: 'New',
-      badgeColor: 'bg-[#8660B0] text-white font-medium',
       match: (p: string) => p.startsWith('/admin/copilot')
     },
     {
@@ -226,7 +231,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     return 'AD';
   })();
 
-  const adminEmail = user?.email || 'admin@sarinejewelry.com';
+  const adminEmail = user?.email || '';
 
   return (
     <div className="min-h-screen bg-[#F8F3FA] text-[#302438] font-sans flex">

@@ -1,21 +1,23 @@
 /**
  * AdminCopilotPage for SARINE.
- * Dedicated AI Business Copilot Workspace for executive intelligence, profit analysis,
- * inventory replenishment forecasts, and festival campaign drafting.
+ * Dedicated AI Business Copilot Workspace grounded strictly in live Firestore product catalogue,
+ * real physical stock levels, and store order metrics.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
+import { productService } from '../../services';
+import { Product } from '../../types/product';
+import { getFirebaseAuth, getDb, isFirebaseConfigured } from '../../lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { formatInr } from '../../utils/currency';
 import {
   Sparkles,
   Send,
   TrendingUp,
   AlertTriangle,
   Lightbulb,
-  CheckCircle2,
-  Package,
-  ShoppingBag,
-  ArrowRight
+  CheckCircle2
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -29,7 +31,7 @@ const INITIAL_MESSAGES: ChatMessage[] = [
   {
     id: 'm1',
     sender: 'copilot',
-    text: 'Welcome! I am your SARINE AI Business Copilot. I have synchronized with your Firestore product catalogue, order velocity, and store metrics. How can I assist with your store operations today?',
+    text: 'Welcome! I am your SARINE AI Business Copilot. I am synchronized with your live Firestore product catalogue, inventory stock on hand, and store sales. How can I assist with your atelier operations today?',
     timestamp: 'Just now'
   }
 ];
@@ -38,6 +40,37 @@ export const AdminCopilotPage: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
   const [inputQuery, setInputQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [ordersCount, setOrdersCount] = useState<number>(0);
+  const [totalRevenue, setTotalRevenue] = useState<number>(0);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const prods = await productService.getProducts({ sortBy: 'newest', inStockOnly: false, includeAll: true });
+        setProducts(prods);
+
+        if (isFirebaseConfigured()) {
+          const db = getDb();
+          const snap = await getDocs(collection(db, 'orders'));
+          let rev = 0;
+          let count = 0;
+          snap.forEach((d) => {
+            const data = d.data();
+            count++;
+            if (data.paymentStatus === 'paid' && data.orderStatus !== 'cancelled') {
+              rev += Number(data.total) || 0;
+            }
+          });
+          setOrdersCount(count);
+          setTotalRevenue(rev);
+        }
+      } catch (err) {
+        console.warn('[AdminCopilotPage] Data load notice:', err);
+      }
+    }
+    loadData();
+  }, []);
 
   const handleSend = (text: string) => {
     const userMsg: ChatMessage = {
@@ -52,28 +85,43 @@ export const AdminCopilotPage: React.FC = () => {
 
     setTimeout(() => {
       let responseText = '';
-      if (text.includes('Diwali') || text.includes('festival')) {
+      const catalogCount = products.length;
+      const lowStockItems = products.filter((p) => typeof p.stock === 'number' && p.stock <= 5);
+      const outOfStockItems = products.filter((p) => typeof p.stock === 'number' && p.stock <= 0);
+
+      if (text.toLowerCase().includes('festive') || text.toLowerCase().includes('campaign') || text.toLowerCase().includes('season')) {
         responseText =
-          '**Diwali Festive Forecast & Strategy:**\n\n' +
-          '• **Top Demand Categories:** Polki Chokers (estimated 35% of revenue), Chandbali Earrings (28%), Bangles (22%).\n' +
-          '• **Recommended Bundle:** "Meera Royal Polki Set + Crystal Studs" priced at ₹3,299 (20% margin improvement).\n' +
-          '• **Stock Safeguard:** Crystal Earrings (SE-001) has only 3 units on hand. Reorder 60 units from Jaipur Atelier by Oct 30.';
-      } else if (text.includes('profit') || text.includes('margin')) {
+          `**Festive Campaign Strategy:**\n\n` +
+          `• **Live Catalogue:** You have ${catalogCount} active jewellery pieces.\n` +
+          `• **Featured Categories:** Chokers, Polki statement sets, and hand-finished bangles are prime drivers for festive gifting in India.\n` +
+          `• **Action Item:** Create a seasonal coupon (e.g. 15% off orders above ₹1,999) in Marketing & Offers to incentivize patrons.`;
+      } else if (text.toLowerCase().includes('profit') || text.toLowerCase().includes('margin')) {
         responseText =
-          '**Profitability Breakdown:**\n\n' +
-          '• **Highest Margin Piece:** Designer Bangles (Selling ₹2,450, Cost ₹540, Gross Margin 78%).\n' +
-          '• **Lowest Margin Piece:** Solid Silver Anklet (Selling ₹999, Cost ₹620, Gross Margin 38%).\n' +
-          '• **Action:** Shift 20% of your Instagram ad budget from low-margin single rings to bridal choker sets to maximize net EBITDA.';
-      } else if (text.includes('restock') || text.includes('stock')) {
-        responseText =
-          '**Atelier Replenishment Priority List:**\n\n' +
-          '1. **Crystal Earrings (SE-001):** 3 units left (Urgent - 2 days coverage)\n' +
-          '2. **Pearl Necklace (PN-002):** 5 units left (4 days coverage)\n' +
-          '3. **Gold Bangles (GB-003):** 7 units left (5 days coverage)\n' +
-          'Total estimated reorder investment: ₹38,400 with expected revenue of ₹1,42,000.';
+          `**Catalogue Margin Optimization:**\n\n` +
+          `• **Total Products:** ${catalogCount} items currently active.\n` +
+          `• **Atelier Gross Margin:** Handcrafted imitation jewellery and bridal sets typically yield 65% - 75% gross margins.\n` +
+          `• **Store Revenue:** ${formatInr(totalRevenue)} recorded across ${ordersCount} orders.\n` +
+          `• **Recommendation:** Feature matching sets (necklace + earrings) on your homepage banner to lift average basket size.`;
+      } else if (text.toLowerCase().includes('restock') || text.toLowerCase().includes('stock')) {
+        if (lowStockItems.length === 0 && outOfStockItems.length === 0) {
+          responseText =
+            `**Inventory Health Status:**\n\n` +
+            `• All ${catalogCount} products in your catalogue currently have optimal physical stock levels (all above threshold).\n` +
+            `• No urgent restock orders needed at this time.`;
+        } else {
+          const listText = lowStockItems.slice(0, 5).map((p, idx) => `${idx + 1}. **${p.name}:** ${p.stock ?? 0} units left`).join('\n');
+          responseText =
+            `**Atelier Replenishment Priority List:**\n\n` +
+            `${listText}\n\n` +
+            `• Replenish these lines to avoid stockouts as customer traffic accelerates.`;
+        }
       } else {
         responseText =
-          `I have analyzed your request regarding "${text}". Across your SARINE catalogue of artificial jewellery, average order value is currently ₹2,499 with 88% prepaid vs 12% COD. Would you like me to draft an email campaign or simulate discount tiers for this line?`;
+          `I have reviewed your inquiry regarding "${text}". Across your SARINE store, you have ${catalogCount} active catalog items, ${ordersCount} customer orders on record, and ${formatInr(totalRevenue)} in gross sales. ${
+            lowStockItems.length > 0
+              ? `${lowStockItems.length} products require restocking attention.`
+              : 'Inventory health is currently optimal.'
+          } How else can I assist with your store planning?`;
       }
 
       const botMsg: ChatMessage = {
@@ -84,7 +132,7 @@ export const AdminCopilotPage: React.FC = () => {
       };
       setMessages((prev) => [...prev, botMsg]);
       setIsTyping(false);
-    }, 800);
+    }, 600);
   };
 
   return (
@@ -115,25 +163,25 @@ export const AdminCopilotPage: React.FC = () => {
         {/* Quick Suggestion Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <button
-            onClick={() => handleSend('Which products are likely to sell well this Diwali?')}
+            onClick={() => handleSend('What campaign strategy should we use for the upcoming season?')}
             className="p-3.5 bg-white border border-[#EADFF0] hover:border-[#78469C] rounded-xl text-left text-xs transition-colors cursor-pointer group shadow-2xs"
           >
             <div className="flex items-center gap-2 font-semibold text-[#563568] mb-1">
               <Sparkles size={14} />
-              <span>Festive Forecasting</span>
+              <span>Seasonal Strategy</span>
             </div>
-            <p className="text-[11px] text-[#705E7B]">"Which products are likely to sell well this Diwali?"</p>
+            <p className="text-[11px] text-[#705E7B]">"What campaign strategy should we use for the upcoming season?"</p>
           </button>
 
           <button
-            onClick={() => handleSend('Show me the most profitable products.')}
+            onClick={() => handleSend('Show me the most profitable product lines.')}
             className="p-3.5 bg-white border border-[#EADFF0] hover:border-[#78469C] rounded-xl text-left text-xs transition-colors cursor-pointer group shadow-2xs"
           >
             <div className="flex items-center gap-2 font-semibold text-[#563568] mb-1">
               <TrendingUp size={14} />
               <span>Margin Optimization</span>
             </div>
-            <p className="text-[11px] text-[#705E7B]">"Show me the most profitable products."</p>
+            <p className="text-[11px] text-[#705E7B]">"Show me the most profitable product lines."</p>
           </button>
 
           <button
