@@ -34,6 +34,12 @@ import { productService } from '../../services';
 import { docToProduct } from '../../services/firebase/firebaseHelpers';
 import { Product } from '../../types/product';
 import { formatInr } from '../../utils/currency';
+import {
+  calculateRealizedRevenue,
+  calculateGmv,
+  getOrderRealizedRevenue,
+  isRealizedRevenueOrder
+} from '../../utils/revenue';
 import { getApiEndpoint } from '../../config/api';
 import {
   ShoppingBag,
@@ -415,20 +421,18 @@ export const AdminDashboardPage: React.FC = () => {
   // CALCULATED REAL METRICS
   // -------------------------------------------------------------
 
-  // 1. Total Sales Revenue (Paid/Successful Orders only)
+  // 1. Total Sales Revenue (Realized / Collected Revenue)
+  // Online orders: paid only
+  // COD orders: delivered and paid only (confirmed and shipped COD strictly excluded)
+  // Cancelled, failed, returned excluded
+  // Verified refunds subtracted
   const totalSalesRevenue = useMemo(() => {
-    return orders
-      .filter((o) => {
-        // Exclude cancelled and returned orders
-        if (o.orderStatus === 'cancelled' || o.orderStatus === 'returned') return false;
-        // Exclude failed payments
-        if (o.paymentStatus === 'failed') return false;
-        // Include if paymentStatus is paid, or if COD order is delivered/confirmed/shipped
-        if (o.paymentStatus === 'paid') return true;
-        if (o.paymentMethod === 'cod' && (o.orderStatus === 'delivered' || o.orderStatus === 'confirmed' || o.orderStatus === 'shipped')) return true;
-        return false;
-      })
-      .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+    return calculateRealizedRevenue(orders);
+  }, [orders]);
+
+  // Gross Merchandise Value (pipeline value of active orders)
+  const pipelineGmv = useMemo(() => {
+    return calculateGmv(orders);
   }, [orders]);
 
   // 2. Total Orders Count
@@ -493,14 +497,14 @@ export const AdminDashboardPage: React.FC = () => {
     const dayMap = new Map(days.map((d) => [d.key, d]));
     orders.forEach((o) => {
       if (!o.createdAt) return;
-      // Only include paid/valid orders in revenue chart
-      if (o.orderStatus === 'cancelled' || o.orderStatus === 'returned' || o.paymentStatus === 'failed') return;
-      if (o.paymentStatus !== 'paid' && o.paymentMethod !== 'cod') return;
+      // Only include realized orders in revenue chart
+      const orderRev = getOrderRealizedRevenue(o);
+      if (orderRev <= 0) return;
 
       const oDateKey = new Date(o.createdAt).toISOString().split('T')[0];
       const entry = dayMap.get(oDateKey);
       if (entry) {
-        entry.revenue += Number(o.total) || 0;
+        entry.revenue += orderRev;
       }
     });
 
@@ -517,7 +521,7 @@ export const AdminDashboardPage: React.FC = () => {
     const salesMap = new Map<string, { id: string; name: string; sold: number; revenue: number; img: string }>();
 
     orders.forEach((o) => {
-      if (o.orderStatus === 'cancelled' || o.orderStatus === 'returned' || o.paymentStatus === 'failed') return;
+      if (!isRealizedRevenueOrder(o)) return;
       o.lines.forEach((line) => {
         const key = line.productId || line.name;
         const existing = salesMap.get(key) || {
@@ -614,7 +618,7 @@ export const AdminDashboardPage: React.FC = () => {
       } else if (question.includes('profitable') || question.includes('margin') || question.includes('sell')) {
         const topItem = topSellingProducts[0];
         setCopilotResponse(
-          `Live Sales Insight: Across your ${catalogCount} catalog items and ${ordersCount} orders (${totalRevFormatted} gross revenue), ${
+          `Live Sales Insight: Across your ${catalogCount} catalog items and ${ordersCount} orders (${totalRevFormatted} realized revenue), ${
             topItem
               ? `your best-performing item is "${topItem.name}" with ${topItem.sold} units sold (${formatInr(topItem.revenue)}).`
               : 'sales are currently spread across initial customer purchases.'
@@ -724,9 +728,16 @@ export const AdminDashboardPage: React.FC = () => {
                 {ordersLoading ? '...' : formatInr(totalSalesRevenue)}
               </span>
             </div>
-            <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#16A34A] font-medium">
-              <span>● Live</span>
-              <span className="text-[#8E769E] font-normal">Paid orders only</span>
+            <div className="mt-1.5 flex items-center justify-between text-[11px]">
+              <div className="flex items-center gap-1.5 text-[#16A34A] font-medium">
+                <span>● Live</span>
+                <span className="text-[#8E769E] font-normal">Realized revenue</span>
+              </div>
+              {pipelineGmv > totalSalesRevenue && (
+                <span className="text-[#8E769E] text-[10px] font-normal" title="Gross Merchandise Value of active orders">
+                  GMV: {formatInr(pipelineGmv)}
+                </span>
+              )}
             </div>
           </div>
 

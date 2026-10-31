@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
+    "test:revenue": "tsx scripts/test-revenue.ts",
     "test:rules": "firebase emulators:exec --only firestore \"npx tsx scripts/test-rules.ts\"",
     "deploy:hosting": "firebase deploy --only hosting"
   },
