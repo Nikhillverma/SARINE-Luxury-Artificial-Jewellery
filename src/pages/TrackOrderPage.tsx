@@ -53,6 +53,74 @@ interface TrackedOrder {
   deliveredAt?: string;
 }
 
+function lookupLocalTrackedOrder(orderNumber: string, phone: string): TrackedOrder | null {
+  try {
+    const raw = localStorage.getItem('sarine_preview_order_' + orderNumber);
+    let orderData: any = null;
+    if (raw) {
+      orderData = JSON.parse(raw);
+    } else {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('sarine_customer_orders_')) {
+          const listRaw = localStorage.getItem(key);
+          if (listRaw) {
+            const list = JSON.parse(listRaw);
+            const match = list.find((o: any) => o.orderNumber === orderNumber);
+            if (match) {
+              orderData = match;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (!orderData) return null;
+
+    const orderPhone = (
+      orderData.customer?.phone ||
+      orderData.shippingAddress?.phone ||
+      ''
+    ).replace(/\D/g, '').slice(-10);
+
+    if (orderPhone && orderPhone !== phone) {
+      return null;
+    }
+
+    return {
+      orderNumber: orderData.orderNumber,
+      publicToken: orderData.publicToken || '',
+      createdAt: orderData.createdAt,
+      lines: (orderData.lines || []).map((l: any) => ({
+        name: l.name,
+        image: l.image,
+        quantity: l.quantity,
+        unitPrice: l.unitPrice
+      })),
+      subtotal: orderData.subtotal || 0,
+      shippingFee: orderData.shippingFee || 0,
+      total: orderData.total || 0,
+      paymentMethod: orderData.paymentMethod || 'cod',
+      paymentStatus: orderData.paymentStatus || 'pending',
+      orderStatus: orderData.orderStatus || 'placed',
+      razorpayPaymentId: orderData.razorpayPaymentId,
+      shippingAddress: {
+        city: orderData.shippingAddress?.city,
+        state: orderData.shippingAddress?.state,
+        pincode: orderData.shippingAddress?.pincode
+      },
+      courierName: orderData.courierName,
+      trackingUrl: orderData.trackingUrl,
+      trackingNumber: orderData.trackingNumber,
+      shippedAt: orderData.shippedAt,
+      deliveredAt: orderData.deliveredAt
+    };
+  } catch {
+    return null;
+  }
+}
+
 export const TrackOrderPage: React.FC = () => {
   const [orderNumberInput, setOrderNumberInput] = useState('');
   const [phoneInput, setPhoneInput] = useState('');
@@ -105,14 +173,30 @@ export const TrackOrderPage: React.FC = () => {
       if (!res.ok) {
         if (res.status === 429) {
           setError(data.error || 'Too many attempts. Please try again later.');
-        } else {
-          setError(data.error || "We couldn't find an order with those details.");
+          return;
         }
+
+        if (import.meta.env.DEV || res.status === 404) {
+          const localOrder = lookupLocalTrackedOrder(cleanNumber, cleanPhone);
+          if (localOrder) {
+            setOrder(localOrder);
+            return;
+          }
+        }
+
+        setError(data.error || "We couldn't find an order with those details.");
         return;
       }
 
       setOrder(data);
     } catch (err) {
+      if (import.meta.env.DEV) {
+        const localOrder = lookupLocalTrackedOrder(cleanNumber, cleanPhone);
+        if (localOrder) {
+          setOrder(localOrder);
+          return;
+        }
+      }
       console.error('[TrackOrder] Network or function error:', err);
       setError("We couldn't find an order with those details.");
     } finally {
