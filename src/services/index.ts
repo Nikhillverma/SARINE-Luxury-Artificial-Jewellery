@@ -1,13 +1,12 @@
 /**
  * Central Service Switch for SARINE.
- * Supports switching between in-memory mock services and live Firebase Firestore.
  *
- * Current Configuration:
- * - Products & Categories: Swappable via DATA_SOURCE ('mock' | 'firebase').
- * - Orders: Strictly handled via NetlifyOrderService communicating with secure server endpoints.
+ * Products and categories: Hostinger MariaDB API.
+ * Orders: existing Netlify service temporarily, until Hostinger checkout is ready.
+ * Admin products: existing mock service temporarily, until Hostinger admin is ready.
  */
 
-import {
+import type {
   IProductService,
   ICategoryService,
   IAdminProductService,
@@ -16,46 +15,33 @@ import {
 import { MockProductService } from './mock/mockProductService';
 import { MockCategoryService } from './mock/mockCategoryService';
 import { MockAdminProductService } from './mock/mockAdminProductService';
-import { FirebaseProductService } from './firebase/firebaseProductService';
-import { FirebaseCategoryService } from './firebase/firebaseCategoryService';
 import { NetlifyOrderService } from './netlify/netlifyOrderService';
+import { HostingerProductService } from './hostinger/hostingerProductService';
+import { HostingerCategoryService } from './hostinger/hostingerCategoryService';
 
-export type DataSource = 'mock' | 'firebase';
+export type DataSource = 'mock' | 'firebase' | 'hostinger';
 
-/**
- * Toggle the data source here:
- * Set to 'mock' for local in-memory catalog data.
- * Set to 'firebase' to read products and categories from Cloud Firestore.
- */
-export const DATA_SOURCE: DataSource = 'firebase';
+export const DATA_SOURCE: DataSource = 'hostinger';
 
-// Instantiations
 const mockProductService = new MockProductService();
 const mockCategoryService = new MockCategoryService();
 const mockAdminProductService = new MockAdminProductService(mockProductService);
 const netlifyOrderService = new NetlifyOrderService();
+const hostingerProductService = new HostingerProductService();
+const hostingerCategoryService = new HostingerCategoryService();
 
-const firebaseProductService = new FirebaseProductService();
-const firebaseCategoryService = new FirebaseCategoryService();
-
-// Export active singletons
 export const productService: IProductService =
-  DATA_SOURCE === 'firebase'
-    ? firebaseProductService
+  DATA_SOURCE === 'hostinger'
+    ? hostingerProductService
     : mockProductService;
 
 export const categoryService: ICategoryService =
-  DATA_SOURCE === 'firebase'
-    ? firebaseCategoryService
+  DATA_SOURCE === 'hostinger'
+    ? hostingerCategoryService
     : mockCategoryService;
 
-/**
- * Orders are strictly handled through Netlify server functions to guarantee
- * authoritative pricing, inventory validation, and cryptographic payment verification.
- */
 export const orderService: IOrderService = netlifyOrderService;
-
 export const adminProductService: IAdminProductService = mockAdminProductService;
-export { netlifyOrderService };
 
+export { netlifyOrderService };
 export * from './interfaces';
