@@ -1,18 +1,11 @@
-/**
- * AdminLoginPage for SARINE.
- * Authenticates store managers via Firebase Auth (Email/Password).
- * Includes secure "Forgot Password?" flow via Firebase sendPasswordResetEmail.
- * Generic error display on failures; noindex enforcement.
+﻿/**
+ * SARINE Admin Login
+ * Authenticates administrators through the Hostinger API.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  signInWithEmailAndPassword,
-  onAuthStateChanged,
-  sendPasswordResetEmail
-} from 'firebase/auth';
-import { getFirebaseAuth, isFirebaseConfigured } from '../../lib/firebase';
+import { adminLogin, getAdminSession } from '../../lib/adminAuth';
 import {
   Lock,
   Mail,
@@ -20,7 +13,6 @@ import {
   ArrowRight,
   ShieldCheck,
   X,
-  CheckCircle2,
   KeyRound
 } from 'lucide-react';
 
@@ -28,57 +20,63 @@ export const AdminLoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Forgot password modal states
   const [showResetModal, setShowResetModal] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
-  const [resetLoading, setResetLoading] = useState(false);
-  const [resetError, setResetError] = useState<string | null>(null);
-  const [resetSuccess, setResetSuccess] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
-  // Enforce noindex for administrative authentication page
   useEffect(() => {
-    let metaTag = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
+    let active = true;
+
+    const checkSession = async () => {
+      const admin = await getAdminSession();
+
+      if (active && admin) {
+        navigate('/admin', { replace: true });
+      }
+
+      if (active) {
+        setCheckingSession(false);
+      }
+    };
+
+    void checkSession();
+
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
+
+  useEffect(() => {
+    let metaTag = document.querySelector(
+      'meta[name="robots"]'
+    ) as HTMLMetaElement | null;
+
     let created = false;
+
     if (!metaTag) {
       metaTag = document.createElement('meta');
       metaTag.name = 'robots';
       document.head.appendChild(metaTag);
       created = true;
     }
+
     const previousContent = metaTag.content;
     metaTag.content = 'noindex, nofollow';
 
     return () => {
-      if (created && metaTag) {
-        metaTag.remove();
+      if (created) {
+        metaTag?.remove();
       } else if (metaTag) {
         metaTag.content = previousContent || '';
       }
     };
   }, []);
 
-  // Redirect if already authenticated with active Firebase credentials
-  useEffect(() => {
-    if (!isFirebaseConfigured()) return;
-    try {
-      const auth = getFirebaseAuth();
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user) {
-          navigate('/admin', { replace: true });
-        }
-      });
-      return () => unsubscribe();
-    } catch {
-      // Ignore
-    }
-  }, [navigate]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (!email.trim() || !password) {
       setError('Please enter both email and password.');
       return;
@@ -88,68 +86,13 @@ export const AdminLoginPage: React.FC = () => {
     setError(null);
 
     try {
-      const auth = getFirebaseAuth();
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      await adminLogin(email.trim(), password);
       navigate('/admin', { replace: true });
-    } catch (err: any) {
+    } catch (err) {
       console.error('[AdminLogin] Authentication failure:', err);
-      // Generic error on failure as required
       setError('Invalid email or password. Please try again.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSendPasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const targetEmail = resetEmail.trim();
-    if (!targetEmail) {
-      setResetError('Please enter your admin email address.');
-      return;
-    }
-
-    setResetLoading(true);
-    setResetError(null);
-    setResetSuccess(null);
-
-    if (!isFirebaseConfigured()) {
-      setResetError('Firebase Authentication is not configured. Please check your Firebase configuration.');
-      setResetLoading(false);
-      return;
-    }
-
-    try {
-      const auth = getFirebaseAuth();
-      await sendPasswordResetEmail(auth, targetEmail);
-      setResetSuccess(`Password reset email sent to ${targetEmail}. Please check your inbox and spam folder.`);
-    } catch (err: any) {
-      console.error('[AdminLogin] Password reset error:', err);
-      const code = err?.code || '';
-      switch (code) {
-        case 'auth/invalid-email':
-          setResetError('The email address entered is not valid. Please check for typos.');
-          break;
-        case 'auth/user-not-found':
-          setResetError('No administrative account found with this email address.');
-          break;
-        case 'auth/missing-email':
-          setResetError('Please enter your admin email address.');
-          break;
-        case 'auth/network-request-failed':
-          setResetError('Network error: Unable to reach Firebase. Please check your internet connection.');
-          break;
-        case 'auth/too-many-requests':
-          setResetError('Too many password reset requests. Please wait a few moments before trying again.');
-          break;
-        case 'auth/operation-not-allowed':
-          setResetError('Email password reset is disabled in your Firebase console.');
-          break;
-        default:
-          setResetError(err?.message || 'Failed to send password reset email. Please try again.');
-          break;
-      }
-    } finally {
-      setResetLoading(false);
     }
   };
 
@@ -187,6 +130,7 @@ export const AdminLoginPage: React.FC = () => {
                   id="admin-email"
                   type="email"
                   required
+                  autoComplete="username"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@sarinejewelry.com"
@@ -211,6 +155,7 @@ export const AdminLoginPage: React.FC = () => {
                   id="admin-password"
                   type="password"
                   required
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
@@ -221,16 +166,11 @@ export const AdminLoginPage: React.FC = () => {
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6F6475]"
                 />
               </div>
-              {/* Forgot Password link directly below password field */}
+
               <div className="flex justify-end mt-1.5">
                 <button
                   type="button"
-                  onClick={() => {
-                    setResetEmail(email.trim());
-                    setResetError(null);
-                    setResetSuccess(null);
-                    setShowResetModal(true);
-                  }}
+                  onClick={() => setShowResetModal(true)}
                   className="text-[11px] text-[#563568] hover:text-[#78469C] hover:underline font-medium transition-colors cursor-pointer"
                 >
                   Forgot Password?
@@ -247,10 +187,12 @@ export const AdminLoginPage: React.FC = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || checkingSession}
               className="w-full py-3 bg-[#563568] text-white text-xs font-medium uppercase tracking-[0.2em] hover:bg-[#78469C] transition-colors rounded-xl flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
             >
-              {loading ? (
+              {checkingSession ? (
+                <span>Checking session...</span>
+              ) : loading ? (
                 <span>Signing in...</span>
               ) : (
                 <>
@@ -268,7 +210,6 @@ export const AdminLoginPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Forgot Password Modal */}
       {showResetModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
@@ -282,10 +223,14 @@ export const AdminLoginPage: React.FC = () => {
                 <div className="w-8 h-8 rounded-lg bg-[#FAF5FC] border border-[#E7DCEB] flex items-center justify-center text-[#563568]">
                   <KeyRound size={16} />
                 </div>
-                <h3 id="reset-modal-title" className="font-serif text-lg font-semibold text-[#2C1838]">
-                  Reset Admin Password
+                <h3
+                  id="reset-modal-title"
+                  className="font-serif text-lg font-semibold text-[#2C1838]"
+                >
+                  Admin Password Assistance
                 </h3>
               </div>
+
               <button
                 type="button"
                 onClick={() => setShowResetModal(false)}
@@ -296,66 +241,21 @@ export const AdminLoginPage: React.FC = () => {
               </button>
             </div>
 
-            <p className="mt-3 text-xs text-[#6F6475] leading-relaxed">
-              Enter your registered SARINE administrative email address. We will send you a secure password reset link via Firebase Authentication.
+            <p className="mt-4 text-xs text-[#6F6475] leading-relaxed">
+              Automated password reset is not yet configured for the
+              Hostinger admin system. Please contact your system
+              administrator to reset your password securely.
             </p>
 
-            <form onSubmit={handleSendPasswordReset} className="mt-4 space-y-4">
-              <div>
-                <label
-                  htmlFor="reset-email"
-                  className="block text-xs uppercase tracking-wider text-[#302438] font-medium mb-1.5"
-                >
-                  Admin Email Address
-                </label>
-                <div className="relative">
-                  <input
-                    id="reset-email"
-                    type="email"
-                    required
-                    value={resetEmail}
-                    onChange={(e) => setResetEmail(e.target.value)}
-                    placeholder="admin@sarinejewelry.com"
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-[#F7F0FA] border border-[#E7DCEB] text-xs text-[#302438] placeholder:text-[#9E90A2] rounded-xs focus:outline-none focus:border-[#B69ACF] focus:ring-1 focus:ring-[#80609A] transition-colors"
-                  />
-                  <Mail
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6F6475]"
-                  />
-                </div>
-              </div>
-
-              {resetError && (
-                <div className="p-3 bg-[#FEF2F2] border border-[#FCA5A5] rounded-xs flex items-start gap-2 text-xs text-[#DC2626]">
-                  <AlertCircle size={15} className="shrink-0 mt-0.5" />
-                  <p>{resetError}</p>
-                </div>
-              )}
-
-              {resetSuccess && (
-                <div className="p-3 bg-[#F0FDF4] border border-[#86EFAC] rounded-xs flex items-start gap-2 text-xs text-[#16A34A]">
-                  <CheckCircle2 size={15} className="shrink-0 mt-0.5" />
-                  <p>{resetSuccess}</p>
-                </div>
-              )}
-
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#E7DCEB]">
-                <button
-                  type="button"
-                  onClick={() => setShowResetModal(false)}
-                  className="px-4 py-2 border border-[#E7DCEB] rounded-lg text-xs font-medium text-[#6F6475] hover:bg-[#FAF5FC] hover:text-[#302438] transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={resetLoading}
-                  className="px-5 py-2 bg-[#563568] hover:bg-[#78469C] text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
-                >
-                  {resetLoading ? <span>Sending...</span> : <span>Send Reset Link</span>}
-                </button>
-              </div>
-            </form>
+            <div className="flex justify-end pt-5">
+              <button
+                type="button"
+                onClick={() => setShowResetModal(false)}
+                className="px-5 py-2 bg-[#563568] hover:bg-[#78469C] text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

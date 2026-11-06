@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AdminLayout component for SARINE.
  * Luxury deep-plum administrative workspace layout matching the official SARINE
  * admin dashboard reference image.
@@ -14,8 +14,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-import { getFirebaseAuth, isFirebaseConfigured } from '../../lib/firebase';
+import { AdminIdentity, getAdminSession, adminLogout } from '../../lib/adminAuth';
+
 import {
   Home,
   Package,
@@ -50,7 +50,7 @@ interface AdminLayoutProps {
 }
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AdminIdentity | null>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -89,39 +89,35 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     };
   }, []);
 
-  // Listen to Firebase auth state
+  // Verify the Hostinger admin session
   useEffect(() => {
-    if (!isFirebaseConfigured()) {
-      setLoading(false);
-      return;
-    }
+    let active = true;
 
-    try {
-      const auth = getFirebaseAuth();
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        setUser(currentUser);
-        setLoading(false);
-        // If not logged in and not on login page, redirect to admin login
-        if (!currentUser && location.pathname !== '/admin/login') {
-          navigate('/admin/login', { replace: true });
-        }
-      });
-      return () => unsubscribe();
-    } catch (e) {
-      console.error('[AdminLayout] Auth initialization error:', e);
+    const verifySession = async () => {
+      const admin = await getAdminSession();
+
+      if (!active) return;
+
+      setUser(admin);
       setLoading(false);
-    }
+
+      if (!admin && location.pathname !== '/admin/login') {
+        navigate('/admin/login', { replace: true });
+      }
+    };
+
+    void verifySession();
+
+    return () => {
+      active = false;
+    };
   }, [navigate, location.pathname]);
-
   const handleSignOut = async () => {
     try {
-      if (isFirebaseConfigured()) {
-        const auth = getFirebaseAuth();
-        await signOut(auth);
-      }
-      navigate('/admin/login', { replace: true });
+      await adminLogout();
     } catch (err) {
       console.error('[AdminLayout] Sign out error:', err);
+    } finally {
       navigate('/admin/login', { replace: true });
     }
   };
@@ -210,15 +206,15 @@ interface NavItem {
   }
 
   // Derived Admin Identity
-  const adminDisplayName = user?.displayName?.trim()
-    ? user.displayName.trim()
+  const adminDisplayName = user?.name?.trim()
+    ? user.name.trim()
     : user?.email
     ? user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1)
     : 'Admin';
 
   const adminInitials = (() => {
-    if (user?.displayName && user.displayName.trim()) {
-      const parts = user.displayName.trim().split(/\s+/);
+    if (user?.name && user.name.trim()) {
+      const parts = user.name.trim().split(/\s+/);
       if (parts.length >= 2) {
         return (parts[0][0] + parts[1][0]).toUpperCase();
       }
@@ -489,9 +485,9 @@ interface NavItem {
                 className="flex items-center gap-2.5 p-1 hover:bg-[#FAF5FC] rounded-full sm:rounded-lg transition-colors cursor-pointer"
                 aria-label="Admin Profile Menu"
               >
-                {user?.photoURL ? (
+                {false ? (
                   <img
-                    src={user.photoURL}
+                    src={undefined}
                     alt={adminDisplayName}
                     className="w-8 h-8 rounded-full object-cover border border-[#E7DCEB]"
                   />
@@ -570,7 +566,7 @@ interface NavItem {
                 onClick={() => setQuickActionSuccess(null)}
                 className="text-[#166534] hover:font-bold cursor-pointer"
               >
-                ✕
+                âœ•
               </button>
             </div>
           )}
@@ -667,7 +663,7 @@ interface NavItem {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[#5D5068] font-medium mb-1">Selling Price (₹)</label>
+                  <label className="block text-[#5D5068] font-medium mb-1">Selling Price (â‚¹)</label>
                   <input
                     type="number"
                     required
@@ -756,7 +752,7 @@ interface NavItem {
                   />
                 </div>
                 <div>
-                  <label className="block text-[#5D5068] font-medium mb-1">Min Order Value (₹)</label>
+                  <label className="block text-[#5D5068] font-medium mb-1">Min Order Value (â‚¹)</label>
                   <input
                     type="number"
                     required
@@ -851,3 +847,4 @@ interface NavItem {
     </div>
   );
 };
+
