@@ -717,8 +717,9 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
 
     const [rows] = await pool.execute(
       `SELECT id, order_number, customer_phone, shipping_address, order_status,
-              created_at, shipped_at, delivered_at, estimated_delivery,
-              courier_name, tracking_number, tracking_url
+              payment_method, payment_status, subtotal, shipping_fee, total,
+              razorpay_payment_id, created_at, shipped_at, delivered_at,
+              estimated_delivery, courier_name, tracking_number, tracking_url
        FROM orders
        WHERE order_number = ?
        LIMIT 1`,
@@ -732,10 +733,11 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
     const order = rows[0];
     const cleanCustomerPhone = String(order.customer_phone || "").replace(/\D/g, "").slice(-10);
 
+    let parsedAddress = {};
     let cleanShippingPhone = "";
     try {
-      const addr = typeof order.shipping_address === "string" ? JSON.parse(order.shipping_address) : (order.shipping_address || {});
-      cleanShippingPhone = String(addr.phone || "").replace(/\D/g, "").slice(-10);
+      parsedAddress = typeof order.shipping_address === "string" ? JSON.parse(order.shipping_address) : (order.shipping_address || {});
+      cleanShippingPhone = String(parsedAddress.phone || "").replace(/\D/g, "").slice(-10);
     } catch {}
 
     const phoneMatches = (cleanCustomerPhone === last10Phone) || (cleanShippingPhone === last10Phone);
@@ -744,17 +746,34 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
     }
 
     const [items] = await pool.execute(
-      `SELECT product_name, quantity, image
+      `SELECT product_name, quantity, image, unit_price
        FROM order_items
        WHERE order_id = ?`,
       [order.id]
     );
 
     const itemCount = items.reduce((sum, itm) => sum + Number(itm.quantity || 0), 0);
+    const lines = items.map(itm => ({
+      name: itm.product_name,
+      quantity: Number(itm.quantity),
+      image: itm.image || "",
+      unitPrice: Number(itm.unit_price || 0)
+    }));
 
     return res.json({
       orderNumber: order.order_number,
       orderStatus: order.order_status,
+      paymentMethod: order.payment_method || "online",
+      paymentStatus: order.payment_status || "pending",
+      subtotal: Number(order.subtotal || 0),
+      shippingFee: Number(order.shipping_fee || 0),
+      total: Number(order.total || 0),
+      razorpayPaymentId: order.payment_status === "paid" ? (order.razorpay_payment_id || undefined) : undefined,
+      shippingAddress: {
+        city: parsedAddress.city || "",
+        state: parsedAddress.state || "",
+        pincode: parsedAddress.pincode || ""
+      },
       createdAt: order.created_at,
       shippedAt: order.shipped_at || undefined,
       deliveredAt: order.delivered_at || undefined,
@@ -763,11 +782,8 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
       trackingNumber: order.tracking_number || undefined,
       trackingUrl: order.tracking_url || undefined,
       itemCount,
-      items: items.map(itm => ({
-        name: itm.product_name,
-        quantity: Number(itm.quantity),
-        image: itm.image || ""
-      }))
+      lines,
+      items: lines
     });
   } catch (error) {
     next(error);
