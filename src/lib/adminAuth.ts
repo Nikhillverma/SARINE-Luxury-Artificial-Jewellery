@@ -1,6 +1,6 @@
-﻿const API_BASE = (
+const API_BASE = (
   import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
-  'https://greenyellow-cat-956048.hostingersite.com/api'
+  (import.meta.env.DEV ? '/api' : 'https://greenyellow-cat-956048.hostingersite.com/api')
 ).replace(/\/+$/, '');
 
 export interface AdminIdentity {
@@ -37,7 +37,9 @@ async function authRequest<T>(
 
   if (!response.ok) {
     throw new Error(
-      typeof data.message === 'string'
+      typeof data.error === 'string'
+        ? data.error
+        : typeof data.message === 'string'
         ? data.message
         : 'Admin authentication request failed.'
     );
@@ -65,7 +67,6 @@ export async function adminLogin(
 export async function getAdminSession(): Promise<AdminIdentity | null> {
   try {
     const result = await authRequest<SessionResponse>('session');
-
     return result.authenticated && result.admin
       ? result.admin
       : null;
@@ -79,3 +80,4 @@ export async function adminLogout(): Promise<void> {
     method: 'POST'
   });
 }
+

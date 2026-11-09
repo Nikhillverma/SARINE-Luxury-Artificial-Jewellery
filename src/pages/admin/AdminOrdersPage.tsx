@@ -6,11 +6,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signOut, onAuthStateChanged, User } from 'firebase/auth';
-import { getFirebaseAuth, isFirebaseConfigured } from '../../lib/firebase';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { formatInr } from '../../utils/currency';
-import { getApiEndpoint } from '../../config/api';
 import {
   Package,
   Search,
@@ -31,6 +28,7 @@ import {
   FileText,
   AlertTriangle
 } from 'lucide-react';
+import { getAdminSession, type AdminIdentity as AdminUser } from '../../lib/adminAuth';
 
 interface OrderLine {
   productId: string;
@@ -77,7 +75,7 @@ interface AdminOrder {
 }
 
 export const AdminOrdersPage: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -113,27 +111,36 @@ export const AdminOrdersPage: React.FC = () => {
 
   const navigate = useNavigate();
 
-  // 1. Monitor Auth State
+  // 1. Monitor Hostinger Admin Auth Session
   useEffect(() => {
-    if (!isFirebaseConfigured()) {
-      setLoading(false);
-      return;
-    }
-    const auth = getFirebaseAuth();
-    const unsub = onAuthStateChanged(auth, (curr) => {
-      if (!curr) {
-        navigate('/admin/login', { replace: true });
-      } else {
-        setUser(curr);
+    let isMounted = true;
+    async function checkSession() {
+      try {
+        const session = await getAdminSession();
+        if (!isMounted) return;
+        if (session) {
+          setAdminUser(session);
+        } else {
+          navigate('/admin/login', { replace: true });
+        }
+      } catch (err) {
+        console.error('[AdminOrdersPage] Session check error:', err);
+        if (isMounted) {
+          navigate('/admin/login', { replace: true });
+        }
       }
-    });
-    return () => unsub();
+    }
+
+    checkSession();
+    return () => {
+      isMounted = false;
+    };
   }, [navigate]);
 
-  // 2. Fetch Orders
+  // 2. Fetch Orders from Hostinger MariaDB
   const fetchOrders = useCallback(
     async (isLoadMore = false) => {
-      if (!user) return;
+      if (!adminUser) return;
 
       if (isLoadMore) {
         setLoadingMore(true);
@@ -144,8 +151,6 @@ export const AdminOrdersPage: React.FC = () => {
       setAccessDenied(null);
 
       try {
-        const idToken = await user.getIdToken();
-
         const queryParams = new URLSearchParams();
         if (statusFilter !== 'all') queryParams.set('status', statusFilter);
         if (paymentFilter !== 'all') queryParams.set('paymentStatus', paymentFilter);
@@ -155,20 +160,20 @@ export const AdminOrdersPage: React.FC = () => {
           queryParams.set('startAfter', nextCursor);
         }
 
-        const res = await fetch(getApiEndpoint(`admin-list-orders?${queryParams.toString()}`), {
+        const res = await fetch(`/api/admin/orders?${queryParams.toString()}`, {
           method: 'GET',
+          credentials: 'include',
           headers: {
-            Authorization: `Bearer ${idToken}`,
-            'Content-Type': 'application/json'
+            Accept: 'application/json'
           }
         });
 
         if (res.status === 401 || res.status === 403) {
-          const auth = getFirebaseAuth();
-          await signOut(auth);
-          setAccessDenied('You do not have access.');
+          setAdminUser(null);
+          setAccessDenied('Your session has expired or you do not have administrative access.');
           setLoading(false);
           setLoadingMore(false);
+          navigate('/admin/login', { replace: true });
           return;
         }
 
@@ -199,15 +204,15 @@ export const AdminOrdersPage: React.FC = () => {
         setLoadingMore(false);
       }
     },
-    [user, statusFilter, paymentFilter, nextCursor]
+    [adminUser, statusFilter, paymentFilter, nextCursor, navigate]
   );
 
-  // Trigger fetch when user is confirmed or server filters change
+  // Trigger fetch when adminUser is verified or server filters change
   useEffect(() => {
-    if (user) {
+    if (adminUser) {
       fetchOrders(false);
     }
-  }, [user, statusFilter, paymentFilter]);
+  }, [adminUser, statusFilter, paymentFilter]);
 
   // Reset note text when selected order changes
   useEffect(() => {
@@ -238,19 +243,19 @@ export const AdminOrdersPage: React.FC = () => {
 
   // 4. Order Mutation Actions
   const handleUpdateOrder = async (action: string, extraPayload: Record<string, any> = {}) => {
-    if (!selectedOrder || !user) return;
+    if (!selectedOrder || !adminUser) return;
 
     setActionLoading(true);
     setActionError(null);
     setActionSuccess(null);
 
     try {
-      const idToken = await user.getIdToken();
-      const res = await fetch(getApiEndpoint('admin-update-order'), {
+      const res = await fetch('/api/admin/orders/update', {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          Authorization: `Bearer ${idToken}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
         },
         body: JSON.stringify({
           orderNumber: selectedOrder.orderNumber,
@@ -258,6 +263,12 @@ export const AdminOrdersPage: React.FC = () => {
           ...extraPayload
         })
       });
+
+      if (res.status === 401 || res.status === 403) {
+        setAdminUser(null);
+        navigate('/admin/login', { replace: true });
+        return;
+      }
 
       const data = await res.json().catch(() => ({}));
 
@@ -529,7 +540,7 @@ export const AdminOrdersPage: React.FC = () => {
         {loading && orders.length === 0 ? (
           <div className="bg-white p-12 border border-[#E7DCEB] rounded-xs text-center space-y-3">
             <div className="w-6 h-6 border-2 border-[#563568] border-t-transparent rounded-full animate-spin mx-auto"></div>
-            <p className="text-xs text-[#6F6475]">Fetching orders from Firestore ledger...</p>
+            <p className="text-xs text-[#6F6475]">Fetching orders from Hostinger MariaDB ledger...</p>
           </div>
         ) : filteredOrders.length === 0 ? (
           <div className="bg-white p-12 border border-[#E7DCEB] rounded-xs text-center space-y-2">
@@ -1120,3 +1131,4 @@ export const AdminOrdersPage: React.FC = () => {
     </AdminLayout>
   );
 };
+

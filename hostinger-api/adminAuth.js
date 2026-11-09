@@ -176,4 +176,55 @@ router.post("/logout", async (req, res) => {
   return res.json({ success: true });
 });
 
+/**
+ * Reusable Express middleware to protect administrative endpoints.
+ * Authenticates via 'sarine_admin_session' cookie or Authorization Bearer header,
+ * checks admin_sessions joined with admins, touches last_used_at, and sets req.admin.
+ */
+export async function requireAdminAuth(req, res, next) {
+  let token = readCookie(req, COOKIE_NAME);
+  if (!token) {
+    const authHeader = req.headers.authorization || "";
+    if (authHeader.startsWith("Bearer ")) {
+      token = authHeader.slice(7).trim();
+    }
+  }
+
+  if (!token || !/^[a-f0-9]{64}$/i.test(token)) {
+    return res.status(401).json({ error: "Unauthorized: Admin session required." });
+  }
+
+  const sessionId = hashToken(token);
+
+  try {
+    const [rows] = await pool.execute(
+      `SELECT a.id, a.email, a.name, a.role
+       FROM admin_sessions s
+       INNER JOIN admins a ON a.id = s.admin_id
+       WHERE s.id = ?
+         AND s.expires_at > CURRENT_TIMESTAMP(3)
+         AND a.status = 'active'
+       LIMIT 1`,
+      [sessionId]
+    );
+
+    if (!rows.length) {
+      clearSessionCookie(res);
+      return res.status(401).json({ error: "Unauthorized: Admin session expired or invalid." });
+    }
+
+    await pool.execute(
+      "UPDATE admin_sessions SET last_used_at = CURRENT_TIMESTAMP(3) WHERE id = ?",
+      [sessionId]
+    );
+
+    req.admin = safeAdmin(rows[0]);
+    next();
+  } catch (err) {
+    console.error("requireAdminAuth error:", err);
+    return res.status(500).json({ error: "Internal server error during auth verification." });
+  }
+}
+
+export { readCookie, hashToken, COOKIE_NAME };
 export default router;

@@ -1,10 +1,11 @@
-﻿
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { pool, testDatabase } from "./db.js";
 import adminAuthRouter from "./adminAuth.js";
+import adminOrdersRouter from "./adminOrders.js";
+import ordersRouter from "./orders.js";
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -31,7 +32,12 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({
+  limit: "1mb",
+  verify: (req, _res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 
 app.use("/api", rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -302,6 +308,42 @@ app.get("/api/categories/:slug", async (req, res, next) => {
 // Hostinger admin authentication
 app.use("/api/admin/auth", adminAuthRouter);
 
+// Hostinger admin orders
+app.use("/api/admin/orders", adminOrdersRouter);
+
+// Hostinger orders router
+app.use("/api/orders", ordersRouter);
+
+// Backward-compatible direct aliases for existing Netlify callers
+app.post("/api/create-order", (req, res, next) => {
+  req.url = "/create";
+  ordersRouter(req, res, next);
+});
+app.post("/api/verify-payment", (req, res, next) => {
+  req.url = "/verify";
+  ordersRouter(req, res, next);
+});
+app.get("/api/get-order", (req, res, next) => {
+  const orderNumber = req.query.orderNumber;
+  if (!orderNumber) {
+    return res.status(400).json({ error: "Missing orderNumber parameter." });
+  }
+  req.url = `/${encodeURIComponent(String(orderNumber).trim())}`;
+  ordersRouter(req, res, next);
+});
+app.post("/api/track-order", (req, res, next) => {
+  req.url = "/track";
+  ordersRouter(req, res, next);
+});
+app.get("/api/admin-list-orders", (req, res, next) => {
+  req.url = "/";
+  adminOrdersRouter(req, res, next);
+});
+app.post("/api/admin-update-order", (req, res, next) => {
+  req.url = "/update";
+  adminOrdersRouter(req, res, next);
+});
+
 // Central error handler
 app.use((error, _req, res, _next) => {
   console.error("API error:", error.message);
@@ -320,3 +362,4 @@ app.use((error, _req, res, _next) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`SARINE Hostinger API listening on port ${PORT}`);
 });
+
