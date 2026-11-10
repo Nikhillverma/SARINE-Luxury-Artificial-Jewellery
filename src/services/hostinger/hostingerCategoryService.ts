@@ -1,18 +1,21 @@
 import type { Category } from '../../types/category';
 import type { ICategoryService } from '../interfaces';
-import { MockCategoryService } from '../mock/mockCategoryService';
 
 function resolveApiBase(): string {
-  if (import.meta.env.VITE_HOSTINGER_API_BASE_URL) {
-    return import.meta.env.VITE_HOSTINGER_API_BASE_URL.replace(/\/+$/, '');
+  const envUrl =
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_HOSTINGER_API_BASE_URL) ||
+    (typeof process !== 'undefined' && process.env?.VITE_HOSTINGER_API_BASE_URL);
+  if (envUrl) {
+    return envUrl.replace(/\/+$/, '');
   }
-  if (import.meta.env.DEV) {
+  const isDev =
+    (typeof import.meta !== 'undefined' && import.meta.env?.DEV) ||
+    (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production');
+  if (isDev) {
     return '/api';
   }
   return 'https://greenyellow-cat-956048.hostingersite.com/api';
 }
-
-const mockFallback = new MockCategoryService();
 
 interface CategoriesResponse {
   categories: Category[];
@@ -35,15 +38,10 @@ async function request<T>(path: string): Promise<T> {
 
 export class HostingerCategoryService implements ICategoryService {
   async getCategories(
-    options?: { activeOnly?: boolean }
+    _options?: { activeOnly?: boolean }
   ): Promise<Category[]> {
-    try {
-      const result = await request<CategoriesResponse>('/categories');
-      return result.categories;
-    } catch (error) {
-      console.warn('[HostingerCategoryService] Error loading categories from API, using fallback:', error);
-      return mockFallback.getCategories(options);
-    }
+    const result = await request<CategoriesResponse>('/categories');
+    return result.categories;
   }
 
   async getCategoryBySlug(slug: string): Promise<Category | null> {
@@ -54,8 +52,7 @@ export class HostingerCategoryService implements ICategoryService {
       return result.category;
     } catch (error) {
       if (error instanceof Error && error.message.includes('(404)')) return null;
-      console.warn('[HostingerCategoryService] Error loading category from API, using fallback:', error);
-      return mockFallback.getCategoryBySlug(slug);
+      throw error;
     }
   }
 }

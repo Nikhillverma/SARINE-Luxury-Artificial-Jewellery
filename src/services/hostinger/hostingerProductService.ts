@@ -1,18 +1,21 @@
 import type { Product } from '../../types/product';
 import type { IProductService, ProductFilterOptions } from '../interfaces';
-import { MockProductService } from '../mock/mockProductService';
 
 function resolveApiBase(): string {
-  if (import.meta.env.VITE_HOSTINGER_API_BASE_URL) {
-    return import.meta.env.VITE_HOSTINGER_API_BASE_URL.replace(/\/+$/, '');
+  const envUrl =
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_HOSTINGER_API_BASE_URL) ||
+    (typeof process !== 'undefined' && process.env?.VITE_HOSTINGER_API_BASE_URL);
+  if (envUrl) {
+    return envUrl.replace(/\/+$/, '');
   }
-  if (import.meta.env.DEV) {
+  const isDev =
+    (typeof import.meta !== 'undefined' && import.meta.env?.DEV) ||
+    (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production');
+  if (isDev) {
     return '/api';
   }
   return 'https://greenyellow-cat-956048.hostingersite.com/api';
 }
-
-const mockFallback = new MockProductService();
 
 interface ProductResponse {
   products: Product[];
@@ -52,13 +55,8 @@ export class HostingerProductService implements IProductService {
     params.set('page', String(filters.page || 1));
     params.set('pageSize', String(filters.pageSize || 100));
 
-    try {
-      const result = await request<ProductResponse>(`/products?${params.toString()}`);
-      return result.products;
-    } catch (error) {
-      console.warn('[HostingerProductService] Error loading products from API, using fallback:', error);
-      return mockFallback.getProducts(filters);
-    }
+    const result = await request<ProductResponse>(`/products?${params.toString()}`);
+    return result.products;
   }
 
   async getProductBySlug(
@@ -72,8 +70,7 @@ export class HostingerProductService implements IProductService {
       return result.product;
     } catch (error) {
       if (error instanceof Error && error.message.includes('(404)')) return null;
-      console.warn('[HostingerProductService] Error loading product from API, using fallback:', error);
-      return mockFallback.getProductBySlug(slug, _options);
+      throw error;
     }
   }
 
