@@ -7,9 +7,9 @@ import { pool } from "./db.js";
 const router = Router();
 
 // Store configuration matching SARINE constants
-const SHIPPING_FLAT_FEE = 0;
-const FREE_SHIPPING_THRESHOLD = null;
-const COD_ENABLED = false;
+const SHIPPING_FLAT_FEE = 99;
+const FREE_SHIPPING_THRESHOLD = 1999;
+const COD_ENABLED = true;
 
 function calculateShippingFee(subtotal) {
   if (FREE_SHIPPING_THRESHOLD !== null && subtotal >= FREE_SHIPPING_THRESHOLD) {
@@ -788,6 +788,246 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+/**
+ * POST /api/orders/webhook
+ * Receives and validates Razorpay webhooks using RAZORPAY_WEBHOOK_SECRET.
+ * Verifies webhook HMAC-SHA256 signature against exact raw request body buffer.
+ * Idempotently decrements inventory and sets order to paid/confirmed, or
+ * sets needs_refund if stock was exhausted before capture, or handles payment.failed.
+ */
+router.post("/webhook", async (req, res, next) => {
+  const signature = req.headers["x-razorpay-signature"] || req.headers["X-Razorpay-Signature"];
+
+  if (!signature) {
+    return res.status(400).json({ error: "Missing webhook signature header" });
+  }
+
+  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    console.error("[Razorpay Webhook] RAZORPAY_WEBHOOK_SECRET not configured on server.");
+    return res.status(500).json({ error: "Webhook secret not configured on the server" });
+  }
+
+  // Exact raw request body buffer captured in express.json verify
+  const rawBodyBuffer = req.rawBody || Buffer.from(typeof req.body === "string" ? req.body : JSON.stringify(req.body || {}), "utf8");
+
+  const expectedSignature = crypto
+    .createHmac("sha256", webhookSecret)
+    .update(rawBodyBuffer)
+    .digest("hex");
+
+  if (!timingSafeCompare(expectedSignature, signature)) {
+    console.warn("[Razorpay Webhook] Invalid webhook signature rejected");
+    return res.status(400).json({ error: "Invalid webhook signature" });
+  }
+
+  const payload = req.body || {};
+  const eventName = payload.event;
+
+  // 1. Handle payment capture or order paid event
+  if (eventName === "payment.captured" || eventName === "order.paid") {
+    const payment = payload.payload?.payment?.entity;
+    const rpOrderId = payment?.order_id;
+    const rpPaymentId = payment?.id;
+
+    if (!rpOrderId || typeof rpOrderId !== "string") {
+      console.warn("[Razorpay Webhook] Ignored event: missing payment.order_id");
+      return res.status(200).json({ status: "ignored_no_order_id" });
+    }
+
+    if (!rpPaymentId || typeof rpPaymentId !== "string" || !/^pay_[A-Za-z0-9]+$/.test(rpPaymentId)) {
+      console.warn(`[Razorpay Webhook] Ignored event: invalid payment.id format: ${rpPaymentId}`);
+      return res.status(200).json({ status: "ignored_invalid_payment_id" });
+    }
+
+    let connection = null;
+    try {
+      connection = await pool.getConnection();
+      await connection.beginTransaction();
+
+      // Look up order by razorpay_order_id or notes.orderNumber
+      const [orderRows] = await connection.execute(
+        `SELECT * FROM orders WHERE razorpay_order_id = ? OR order_number = ? FOR UPDATE`,
+        [rpOrderId, payment?.notes?.orderNumber || ""]
+      );
+
+      if (!orderRows.length) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        console.warn(`[Razorpay Webhook] Order not found for Razorpay order ID ${rpOrderId}`);
+        return res.status(200).json({ status: "order_not_found_locally" });
+      }
+
+      const order = orderRows[0];
+
+      // Validate razorpay_order_id match
+      if (order.razorpay_order_id && order.razorpay_order_id !== rpOrderId) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        console.warn(`[Razorpay Webhook] Razorpay order ID mismatch: expected ${order.razorpay_order_id}, got ${rpOrderId}`);
+        return res.status(200).json({ status: "razorpay_order_id_mismatch" });
+      }
+
+      // Validate currency and amount
+      const expectedAmountPaise = Math.round(Number(order.total || 0) * 100);
+      if (payment.amount !== expectedAmountPaise || payment.currency !== "INR") {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        console.warn(`[Razorpay Webhook] Amount/currency mismatch: expected ${expectedAmountPaise} INR, got ${payment.amount} ${payment.currency}`);
+        return res.status(200).json({ status: "ignored_amount_currency_mismatch" });
+      }
+
+      // Idempotency: if already paid, do not re-decrement stock
+      if (order.payment_status === "paid") {
+        await connection.commit();
+        connection.release();
+        connection = null;
+        return res.status(200).json({ status: "ok", alreadyPaid: true });
+      }
+
+      // Fetch items to check and decrement stock
+      const [items] = await connection.execute(
+        `SELECT product_id, quantity, product_name FROM order_items WHERE order_id = ?`,
+        [order.id]
+      );
+
+      let hasSufficientStock = true;
+      const lockedProducts = [];
+      for (const itm of items) {
+        const [pRows] = await connection.execute(
+          `SELECT id, stock FROM products WHERE id = ? FOR UPDATE`,
+          [itm.product_id]
+        );
+        if (!pRows.length || Number(pRows[0].stock) < Number(itm.quantity)) {
+          hasSufficientStock = false;
+          break;
+        }
+        lockedProducts.push({ id: pRows[0].id, quantity: Number(itm.quantity) });
+      }
+
+      if (hasSufficientStock) {
+        for (const lp of lockedProducts) {
+          await connection.execute(
+            `UPDATE products SET stock = stock - ?, updated_at = CURRENT_TIMESTAMP(3) WHERE id = ?`,
+            [lp.quantity, lp.id]
+          );
+        }
+
+        await connection.execute(
+          `UPDATE orders
+           SET payment_status = 'paid',
+               order_status = 'confirmed',
+               razorpay_payment_id = ?,
+               paid_at = CURRENT_TIMESTAMP(3),
+               updated_at = CURRENT_TIMESTAMP(3)
+           WHERE id = ?`,
+          [rpPaymentId, order.id]
+        );
+
+        await connection.execute(
+          `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by)
+           VALUES (?, ?, 'confirmed', 'Payment captured via Razorpay webhook', 'razorpay_webhook')`,
+          [order.id, order.order_status]
+        );
+      } else {
+        await connection.execute(
+          `UPDATE orders
+           SET payment_status = 'paid',
+               order_status = 'needs_refund',
+               razorpay_payment_id = ?,
+               paid_at = CURRENT_TIMESTAMP(3),
+               refund_needed = 1,
+               refund_amount = total,
+               refund_reason = 'Stock exhausted prior to payment completion.',
+               updated_at = CURRENT_TIMESTAMP(3)
+           WHERE id = ?`,
+          [rpPaymentId, order.id]
+        );
+
+        await connection.execute(
+          `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by)
+           VALUES (?, ?, 'needs_refund', 'Stock exhausted prior to payment capture - flagged for refund', 'razorpay_webhook')`,
+          [order.id, order.order_status]
+        );
+      }
+
+      await connection.commit();
+      connection.release();
+      connection = null;
+      return res.status(200).json({ status: "ok" });
+    } catch (err) {
+      if (connection) {
+        await connection.rollback();
+        connection.release();
+      }
+      return next(err);
+    }
+  }
+
+  // 2. Handle payment failed event
+  if (eventName === "payment.failed") {
+    const payment = payload.payload?.payment?.entity;
+    const rpOrderId = payment?.order_id;
+
+    if (!rpOrderId || typeof rpOrderId !== "string") {
+      return res.status(200).json({ status: "ignored_no_order_id" });
+    }
+
+    let connection = null;
+    try {
+      connection = await pool.getConnection();
+      await connection.beginTransaction();
+
+      const [orderRows] = await connection.execute(
+        `SELECT * FROM orders WHERE razorpay_order_id = ? OR order_number = ? FOR UPDATE`,
+        [rpOrderId, payment?.notes?.orderNumber || ""]
+      );
+
+      if (!orderRows.length) {
+        await connection.rollback();
+        connection.release();
+        return res.status(200).json({ status: "order_not_found" });
+      }
+
+      const order = orderRows[0];
+      // Only fail if order is currently pending; never downgrade a paid order
+      if (order.payment_status === "pending") {
+        const errorDesc = payment?.error_description || "Payment failed via Razorpay";
+        await connection.execute(
+          `UPDATE orders
+           SET payment_status = 'failed',
+               order_status = 'failed',
+               cancellation_reason = ?,
+               updated_at = CURRENT_TIMESTAMP(3)
+           WHERE id = ?`,
+          [errorDesc, order.id]
+        );
+
+        await connection.execute(
+          `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by)
+           VALUES (?, ?, 'failed', ?, 'razorpay_webhook')`,
+          [order.id, order.order_status, errorDesc]
+        );
+      }
+
+      await connection.commit();
+      connection.release();
+      return res.status(200).json({ status: "ok" });
+    } catch (err) {
+      if (connection) {
+        await connection.rollback();
+        connection.release();
+      }
+      return next(err);
+    }
+  }
+
+  return res.status(200).json({ status: "ignored_event" });
 });
 
 export default router;

@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatInr } from '../utils/currency';
 import { getApiEndpoint } from '../config/api';
+import { DATA_SOURCE, hostingerOrderService } from '../services';
 import {
   Package,
   Search,
@@ -85,6 +86,12 @@ export const TrackOrderPage: React.FC = () => {
     setOrder(null);
 
     try {
+      if (DATA_SOURCE === 'hostinger') {
+        const data = await hostingerOrderService.trackOrder(cleanNumber, cleanPhone);
+        setOrder(data);
+        return;
+      }
+
       const res = await fetch(getApiEndpoint('track-order'), {
         method: 'POST',
         headers: {
@@ -112,9 +119,13 @@ export const TrackOrderPage: React.FC = () => {
       }
 
       setOrder(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error('[TrackOrder] Network or function error:', err);
-      setError("We couldn't find an order with those details.");
+      if (err?.status === 429) {
+        setError(err.message || 'Too many attempts. Please try again later.');
+      } else {
+        setError(err?.message || "We couldn't find an order with those details.");
+      }
     } finally {
       setLoading(false);
     }

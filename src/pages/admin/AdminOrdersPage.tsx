@@ -30,6 +30,11 @@ import {
 } from 'lucide-react';
 import { getAdminSession, type AdminIdentity as AdminUser } from '../../lib/adminAuth';
 
+const API_BASE = (
+  import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
+  (import.meta.env.DEV ? '/api' : 'https://greenyellow-cat-956048.hostingersite.com/api')
+).replace(/\/+$/, '');
+
 interface OrderLine {
   productId: string;
   name: string;
@@ -160,7 +165,7 @@ export const AdminOrdersPage: React.FC = () => {
           queryParams.set('startAfter', nextCursor);
         }
 
-        const res = await fetch(`/api/admin/orders?${queryParams.toString()}`, {
+        const res = await fetch(`${API_BASE}/admin/orders?${queryParams.toString()}`, {
           method: 'GET',
           credentials: 'include',
           headers: {
@@ -250,7 +255,7 @@ export const AdminOrdersPage: React.FC = () => {
     setActionSuccess(null);
 
     try {
-      const res = await fetch('/api/admin/orders/update', {
+      const res = await fetch(`${API_BASE}/admin/orders/update`, {
         method: 'POST',
         credentials: 'include',
         headers: {

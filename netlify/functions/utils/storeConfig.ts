@@ -4,9 +4,9 @@
  * and COD rules are authoritatively calculated and enforced on the server.
  */
 
-export const SHIPPING_FLAT_FEE = 0;
-export const FREE_SHIPPING_THRESHOLD: number | null = null;
-export const COD_ENABLED = false;
+export const SHIPPING_FLAT_FEE = 99;
+export const FREE_SHIPPING_THRESHOLD: number | null = 1999;
+export const COD_ENABLED = true;
 export const CURRENCY = 'INR';
 
 export function calculateShippingFee(subtotal: number): number {

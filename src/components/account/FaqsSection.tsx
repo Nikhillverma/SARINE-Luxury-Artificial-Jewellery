@@ -72,7 +72,7 @@ const FAQ_DATA: FaqCategory[] = [
     items: [
       {
         q: 'What are the delivery charges?',
-        a: 'We offer complimentary express shipping across all serviceable Indian pin codes on orders of ₹999 and above. For orders below ₹999, a nominal flat shipping fee of ₹99 is applied.'
+        a: 'We offer complimentary express shipping across all serviceable Indian pin codes on orders of ₹1,999 and above. For orders below ₹1,999, a nominal flat shipping fee of ₹99 is applied.'
       },
       {
         q: 'Which courier partners handle SARINE deliveries?',

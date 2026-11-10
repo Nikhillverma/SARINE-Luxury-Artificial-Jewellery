@@ -343,6 +343,10 @@ app.post("/api/admin-update-order", (req, res, next) => {
   req.url = "/update";
   adminOrdersRouter(req, res, next);
 });
+app.post("/api/razorpay-webhook", (req, res, next) => {
+  req.url = "/webhook";
+  ordersRouter(req, res, next);
+});
 
 // Central error handler
 app.use((error, _req, res, _next) => {

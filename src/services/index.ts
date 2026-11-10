@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Central Service Switch for SARINE.
  *
  * Products and categories: Hostinger MariaDB API.
@@ -20,6 +20,7 @@ import { NetlifyOrderService } from './netlify/netlifyOrderService';
 
 import { HostingerProductService } from './hostinger/hostingerProductService';
 import { HostingerCategoryService } from './hostinger/hostingerCategoryService';
+import { HostingerOrderService } from './hostinger/hostingerOrderService';
 
 export type DataSource = 'mock' | 'firebase' | 'hostinger';
 
@@ -33,6 +34,7 @@ const netlifyOrderService = new NetlifyOrderService();
 
 const hostingerProductService = new HostingerProductService();
 const hostingerCategoryService = new HostingerCategoryService();
+const hostingerOrderService = new HostingerOrderService();
 
 export const productService: IProductService =
   DATA_SOURCE === 'hostinger'
@@ -44,10 +46,13 @@ export const categoryService: ICategoryService =
     ? hostingerCategoryService
     : mockCategoryService;
 
-export const orderService: IOrderService = netlifyOrderService;
+export const orderService: IOrderService =
+  DATA_SOURCE === 'hostinger'
+    ? hostingerOrderService
+    : netlifyOrderService;
 
 export const adminProductService: IAdminProductService = mockAdminProductService;
 
-export { netlifyOrderService };
+export { netlifyOrderService, hostingerOrderService };
 
 export * from './interfaces';

@@ -5,22 +5,22 @@
  */
 
 /**
- * Standard flat shipping fee across India in INR.
- * Currently set to 0 (complimentary standard delivery).
+ * Standard flat shipping fee across India in INR for orders below the free-shipping threshold.
+ * Kept identical to the nominal fee stated in atelier policies (₹99).
  */
-export const SHIPPING_FLAT_FEE = 0;
+export const SHIPPING_FLAT_FEE: number = 99;
 
 /**
  * Cart subtotal threshold in INR required for complimentary shipping.
- * Set to null when flat shipping applies uniformly regardless of subtotal.
+ * Orders of ₹1,999 or more qualify for free shipping.
  */
-export const FREE_SHIPPING_THRESHOLD: number | null = null;
+export const FREE_SHIPPING_THRESHOLD: number | null = 1999;
 
 /**
  * Whether Cash on Delivery (COD) is active on checkout.
- * Default is false (online card / UPI / netbanking exclusive).
+ * Enabled for SARINE pan-India deliveries.
  */
-export const COD_ENABLED = false;
+export const COD_ENABLED = true;
 
 /**
  * Store base currency ISO code.
