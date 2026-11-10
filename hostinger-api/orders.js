@@ -184,13 +184,13 @@ router.post("/create", async (req, res, next) => {
 
     // 6. Concurrency-safe counter allocation
     await connection.execute(
-      `INSERT INTO counters (name, seq, updated_at)
+      `INSERT INTO counters (counter_key, counter_value, updated_at)
        VALUES ('orders', 0, CURRENT_TIMESTAMP(3))
-       ON DUPLICATE KEY UPDATE name = name`
+       ON DUPLICATE KEY UPDATE counter_key = counter_key`
     );
 
     const [counterRows] = await connection.execute(
-      `SELECT seq FROM counters WHERE name = 'orders' FOR UPDATE`
+      `SELECT counter_value FROM counters WHERE counter_key = 'orders' FOR UPDATE`
     );
 
     const [maxOrderRows] = await connection.execute(
@@ -199,7 +199,7 @@ router.post("/create", async (req, res, next) => {
        WHERE order_number LIKE 'SAR-%'`
     );
 
-    const currentCounterSeq = Number(counterRows[0]?.seq || 0);
+    const currentCounterSeq = Number(counterRows[0]?.counter_value || 0);
     const maxExistingSeq = Number(maxOrderRows[0]?.max_order_seq || 0);
     const currentCeiling = Math.max(currentCounterSeq, maxExistingSeq, 124);
     let allocatedSeq = currentCeiling + 1;
@@ -216,7 +216,7 @@ router.post("/create", async (req, res, next) => {
     }
 
     await connection.execute(
-      `UPDATE counters SET seq = ?, updated_at = CURRENT_TIMESTAMP(3) WHERE name = 'orders'`,
+      `UPDATE counters SET counter_value = ?, updated_at = CURRENT_TIMESTAMP(3) WHERE counter_key = 'orders'`,
       [allocatedSeq]
     );
 
