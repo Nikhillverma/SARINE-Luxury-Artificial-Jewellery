@@ -27,6 +27,16 @@ app.use(cors({
     if (!origin || allowedOrigins.has(origin)) {
       return callback(null, true);
     }
+    try {
+      const parsed = new URL(origin);
+      if (
+        parsed.hostname.endsWith(".run.app") ||
+        parsed.hostname === "localhost" ||
+        parsed.hostname === "127.0.0.1"
+      ) {
+        return callback(null, true);
+      }
+    } catch {}
     return callback(new Error("Origin not allowed by CORS"));
   },
   credentials: true

@@ -1,10 +1,18 @@
-﻿import type { Product } from '../../types/product';
+import type { Product } from '../../types/product';
 import type { IProductService, ProductFilterOptions } from '../interfaces';
+import { MockProductService } from '../mock/mockProductService';
 
-const API_BASE = (
-  import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
-  'https://greenyellow-cat-956048.hostingersite.com/api'
-).replace(/\/+$/, '');
+function resolveApiBase(): string {
+  if (import.meta.env.VITE_HOSTINGER_API_BASE_URL) {
+    return import.meta.env.VITE_HOSTINGER_API_BASE_URL.replace(/\/+$/, '');
+  }
+  if (import.meta.env.DEV) {
+    return '/api';
+  }
+  return 'https://greenyellow-cat-956048.hostingersite.com/api';
+}
+
+const mockFallback = new MockProductService();
 
 interface ProductResponse {
   products: Product[];
@@ -18,7 +26,8 @@ interface SingleProductResponse {
 }
 
 async function request<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`);
+  const apiBase = resolveApiBase();
+  const response = await fetch(`${apiBase}${path}`);
 
   if (!response.ok) {
     throw new Error(`Hostinger API error (${response.status})`);
@@ -43,8 +52,13 @@ export class HostingerProductService implements IProductService {
     params.set('page', String(filters.page || 1));
     params.set('pageSize', String(filters.pageSize || 100));
 
-    const result = await request<ProductResponse>(`/products?${params.toString()}`);
-    return result.products;
+    try {
+      const result = await request<ProductResponse>(`/products?${params.toString()}`);
+      return result.products;
+    } catch (error) {
+      console.warn('[HostingerProductService] Error loading products from API, using fallback:', error);
+      return mockFallback.getProducts(filters);
+    }
   }
 
   async getProductBySlug(
@@ -58,7 +72,8 @@ export class HostingerProductService implements IProductService {
       return result.product;
     } catch (error) {
       if (error instanceof Error && error.message.includes('(404)')) return null;
-      throw error;
+      console.warn('[HostingerProductService] Error loading product from API, using fallback:', error);
+      return mockFallback.getProductBySlug(slug, _options);
     }
   }
 

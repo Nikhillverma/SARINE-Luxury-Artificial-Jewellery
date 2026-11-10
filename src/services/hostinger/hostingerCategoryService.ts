@@ -1,10 +1,18 @@
-﻿import type { Category } from '../../types/category';
+import type { Category } from '../../types/category';
 import type { ICategoryService } from '../interfaces';
+import { MockCategoryService } from '../mock/mockCategoryService';
 
-const API_BASE = (
-  import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
-  'https://greenyellow-cat-956048.hostingersite.com/api'
-).replace(/\/+$/, '');
+function resolveApiBase(): string {
+  if (import.meta.env.VITE_HOSTINGER_API_BASE_URL) {
+    return import.meta.env.VITE_HOSTINGER_API_BASE_URL.replace(/\/+$/, '');
+  }
+  if (import.meta.env.DEV) {
+    return '/api';
+  }
+  return 'https://greenyellow-cat-956048.hostingersite.com/api';
+}
+
+const mockFallback = new MockCategoryService();
 
 interface CategoriesResponse {
   categories: Category[];
@@ -15,7 +23,8 @@ interface CategoryResponse {
 }
 
 async function request<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`);
+  const apiBase = resolveApiBase();
+  const response = await fetch(`${apiBase}${path}`);
 
   if (!response.ok) {
     throw new Error(`Hostinger API error (${response.status})`);
@@ -26,10 +35,15 @@ async function request<T>(path: string): Promise<T> {
 
 export class HostingerCategoryService implements ICategoryService {
   async getCategories(
-    _options?: { activeOnly?: boolean }
+    options?: { activeOnly?: boolean }
   ): Promise<Category[]> {
-    const result = await request<CategoriesResponse>('/categories');
-    return result.categories;
+    try {
+      const result = await request<CategoriesResponse>('/categories');
+      return result.categories;
+    } catch (error) {
+      console.warn('[HostingerCategoryService] Error loading categories from API, using fallback:', error);
+      return mockFallback.getCategories(options);
+    }
   }
 
   async getCategoryBySlug(slug: string): Promise<Category | null> {
@@ -40,7 +54,8 @@ export class HostingerCategoryService implements ICategoryService {
       return result.category;
     } catch (error) {
       if (error instanceof Error && error.message.includes('(404)')) return null;
-      throw error;
+      console.warn('[HostingerCategoryService] Error loading category from API, using fallback:', error);
+      return mockFallback.getCategoryBySlug(slug);
     }
   }
 }
