@@ -14,16 +14,10 @@ import type {
 } from '../../types/order';
 
 function resolveApiBase(): string {
-  const envUrl =
-    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_HOSTINGER_API_BASE_URL) ||
-    (typeof process !== 'undefined' && process.env?.VITE_HOSTINGER_API_BASE_URL);
-  if (envUrl) {
-    return envUrl.replace(/\/+$/, '');
+  if (import.meta.env.VITE_HOSTINGER_API_BASE_URL) {
+    return import.meta.env.VITE_HOSTINGER_API_BASE_URL.replace(/\/+$/, '');
   }
-  const isDev =
-    (typeof import.meta !== 'undefined' && import.meta.env?.DEV) ||
-    (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production');
-  if (isDev) {
+  if (import.meta.env.DEV) {
     return '/api';
   }
   return 'https://greenyellow-cat-956048.hostingersite.com/api';

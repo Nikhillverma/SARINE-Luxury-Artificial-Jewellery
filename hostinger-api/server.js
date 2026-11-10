@@ -13,11 +13,19 @@ const PORT = Number(process.env.PORT || 3000);
 const allowedOrigins = new Set([
   "https://lavender-emu-732118.hostingersite.com",
   "http://localhost:5173",
-  "http://127.0.0.1:5173"
+  "http://127.0.0.1:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000"
 ]);
 
 if (process.env.FRONTEND_ORIGIN) {
-  allowedOrigins.add(process.env.FRONTEND_ORIGIN);
+  process.env.FRONTEND_ORIGIN.split(",").map(o => o.trim()).filter(Boolean).forEach(o => allowedOrigins.add(o));
+}
+if (process.env.ALLOWED_ORIGINS) {
+  process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim()).filter(Boolean).forEach(o => allowedOrigins.add(o));
+}
+if (process.env.PREVIEW_ORIGIN) {
+  process.env.PREVIEW_ORIGIN.split(",").map(o => o.trim()).filter(Boolean).forEach(o => allowedOrigins.add(o));
 }
 
 app.use(helmet());
@@ -27,16 +35,6 @@ app.use(cors({
     if (!origin || allowedOrigins.has(origin)) {
       return callback(null, true);
     }
-    try {
-      const parsed = new URL(origin);
-      if (
-        parsed.hostname.endsWith(".run.app") ||
-        parsed.hostname === "localhost" ||
-        parsed.hostname === "127.0.0.1"
-      ) {
-        return callback(null, true);
-      }
-    } catch {}
     return callback(new Error("Origin not allowed by CORS"));
   },
   credentials: true
