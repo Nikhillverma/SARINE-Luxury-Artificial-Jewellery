@@ -249,7 +249,7 @@ router.post("/create", async (req, res, next) => {
            id, order_number, customer_id, customer_name, customer_email, customer_phone,
            shipping_address, subtotal, shipping_fee, total, payment_method,
            payment_status, order_status, public_token_hash, source_document
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cod', 'pending', 'placed', ?, 'web_checkout')`,
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cod', 'pending', 'placed', ?, '{"source":"web_checkout"}')`,
         [
           orderNumber,
           orderNumber,
@@ -296,7 +296,7 @@ router.post("/create", async (req, res, next) => {
            id, order_number, customer_id, customer_name, customer_email, customer_phone,
            shipping_address, subtotal, shipping_fee, total, payment_method,
            payment_status, order_status, public_token_hash, source_document
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'online', 'pending', 'awaiting_payment', ?, 'web_checkout')`,
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'online', 'pending', 'awaiting_payment', ?, '{"source":"web_checkout"}')`,
         [
           orderNumber,
           orderNumber,
