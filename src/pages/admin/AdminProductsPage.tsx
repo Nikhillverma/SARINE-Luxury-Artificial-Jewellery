@@ -1,548 +1,280 @@
-/**
- * AdminProductsPage for SARINE.
- * Complete Product & Catalogue Management Console.
- * Supports:
- * - Product listing with high-resolution imagery, SKU, category, price, cost price, margins, and stock.
- * - Search, category filter, in-stock filter.
- * - Add Product modal with validation.
- * - CSV Export & CSV Import with row-level validation.
- * - Quick edit, publish/unpublish, and duplicate product controls.
- */
-
-import React, { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
-import { productService, categoryService } from '../../services';
-import { Product } from '../../types/product';
-import { Category } from '../../types/category';
+import { adminProductService, categoryService } from '../../services';
+import type { Product, JewelleryType, ProductStatus } from '../../types/product';
+import type { Category } from '../../types/category';
+import { JEWELLERY_TYPE_LABELS } from '../../types/product';
 import { formatInr } from '../../utils/currency';
-import {
-  Package,
-  Search,
-  Filter,
-  Plus,
-  Download,
-  Upload,
-  Edit2,
-  Trash2,
-  Copy,
-  CheckCircle2,
-  AlertCircle,
-  Eye,
-  EyeOff,
-  Sparkles,
-  X,
-  FileSpreadsheet
-} from 'lucide-react';
+import { Plus, Search, Edit2, Copy, Archive, X, RefreshCw } from 'lucide-react';
+
+const EMPTY_FORM = {
+  name: '', price: '', costPrice: '', stock: '0', categoryId: '',
+  jewelleryType: 'necklace' as JewelleryType, description: '', imageUrl: '',
+  status: 'draft' as ProductStatus
+};
+
+function slugify(value: string): string {
+  return value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
 
 export const AdminProductsPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [stockFilter, setStockFilter] = useState('all');
+  const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
 
-  // Modal states
-  const [showAddModal, setShowAddModal] = useState(searchParams.get('action') === 'new');
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // New product form
-  const [newTitle, setNewTitle] = useState('');
-  const [newSku, setNewSku] = useState('');
-  const [newPrice, setNewPrice] = useState('');
-  const [newCostPrice, setNewCostPrice] = useState('');
-  const [newStock, setNewStock] = useState('20');
-  const [newCategory, setNewCategory] = useState('necklaces');
-  const [newType, setNewType] = useState('necklace');
-  const [newDescription, setNewDescription] = useState('');
-  const [newImageUrl, setNewImageUrl] = useState('');
-
-  const loadCatalog = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
+    setError('');
     try {
-      const [cats, prods] = await Promise.all([
-        categoryService.getCategories({ activeOnly: false }),
-        productService.getProducts({ sortBy: 'newest', inStockOnly: false, includeAll: true })
+      const [items, cats] = await Promise.all([
+        adminProductService.getProducts(),
+        categoryService.getCategories({ activeOnly: false })
       ]);
+      setProducts(items);
       setCategories(cats);
-      setProducts(prods);
+      setForm(current => ({ ...current, categoryId: current.categoryId || cats[0]?.id || '' }));
     } catch (err) {
-      console.error('Failed to load catalogue', err);
-      setErrorMessage('Could not load catalogue products.');
+      setError(err instanceof Error ? err.message : 'Could not load products. Please sign in again.');
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadCatalog();
   }, []);
 
-  // Filter pipeline
-  const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        const matchesName = p.name.toLowerCase().includes(q);
-        const matchesSku = p.id.toLowerCase().includes(q);
-        if (!matchesName && !matchesSku) return false;
-      }
-      if (selectedCategory !== 'all' && p.categoryId !== selectedCategory) {
-        return false;
-      }
-      if (stockFilter === 'in-stock' && (p.stock || 0) <= 0) return false;
-      if (stockFilter === 'low-stock' && ((p.stock || 0) > 8 || (p.stock || 0) <= 0)) return false;
-      if (stockFilter === 'out-of-stock' && (p.stock || 0) > 0) return false;
-      return true;
+  useEffect(() => { void load(); }, [load]);
+
+  const visibleProducts = useMemo(() => products.filter(product => {
+    const term = search.trim().toLowerCase();
+    const matchesText = !term || product.name.toLowerCase().includes(term) ||
+      product.slug.toLowerCase().includes(term) || product.id.toLowerCase().includes(term);
+    const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
+    return matchesText && matchesStatus;
+  }), [products, search, statusFilter]);
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm({ ...EMPTY_FORM, categoryId: categories[0]?.id || '', status: 'draft' });
+    setError('');
+    setModalOpen(true);
+  };
+
+  const openEdit = (product: Product) => {
+    setEditing(product);
+    setForm({
+      name: product.name,
+      price: String(product.price),
+      costPrice: product.costPrice == null ? '' : String(product.costPrice),
+      stock: String(product.stock),
+      categoryId: product.categoryId,
+      jewelleryType: product.jewelleryType,
+      description: product.description || '',
+      imageUrl: product.images?.[0] || '',
+      status: product.status
     });
-  }, [products, searchQuery, selectedCategory, stockFilter]);
+    setError('');
+    setModalOpen(true);
+  };
 
-  const handleCreateProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim() || !newPrice) {
-      setErrorMessage('Please fill in required product details.');
-      return;
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSaving(true);
+    setError('');
+    try {
+      const price = Number(form.price);
+      const stock = Number(form.stock);
+      if (!form.name.trim() || !Number.isFinite(price) || price < 0 ||
+          !Number.isInteger(stock) || stock < 0 || !form.categoryId) {
+        throw new Error('Enter a product name, valid price, non-negative whole stock count and category.');
+      }
+      const baseSlug = slugify(form.name);
+      if (!baseSlug) throw new Error('Please enter a valid product title.');
+      const payload = {
+        slug: editing && editing.name === form.name ? editing.slug : baseSlug,
+        name: form.name.trim(),
+        description: form.description.trim(),
+        shortDescription: editing?.shortDescription || '',
+        price,
+        ...(form.costPrice.trim() ? { costPrice: Number(form.costPrice) } : {}),
+        images: form.imageUrl.trim() ? [form.imageUrl.trim()] : [],
+        categoryId: form.categoryId,
+        collectionSlugs: editing?.collectionSlugs || [],
+        jewelleryType: form.jewelleryType,
+        stock,
+        status: form.status,
+        tags: editing?.tags || [],
+        ...(editing?.baseMetal ? { baseMetal: editing.baseMetal } : {}),
+        ...(editing?.platingFinish ? { platingFinish: editing.platingFinish } : {}),
+        ...(editing?.stoneType ? { stoneType: editing.stoneType } : {}),
+        ...(editing?.closureType ? { closureType: editing.closureType } : {}),
+        careInstructions: editing?.careInstructions || []
+      };
+      if (form.costPrice.trim() && (!Number.isFinite(Number(form.costPrice)) || Number(form.costPrice) < 0)) {
+        throw new Error('Enter a valid cost price.');
+      }
+      if (editing) {
+        await adminProductService.updateProduct(editing.id, payload);
+        setNotice('Product changes saved to Hostinger database.');
+      } else {
+        await adminProductService.createProduct(payload);
+        setNotice('Product created in Hostinger database.');
+      }
+      setModalOpen(false);
+      setEditing(null);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to save product.');
+    } finally {
+      setSaving(false);
     }
-
-    const priceNum = parseFloat(newPrice);
-    const costNum = newCostPrice ? parseFloat(newCostPrice) : Math.round(priceNum * 0.35);
-    const stockNum = parseInt(newStock, 10) || 10;
-    const generatedSlug = newTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    const generatedSku = newSku.trim() || `SAR-${newCategory.slice(0, 2).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
-
-    const newProd: Product = {
-      id: `p-${Date.now()}`,
-      slug: generatedSlug,
-      name: newTitle.trim(),
-      description: newDescription.trim() || 'Handcrafted luxury artificial jewellery with high-grade anti-tarnish polish.',
-      price: priceNum,
-      costPrice: costNum,
-      stock: stockNum,
-      images: [
-        newImageUrl.trim() || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=80'
-      ],
-      categoryId: newCategory,
-      collectionSlugs: [newCategory, 'festive'],
-      jewelleryType: newType as any,
-      status: 'active',
-      tags: ['new-arrival', 'luxury', 'atelier-handcrafted'],
-      createdAt: new Date().toISOString()
-    };
-
-    setProducts([newProd, ...products]);
-    setShowAddModal(false);
-    setSuccessMessage(`Product "${newTitle}" published successfully to SARINE catalogue.`);
-
-    // Reset form
-    setNewTitle('');
-    setNewPrice('');
-    setNewCostPrice('');
-    setNewSku('');
-    setNewDescription('');
-    setNewImageUrl('');
   };
 
-  const handleToggleStatus = (prod: Product) => {
-    const updatedStatus = prod.status === 'active' ? 'draft' : 'active';
-    setProducts((prev) =>
-      prev.map((p) => (p.id === prod.id ? { ...p, status: updatedStatus } : p))
-    );
-    setSuccessMessage(`Product "${prod.name}" status changed to ${updatedStatus}.`);
+  const toggleStatus = async (product: Product) => {
+    try {
+      await adminProductService.updateProduct(product.id, {
+        status: product.status === 'active' ? 'draft' : 'active'
+      });
+      setNotice(`${product.name} status updated.`);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update product status.');
+    }
   };
 
-  const handleDuplicateProduct = (prod: Product) => {
-    const dup: Product = {
-      ...prod,
-      id: `p-${Date.now()}`,
-      slug: `${prod.slug}-copy`,
-      name: `${prod.name} (Copy)`,
-      createdAt: new Date().toISOString()
-    };
-    setProducts([dup, ...products]);
-    setSuccessMessage(`Duplicated product "${prod.name}".`);
+  const duplicate = async (product: Product) => {
+    try {
+      await adminProductService.createProduct({
+        slug: `${product.slug}-copy-${Date.now().toString().slice(-6)}`,
+        name: `${product.name} (Copy)`,
+        description: product.description,
+        shortDescription: product.shortDescription,
+        price: product.price,
+        ...(product.compareAtPrice == null ? {} : { compareAtPrice: product.compareAtPrice }),
+        ...(product.costPrice == null ? {} : { costPrice: product.costPrice }),
+        images: product.images,
+        categoryId: product.categoryId,
+        collectionSlugs: product.collectionSlugs,
+        jewelleryType: product.jewelleryType,
+        stock: 0,
+        status: 'draft',
+        tags: product.tags,
+        ...(product.baseMetal ? { baseMetal: product.baseMetal } : {}),
+        ...(product.platingFinish ? { platingFinish: product.platingFinish } : {}),
+        ...(product.stoneType ? { stoneType: product.stoneType } : {}),
+        ...(product.closureType ? { closureType: product.closureType } : {}),
+        careInstructions: product.careInstructions || []
+      });
+      setNotice('A draft copy was saved to Hostinger.');
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not duplicate product.');
+    }
   };
 
-  const handleExportCsv = () => {
-    const headers = ['ID', 'Name', 'SKU', 'Category', 'Price', 'CostPrice', 'Stock', 'Status'];
-    const rows = filteredProducts.map((p) => [
-      p.id,
-      `"${p.name.replace(/"/g, '""')}"`,
-      p.id,
-      p.categoryId,
-      p.price,
-      p.costPrice || '',
-      p.stock || 0,
-      p.status
-    ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `sarine-catalogue-export-${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setSuccessMessage(`Exported ${filteredProducts.length} products to CSV.`);
+  const archive = async (product: Product) => {
+    if (!window.confirm(`Archive "${product.name}"? It will be hidden from the storefront, not deleted.`)) return;
+    try {
+      await adminProductService.archiveProduct(product.id);
+      setNotice(`${product.name} archived. Historical order references are preserved.`);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not archive product.');
+    }
   };
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        {/* Top Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-[#2C1838] tracking-tight">
-              Products & Catalogue
-            </h1>
-            <p className="text-xs sm:text-sm text-[#705E7B] mt-0.5">
-              Manage complete jewellery lifecycle, pricing, inventory thresholds, and media.
-            </p>
+            <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-[#2C1838]">Products & Catalogue</h1>
+            <p className="text-xs sm:text-sm text-[#705E7B] mt-1">Changes are saved directly to your Hostinger MariaDB database.</p>
           </div>
-
-          <div className="flex items-center gap-2.5">
-            <button
-              onClick={handleExportCsv}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white border border-[#E7DCEB] hover:border-[#563568] text-xs font-medium text-[#2C1838] rounded-xl shadow-2xs transition-colors cursor-pointer"
-            >
-              <Download size={14} className="text-[#563568]" />
-              <span>Export CSV</span>
-            </button>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-[#563568] hover:bg-[#78469C] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
-            >
-              <Plus size={15} />
-              <span>Add New Product</span>
-            </button>
+          <div className="flex gap-2">
+            <button onClick={() => void load()} className="inline-flex items-center gap-2 px-3 py-2 border border-[#E7DCEB] rounded-xl text-xs"><RefreshCw size={14}/> Refresh</button>
+            <button onClick={openCreate} className="inline-flex items-center gap-2 px-4 py-2 bg-[#563568] text-white rounded-xl text-xs font-semibold"><Plus size={15}/> Add Product</button>
           </div>
         </div>
 
-        {/* Notifications */}
-        {successMessage && (
-          <div className="p-3.5 bg-[#F2FBF5] border border-[#A7E8BD] rounded-xl flex items-center justify-between text-xs text-[#166534]">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={16} />
-              <span>{successMessage}</span>
-            </div>
-            <button onClick={() => setSuccessMessage(null)} className="text-[#166534] hover:font-bold">✕</button>
-          </div>
-        )}
+        {notice && <div className="p-3 rounded-xl bg-[#F2FBF5] text-[#166534] text-xs flex justify-between">{notice}<button onClick={() => setNotice('')}><X size={14}/></button></div>}
+        {error && !modalOpen && <div className="p-3 rounded-xl bg-red-50 text-red-700 text-xs">{error}</div>}
 
-        {/* Filters Bar */}
-        <div className="bg-white rounded-2xl p-4 border border-[#EADFF0] shadow-2xs flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
-          <div className="relative w-full md:w-80">
-            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8E769E]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by title, SKU..."
-              className="w-full pl-9 pr-3.5 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl focus:outline-none focus:border-[#563568] text-xs"
-            />
+        <div className="bg-white rounded-2xl p-4 border border-[#EADFF0] flex flex-col sm:flex-row gap-3">
+          <div className="flex-1 flex items-center gap-2">
+            <Search size={15} className="text-[#8E769E]"/>
+            <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search product name or ID" className="w-full bg-transparent outline-none text-sm"/>
           </div>
-
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl text-xs focus:outline-none focus:border-[#563568]"
-            >
-              <option value="all">All Categories</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id || c.slug}>{c.name}</option>
-              ))}
-            </select>
-
-            <select
-              value={stockFilter}
-              onChange={(e) => setStockFilter(e.target.value)}
-              className="px-3 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl text-xs focus:outline-none focus:border-[#563568]"
-            >
-              <option value="all">All Stock States</option>
-              <option value="in-stock">In Stock (&gt; 0)</option>
-              <option value="low-stock">Low Stock (≤ 8)</option>
-              <option value="out-of-stock">Out of Stock (0)</option>
-            </select>
-          </div>
+          <select value={statusFilter} onChange={event => setStatusFilter(event.target.value)} className="px-3 py-2 border border-[#E7DCEB] rounded-lg text-xs">
+            <option value="all">All statuses</option><option value="active">Active</option><option value="draft">Draft</option><option value="archived">Archived</option>
+          </select>
         </div>
 
-        {/* Product Table */}
-        <div className="bg-white rounded-2xl border border-[#EADFF0] shadow-2xs overflow-hidden">
+        <div className="bg-white rounded-2xl border border-[#EADFF0] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#FAF5FC] border-b border-[#EADFF0] text-[11px] text-[#705E7B] font-semibold uppercase tracking-wider">
-                <tr>
-                  <th className="py-3 px-4">Product</th>
-                  <th className="py-3 px-4">Category</th>
-                  <th className="py-3 px-4">Selling Price</th>
-                  <th className="py-3 px-4">Est. Margin</th>
-                  <th className="py-3 px-4 text-center">Stock</th>
-                  <th className="py-3 px-4 text-center">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
+              <thead className="bg-[#FAF5FC] text-[#705E7B] uppercase"><tr>
+                <th className="p-3">Product</th><th className="p-3">Category</th><th className="p-3">Price</th><th className="p-3">Stock</th><th className="p-3">Status</th><th className="p-3 text-right">Actions</th>
+              </tr></thead>
               <tbody className="divide-y divide-[#F5EDF8]">
-                {loading ? (
-                  <tr>
-                    <td colSpan={7} className="py-12 text-center text-xs text-[#8E769E]">
-                      Loading SARINE catalogue records...
+                {loading ? <tr><td colSpan={6} className="p-10 text-center text-[#8E769E]">Loading catalogue…</td></tr> :
+                visibleProducts.length === 0 ? <tr><td colSpan={6} className="p-10 text-center text-[#8E769E]">No products found.</td></tr> :
+                visibleProducts.map(product => (
+                  <tr key={product.id} className="hover:bg-[#FAF5FC]">
+                    <td className="p-3"><div className="flex items-center gap-3">
+                      <img src={product.images?.[0] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=100&q=80'} alt="" className="w-11 h-11 rounded-lg object-cover"/>
+                      <div><div className="font-semibold text-[#2C1838]">{product.name}</div><div className="text-[10px] text-[#8E769E] font-mono">{product.id}</div></div>
+                    </div></td>
+                    <td className="p-3 text-[#5D5068]">{categories.find(category => category.id === product.categoryId)?.name || product.categoryId}</td>
+                    <td className="p-3 font-semibold">{formatInr(product.price)}</td>
+                    <td className="p-3">{product.stock}</td>
+                    <td className="p-3"><span className="capitalize">{product.status}</span></td>
+                    <td className="p-3 text-right whitespace-nowrap">
+                      {product.status !== 'archived' && <button onClick={() => void toggleStatus(product)} title="Toggle active/draft" className="p-2 hover:bg-[#F3E8FF] rounded-lg text-[#563568]">{product.status === 'active' ? 'Unpublish' : 'Publish'}</button>}
+                      <button onClick={() => openEdit(product)} title="Edit" className="p-2 hover:bg-[#F3E8FF] rounded-lg"><Edit2 size={14}/></button>
+                      <button onClick={() => void duplicate(product)} title="Duplicate as draft" className="p-2 hover:bg-[#F3E8FF] rounded-lg"><Copy size={14}/></button>
+                      {product.status !== 'archived' && <button onClick={() => void archive(product)} title="Archive" className="p-2 hover:bg-red-50 text-red-600 rounded-lg"><Archive size={14}/></button>}
                     </td>
                   </tr>
-                ) : filteredProducts.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-12 text-center text-xs text-[#8E769E]">
-                      No jewellery pieces match your search or filter.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredProducts.map((p) => {
-                    const cost = p.costPrice || Math.round(p.price * 0.35);
-                    const margin = Math.round(((p.price - cost) / p.price) * 100);
-                    const stock = p.stock !== undefined ? p.stock : 15;
-                    return (
-                      <tr key={p.id} className="hover:bg-[#FAF5FC] transition-colors">
-                        <td className="py-3 px-4 flex items-center gap-3">
-                          <img
-                            src={p.images?.[0] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=100&q=80'}
-                            alt={p.name}
-                            className="w-10 h-10 rounded-lg object-cover border border-[#E7DCEB] shrink-0"
-                          />
-                          <div className="min-w-0">
-                            <span className="font-semibold text-[#2C1838] block truncate max-w-xs">{p.name}</span>
-                            <span className="text-[10px] text-[#8E769E] font-mono">{p.id}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 capitalize text-[#5D5068]">
-                          {p.categoryId?.replace(/-/g, ' ')}
-                        </td>
-                        <td className="py-3 px-4 font-semibold text-[#2C1838]">
-                          {formatInr(p.price)}
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="font-medium text-[#16A34A]">{margin}%</span>
-                          <span className="text-[10px] text-[#8E769E] block">Cost: {formatInr(cost)}</span>
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <span
-                            className={`inline-block px-2.5 py-0.5 rounded-full font-bold text-[11px] ${
-                              stock === 0
-                                ? 'bg-[#FEE2E2] text-[#DC2626]'
-                                : stock <= 8
-                                ? 'bg-[#FEF3C7] text-[#D97706]'
-                                : 'bg-[#DCFCE7] text-[#16A34A]'
-                            }`}
-                          >
-                            {stock}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <button
-                            onClick={() => handleToggleStatus(p)}
-                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-colors cursor-pointer ${
-                              p.status === 'active'
-                                ? 'bg-[#F3E8FF] text-[#78469C] hover:bg-[#E9D5FF]'
-                                : 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]'
-                            }`}
-                          >
-                            {p.status === 'active' ? 'Published' : 'Draft'}
-                          </button>
-                        </td>
-                        <td className="py-3 px-4 text-right space-x-1">
-                          <button
-                            onClick={() => handleDuplicateProduct(p)}
-                            title="Duplicate Record"
-                            className="p-1.5 text-[#705E7B] hover:text-[#563568] hover:bg-[#FAF5FC] rounded-md transition-colors cursor-pointer"
-                          >
-                            <Copy size={13} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingProduct(p);
-                              setNewTitle(p.name);
-                              setNewPrice(p.price.toString());
-                              setNewCostPrice((p.costPrice || Math.round(p.price * 0.35)).toString());
-                              setNewStock((p.stock || 10).toString());
-                              setNewCategory(p.categoryId);
-                              setShowAddModal(true);
-                            }}
-                            title="Edit Product"
-                            className="p-1.5 text-[#705E7B] hover:text-[#563568] hover:bg-[#FAF5FC] rounded-md transition-colors cursor-pointer"
-                          >
-                            <Edit2 size={13} />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
+                ))}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Add/Edit Modal */}
-        {showAddModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6 border border-[#E7DCEB] max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between pb-4 border-b border-[#E7DCEB]">
-                <div className="flex items-center gap-2">
-                  <Package size={18} className="text-[#563568]" />
-                  <h3 className="font-serif text-lg font-normal text-[#2C1838]">
-                    {editingProduct ? 'Edit Catalogue Piece' : 'Add New Jewellery Piece'}
-                  </h3>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setEditingProduct(null);
-                  }}
-                  className="text-[#705E7B] hover:text-black"
-                >
-                  <X size={18} />
-                </button>
+        {modalOpen && <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-5"><h2 className="font-serif text-xl text-[#2C1838]">{editing ? 'Edit Product' : 'Add Product'}</h2><button onClick={() => setModalOpen(false)}><X size={18}/></button></div>
+            {error && <div className="mb-3 p-3 bg-red-50 text-red-700 rounded-lg text-xs">{error}</div>}
+            <form onSubmit={save} className="space-y-4 text-xs">
+              <label className="block">Product name *<input required maxLength={255} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
+              <div className="grid grid-cols-2 gap-3">
+                <label>Selling price (₹) *<input required type="number" min="0" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
+                <label>Cost price (₹)<input type="number" min="0" step="0.01" value={form.costPrice} onChange={e => setForm({ ...form, costPrice: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
               </div>
-
-              <form onSubmit={handleCreateProduct} className="mt-4 space-y-4 text-xs">
-                <div>
-                  <label className="block text-[#5D5068] font-medium mb-1">Product Title *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    placeholder="e.g. Meera Royal Polki Choker Set with Pearl Drops"
-                    className="w-full px-3.5 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl focus:outline-none focus:border-[#563568]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[#5D5068] font-medium mb-1">Selling Price (₹) *</label>
-                    <input
-                      type="number"
-                      required
-                      value={newPrice}
-                      onChange={(e) => setNewPrice(e.target.value)}
-                      placeholder="2499"
-                      className="w-full px-3.5 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl focus:outline-none focus:border-[#563568]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[#5D5068] font-medium mb-1">Cost Price (₹)</label>
-                    <input
-                      type="number"
-                      value={newCostPrice}
-                      onChange={(e) => setNewCostPrice(e.target.value)}
-                      placeholder="850"
-                      className="w-full px-3.5 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl focus:outline-none focus:border-[#563568]"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[#5D5068] font-medium mb-1">Initial Stock Count *</label>
-                    <input
-                      type="number"
-                      required
-                      value={newStock}
-                      onChange={(e) => setNewStock(e.target.value)}
-                      placeholder="20"
-                      className="w-full px-3.5 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl focus:outline-none focus:border-[#563568]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[#5D5068] font-medium mb-1">Custom SKU</label>
-                    <input
-                      type="text"
-                      value={newSku}
-                      onChange={(e) => setNewSku(e.target.value)}
-                      placeholder="SAR-NK-105"
-                      className="w-full px-3.5 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl focus:outline-none focus:border-[#563568] uppercase font-mono"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[#5D5068] font-medium mb-1">Category</label>
-                    <select
-                      value={newCategory}
-                      onChange={(e) => setNewCategory(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl focus:outline-none focus:border-[#563568]"
-                    >
-                      <option value="necklaces">Necklaces</option>
-                      <option value="earrings">Earrings</option>
-                      <option value="bracelets">Bracelets & Bangles</option>
-                      <option value="rings">Rings</option>
-                      <option value="sets">Sets & Combos</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[#5D5068] font-medium mb-1">Jewellery Type</label>
-                    <select
-                      value={newType}
-                      onChange={(e) => setNewType(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl focus:outline-none focus:border-[#563568]"
-                    >
-                      <option value="necklace">Necklace</option>
-                      <option value="choker">Choker</option>
-                      <option value="earring">Earrings</option>
-                      <option value="jhumka">Jhumka</option>
-                      <option value="bangle">Bangle</option>
-                      <option value="ring">Ring</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[#5D5068] font-medium mb-1">Image URL</label>
-                  <input
-                    type="url"
-                    value={newImageUrl}
-                    onChange={(e) => setNewImageUrl(e.target.value)}
-                    placeholder="https://images.unsplash.com/photo-..."
-                    className="w-full px-3.5 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl focus:outline-none focus:border-[#563568]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[#5D5068] font-medium mb-1">Craftsmanship Description</label>
-                  <textarea
-                    rows={3}
-                    value={newDescription}
-                    onChange={(e) => setNewDescription(e.target.value)}
-                    placeholder="Handcrafted in hypoallergenic brass with 18K micro-gold electroplating and AAA zircon gemstones..."
-                    className="w-full px-3.5 py-2 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl focus:outline-none focus:border-[#563568]"
-                  />
-                </div>
-
-                <div className="pt-3 flex items-center justify-end gap-2 border-t border-[#E7DCEB]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAddModal(false);
-                      setEditingProduct(null);
-                    }}
-                    className="px-4 py-2 border border-[#E7DCEB] rounded-xl text-[#5D5068] hover:bg-[#FAF5FC]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 bg-[#563568] hover:bg-[#78469C] text-white rounded-xl font-medium transition-colors cursor-pointer"
-                  >
-                    {editingProduct ? 'Save Changes' : 'Publish Product'}
-                  </button>
-                </div>
-              </form>
-            </div>
+              <div className="grid grid-cols-2 gap-3">
+                <label>Stock *<input required type="number" min="0" step="1" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
+                <label>Category *<select required value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl">{categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <label>Jewellery type *<select value={form.jewelleryType} onChange={e => setForm({ ...form, jewelleryType: e.target.value as JewelleryType })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl">{Object.entries(JEWELLERY_TYPE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+                <label>Status<select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as ProductStatus })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"><option value="draft">Draft</option><option value="active">Active</option></select></label>
+              </div>
+              <label className="block">Image URL (HTTPS)<input type="url" value={form.imageUrl} onChange={e => setForm({ ...form, imageUrl: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
+              <label className="block">Description<textarea rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#E7DCEB]">
+                <button type="button" onClick={() => setModalOpen(false)} className="px-4 py-2 border rounded-xl">Cancel</button>
+                <button disabled={saving} type="submit" className="px-5 py-2 bg-[#563568] text-white rounded-xl disabled:opacity-50">{saving ? 'Saving…' : editing ? 'Save Changes' : 'Create Draft/Product'}</button>
+              </div>
+            </form>
           </div>
-        )}
+        </div>}
       </div>
     </AdminLayout>
   );

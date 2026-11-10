@@ -1,58 +1,60 @@
 /**
  * Central Service Switch for SARINE.
- *
- * Products and categories: Hostinger MariaDB API.
- * Orders: existing Netlify service temporarily, until Hostinger checkout is ready.
- * Admin products: existing mock service temporarily, until Hostinger admin is ready.
+ * Storefront catalogue and administrative product writes use Hostinger MariaDB.
  */
-
-import type {
-  IProductService,
-  ICategoryService,
-  IAdminProductService,
-  IOrderService
-} from './interfaces';
-
+import type { IProductService, ICategoryService, IAdminProductService, IOrderService } from './interfaces';
 import { MockProductService } from './mock/mockProductService';
 import { MockCategoryService } from './mock/mockCategoryService';
-import { MockAdminProductService } from './mock/mockAdminProductService';
 import { NetlifyOrderService } from './netlify/netlifyOrderService';
-
 import { HostingerProductService } from './hostinger/hostingerProductService';
 import { HostingerCategoryService } from './hostinger/hostingerCategoryService';
 import { HostingerOrderService } from './hostinger/hostingerOrderService';
+import { HostingerAdminProductService } from './hostinger/hostingerAdminProductService';
 
 export type DataSource = 'mock' | 'firebase' | 'hostinger';
-
 export const DATA_SOURCE: DataSource = 'hostinger';
 
 const mockProductService = new MockProductService();
 const mockCategoryService = new MockCategoryService();
-const mockAdminProductService = new MockAdminProductService(mockProductService);
-
 const netlifyOrderService = new NetlifyOrderService();
-
 const hostingerProductService = new HostingerProductService();
 const hostingerCategoryService = new HostingerCategoryService();
 const hostingerOrderService = new HostingerOrderService();
+const hostingerAdminProductService = new HostingerAdminProductService();
 
 export const productService: IProductService =
-  DATA_SOURCE === 'hostinger'
-    ? hostingerProductService
-    : mockProductService;
-
+  DATA_SOURCE === 'hostinger' ? hostingerProductService : mockProductService;
 export const categoryService: ICategoryService =
-  DATA_SOURCE === 'hostinger'
-    ? hostingerCategoryService
-    : mockCategoryService;
-
+  DATA_SOURCE === 'hostinger' ? hostingerCategoryService : mockCategoryService;
 export const orderService: IOrderService =
-  DATA_SOURCE === 'hostinger'
-    ? hostingerOrderService
-    : netlifyOrderService;
-
-export const adminProductService: IAdminProductService = mockAdminProductService;
+  DATA_SOURCE === 'hostinger' ? hostingerOrderService : netlifyOrderService;
+export const adminProductService: IAdminProductService =
+  DATA_SOURCE === 'hostinger' ? hostingerAdminProductService : {
+    getProducts: () => mockProductService.getProducts({ includeAll: true }),
+    createProduct: async product => {
+      const created = { ...product, id: `prod-${Date.now()}`, createdAt: new Date().toISOString() };
+      mockProductService._getAllInternal().unshift(created);
+      return created;
+    },
+    updateProduct: async (id, updates) => {
+      const item = mockProductService._getAllInternal().find(p => p.id === id);
+      if (!item) throw new Error('Product not found.');
+      Object.assign(item, updates);
+      return item;
+    },
+    deleteProduct: async id => {
+      const item = mockProductService._getAllInternal().find(p => p.id === id);
+      if (!item) return false;
+      item.status = 'archived';
+      return true;
+    },
+    archiveProduct: async id => {
+      const item = mockProductService._getAllInternal().find(p => p.id === id);
+      if (!item) throw new Error('Product not found.');
+      item.status = 'archived';
+      return item;
+    }
+  };
 
 export { netlifyOrderService, hostingerOrderService };
-
 export * from './interfaces';
