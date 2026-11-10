@@ -9,6 +9,8 @@ import adminProductsRouter from "./adminProducts.js";
 import ordersRouter from "./orders.js";
 
 const app = express();
+// Hostinger runs this app behind a reverse proxy; trust its forwarded client IP.
+app.set("trust proxy", 1);
 const PORT = Number(process.env.PORT || 3000);
 
 const allowedOrigins = new Set([
