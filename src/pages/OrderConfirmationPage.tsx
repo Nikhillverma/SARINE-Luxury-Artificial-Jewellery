@@ -96,13 +96,21 @@ export const OrderConfirmationPage: React.FC = () => {
     );
   }
 
-  const orderDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  const parsedOrderDate = order.createdAt ? new Date(order.createdAt) : null;
+  const hasValidOrderDate = Boolean(
+    parsedOrderDate &&
+    !Number.isNaN(parsedOrderDate.getTime()) &&
+    parsedOrderDate.getFullYear() > 1970
+  );
+  const orderDate = hasValidOrderDate
+    ? parsedOrderDate!.toLocaleString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    : 'Date unavailable';
 
   const isFailed = order.paymentStatus === 'failed' || order.orderStatus === 'failed';
   const isNeedsRefund = order.orderStatus === 'needs_refund';
