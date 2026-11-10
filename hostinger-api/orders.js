@@ -125,7 +125,7 @@ router.post("/create", async (req, res, next) => {
     for (let i = 0; i < items.length; i++) {
       const itm = items[i];
       const [pRows] = await connection.execute(
-        `SELECT id, name, price, stock, status, images, sku
+        `SELECT id, name, price, stock, status, images
          FROM products
          WHERE id = ?
          FOR UPDATE`,
@@ -173,7 +173,8 @@ router.post("/create", async (req, res, next) => {
         unitPrice,
         quantity: Number(itm.quantity),
         image: Array.isArray(images) && images[0] ? String(images[0]) : "",
-        sku: p.sku || null,
+        // The products table has no SKU column in the Hostinger MariaDB schema.
+        sku: null,
         sourceLine: i
       });
     }
