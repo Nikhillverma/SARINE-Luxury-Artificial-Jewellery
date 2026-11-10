@@ -247,8 +247,8 @@ router.post("/create", async (req, res, next) => {
         `INSERT INTO orders (
            id, order_number, customer_id, customer_name, customer_email, customer_phone,
            shipping_address, subtotal, shipping_fee, total, payment_method,
-           payment_status, order_status, public_token_hash, source_document
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cod', 'pending', 'placed', ?, 'web_checkout')`,
+           payment_status, order_status, public_token_hash, source_document, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cod', 'pending', 'placed', ?, 'web_checkout', CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))`,
         [
           orderNumber,
           orderNumber,
@@ -273,8 +273,8 @@ router.post("/create", async (req, res, next) => {
       }
 
       await connection.execute(
-        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by)
-         VALUES (?, NULL, 'placed', 'Order placed via COD', 'customer')`,
+        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
+         VALUES (?, NULL, 'placed', 'Order placed via COD', 'customer', CURRENT_TIMESTAMP(3))`,
         [orderNumber]
       );
 
@@ -294,8 +294,8 @@ router.post("/create", async (req, res, next) => {
         `INSERT INTO orders (
            id, order_number, customer_id, customer_name, customer_email, customer_phone,
            shipping_address, subtotal, shipping_fee, total, payment_method,
-           payment_status, order_status, public_token_hash, source_document
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'online', 'pending', 'awaiting_payment', ?, 'web_checkout')`,
+           payment_status, order_status, public_token_hash, source_document, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'online', 'pending', 'awaiting_payment', ?, 'web_checkout', CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))`,
         [
           orderNumber,
           orderNumber,
@@ -320,8 +320,8 @@ router.post("/create", async (req, res, next) => {
       }
 
       await connection.execute(
-        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by)
-         VALUES (?, NULL, 'awaiting_payment', 'Order created awaiting Razorpay payment', 'customer')`,
+        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
+         VALUES (?, NULL, 'awaiting_payment', 'Order created awaiting Razorpay payment', 'customer', CURRENT_TIMESTAMP(3))`,
         [orderNumber]
       );
 
@@ -350,8 +350,8 @@ router.post("/create", async (req, res, next) => {
           [rpErr.message || "Gateway order initialization failed", orderNumber]
         );
         await pool.execute(
-          `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by)
-           VALUES (?, 'awaiting_payment', 'failed', 'Payment gateway order creation failed', 'system')`,
+          `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
+           VALUES (?, 'awaiting_payment', 'failed', 'Payment gateway order creation failed', 'system', CURRENT_TIMESTAMP(3))`,
           [orderNumber]
         );
         return res.status(500).json({
@@ -558,8 +558,8 @@ router.post("/verify", async (req, res, next) => {
         [razorpay_payment_id, order.id]
       );
       await connection.execute(
-        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by)
-         VALUES (?, ?, 'confirmed', 'Payment verified and captured', 'customer')`,
+        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
+         VALUES (?, ?, 'confirmed', 'Payment verified and captured', 'customer', CURRENT_TIMESTAMP(3))`,
         [order.id, order.order_status]
       );
       await connection.commit();
@@ -587,8 +587,8 @@ router.post("/verify", async (req, res, next) => {
         [order.total, razorpay_payment_id, order.id]
       );
       await connection.execute(
-        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by)
-         VALUES (?, ?, 'needs_refund', 'Stock exhausted between order creation and payment authorization. Flagged for full refund.', 'system')`,
+        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
+         VALUES (?, ?, 'needs_refund', 'Stock exhausted between order creation and payment authorization. Flagged for full refund.', 'system', CURRENT_TIMESTAMP(3))`,
         [order.id, order.order_status]
       );
       await connection.commit();
