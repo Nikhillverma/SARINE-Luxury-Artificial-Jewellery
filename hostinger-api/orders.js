@@ -6,17 +6,7 @@ import { pool } from "./db.js";
 
 const router = Router();
 
-// Store configuration matching SARINE constants
-const SHIPPING_FLAT_FEE = 0;
-const FREE_SHIPPING_THRESHOLD = null;
-const COD_ENABLED = false;
-
-function calculateShippingFee(subtotal) {
-  if (FREE_SHIPPING_THRESHOLD !== null && subtotal >= FREE_SHIPPING_THRESHOLD) {
-    return 0;
-  }
-  return SHIPPING_FLAT_FEE;
-}
+import { calculateShippingFee, COD_ENABLED } from "./checkoutPolicy.js";
 
 function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");

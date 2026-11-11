@@ -1,0 +1,37 @@
+name: Guest checkout backend CI
+
+on:
+  pull_request:
+    branches:
+      - fix/order-timestamps
+    paths:
+      - "hostinger-api/**"
+      - ".github/workflows/guest-checkout-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hostinger-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: hostinger-api/package-lock.json
+      - name: Install backend dependencies
+        run: npm ci
+      - name: Backend tests
+        run: npm test
+      - name: Check backend JavaScript syntax
+        run: |
+          node --check server.js
+          node --check orders.js
+          node --check adminAuth.js
+          node --check adminOrders.js
