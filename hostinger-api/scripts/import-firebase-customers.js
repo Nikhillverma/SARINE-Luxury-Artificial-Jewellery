@@ -23,8 +23,16 @@ async function main() {
   if (!exportPath) throw new Error("Set FIREBASE_AUTH_EXPORT_PATH to the local Firebase Auth export JSON path.");
   const raw = await fs.readFile(exportPath, "utf8");
   const users = readUsers(JSON.parse(raw));
+  const apply = process.argv.includes("--apply");
+  if (apply && (!process.env.FIREBASE_SCRYPT_SIGNER_KEY ||
+      !process.env.FIREBASE_SCRYPT_SALT_SEPARATOR ||
+      !process.env.FIREBASE_SCRYPT_MEM_COST || !process.env.FIREBASE_SCRYPT_ROUNDS)) {
+    throw new Error("Refusing import: Firebase SCRYPT runtime configuration is incomplete.");
+  }
   let imported = 0;
   let skipped = 0;
+  let passwordAccounts = 0;
+  let disabledAccounts = 0;
 
   for (const user of users) {
     const uid = String(user.localId || user.uid || "").trim();
@@ -42,6 +50,8 @@ async function main() {
       throw new Error(`Refusing incomplete password hash/salt for Firebase UID ${uid}.`);
     }
 
+    if (passwordHash) passwordAccounts++;
+    if (user.disabled === true) disabledAccounts++;
     const status = user.disabled === true ? "disabled" : (passwordHash ? "active" : "pending");
     const name = String(user.displayName || email.split("@")[0]).trim().slice(0, 255) || email;
     const phone = typeof user.phoneNumber === "string" && user.phoneNumber.trim()
@@ -49,6 +59,11 @@ async function main() {
     const verifiedAt = user.emailVerified === true
       ? (parseDate(user.lastLoginAt) || parseDate(user.createdAt) || new Date())
       : null;
+
+    if (!apply) {
+      imported++;
+      continue;
+    }
 
     const connection = await pool.getConnection();
     try {
@@ -96,7 +111,7 @@ async function main() {
     }
   }
 
-  console.log(JSON.stringify({ total: users.length, imported, skipped }));
+  console.log(JSON.stringify({ mode: apply ? "apply" : "dry-run", total: users.length, validAccounts: imported + skipped, passwordAccounts, disabledAccounts, imported: apply ? imported : 0, skipped }));
   await pool.end();
 }
 
