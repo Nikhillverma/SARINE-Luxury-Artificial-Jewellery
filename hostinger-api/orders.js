@@ -791,3 +791,4 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
 });
 
 export default router;
+export { calculateShippingFee, SHIPPING_FLAT_FEE, FREE_SHIPPING_THRESHOLD, COD_ENABLED };
