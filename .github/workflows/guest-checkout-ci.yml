@@ -53,3 +53,4 @@ jobs:
           node --check orders.js
           node --check adminAuth.js
           node --check adminOrders.js
+          node --check adminDashboard.js
