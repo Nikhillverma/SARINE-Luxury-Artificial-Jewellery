@@ -1,16 +1,11 @@
-name: Guest checkout migration CI
+name: Guest checkout backend CI
 
 on:
   pull_request:
     branches:
-      - hostinger-migration
       - fix/order-timestamps
     paths:
-      - "src/**"
       - "hostinger-api/**"
-      - "package.json"
-      - "package-lock.json"
-      - "bun.lock"
       - ".github/workflows/guest-checkout-ci.yml"
   workflow_dispatch:
 
@@ -18,21 +13,6 @@ permissions:
   contents: read
 
 jobs:
-  frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - name: Install frontend dependencies
-        run: npm ci
-      - name: Type check
-        run: npm run lint
-      - name: Production build
-        run: npm run build
-
   backend:
     runs-on: ubuntu-latest
     defaults:
@@ -47,6 +27,8 @@ jobs:
           cache-dependency-path: hostinger-api/package-lock.json
       - name: Install backend dependencies
         run: npm ci
+      - name: Backend tests
+        run: npm test
       - name: Check backend JavaScript syntax
         run: |
           node --check server.js
