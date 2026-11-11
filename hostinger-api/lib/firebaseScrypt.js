@@ -66,7 +66,7 @@ export async function verifyFirebaseScrypt({
     return false;
   }
 
-  if (expected.length !== KEY_LENGTH) return false;
+  if (expected.length !== settings.signerKey.length) return false;
 
   const combinedSalt = Buffer.concat([salt, settings.saltSeparator]);
   const derivedKey = await scrypt(password, combinedSalt, KEY_LENGTH, {
