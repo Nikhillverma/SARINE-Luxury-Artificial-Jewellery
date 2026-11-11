@@ -22,10 +22,10 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
       proxy: {
         '/api': {
-          target: 'https://greenyellow-cat-956048.hostingersite.com',
+          target: 'https://lavender-goldfish-844589.hostingersite.com',
           changeOrigin: true,
           headers: {
-            origin: 'https://lavender-emu-732118.hostingersite.com',
+            origin: 'http://localhost:5173',
           },
         },
       },
