@@ -5,6 +5,8 @@ import rateLimit from "express-rate-limit";
 import { pool, testDatabase } from "./db.js";
 import adminAuthRouter from "./adminAuth.js";
 import adminOrdersRouter from "./adminOrders.js";
+import adminDashboardRouter from "./adminDashboard.js";
+import adminProductsRouter from "./adminProducts.js";
 import ordersRouter from "./orders.js";
 
 const app = express();
@@ -307,6 +309,10 @@ app.get("/api/categories/:slug", async (req, res, next) => {
 
 // Hostinger admin authentication
 app.use("/api/admin/auth", adminAuthRouter);
+
+// Hostinger admin dashboard and product management
+app.use("/api/admin/dashboard", adminDashboardRouter);
+app.use("/api/admin/products", adminProductsRouter);
 
 // Hostinger admin orders
 app.use("/api/admin/orders", adminOrdersRouter);

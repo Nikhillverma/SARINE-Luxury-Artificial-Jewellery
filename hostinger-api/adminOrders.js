@@ -318,8 +318,8 @@ router.post("/update", async (req, res, next) => {
       }
 
       await connection.execute(
-        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by)
-         VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
+         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP(3))`,
         [order.id, order.order_status, order.order_status, trimmedNote, adminEmail]
       );
 
@@ -389,8 +389,8 @@ router.post("/update", async (req, res, next) => {
       );
 
       await connection.execute(
-        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by)
-         VALUES (?, ?, 'shipped', ?, ?)`,
+        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
+         VALUES (?, ?, 'shipped', ?, ?, CURRENT_TIMESTAMP(3))`,
         [order.id, order.order_status, courierName ? `Shipped via ${courierName}` : "Marked shipped", adminEmail]
       );
 
@@ -434,8 +434,8 @@ router.post("/update", async (req, res, next) => {
       );
 
       await connection.execute(
-        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by)
-         VALUES (?, 'shipped', 'delivered', ?, ?)`,
+        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
+         VALUES (?, 'shipped', 'delivered', ?, ?, CURRENT_TIMESTAMP(3))`,
         [order.id, order.payment_method === "cod" ? "Delivered and COD collected" : "Delivered to recipient", adminEmail]
       );
 
@@ -527,8 +527,8 @@ router.post("/update", async (req, res, next) => {
       );
 
       await connection.execute(
-        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by)
-         VALUES (?, ?, 'cancelled', ?, ?)`,
+        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
+         VALUES (?, ?, 'cancelled', ?, ?, CURRENT_TIMESTAMP(3))`,
         [order.id, currentStatus, reason, adminEmail]
       );
 

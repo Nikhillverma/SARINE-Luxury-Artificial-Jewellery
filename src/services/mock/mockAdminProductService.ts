@@ -21,6 +21,11 @@ export class MockAdminProductService implements IAdminProductService {
     this.productService = productService;
   }
 
+  async getProducts(): Promise<Product[]> {
+    await sleep(NETWORK_DELAY_MS);
+    return this.productService.getProducts({ includeAll: true });
+  }
+
   async createProduct(productData: Omit<Product, 'id' | 'createdAt'>): Promise<Product> {
     await sleep(NETWORK_DELAY_MS);
 

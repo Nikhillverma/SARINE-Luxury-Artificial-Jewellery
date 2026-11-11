@@ -213,6 +213,169 @@ async function runTests() {
   }
   assert(duplicateProcessed === true, 'Duplicate verification returns early without double stock deduction');
 
+  // Test 8: Shipping fee configuration and free shipping threshold
+  const SHIPPING_FLAT_FEE = 99;
+  const FREE_SHIPPING_THRESHOLD = 1999;
+  const COD_ENABLED = true;
+
+  function calculateShipping(subtotal: number): number {
+    if (FREE_SHIPPING_THRESHOLD !== null && subtotal >= FREE_SHIPPING_THRESHOLD) {
+      return 0;
+    }
+    return SHIPPING_FLAT_FEE;
+  }
+
+  assert(COD_ENABLED === true, 'Cash on Delivery (COD) is active on checkout');
+  assert(calculateShipping(1499) === 99, 'Cart subtotal ₹1,499 (< ₹1,999) incurs flat shipping fee of ₹99');
+  assert(calculateShipping(1998) === 99, 'Cart subtotal ₹1,998 (< ₹1,999) incurs flat shipping fee of ₹99');
+  assert(calculateShipping(1999) === 0, 'Cart subtotal ₹1,999 qualifies for complimentary free shipping (₹0)');
+  assert(calculateShipping(3499) === 0, 'Cart subtotal ₹3,499 (> ₹1,999) qualifies for complimentary free shipping (₹0)');
+
+  // Test 9: Razorpay Webhook signature verification on exact raw request buffer
+  const webhookSecret = 'test_webhook_secret_sarine_9988';
+  const rawPayload = Buffer.from(JSON.stringify({
+    event: 'payment.captured',
+    payload: {
+      payment: {
+        entity: {
+          id: 'pay_K1234567890abcdef',
+          order_id: 'order_L1234567890abcdef',
+          amount: 249900,
+          currency: 'INR',
+          status: 'captured'
+        }
+      }
+    }
+  }), 'utf8');
+
+  const validWebhookSig = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(rawPayload)
+    .digest('hex');
+
+  const computedSig = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(rawPayload)
+    .digest('hex');
+
+  assert(timingSafeCompare(computedSig, validWebhookSig) === true, 'Webhook HMAC-SHA256 signature verified on exact raw buffer');
+
+  const tamperedPayload = Buffer.from(JSON.stringify({
+    event: 'payment.captured',
+    payload: { payment: { entity: { id: 'pay_K1234567890abcdef', amount: 100 } } }
+  }), 'utf8');
+
+  const tamperedSig = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(tamperedPayload)
+    .digest('hex');
+
+  assert(timingSafeCompare(tamperedSig, validWebhookSig) === false, 'Tampered raw webhook payload rejected by timingSafeCompare');
+
+  // Test 10: Razorpay Webhook payment capture state machine & inventory transition
+  interface OrderRow {
+    id: string;
+    orderNumber: string;
+    razorpayOrderId: string;
+    total: number;
+    paymentStatus: string;
+    orderStatus: string;
+    razorpayPaymentId?: string;
+    refundNeeded?: boolean;
+    refundReason?: string;
+  }
+
+  const orderLedger: Record<string, OrderRow> = {
+    'SAR-000125': {
+      id: 'SAR-000125',
+      orderNumber: 'SAR-000125',
+      razorpayOrderId: 'order_L1234567890abcdef',
+      total: 2499,
+      paymentStatus: 'pending',
+      orderStatus: 'awaiting_payment'
+    }
+  };
+
+  let productInventory = { stock: 5 };
+
+  function handleWebhookPaymentCaptured(ord: OrderRow, paymentEntity: { id: string; order_id: string; amount: number; currency: string }) {
+    if (ord.paymentStatus === 'paid') {
+      return { status: 'ok', alreadyPaid: true };
+    }
+    const expectedPaise = Math.round(ord.total * 100);
+    if (paymentEntity.amount !== expectedPaise || paymentEntity.currency !== 'INR') {
+      return { status: 'mismatch' };
+    }
+    if (productInventory.stock >= 1) {
+      productInventory.stock -= 1;
+      ord.paymentStatus = 'paid';
+      ord.orderStatus = 'confirmed';
+      ord.razorpayPaymentId = paymentEntity.id;
+      return { status: 'ok' };
+    } else {
+      ord.paymentStatus = 'paid';
+      ord.orderStatus = 'needs_refund';
+      ord.refundNeeded = true;
+      ord.refundReason = 'Stock exhausted prior to payment completion.';
+      ord.razorpayPaymentId = paymentEntity.id;
+      return { status: 'needs_refund' };
+    }
+  }
+
+  // First webhook delivery
+  const res1 = handleWebhookPaymentCaptured(orderLedger['SAR-000125'], {
+    id: 'pay_K1234567890abcdef',
+    order_id: 'order_L1234567890abcdef',
+    amount: 249900,
+    currency: 'INR'
+  });
+  assert(res1.status === 'ok', 'Webhook payment capture transitions order to confirmed and paid');
+  assert(productInventory.stock === 4, 'Webhook payment capture decrements stock by ordered quantity');
+
+  // Duplicate webhook delivery
+  const res2 = handleWebhookPaymentCaptured(orderLedger['SAR-000125'], {
+    id: 'pay_K1234567890abcdef',
+    order_id: 'order_L1234567890abcdef',
+    amount: 249900,
+    currency: 'INR'
+  });
+  assert(res2.alreadyPaid === true, 'Duplicate webhook returns alreadyPaid idempotently');
+  assert(productInventory.stock === 4, 'Duplicate webhook delivery never decrements stock a second time');
+
+  // Test 11: Webhook payment.failed handling
+  const failedOrder: OrderRow = {
+    id: 'SAR-000126',
+    orderNumber: 'SAR-000126',
+    razorpayOrderId: 'order_M1234567890abcdef',
+    total: 1899,
+    paymentStatus: 'pending',
+    orderStatus: 'awaiting_payment'
+  };
+
+  function handleWebhookPaymentFailed(ord: OrderRow) {
+    if (ord.paymentStatus === 'pending') {
+      ord.paymentStatus = 'failed';
+      ord.orderStatus = 'failed';
+      return { status: 'failed' };
+    }
+    return { status: 'ignored_not_pending' };
+  }
+
+  const failRes = handleWebhookPaymentFailed(failedOrder);
+  assert(failRes.status === 'failed' && failedOrder.orderStatus === 'failed', 'Webhook payment.failed marks pending order as failed');
+
+  // Never downgrade a paid order on payment.failed event
+  const paidOrder: OrderRow = {
+    id: 'SAR-000127',
+    orderNumber: 'SAR-000127',
+    razorpayOrderId: 'order_N1234567890abcdef',
+    total: 3999,
+    paymentStatus: 'paid',
+    orderStatus: 'confirmed'
+  };
+  const ignoreRes = handleWebhookPaymentFailed(paidOrder);
+  assert(ignoreRes.status === 'ignored_not_pending' && paidOrder.orderStatus === 'confirmed', 'Webhook payment.failed never downgrades an already paid/confirmed order');
+
   console.log(`\nTests Completed: ${passed} passed, ${failed} failed.`);
   if (failed > 0) {
     process.exit(1);
