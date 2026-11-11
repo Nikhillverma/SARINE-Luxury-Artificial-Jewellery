@@ -54,13 +54,15 @@ export class HostingerAdminProductService implements IAdminProductService {
   }
 
   async archiveProduct(id: string): Promise<Product> {
-    const result = await request<{ success: boolean; id: string; status: string }>(`/admin/products/${encodeURIComponent(id)}/status`, {
+    await request<{ success: boolean; id: string; status: string }>(`/admin/products/${encodeURIComponent(id)}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status: 'archived' })
     });
-    return {
-      id: result.id,
-      status: result.status
-    } as Product;
+    const products = await this.getProducts();
+    const archivedProduct = products.find(product => product.id === id);
+    if (!archivedProduct) {
+      throw new Error('Product was archived but could not be reloaded.');
+    }
+    return archivedProduct;
   }
 }
