@@ -267,7 +267,6 @@ export const CheckoutPage: React.FC = () => {
                 orderPlacedRef.current = true;
 
                                 
-
                 const targetUrl = order.publicToken
                   ? `/order/${order.orderNumber}?t=${order.publicToken}`
                   : `/order/${order.orderNumber}`;
