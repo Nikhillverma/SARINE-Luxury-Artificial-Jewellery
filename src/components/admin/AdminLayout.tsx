@@ -21,11 +21,7 @@ import {
   Package,
   Boxes,
   ShoppingBag,
-  Users,
-  Megaphone,
   LayoutTemplate,
-  BarChart2,
-  Sparkles,
   Settings,
   Search,
   Bell,
@@ -157,34 +153,10 @@ interface NavItem {
       match: (p: string) => p.startsWith('/admin/orders')
     },
     {
-      name: 'Customers & Loyalty',
-      path: '/admin/customers',
-      icon: Users,
-      match: (p: string) => p.startsWith('/admin/customers')
-    },
-    {
-      name: 'Marketing & Offers',
-      path: '/admin/marketing',
-      icon: Megaphone,
-      match: (p: string) => p.startsWith('/admin/marketing')
-    },
-    {
       name: 'Storefront Studio',
       path: '/admin/storefront',
       icon: LayoutTemplate,
       match: (p: string) => p.startsWith('/admin/storefront')
-    },
-    {
-      name: 'Analytics & Profit',
-      path: '/admin/analytics',
-      icon: BarChart2,
-      match: (p: string) => p.startsWith('/admin/analytics')
-    },
-    {
-      name: 'AI Business Copilot',
-      path: '/admin/copilot',
-      icon: Sparkles,
-      match: (p: string) => p.startsWith('/admin/copilot')
     },
     {
       name: 'Settings & Security',
@@ -409,16 +381,6 @@ interface NavItem {
                       <div className="flex items-center gap-2">
                         <ShoppingBag size={14} className="text-[#563568]" />
                         <span>Search in Orders</span>
-                      </div>
-                      <ChevronRight size={13} className="text-[#8E769E]" />
-                    </Link>
-                    <Link
-                      to={`/admin/customers?search=${encodeURIComponent(globalSearch)}`}
-                      className="flex items-center justify-between p-2 hover:bg-[#FAF5FC] rounded-lg text-[#2C1838]"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Users size={14} className="text-[#563568]" />
-                        <span>Search in Customers</span>
                       </div>
                       <ChevronRight size={13} className="text-[#8E769E]" />
                     </Link>

@@ -31,11 +31,7 @@ import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminProductsPage } from './pages/admin/AdminProductsPage';
 import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
 import { AdminInventoryPage } from './pages/admin/AdminInventoryPage';
-import { AdminCustomersPage } from './pages/admin/AdminCustomersPage';
-import { AdminMarketingPage } from './pages/admin/AdminMarketingPage';
 import { AdminStorefrontPage } from './pages/admin/AdminStorefrontPage';
-import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
-import { AdminCopilotPage } from './pages/admin/AdminCopilotPage';
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
 import {
   SustainabilityPage,
@@ -96,11 +92,11 @@ function MainAppShell() {
           <Route path="/admin/products" element={<AdminProductsPage />} />
           <Route path="/admin/orders" element={<AdminOrdersPage />} />
           <Route path="/admin/inventory" element={<AdminInventoryPage />} />
-          <Route path="/admin/customers" element={<AdminCustomersPage />} />
-          <Route path="/admin/marketing" element={<AdminMarketingPage />} />
+          <Route path="/admin/customers" element={<Navigate to="/admin/orders" replace />} />
+          <Route path="/admin/marketing" element={<Navigate to="/admin" replace />} />
           <Route path="/admin/storefront" element={<AdminStorefrontPage />} />
-          <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
-          <Route path="/admin/copilot" element={<AdminCopilotPage />} />
+          <Route path="/admin/analytics" element={<Navigate to="/admin" replace />} />
+          <Route path="/admin/copilot" element={<Navigate to="/admin" replace />} />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />
 
           {/* Help & Policies */}
