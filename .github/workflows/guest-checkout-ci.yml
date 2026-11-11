@@ -3,6 +3,7 @@ name: Hostinger guest-checkout and Firebase-exit CI
 on:
   pull_request:
     branches:
+      - main
       - hostinger-migration
       - guest-checkout-migration
       - fix/order-timestamps
@@ -55,3 +56,7 @@ jobs:
           node --check adminAuth.js
           node --check adminOrders.js
           node --check adminDashboard.js
+          node --check adminProducts.js
+          node --check checkoutPolicy.js
+      - name: Run backend tests
+        run: npm test
