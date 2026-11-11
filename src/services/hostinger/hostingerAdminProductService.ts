@@ -3,7 +3,7 @@ import type { IAdminProductService } from '../interfaces';
 
 const API_BASE = (
   import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
-  (import.meta.env.DEV ? '/api' : 'https://greenyellow-cat-956048.hostingersite.com/api')
+  (import.meta.env.DEV ? '/api' : 'https://lavender-goldfish-844589.hostingersite.com/api')
 ).replace(/\/+$/, '');
 
 interface ProductsResponse { products: Product[]; total: number; }
@@ -54,9 +54,13 @@ export class HostingerAdminProductService implements IAdminProductService {
   }
 
   async archiveProduct(id: string): Promise<Product> {
-    const result = await request<ProductResponse>(`/admin/products/${encodeURIComponent(id)}/archive`, {
-      method: 'PATCH'
+    const result = await request<{ success: boolean; id: string; status: string }>(`/admin/products/${encodeURIComponent(id)}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'archived' })
     });
-    return result.product;
+    return {
+      id: result.id,
+      status: result.status
+    } as Product;
   }
 }
