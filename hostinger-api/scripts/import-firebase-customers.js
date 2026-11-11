@@ -17,8 +17,9 @@ function readUsers(exportData) {
   throw new Error("Unsupported Firebase Auth export: expected a users array.");
 }
 
+let pool;
+
 async function main() {
-  let pool;
   const exportPath = process.env.FIREBASE_AUTH_EXPORT_PATH;
   if (!exportPath) throw new Error("Set FIREBASE_AUTH_EXPORT_PATH to the local Firebase Auth export JSON path.");
   const raw = await fs.readFile(exportPath, "utf8");
