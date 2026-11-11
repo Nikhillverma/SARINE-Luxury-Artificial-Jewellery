@@ -8,6 +8,10 @@ on:
       - "hostinger-api/lib/firebaseScrypt.js"
       - "hostinger-api/tests/firebaseScrypt.test.js"
       - "hostinger-api/package.json"
+      - "hostinger-api/customerAuth.js"
+      - "hostinger-api/server.js"
+      - "hostinger-api/scripts/**"
+      - "hostinger-api/migrations/**"
       - ".github/workflows/customer-auth-scrypt.yml"
   pull_request:
     branches:
@@ -32,4 +36,4 @@ jobs:
           cache: npm
           cache-dependency-path: hostinger-api/package-lock.json
       - run: npm ci
-      - run: npm run test:firebase-scrypt
+      - run: npm test
