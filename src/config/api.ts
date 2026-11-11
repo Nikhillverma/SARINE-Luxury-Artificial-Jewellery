@@ -2,9 +2,9 @@
  * SARINE API Endpoint Resolver
  *
  * Dynamically resolves backend API endpoints for:
- * 1. Firebase Hosting + Netlify Functions (Hybrid / 100% Free Architecture):
- *    Set VITE_API_BASE_URL to your Netlify site URL, e.g. "https://sarine-api.netlify.app/.netlify/functions"
- * 2. Firebase Cloud Functions (Blaze Plan Architecture):
+ * 1. Hostinger Express API:
+ *    Set VITE_API_BASE_URL to your Hostinger API base URL, e.g. "https://sarine-api.netlify.app/.netlify/functions"
+ * 2. Hostinger MariaDB API:
  *    Set VITE_API_BASE_URL to "/api" or Cloud Function URL (with Firebase Hosting rewrite)
  * 3. Local Development / Same-Origin Default:
  *    Defaults to "/.netlify/functions" for backward-compatibility.
@@ -15,11 +15,7 @@ function normalizeBaseUrl(rawUrl?: string): string {
     return '/.netlify/functions';
   }
   let trimmed = rawUrl.trim().replace(/\/+$/, '');
-  // If user provides a Netlify domain without /.netlify/functions appended, append it
-  if (trimmed.includes('.netlify.app') && !trimmed.includes('/.netlify/functions')) {
-    trimmed = `${trimmed}/.netlify/functions`;
-  }
-  return trimmed;
+    return trimmed;
 }
 
 export const API_BASE_URL = normalizeBaseUrl(
