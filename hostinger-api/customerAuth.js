@@ -285,7 +285,7 @@ router.get("/orders", requireCustomerAuth, async (req, res, next) => {
        FROM orders o
        LEFT JOIN order_items oi ON oi.order_id = o.id
        WHERE o.customer_id = ?
-       ORDER BY o.created_at DESC, oi.id ASC`,
+       ORDER BY o.created_at DESC, oi.source_line ASC`,
       [req.customer.id]
     );
 
