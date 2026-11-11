@@ -5,18 +5,16 @@
 import type { IProductService, ICategoryService, IAdminProductService, IOrderService } from './interfaces';
 import { MockProductService } from './mock/mockProductService';
 import { MockCategoryService } from './mock/mockCategoryService';
-import { NetlifyOrderService } from './netlify/netlifyOrderService';
 import { HostingerProductService } from './hostinger/hostingerProductService';
 import { HostingerCategoryService } from './hostinger/hostingerCategoryService';
 import { HostingerOrderService } from './hostinger/hostingerOrderService';
 import { HostingerAdminProductService } from './hostinger/hostingerAdminProductService';
 
-export type DataSource = 'mock' | 'firebase' | 'hostinger';
+export type DataSource = 'mock' | 'hostinger';
 export const DATA_SOURCE: DataSource = 'hostinger';
 
 const mockProductService = new MockProductService();
 const mockCategoryService = new MockCategoryService();
-const netlifyOrderService = new NetlifyOrderService();
 const hostingerProductService = new HostingerProductService();
 const hostingerCategoryService = new HostingerCategoryService();
 const hostingerOrderService = new HostingerOrderService();
@@ -26,8 +24,7 @@ export const productService: IProductService =
   DATA_SOURCE === 'hostinger' ? hostingerProductService : mockProductService;
 export const categoryService: ICategoryService =
   DATA_SOURCE === 'hostinger' ? hostingerCategoryService : mockCategoryService;
-export const orderService: IOrderService =
-  DATA_SOURCE === 'hostinger' ? hostingerOrderService : netlifyOrderService;
+export const orderService: IOrderService = hostingerOrderService;
 export const adminProductService: IAdminProductService =
   DATA_SOURCE === 'hostinger' ? hostingerAdminProductService : {
     getProducts: () => mockProductService.getProducts({ includeAll: true }),
@@ -56,5 +53,5 @@ export const adminProductService: IAdminProductService =
     }
   };
 
-export { netlifyOrderService, hostingerOrderService };
+export { hostingerOrderService };
 export * from './interfaces';

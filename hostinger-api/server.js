@@ -4,6 +4,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { pool, testDatabase } from "./db.js";
 import adminAuthRouter from "./adminAuth.js";
+import adminDashboardRouter from "./adminDashboard.js";
 import adminOrdersRouter from "./adminOrders.js";
 import adminProductsRouter from "./adminProducts.js";
 import ordersRouter from "./orders.js";
@@ -318,6 +319,9 @@ app.get("/api/categories/:slug", async (req, res, next) => {
 
 // Hostinger admin authentication
 app.use("/api/admin/auth", adminAuthRouter);
+
+// Hostinger admin dashboard and operational metrics
+app.use("/api/admin/dashboard", adminDashboardRouter);
 
 // Hostinger admin products (all writes require an authenticated admin session)
 app.use("/api/admin/products", adminProductsRouter);
