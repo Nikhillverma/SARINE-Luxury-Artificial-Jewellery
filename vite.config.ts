@@ -12,7 +12,6 @@ export default defineConfig(() => {
       },
     },
     optimizeDeps: {
-      include: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
