@@ -13,7 +13,6 @@ import {
   ShoppingBag,
   TrendingUp,
   Truck,
-  Users
 } from 'lucide-react';
 
 const API_BASE = (
@@ -36,8 +35,6 @@ interface DashboardMetrics {
   draftProducts: number;
   archivedProducts: number;
   lowStockProducts: number;
-  customers: number;
-  activeCustomers: number;
 }
 
 interface RecentOrder {
@@ -67,7 +64,7 @@ const emptyMetrics: DashboardMetrics = {
   orders: 0, pendingOrders: 0, processingOrders: 0, shippedOrders: 0,
   deliveredOrders: 0, cancelledOrders: 0, paidRevenue: 0, todayRevenue: 0,
   todayOrders: 0, products: 0, activeProducts: 0, draftProducts: 0,
-  archivedProducts: 0, lowStockProducts: 0, customers: 0, activeCustomers: 0
+  archivedProducts: 0, lowStockProducts: 0
 };
 
 function formatDate(value: string | null): string {
@@ -141,7 +138,6 @@ export const AdminDashboardPage: React.FC = () => {
   const cards = [
     { label: 'Paid Revenue', value: formatInr(metrics.paidRevenue), note: `${formatInr(metrics.todayRevenue)} today`, icon: IndianRupee },
     { label: 'Total Orders', value: metrics.orders.toLocaleString('en-IN'), note: `${metrics.todayOrders} today`, icon: ShoppingBag },
-    { label: 'Customers', value: metrics.customers.toLocaleString('en-IN'), note: `${metrics.activeCustomers} active`, icon: Users },
     { label: 'Low Stock Alerts', value: metrics.lowStockProducts.toLocaleString('en-IN'), note: '5 or fewer units', icon: AlertTriangle }
   ];
 
