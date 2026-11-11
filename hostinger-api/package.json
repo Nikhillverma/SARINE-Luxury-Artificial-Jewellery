@@ -4,10 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test tests/*.test.js",
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test:firebase-scrypt": "node --test tests/firebaseScrypt.test.js"
+    "test:firebase-scrypt": "node --test tests/firebaseScrypt.test.js",
+    "import:firebase-customers": "node scripts/import-firebase-customers.js"
   },
   "keywords": [],
   "author": "",
