@@ -26,7 +26,6 @@ import { ShippingPolicyPage } from './pages/ShippingPolicyPage';
 import { RefundPolicyPage } from './pages/RefundPolicyPage';
 import { AboutPage } from './pages/AboutPage';
 import { TrackOrderPage } from './pages/TrackOrderPage';
-import { AccountPage } from './pages/AccountPage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminProductsPage } from './pages/admin/AdminProductsPage';
@@ -88,7 +87,7 @@ function MainAppShell() {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order/:orderNumber" element={<OrderConfirmationPage />} />
           <Route path="/track-order" element={<TrackOrderPage />} />
-          <Route path="/account" element={<AccountPage />} />
+          <Route path="/account" element={<Navigate to="/track-order" replace />} />
 
           {/* Private Admin Management Routes */}
           <Route path="/admin" element={<AdminDashboardPage />} />
