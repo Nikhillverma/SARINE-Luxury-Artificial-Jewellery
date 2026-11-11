@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   frontend:
@@ -53,3 +53,37 @@ jobs:
           node --check orders.js
           node --check adminAuth.js
           node --check adminOrders.js
+
+  prune-legacy-dependencies:
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 6
+    needs: [frontend, backend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Remove unused Firebase and Netlify packages
+        run: |
+          npm ci
+          npm uninstall firebase firebase-admin @netlify/functions
+          npm uninstall --save-dev @firebase/rules-unit-testing
+      - name: Verify dependency-free frontend
+        run: |
+          npm run lint
+          npm run build
+      - name: Commit generated package lock
+        run: |
+          if ! git diff --quiet -- package.json package-lock.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add package.json package-lock.json
+            git commit -m "Remove unused Firebase and Netlify dependencies"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
