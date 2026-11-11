@@ -364,9 +364,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 {/* Mobile Account Icon Only */}
                 <Link
-                  to="/account"
+                  to="/track-order"
                   className="sm:hidden p-2 text-[#302438] hover:text-[#563568] transition-colors rounded-full hover:bg-white/60 flex items-center"
-                  aria-label="Account"
+                  aria-label="Track Order"
                 >
                   <User size={19} strokeWidth={1.5} className="text-[#563568]" />
                 </Link>
@@ -411,7 +411,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                     {/* Order History */}
                     <Link
-                      to="/account?section=orders"
+                      to="/track-order?section=orders"
                       onClick={() => setIsAccountMenuOpen(false)}
                       className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
                     >
@@ -424,7 +424,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                     {/* Plan of Purchase */}
                     <Link
-                      to="/account?section=plan-of-purchase"
+                      to="/track-order?section=plan-of-purchase"
                       onClick={() => setIsAccountMenuOpen(false)}
                       className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
                     >
@@ -462,7 +462,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                     {/* SARINE Wallet */}
                     <Link
-                      to="/account?section=wallet"
+                      to="/track-order?section=wallet"
                       onClick={() => setIsAccountMenuOpen(false)}
                       className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
                     >
@@ -475,7 +475,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                     {/* Delivery Addresses */}
                     <Link
-                      to="/account?section=addresses"
+                      to="/track-order?section=addresses"
                       onClick={() => setIsAccountMenuOpen(false)}
                       className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
                     >
@@ -489,7 +489,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {/* Concierge & Support */}
                     <div className="border-t border-[#E7DCEB] mt-1 pt-1">
                       <Link
-                        to="/account?section=support"
+                        to="/track-order?section=support"
                         onClick={() => setIsAccountMenuOpen(false)}
                         className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
                       >
@@ -1948,7 +1948,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <span>Track Your Order</span>
                   </Link>
                   <Link
-                    to="/account"
+                    to="/track-order"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center gap-2.5 text-xs text-[#302438] hover:text-[#563568] py-1 font-medium"
                   >
