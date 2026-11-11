@@ -1,6 +1,5 @@
 import fs from "node:fs/promises";
 import crypto from "node:crypto";
-import { pool } from "../db.js";
 
 function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
@@ -19,6 +18,7 @@ function readUsers(exportData) {
 }
 
 async function main() {
+  let pool;
   const exportPath = process.env.FIREBASE_AUTH_EXPORT_PATH;
   if (!exportPath) throw new Error("Set FIREBASE_AUTH_EXPORT_PATH to the local Firebase Auth export JSON path.");
   const raw = await fs.readFile(exportPath, "utf8");
@@ -28,6 +28,10 @@ async function main() {
       !process.env.FIREBASE_SCRYPT_SALT_SEPARATOR ||
       !process.env.FIREBASE_SCRYPT_MEM_COST || !process.env.FIREBASE_SCRYPT_ROUNDS)) {
     throw new Error("Refusing import: Firebase SCRYPT runtime configuration is incomplete.");
+  }
+  if (apply) {
+    const database = await import("../db.js");
+    pool = database.pool;
   }
   let imported = 0;
   let skipped = 0;
@@ -112,11 +116,11 @@ async function main() {
   }
 
   console.log(JSON.stringify({ mode: apply ? "apply" : "dry-run", total: users.length, validAccounts: imported + skipped, passwordAccounts, disabledAccounts, imported: apply ? imported : 0, skipped }));
-  await pool.end();
+  if (pool) await pool.end();
 }
 
 main().catch(async error => {
   console.error("Customer import stopped:", error.message);
-  try { await pool.end(); } catch {}
+  try { if (pool) await pool.end(); } catch {}
   process.exitCode = 1;
 });
