@@ -6,17 +6,7 @@ import { pool } from "./db.js";
 
 const router = Router();
 
-// Store configuration matching SARINE constants
-const SHIPPING_FLAT_FEE = 99;
-const FREE_SHIPPING_THRESHOLD = 1999;
-const COD_ENABLED = true;
-
-function calculateShippingFee(subtotal) {
-  if (FREE_SHIPPING_THRESHOLD !== null && subtotal >= FREE_SHIPPING_THRESHOLD) {
-    return 0;
-  }
-  return SHIPPING_FLAT_FEE;
-}
+import { calculateShippingFee, COD_ENABLED } from "./checkoutPolicy.js";
 
 function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -791,4 +781,3 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
 });
 
 export default router;
-export { calculateShippingFee, SHIPPING_FLAT_FEE, FREE_SHIPPING_THRESHOLD, COD_ENABLED };
