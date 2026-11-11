@@ -7,6 +7,7 @@ import adminAuthRouter from "./adminAuth.js";
 import adminOrdersRouter from "./adminOrders.js";
 import adminProductsRouter from "./adminProducts.js";
 import ordersRouter from "./orders.js";
+import customerAuthRouter from "./customerAuth.js";
 
 const app = express();
 // Hostinger runs this app behind a reverse proxy; trust its forwarded client IP.
@@ -315,6 +316,9 @@ app.get("/api/categories/:slug", async (req, res, next) => {
     next(error);
   }
 });
+
+// Hostinger customer authentication and account APIs
+app.use("/api/customer/auth", customerAuthRouter);
 
 // Hostinger admin authentication
 app.use("/api/admin/auth", adminAuthRouter);
