@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - hostinger-migration
+      - guest-checkout-migration
       - fix/order-timestamps
     paths:
       - "src/**"
