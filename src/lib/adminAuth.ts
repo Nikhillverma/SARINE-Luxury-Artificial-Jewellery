@@ -1,6 +1,6 @@
 const API_BASE = (
   import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
-  (import.meta.env.DEV ? '/api' : 'https://greenyellow-cat-956048.hostingersite.com/api')
+  (import.meta.env.DEV ? '/api' : 'https://lavender-goldfish-844589.hostingersite.com/api')
 ).replace(/\/+$/, '');
 
 export interface AdminIdentity {

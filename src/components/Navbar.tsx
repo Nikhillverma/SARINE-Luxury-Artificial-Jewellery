@@ -34,7 +34,6 @@ import {
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { SearchOverlay } from './SearchOverlay';
-import { DevFirebaseSeedModal } from './DevFirebaseSeedModal';
 
 interface NavbarProps {
   includeAll: boolean;
@@ -77,7 +76,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   // Search & Mobile Drawer states
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isSeedModalOpen, setIsSeedModalOpen] = useState(false);
   const [activeAnnouncement, setActiveAnnouncement] = useState(0);
 
   // Mobile Accordion state
@@ -249,14 +247,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               </Link>
               <span className="w-[1px] h-3.5 bg-white/20 inline-block" />
               <Link
-                to="/account?section=faqs"
+                to="/contact"
                 className="hover:text-white transition-colors cursor-pointer py-1"
               >
                 Help
               </Link>
               <span className="w-[1px] h-3.5 bg-white/20 inline-block" />
               <Link
-                to="/account?section=support"
+                to="/contact"
                 className="hover:text-white transition-colors cursor-pointer py-1"
               >
                 Support
@@ -347,14 +345,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onMouseLeave={handleAccountMouseLeave}
               >
                 <Link
-                  to="/account"
+                  to="/track-order"
                   className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer group"
-                  aria-label="Customer Account & Orders"
-                  title="Customer Account & Orders"
+                  aria-label="Track Order"
+                  title="Track Order"
                 >
                   <User size={19} strokeWidth={1.5} className="text-[#563568] shrink-0" />
                   <span className="text-[13px] font-medium text-[#302438] group-hover:text-[#563568]">
-                    Account
+                    Track Order
                   </span>
                   <ChevronDown
                     size={13}
@@ -366,9 +364,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 {/* Mobile Account Icon Only */}
                 <Link
-                  to="/account"
+                  to="/track-order"
                   className="sm:hidden p-2 text-[#302438] hover:text-[#563568] transition-colors rounded-full hover:bg-white/60 flex items-center"
-                  aria-label="Account"
+                  aria-label="Track Order"
                 >
                   <User size={19} strokeWidth={1.5} className="text-[#563568]" />
                 </Link>
@@ -413,7 +411,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                     {/* Order History */}
                     <Link
-                      to="/account?section=orders"
+                      to="/track-order?section=orders"
                       onClick={() => setIsAccountMenuOpen(false)}
                       className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
                     >
@@ -426,7 +424,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                     {/* Plan of Purchase */}
                     <Link
-                      to="/account?section=plan-of-purchase"
+                      to="/track-order?section=plan-of-purchase"
                       onClick={() => setIsAccountMenuOpen(false)}
                       className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
                     >
@@ -464,7 +462,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                     {/* SARINE Wallet */}
                     <Link
-                      to="/account?section=wallet"
+                      to="/track-order?section=wallet"
                       onClick={() => setIsAccountMenuOpen(false)}
                       className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
                     >
@@ -477,7 +475,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                     {/* Delivery Addresses */}
                     <Link
-                      to="/account?section=addresses"
+                      to="/track-order?section=addresses"
                       onClick={() => setIsAccountMenuOpen(false)}
                       className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
                     >
@@ -491,7 +489,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {/* Concierge & Support */}
                     <div className="border-t border-[#E7DCEB] mt-1 pt-1">
                       <Link
-                        to="/account?section=support"
+                        to="/track-order?section=support"
                         onClick={() => setIsAccountMenuOpen(false)}
                         className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
                       >
@@ -1950,7 +1948,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <span>Track Your Order</span>
                   </Link>
                   <Link
-                    to="/account"
+                    to="/track-order"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center gap-2.5 text-xs text-[#302438] hover:text-[#563568] py-1 font-medium"
                   >
@@ -2019,15 +2017,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     >
                       includeAll: {includeAll ? 'ON' : 'OFF'}
                     </button>
-                    <button
-                      onClick={() => {
-                        setIsMobileMenuOpen(false);
-                        setIsSeedModalOpen(true);
-                      }}
-                      className="text-[11px] uppercase tracking-wider text-[#563568] hover:text-[#B69ACF] underline"
-                    >
-                      Seed Firestore
-                    </button>
+
                   </div>
                 )}
               </div>
@@ -2039,13 +2029,6 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Global Search Overlay */}
       <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
-      {/* Dev Seed Modal */}
-      {import.meta.env.DEV && (
-        <DevFirebaseSeedModal
-          isOpen={isSeedModalOpen}
-          onClose={() => setIsSeedModalOpen(false)}
-        />
-      )}
     </>
   );
 };

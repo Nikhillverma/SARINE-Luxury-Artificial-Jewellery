@@ -1,32 +1,42 @@
 /**
- * Netlify Functions Order Service implementation for SARINE.
- * Calls /.netlify/functions/* to authoritatively handle order creation,
- * payment verification, and secure tokenized order lookup.
- *
- * Used when DATA_SOURCE = 'firebase'.
+ * Hostinger MariaDB Order Service implementation for SARINE.
+ * Communicates with /api/orders/* on the Hostinger Express backend to authoritatively
+ * handle order creation, live price/stock validation, payment verification,
+ * and secure tokenized order lookup.
  */
 
-import { IOrderService } from '../interfaces';
-import {
+import type { IOrderService } from '../interfaces';
+import type {
   Order,
   CreateOrderInput,
   VerifyPaymentInput,
   VerifyPaymentResult
 } from '../../types/order';
-import { getApiEndpoint } from '../../config/api';
 
-export class NetlifyOrderService implements IOrderService {
+function resolveApiBase(): string {
+  if (import.meta.env.VITE_HOSTINGER_API_BASE_URL) {
+    return import.meta.env.VITE_HOSTINGER_API_BASE_URL.replace(/\/+$/, '');
+  }
+  if (import.meta.env.DEV) {
+    return '/api';
+  }
+  return 'https://lavender-goldfish-844589.hostingersite.com/api';
+}
+
+export class HostingerOrderService implements IOrderService {
   /**
-   * Creates an order on the server.
-   * Prices, inventory, order number, and public tokens are strictly decided server-side.
+   * Creates an order on the Hostinger MariaDB backend.
+   * Prices, inventory, sequential SAR order numbers, and public tokens are strictly decided server-side.
    */
   async createOrder(input: CreateOrderInput): Promise<Order> {
+    const apiBase = resolveApiBase();
     let res: Response;
     try {
-      res = await fetch(getApiEndpoint('create-order'), {
+      res = await fetch(`${apiBase}/orders/create`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
         },
         body: JSON.stringify({
           items: input.lines.map((l) => ({
@@ -39,14 +49,9 @@ export class NetlifyOrderService implements IOrderService {
         })
       });
     } catch (netErr: any) {
+      console.error('[HostingerOrderService] Network error during createOrder:', netErr);
       throw new Error(
-        'Unable to reach the secure order server. If testing locally in preview, ensure Netlify Functions are running.'
-      );
-    }
-
-    if (res.status === 404) {
-      throw new Error(
-        'The secure order function (/.netlify/functions/create-order) is not hosted in this preview environment. Deploy to Netlify or run "netlify dev" to test server-side payments.'
+        'Unable to reach the secure order server. Please check your internet connection and try again.'
       );
     }
 
@@ -59,7 +64,6 @@ export class NetlifyOrderService implements IOrderService {
       );
     }
 
-    // Return Order object populated with server tokens and Razorpay order ID
     return {
       id: data.orderNumber,
       orderNumber: data.orderNumber,
@@ -71,7 +75,7 @@ export class NetlifyOrderService implements IOrderService {
       customer: input.customer,
       shippingAddress: input.shippingAddress,
       subtotal: data.total ? data.total : (data.amount ? Math.round(data.amount / 100) : 0),
-      shippingFee: 0,
+      shippingFee: data.shippingFee !== undefined ? Number(data.shippingFee) : 0,
       total: data.total ? data.total : (data.amount ? Math.round(data.amount / 100) : 0),
       paymentMethod: input.paymentMethod,
       paymentStatus: 'pending',
@@ -81,19 +85,22 @@ export class NetlifyOrderService implements IOrderService {
   }
 
   /**
-   * Verifies payment signature with the server and finalizes inventory reduction.
+   * Verifies Razorpay payment signature with the Hostinger server and finalizes inventory reduction.
    */
   async verifyPayment(input: VerifyPaymentInput): Promise<VerifyPaymentResult> {
+    const apiBase = resolveApiBase();
     let res: Response;
     try {
-      res = await fetch(getApiEndpoint('verify-payment'), {
+      res = await fetch(`${apiBase}/orders/verify`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
         },
         body: JSON.stringify(input)
       });
     } catch (netErr: any) {
+      console.error('[HostingerOrderService] Network error during verifyPayment:', netErr);
       throw new Error('Unable to connect to the payment verification server.');
     }
 
@@ -119,16 +126,15 @@ export class NetlifyOrderService implements IOrderService {
     }
 
     try {
-      const url = getApiEndpoint(
-        `get-order?orderNumber=${encodeURIComponent(
-          orderNumber.trim()
-        )}&t=${encodeURIComponent(publicToken.trim())}`
-      );
+      const apiBase = resolveApiBase();
+      const url = `${apiBase}/orders/${encodeURIComponent(
+        orderNumber.trim()
+      )}?t=${encodeURIComponent(publicToken.trim())}`;
 
       const res = await fetch(url, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
+          Accept: 'application/json'
         }
       });
 
@@ -139,7 +145,7 @@ export class NetlifyOrderService implements IOrderService {
       const data = await res.json();
       return data;
     } catch (err) {
-      console.error('[NetlifyOrderService] Failed to fetch order:', err);
+      console.error('[HostingerOrderService] Failed to fetch order:', err);
       return null;
     }
   }
@@ -150,5 +156,31 @@ export class NetlifyOrderService implements IOrderService {
   async getOrderById(id: string): Promise<Order | null> {
     return this.getOrderByNumber(id);
   }
-}
 
+  /**
+   * Tracks order status via phone verification against Hostinger MariaDB.
+   */
+  async trackOrder(orderNumber: string, phone: string): Promise<any> {
+    const apiBase = resolveApiBase();
+    const res = await fetch(`${apiBase}/orders/track`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
+      body: JSON.stringify({
+        orderNumber: orderNumber.trim(),
+        phone: phone.trim()
+      })
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err: any = new Error(data.error || "We couldn't find an order with those details.");
+      err.status = res.status;
+      throw err;
+    }
+
+    return data;
+  }
+}

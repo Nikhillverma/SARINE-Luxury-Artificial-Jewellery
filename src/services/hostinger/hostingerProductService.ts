@@ -8,7 +8,7 @@ function resolveApiBase(): string {
   if (import.meta.env.DEV) {
     return '/api';
   }
-  return 'https://greenyellow-cat-956048.hostingersite.com/api';
+  return 'https://lavender-goldfish-844589.hostingersite.com/api';
 }
 
 interface ProductResponse {
@@ -25,15 +25,18 @@ interface SingleProductResponse {
 async function request<T>(path: string): Promise<T> {
   const apiBase = resolveApiBase();
   const response = await fetch(`${apiBase}${path}`);
+
   if (!response.ok) {
     throw new Error(`Hostinger API error (${response.status})`);
   }
+
   return response.json() as Promise<T>;
 }
 
 export class HostingerProductService implements IProductService {
   async getProducts(filters: ProductFilterOptions = {}): Promise<Product[]> {
     const params = new URLSearchParams();
+
     if (filters.categorySlug) params.set('categorySlug', filters.categorySlug);
     if (filters.categoryId) params.set('categoryId', filters.categoryId);
     if (filters.collectionSlug) params.set('collectionSlug', filters.collectionSlug);
@@ -42,6 +45,7 @@ export class HostingerProductService implements IProductService {
     if (filters.minPrice !== undefined) params.set('minPrice', String(filters.minPrice));
     if (filters.maxPrice !== undefined) params.set('maxPrice', String(filters.maxPrice));
     if (filters.sortBy) params.set('sortBy', filters.sortBy);
+
     params.set('page', String(filters.page || 1));
     params.set('pageSize', String(filters.pageSize || 100));
 
@@ -69,8 +73,10 @@ export class HostingerProductService implements IProductService {
     _options?: { includeAll?: boolean }
   ): Promise<Product[]> {
     if (!ids.length) return [];
+
     const products = await this.getProducts({ pageSize: 100 });
     const requestedIds = new Set(ids);
+
     return products.filter(product => requestedIds.has(product.id));
   }
 
@@ -79,11 +85,13 @@ export class HostingerProductService implements IProductService {
     _options?: { includeAll?: boolean }
   ): Promise<Product[]> {
     if (!query.trim()) return [];
+
     const params = new URLSearchParams({
       search: query.trim(),
       page: '1',
       pageSize: '100'
     });
+
     const result = await request<ProductResponse>(`/products?${params.toString()}`);
     return result.products;
   }
@@ -94,12 +102,14 @@ export class HostingerProductService implements IProductService {
       sortBy: 'newest',
       pageSize: 100
     });
+
     return products.slice(0, Math.max(0, limit));
   }
 
   async getRelatedProducts(productId: string, limit = 4): Promise<Product[]> {
     const allProducts = await this.getProducts({ pageSize: 100 });
     const current = allProducts.find(product => product.id === productId);
+
     if (!current) return [];
 
     return allProducts

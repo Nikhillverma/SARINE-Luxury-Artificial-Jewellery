@@ -1,14 +1,14 @@
 /**
  * TrackOrderPage component for SARINE.
  * Public customer order tracking using Order Number and 10-digit mobile number.
- * Communicates with /.netlify/functions/track-order.
+ * Communicates with the Hostinger MariaDB order-tracking API.
  * Honest status labels, no fake data, no black hovers, strictly privacy-safe.
  */
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatInr } from '../utils/currency';
-import { getApiEndpoint } from '../config/api';
+import { hostingerOrderService } from '../services';
 import {
   Package,
   Search,
@@ -85,36 +85,15 @@ export const TrackOrderPage: React.FC = () => {
     setOrder(null);
 
     try {
-      const res = await fetch(getApiEndpoint('track-order'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          orderNumber: cleanNumber,
-          phone: cleanPhone
-        })
-      });
-
-      const contentType = res.headers.get('content-type') || '';
-      let data: any = {};
-      if (contentType.includes('application/json')) {
-        data = await res.json();
-      }
-
-      if (!res.ok) {
-        if (res.status === 429) {
-          setError(data.error || 'Too many attempts. Please try again later.');
-        } else {
-          setError(data.error || "We couldn't find an order with those details.");
-        }
-        return;
-      }
-
+      const data = await hostingerOrderService.trackOrder(cleanNumber, cleanPhone);
       setOrder(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error('[TrackOrder] Network or function error:', err);
-      setError("We couldn't find an order with those details.");
+      if (err?.status === 429) {
+        setError(err.message || 'Too many attempts. Please try again later.');
+      } else {
+        setError(err?.message || "We couldn't find an order with those details.");
+      }
     } finally {
       setLoading(false);
     }
