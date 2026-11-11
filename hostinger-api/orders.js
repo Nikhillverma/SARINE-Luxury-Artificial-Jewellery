@@ -6,10 +6,10 @@ import { pool } from "./db.js";
 
 const router = Router();
 
-// Store configuration matching SARINE constants
-const SHIPPING_FLAT_FEE = 0;
-const FREE_SHIPPING_THRESHOLD = null;
-const COD_ENABLED = false;
+// Store configuration matching the storefront checkout settings.
+const SHIPPING_FLAT_FEE = 99;
+const FREE_SHIPPING_THRESHOLD = 1999;
+const COD_ENABLED = true;
 
 function calculateShippingFee(subtotal) {
   if (FREE_SHIPPING_THRESHOLD !== null && subtotal >= FREE_SHIPPING_THRESHOLD) {
