@@ -1,4 +1,4 @@
-name: Guest checkout migration CI
+name: Hostinger guest-checkout and Firebase-exit CI
 
 on:
   pull_request:
