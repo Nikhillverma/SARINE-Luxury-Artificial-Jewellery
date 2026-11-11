@@ -5,7 +5,7 @@ import {
   SHIPPING_FLAT_FEE,
   FREE_SHIPPING_THRESHOLD,
   COD_ENABLED
-} from "../orders.js";
+} from "../checkoutPolicy.js";
 
 test("charges the flat shipping fee below the free-shipping threshold", () => {
   assert.equal(calculateShippingFee(0), SHIPPING_FLAT_FEE);
