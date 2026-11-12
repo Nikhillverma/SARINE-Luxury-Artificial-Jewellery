@@ -37,3 +37,4 @@ jobs:
           node --check adminOrders.js
           node --check adminStorefront.js
           node --check adminAnalytics.js
+          node --check adminDashboard.js
