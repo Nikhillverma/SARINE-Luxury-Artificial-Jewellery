@@ -12,6 +12,7 @@ import { Product, isInStock, JEWELLERY_TYPE_LABELS, getDiscountPercent } from '.
 import { Category } from '../types/category';
 import { formatInr } from '../utils/currency';
 import { ProductCard } from '../components/ProductCard';
+import { hostingerStorefrontService } from '../services/hostinger/hostingerStorefrontService';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import {
@@ -111,6 +112,13 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [newReviewName, setNewReviewName] = useState('');
+  const [newReviewEmail, setNewReviewEmail] = useState('');
+  const [newReviewOrderNumber, setNewReviewOrderNumber] = useState('');
+  const [reviewMessage, setReviewMessage] = useState('');
+  const [reviewError, setReviewError] = useState('');
+  const [reviewCount, setReviewCount] = useState(0);
+  const [reviewAverage, setReviewAverage] = useState(0);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [newReviewTitle, setNewReviewTitle] = useState('');
   const [newReviewComment, setNewReviewComment] = useState('');
 
@@ -140,17 +148,17 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               // Ignore
             }
 
-            // Load reviews from local storage or defaults
+            // Load only customer reviews approved in the Hostinger database.
             try {
-              const revKey = `sarine_reviews_${found.id}`;
-              const saved = localStorage.getItem(revKey);
-              if (saved) {
-                setReviews(JSON.parse(saved));
-              } else {
-                setReviews(SAMPLE_REVIEWS.default);
+              const result = await hostingerStorefrontService.getReviews(found.id);
+              if (!isCancelled) {
+                setReviews(result.reviews.map(review => ({ ...review, date: new Date(review.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) })));
+                setReviewCount(result.count);
+                setReviewAverage(result.average);
               }
-            } catch {
-              setReviews(SAMPLE_REVIEWS.default);
+            } catch (reviewError) {
+              console.warn('[ProductDetailPage] Customer reviews are temporarily unavailable.', reviewError);
+              if (!isCancelled) { setReviews([]); setReviewCount(0); setReviewAverage(0); }
             }
 
             // Load related pieces
@@ -238,32 +246,22 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
     }
   };
 
-  const handleAddReview = (e: React.FormEvent) => {
+  const handleAddReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newReviewName.trim() || !newReviewComment.trim() || !product) return;
-
-    const newRev: CustomerReview = {
-      id: `rev-${Date.now()}`,
-      name: newReviewName.trim(),
-      rating: newReviewRating,
-      date: 'Just now',
-      title: newReviewTitle.trim() || 'Verified Purchase Review',
-      comment: newReviewComment.trim(),
-      verified: true
-    };
-
-    const updated = [newRev, ...reviews];
-    setReviews(updated);
+    if (!product) return;
+    setReviewSubmitting(true); setReviewError(""); setReviewMessage("");
     try {
-      localStorage.setItem(`sarine_reviews_${product.id}`, JSON.stringify(updated));
-    } catch {
-      // Ignore
-    }
-
-    setIsReviewModalOpen(false);
-    setNewReviewName('');
-    setNewReviewTitle('');
-    setNewReviewComment('');
+      const result = await hostingerStorefrontService.submitReview(product.id, {
+        name: newReviewName.trim(), email: newReviewEmail.trim(), orderNumber: newReviewOrderNumber.trim(),
+        rating: newReviewRating, title: newReviewTitle.trim(), comment: newReviewComment.trim()
+      });
+      setReviewMessage(result.message);
+      setNewReviewName(''); setNewReviewEmail(''); setNewReviewOrderNumber('');
+      setNewReviewTitle(''); setNewReviewComment('');
+      setIsReviewModalOpen(false);
+    } catch (error) {
+      setReviewError(error instanceof Error ? error.message : "Your review could not be submitted.");
+    } finally { setReviewSubmitting(false); }
   };
 
   const resolvedImages = useMemo<string[]>(() => {
@@ -439,10 +437,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                     <Star key={i} size={14} className="fill-[#D9B8A0]" />
                   ))}
                 </div>
-                <span className="font-medium text-[#302438]">5.0</span>
+                <span className="font-medium text-[#302438]">{reviewCount ? reviewAverage.toFixed(1) : "—"}</span>
                 <span>·</span>
                 <a href="#reviews" className="hover:text-[#563568] underline underline-offset-2">
-                  {reviews.length} Verified Reviews
+                  {reviewCount} Approved Reviews
                 </a>
               </div>
 
@@ -743,7 +741,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                 AUTHENTIC SOCIAL PROOF
               </span>
               <h2 className="font-serif text-2xl text-[#302438] font-normal mt-0.5">
-                Customer Reviews ({reviews.length})
+                Customer Reviews ({reviewCount})
               </h2>
             </div>
 
@@ -757,6 +755,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
 
           {/* Review List */}
           <div className="divide-y divide-[#E7DCEB]">
+            {reviews.length === 0 && <p className="py-6 text-sm text-[#6F6475]">No approved reviews yet. If you have received this piece, share your experience after delivery.</p>}
             {reviews.map((rev) => (
               <div key={rev.id} className="py-6 first:pt-4 last:pb-0 space-y-2">
                 <div className="flex items-center justify-between">
@@ -855,6 +854,14 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               </div>
 
               <div>
+                <label className="block text-[#6F6475] mb-1">Checkout Email</label>
+                <input type="email" required value={newReviewEmail} onChange={e=>setNewReviewEmail(e.target.value)} placeholder="Email used for your order" className="w-full p-2 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-[#6F6475] mb-1">Order Number</label>
+                <input required value={newReviewOrderNumber} onChange={e=>setNewReviewOrderNumber(e.target.value)} placeholder="e.g. SAR-000123" className="w-full p-2 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:outline-none" />
+              </div>
+              <div>
                 <label className="block text-[#6F6475] mb-1">Review Headline</label>
                 <input
                   type="text"
@@ -877,6 +884,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                 />
               </div>
 
+              {reviewError && <p role="alert" className="text-xs text-red-700">{reviewError}</p>}
+              <p className="text-[11px] text-[#6F6475]">Only customers with a delivered order containing this product can submit a verified review. Reviews appear after SARINE moderation.</p>
               <div className="pt-2 flex justify-end gap-2">
                 <button
                   type="button"
@@ -887,9 +896,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#563568] text-white hover:bg-[#A184BD] font-medium rounded-xs transition-colors"
+                  disabled={reviewSubmitting}
+                  className="px-5 py-2 bg-[#563568] text-white hover:bg-[#A184BD] font-medium rounded-xs transition-colors disabled:opacity-50"
                 >
-                  Submit Review
+                  {reviewSubmitting ? "Submitting…" : "Submit Review"}
                 </button>
               </div>
             </form>
