@@ -87,7 +87,7 @@ export const TermsPage: React.FC = () => {
             Online payments on our website are facilitated securely through <strong>Razorpay</strong>. Accepted payment modes include UPI (Google Pay, PhonePe, Paytm, BHIM), major Credit &amp; Debit Cards (Visa, MasterCard, RuPay), and NetBanking.
           </p>
           <p className="text-xs text-[#6F6475]">
-            Orders are only processed for packaging and dispatch once payment capture is verified by our secure serverless verification endpoints. Any transaction failure or bank reversal is handled according to standard RBI clearing protocols.
+            Orders are only processed for packaging and dispatch once payment capture is verified by SARINE's secure Hostinger API. Any transaction failure or bank reversal is handled according to standard RBI clearing protocols.
           </p>
         </section>
 
