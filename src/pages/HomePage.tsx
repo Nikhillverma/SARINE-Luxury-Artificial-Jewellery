@@ -17,6 +17,7 @@ import { Product } from '../types/product';
 import { Category } from '../types/category';
 import { ProductCard } from '../components/ProductCard';
 import { formatInr } from '../utils/currency';
+import { hostingerStorefrontService } from '../services/hostinger/hostingerStorefrontService';
 import {
   ArrowRight,
   ChevronLeft,
@@ -99,7 +100,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   // Hero Slider State
   const [activeSlide, setActiveSlide] = useState<number>(0);
-  const slideCount = 3;
+  const [managedHeroSlides, setManagedHeroSlides] = useState<Array<{id:string; tagline:string; title:string; subtitle:string; ctaText:string; ctaLink:string; imageUrl:string}>>([]);
 
   // Best Sellers Carousel Scroll Reference
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -107,8 +108,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   // Wishlist State (Local interactive set)
   const [wishlist, setWishlist] = useState<Set<string>>(new Set());
 
-  // Hero Slides Definition
-  const heroSlides = [
+  // Hero Slides Definition (published MariaDB content takes precedence over safe defaults)
+  const defaultHeroSlides = [
     {
       id: 0,
       eyebrow: 'ELEGANCE IN EVERY DETAIL',
@@ -116,7 +117,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       paragraph: 'Thoughtfully designed artificial jewellery that brings timeless elegance to your everyday moments.',
       image: HOMEPAGE_IMAGES.heroSlide1,
       shopLink: '/shop',
-      categoriesLink: '#categories'
+      categoriesLink: '#categories',
+      ctaText: 'Discover Jewellery',
+      ctaText: 'Explore Collection',
+      ctaText: 'Shop the Collection'
     },
     {
       id: 1,
@@ -138,7 +142,27 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     }
   ];
 
-  // 1. Fetch Firestore / Service Data
+  const heroSlides = managedHeroSlides.length > 0 ? managedHeroSlides.map((banner, index) => ({
+    id: banner.id || index,
+    eyebrow: banner.tagline,
+    heading: banner.title,
+    paragraph: banner.subtitle,
+    image: banner.imageUrl,
+    shopLink: banner.ctaLink,
+    categoriesLink: '#categories',
+    ctaText: banner.ctaText
+  })) : defaultHeroSlides;
+  const slideCount = heroSlides.length;
+
+  useEffect(() => {
+    let cancelled = false;
+    hostingerStorefrontService.getPublicBanners()
+      .then(result => { if (!cancelled && result.banners.length) { setManagedHeroSlides(result.banners); setActiveSlide(0); } })
+      .catch(error => console.warn('[HomePage] Published hero banners unavailable; using defaults.', error));
+    return () => { cancelled = true; };
+  }, []);
+
+  // 1. Fetch Hostinger storefront data
   useEffect(() => {
     let isCancelled = false;
 
@@ -199,7 +223,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   // 2. Hero Slider Auto-advance every 5 seconds
   useEffect(() => {
     const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % slideCount);
+      setActiveSlide((prev) => (prev + 1) % Math.max(slideCount, 1));
     }, 5000);
 
     return () => clearInterval(timer);
@@ -210,7 +234,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   };
 
   const nextSlide = () => {
-    setActiveSlide((prev) => (prev + 1) % slideCount);
+    setActiveSlide((prev) => (prev + 1) % Math.max(slideCount, 1));
   };
 
   // 3. Best Sellers Carousel Controls
@@ -287,7 +311,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 to={currentHero.shopLink}
                 className="px-6 sm:px-7 py-3 bg-[#563568] text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[#A184BD] transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"
               >
-                <span>Shop the Collection</span>
+                <span>{currentHero.ctaText}</span>
                 <ArrowRight size={13} />
               </Link>
               <a
