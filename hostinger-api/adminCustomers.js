@@ -51,8 +51,8 @@ router.get("/", async (req, res, next) => {
     const sql = "SELECT LOWER(TRIM(o.customer_email)) AS email, " +
       "MAX(NULLIF(TRIM(o.customer_name), '')) AS name, " +
       "MAX(NULLIF(TRIM(o.customer_phone), '')) AS phone, " +
-      "MAX(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(o.shipping_address, '$.city')), '')) AS city, " +
-      "MAX(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(o.shipping_address, '$.state')), '')) AS state, " +
+      "MAX(NULLIF(CASE WHEN JSON_VALID(o.shipping_address) THEN JSON_UNQUOTE(JSON_EXTRACT(o.shipping_address, '$.city')) ELSE NULL END, '')) AS city, " +
+      "MAX(NULLIF(CASE WHEN JSON_VALID(o.shipping_address) THEN JSON_UNQUOTE(JSON_EXTRACT(o.shipping_address, '$.state')) ELSE NULL END, '')) AS state, " +
       "COUNT(*) AS total_orders, " +
       "SUM(CASE WHEN o.payment_status = 'paid' OR (o.payment_method = 'cod' AND o.order_status = 'delivered') " +
       "THEN COALESCE(o.total, 0) ELSE 0 END) AS lifetime_spend, " +
