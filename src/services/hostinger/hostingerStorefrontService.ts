@@ -41,3 +41,28 @@ export const hostingerStorefrontService = {
   saveAnnouncement: (message: string, active: boolean) =>
     request<{ success: boolean }>("/admin/storefront/announcement", { method: "PUT", body: JSON.stringify({ message, active }) })
 };
+
+export interface EditorialContent {
+  eyebrow: string;
+  title: string;
+  description: string;
+  ctaText: string;
+  ctaLink: string;
+  imageUrl: string;
+  active: boolean;
+}
+export interface ProductReview {
+  id: string;
+  productId: string;
+  name: string;
+  rating: number;
+  title: string;
+  comment: string;
+  status: "pending" | "approved" | "rejected";
+  verified: boolean;
+  adminReply?: string;
+  date: string;
+  email?: string;
+  orderNumber?: string;
+  productName?: string;
+}
