@@ -11,6 +11,7 @@ import { useWishlist } from '../context/WishlistContext';
 import { formatInr } from '../utils/currency';
 import { calculateShippingFee } from '../config/store';
 import { useCheckoutConfig } from '../hooks/useCheckoutConfig';
+import { validateStorefrontCoupon } from '../services/hostinger/hostingerMarketingService';
 import { X, ShoppingBag, Trash2, ArrowRight, AlertCircle, Heart, Tag, Check, Sparkles } from 'lucide-react';
 
 const FREE_GIFT_BOX_THRESHOLD = 1500;
@@ -32,17 +33,49 @@ export const CartDrawer: React.FC = () => {
   const { toggleWishlist } = useWishlist();
   const { config: checkoutConfig } = useCheckoutConfig();
 
-  // Coupon state
+  // Coupon state: use the same MariaDB-backed validation as the full Bag page.
   const [couponInput, setCouponInput] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(() => {
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; subtotal: number } | null>(() => {
     try {
       const saved = localStorage.getItem('sarine_applied_coupon');
-      return saved ? JSON.parse(saved) : null;
+      const parsed = saved ? JSON.parse(saved) : null;
+      return parsed && typeof parsed.code === 'string' && Number.isFinite(Number(parsed.subtotal))
+        ? { code: parsed.code, discount: Number(parsed.discount) || 0, subtotal: Number(parsed.subtotal) }
+        : null;
     } catch {
       return null;
     }
   });
   const [couponError, setCouponError] = useState<string | null>(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const activeCoupon = appliedCoupon && appliedCoupon.subtotal === subtotal ? appliedCoupon : null;
+
+  const handleApplyCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCouponError(null);
+    const code = couponInput.trim().toUpperCase();
+    if (!code) {
+      setCouponError('Enter a coupon code.');
+      return;
+    }
+    setIsApplyingCoupon(true);
+    try {
+      const result = await validateStorefrontCoupon(code, subtotal);
+      const couponObj = { code: result.code, discount: result.discountAmount, subtotal };
+      setAppliedCoupon(couponObj);
+      localStorage.setItem('sarine_applied_coupon', JSON.stringify(couponObj));
+      setCouponInput('');
+    } catch (err) {
+      setCouponError(err instanceof Error ? err.message : 'This coupon could not be applied.');
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    localStorage.removeItem('sarine_applied_coupon');
+  };
 
   // Close drawer on Escape key press
   useEffect(() => {
@@ -111,7 +144,7 @@ export const CartDrawer: React.FC = () => {
     removeItem(item.productId);
   };
 
-  const currentDiscount = appliedCoupon ? appliedCoupon.discount : 0;
+  const currentDiscount = activeCoupon ? activeCoupon.discount : 0;
   const shippingFee = calculateShippingFee(subtotal, checkoutConfig);
   const finalTotal = Math.max(0, subtotal - currentDiscount) + shippingFee;
 
@@ -311,36 +344,38 @@ export const CartDrawer: React.FC = () => {
           <div className="p-4 sm:p-5 border-t border-[#E7DCEB] bg-[#F7F0FA] space-y-3">
             {/* Coupon Code Section */}
             <div>
-              {appliedCoupon ? (
-                <div className="flex items-center justify-between bg-white px-3 py-2 border border-[#B69ACF] rounded-xs text-xs">
+              {activeCoupon && (
+                <div className="flex items-center justify-between bg-white px-3 py-2 border border-[#B69ACF] rounded-xs text-xs mb-2">
                   <span className="text-emerald-700 font-medium flex items-center gap-1.5">
                     <Tag size={13} />
-                    <span>Coupon {appliedCoupon.code} applied (-{formatInr(appliedCoupon.discount)})</span>
+                    <span>Coupon {activeCoupon.code} applied (-{formatInr(activeCoupon.discount)})</span>
                   </span>
                   <button
+                    type="button"
                     onClick={handleRemoveCoupon}
                     className="text-[#6F6475] hover:text-[#DC2626] text-xs font-semibold cursor-pointer"
                   >
                     Remove
                   </button>
                 </div>
-              ) : (
-                <form onSubmit={handleApplyCoupon} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={couponInput}
-                    onChange={(e) => setCouponInput(e.target.value)}
-                    placeholder="Enter coupon (e.g. SARINE10)"
-                    className="flex-1 px-3 py-1.5 bg-white border border-[#E7DCEB] rounded-xs text-xs uppercase focus:outline-none focus:border-[#563568]"
-                  />
-                  <button
-                    type="submit"
-                    className="px-3 py-1.5 bg-white border border-[#563568] text-[#563568] hover:bg-[#563568] hover:text-white text-xs font-medium rounded-xs transition-colors cursor-pointer"
-                  >
-                    Apply
-                  </button>
-                </form>
               )}
+              <form onSubmit={handleApplyCoupon} className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                  placeholder={activeCoupon ? "Enter a different coupon code" : "Enter coupon code"}
+                  aria-label="Coupon code"
+                  className="flex-1 min-w-0 px-3 py-1.5 bg-white border border-[#E7DCEB] rounded-xs text-xs uppercase focus:outline-none focus:border-[#563568]"
+                />
+                <button
+                  type="submit"
+                  disabled={isApplyingCoupon}
+                  className="px-3 py-1.5 bg-white border border-[#563568] text-[#563568] hover:bg-[#563568] hover:text-white text-xs font-medium rounded-xs transition-colors cursor-pointer disabled:opacity-60"
+                >
+                  {isApplyingCoupon ? "Checking..." : activeCoupon ? "Replace" : "Apply"}
+                </button>
+              </form>
               {couponError && <p className="text-[11px] text-[#DC2626] mt-1">{couponError}</p>}
             </div>
 
@@ -350,10 +385,10 @@ export const CartDrawer: React.FC = () => {
                 <span>Subtotal</span>
                 <span className="font-medium text-[#302438]">{formatInr(subtotal)}</span>
               </div>
-              {appliedCoupon && (
+              {activeCoupon && (
                 <div className="flex items-baseline justify-between text-emerald-700">
                   <span>Promotional Discount</span>
-                  <span>-{formatInr(appliedCoupon.discount)}</span>
+                  <span>-{formatInr(activeCoupon.discount)}</span>
                 </div>
               )}
               <div className="flex items-baseline justify-between">
