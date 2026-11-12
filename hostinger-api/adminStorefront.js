@@ -4,6 +4,7 @@ import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import rateLimit from "express-rate-limit";
 import { validateImageUpload } from "./mediaValidation.js";
+import { getCheckoutConfig, saveCheckoutConfig } from "./checkoutPolicy.js";
 
 const admin = Router();
 const publicRouter = Router();
@@ -161,6 +162,28 @@ publicRouter.get("/banners", async (_req, res, next) => {
     res.set("Cache-Control", "no-store").json({ banners: rows.map(mapBanner) });
   } catch (error) { next(error); }
 });
+adminOnly.get("/checkout-config", async (_req, res, next) => {
+  try {
+    res.set("Cache-Control", "no-store").json({ checkoutConfig: await getCheckoutConfig() });
+  } catch (error) { next(error); }
+});
+adminOnly.put("/checkout-config", async (req, res, next) => {
+  try {
+    const checkoutConfig = await saveCheckoutConfig(req.body || {});
+    res.set("Cache-Control", "no-store").json({ success: true, checkoutConfig });
+  } catch (error) {
+    if (error instanceof Error && /must be|choose whether/i.test(error.message)) {
+      return res.status(400).json({ error: error.message });
+    }
+    next(error);
+  }
+});
+publicRouter.get("/checkout-config", async (_req, res, next) => {
+  try {
+    res.set("Cache-Control", "no-store").json({ checkoutConfig: await getCheckoutConfig() });
+  } catch (error) { next(error); }
+});
+
 publicRouter.get("/announcement", async (_req, res, next) => {
   try {
     await ensureSchema();
