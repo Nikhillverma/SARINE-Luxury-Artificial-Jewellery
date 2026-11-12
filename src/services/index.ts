@@ -9,6 +9,7 @@ import { HostingerProductService } from './hostinger/hostingerProductService';
 import { HostingerCategoryService } from './hostinger/hostingerCategoryService';
 import { HostingerOrderService } from './hostinger/hostingerOrderService';
 import { HostingerAdminProductService } from './hostinger/hostingerAdminProductService';
+import { HostingerMediaService } from './hostinger/hostingerMediaService';
 
 export type DataSource = 'mock' | 'hostinger';
 export const DATA_SOURCE: DataSource = 'hostinger';
@@ -19,6 +20,7 @@ const hostingerProductService = new HostingerProductService();
 const hostingerCategoryService = new HostingerCategoryService();
 const hostingerOrderService = new HostingerOrderService();
 const hostingerAdminProductService = new HostingerAdminProductService();
+export const hostingerMediaService = new HostingerMediaService();
 
 export const productService: IProductService =
   DATA_SOURCE === 'hostinger' ? hostingerProductService : mockProductService;
