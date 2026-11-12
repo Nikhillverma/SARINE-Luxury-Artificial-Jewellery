@@ -239,11 +239,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 )}
               </div>
             </div>
-            <div className="hidden lg:flex shrink-0 items-center space-x-3 text-[12px] text-[#FAF5FC]/90">
-              <Link to="/track-order" className="hover:text-white transition-colors cursor-pointer py-1">Track Order</Link>
-              <span className="w-[1px] h-3.5 bg-white/20 inline-block" />
-              <Link to="/contact" className="hover:text-white transition-colors cursor-pointer py-1">Help &amp; Support</Link>
-            </div>
+
           </div>
         </div>
 
