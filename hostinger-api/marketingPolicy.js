@@ -1,10 +1,15 @@
 import { randomUUID } from "node:crypto";
-import { pool } from "./db.js";
+let poolPromise;
+async function getPool() {
+  if (!poolPromise) poolPromise = import("./db.js").then((module) => module.pool);
+  return poolPromise;
+}
 
 let schemaPromise;
 export async function ensureMarketingSchema() {
   if (!schemaPromise) {
     schemaPromise = (async () => {
+      const pool = await getPool();
       await pool.execute(`CREATE TABLE IF NOT EXISTS marketing_coupons (
         id CHAR(36) NOT NULL PRIMARY KEY,
         code VARCHAR(40) NOT NULL,
@@ -134,6 +139,7 @@ export async function reserveCouponRedemption(connection, coupon, orderNumber, e
 
 export async function releaseCouponReservation(orderNumber) {
   await ensureMarketingSchema();
+  const pool = await getPool();
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
