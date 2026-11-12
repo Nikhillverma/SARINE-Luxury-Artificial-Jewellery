@@ -134,7 +134,7 @@ async function buildReport(range) {
       unpaidOrders: Number(summary.unpaid_orders) || 0,
       cancelledOrders: Number(summary.cancelled_orders) || 0
     },
-    daily: dailyRows[0].map(row => ({ date: row.report_day, orders: Number(row.orders) || 0, revenue: Number(row.revenue) || 0 })),
+    daily: dailyRows[0].map(row => ({ date: row.report_day instanceof Date ? row.report_day.toISOString().slice(0, 10) : String(row.report_day).slice(0, 10), orders: Number(row.orders) || 0, revenue: Number(row.revenue) || 0 })),
     orderStatuses: statusRows[0].map(row => ({ label: row.label || "unknown", count: Number(row.count) || 0 })),
     payments: paymentRows[0].map(row => ({ label: row.label, count: Number(row.count) || 0, revenue: Number(row.revenue) || 0 })),
     topProducts: productRows[0].map(row => ({ productId: row.productId, productName: row.productName, unitsSold: Number(row.units_sold) || 0, itemSales: Number(row.item_sales) || 0 })),
