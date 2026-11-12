@@ -106,7 +106,7 @@ export const ShippingPolicyPage: React.FC = () => {
               </span>
             </div>
             <p className="text-[#6F6475] pt-1">
-              Standard delivery is currently complimentary across all prepaid orders nationwide.
+              The shipping fee shown above is applied at checkout. Complimentary shipping is applied automatically when the order subtotal meets the eligibility threshold.
             </p>
           </div>
         </section>
