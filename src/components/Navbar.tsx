@@ -34,6 +34,7 @@ import {
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { SearchOverlay } from './SearchOverlay';
+import { hostingerStorefrontService } from '../services/hostinger/hostingerStorefrontService';
 
 interface NavbarProps {
   includeAll: boolean;
@@ -77,6 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeAnnouncement, setActiveAnnouncement] = useState(0);
+  const [managedAnnouncement, setManagedAnnouncement] = useState('');
 
   // Mobile Accordion state
   const [mobileExpanded, setMobileExpanded] = useState<Record<string, boolean>>({
@@ -87,13 +89,29 @@ export const Navbar: React.FC<NavbarProps> = ({
     about: false
   });
 
-  // Rotate announcement bar every 5 seconds
+  // Load the currently published announcement managed in Storefront Studio.
   useEffect(() => {
+    let cancelled = false;
+    hostingerStorefrontService.getPublicAnnouncement()
+      .then(({ announcement }) => {
+        if (!cancelled && announcement?.active && announcement.message?.trim()) {
+          setManagedAnnouncement(announcement.message.trim());
+        } else if (!cancelled) {
+          setManagedAnnouncement('');
+        }
+      })
+      .catch((error) => console.warn('[Navbar] Published announcement unavailable; using default messages.', error));
+    return () => { cancelled = true; };
+  }, []);
+
+  // Rotate the fallback messages only when no managed announcement is published.
+  useEffect(() => {
+    if (managedAnnouncement) return;
     const timer = setInterval(() => {
       setActiveAnnouncement((prev) => (prev + 1) % ANNOUNCEMENT_MESSAGES.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [managedAnnouncement]);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -209,32 +227,41 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </div>
 
-            {/* Mobile / Tablet: Rotating Announcement Banner */}
-            <div className="flex lg:hidden items-center justify-between w-full">
-              <button
-                onClick={() =>
-                  setActiveAnnouncement(
-                    (prev) => (prev - 1 + ANNOUNCEMENT_MESSAGES.length) % ANNOUNCEMENT_MESSAGES.length
-                  )
-                }
-                className="text-[#D9B8A0] hover:text-white px-2 py-0.5 text-xs cursor-pointer transition-colors"
-                aria-label="Previous announcement"
-              >
-                ‹
-              </button>
-              <div className="text-center flex-1 truncate px-2 text-[11px] font-normal text-[#FAF5FC]">
-                <span className="inline-flex items-center gap-1.5">
-                  <Sparkles size={11} className="text-[#D9B8A0] shrink-0" />
-                  <span>{ANNOUNCEMENT_MESSAGES[activeAnnouncement]}</span>
+            {managedAnnouncement && (
+              <div className="hidden lg:flex flex-1 min-w-0 justify-center px-4 text-center text-[12px] font-medium text-[#FAF5FC]" role="status" aria-live="polite">
+                <span className="inline-flex items-center gap-1.5 max-w-full">
+                  <Sparkles size={12} className="text-[#D9B8A0] shrink-0" />
+                  <span className="truncate">{managedAnnouncement}</span>
                 </span>
               </div>
-              <button
-                onClick={() => setActiveAnnouncement((prev) => (prev + 1) % ANNOUNCEMENT_MESSAGES.length)}
-                className="text-[#D9B8A0] hover:text-white px-2 py-0.5 text-xs cursor-pointer transition-colors"
-                aria-label="Next announcement"
-              >
-                ›
-              </button>
+            )}
+
+            {/* Mobile / Tablet: Published announcement takes priority over fallback messages. */}
+            <div className="flex lg:hidden items-center justify-between w-full min-w-0">
+              {!managedAnnouncement && (
+                <button
+                  onClick={() => setActiveAnnouncement((prev) => (prev - 1 + ANNOUNCEMENT_MESSAGES.length) % ANNOUNCEMENT_MESSAGES.length)}
+                  className="text-[#D9B8A0] hover:text-white px-2 py-0.5 text-xs cursor-pointer transition-colors"
+                  aria-label="Previous announcement"
+                >
+                  ‹
+                </button>
+              )}
+              <div className="text-center flex-1 min-w-0 truncate px-2 text-[11px] font-normal text-[#FAF5FC]" role="status" aria-live="polite">
+                <span className="inline-flex items-center gap-1.5 max-w-full">
+                  <Sparkles size={11} className="text-[#D9B8A0] shrink-0" />
+                  <span className="truncate">{managedAnnouncement || ANNOUNCEMENT_MESSAGES[activeAnnouncement]}</span>
+                </span>
+              </div>
+              {!managedAnnouncement && (
+                <button
+                  onClick={() => setActiveAnnouncement((prev) => (prev + 1) % ANNOUNCEMENT_MESSAGES.length)}
+                  className="text-[#D9B8A0] hover:text-white px-2 py-0.5 text-xs cursor-pointer transition-colors"
+                  aria-label="Next announcement"
+                >
+                  ›
+                </button>
+              )}
             </div>
 
             {/* Desktop Right: Customer Utility Links */}
