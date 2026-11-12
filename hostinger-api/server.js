@@ -9,6 +9,7 @@ import adminDashboardRouter from "./adminDashboard.js";
 import adminAnalyticsRouter from "./adminAnalytics.js";
 import adminProductsRouter from "./adminProducts.js";
 import adminCategoriesRouter from "./adminCategories.js";
+import adminCustomersRouter from "./adminCustomers.js";
 import adminStorefrontRouter, { publicStorefrontRouter } from "./adminStorefront.js";
 import ordersRouter from "./orders.js";
 import { publicMediaRouter, adminMediaRouter } from "./media.js";
@@ -329,6 +330,7 @@ app.use("/api/admin/auth", adminAuthRouter);
 app.use("/api/admin/dashboard", adminDashboardRouter);
 app.use("/api/admin/analytics", adminAnalyticsRouter);
 app.use("/api/admin/categories", adminCategoriesRouter);
+app.use("/api/admin/customers", adminCustomersRouter);
 app.use("/api/admin/products", adminProductsRouter);
 
 // Hostinger admin orders
