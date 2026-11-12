@@ -1,5 +1,3 @@
-import { pool } from "./db.js";
-
 export const SHIPPING_FLAT_FEE = 99;
 export const FREE_SHIPPING_THRESHOLD = 1999;
 export const COD_ENABLED = true;
@@ -11,15 +9,21 @@ export const DEFAULT_CHECKOUT_CONFIG = Object.freeze({
 });
 
 let schemaPromise;
+let poolPromise;
+async function getPool() {
+  if (!poolPromise) poolPromise = import("./db.js").then((module) => module.pool);
+  return poolPromise;
+}
+
 async function ensureSettingsSchema() {
   if (!schemaPromise) {
-    schemaPromise = pool.execute(
+    schemaPromise = getPool().then((pool) => pool.execute(
       "CREATE TABLE IF NOT EXISTS storefront_settings (" +
       "setting_key VARCHAR(100) NOT NULL PRIMARY KEY, " +
       "setting_value TEXT NOT NULL, " +
       "updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)" +
       ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-    ).catch((error) => {
+    )).catch((error) => {
       schemaPromise = undefined;
       throw error;
     });
@@ -43,6 +47,7 @@ function normalizeCheckoutConfig(value) {
 
 export async function getCheckoutConfig() {
   await ensureSettingsSchema();
+  const pool = await getPool();
   const [rows] = await pool.execute(
     "SELECT setting_value FROM storefront_settings WHERE setting_key = 'checkout_config' LIMIT 1"
   );
@@ -69,6 +74,7 @@ export async function saveCheckoutConfig(value) {
   }
   const config = { shippingFlatFee: fee, freeShippingThreshold: threshold, codEnabled: input.codEnabled };
   await ensureSettingsSchema();
+  const pool = await getPool();
   await pool.execute(
     "INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('checkout_config', ?) " +
     "ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)",
