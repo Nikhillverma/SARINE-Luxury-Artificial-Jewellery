@@ -235,8 +235,6 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
     setReviewError("");
   };
 
-  useEffect(() => () => { newReviewImagePreviews.forEach(url => URL.revokeObjectURL(url)); }, [newReviewImagePreviews]);
-
   const handleAddReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product) return;
