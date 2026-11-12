@@ -10,6 +10,7 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { formatInr } from '../utils/currency';
 import { calculateShippingFee } from '../config/store';
+import { useCheckoutConfig } from '../hooks/useCheckoutConfig';
 import { X, ShoppingBag, Trash2, ArrowRight, AlertCircle, Heart, Tag, Check, Sparkles } from 'lucide-react';
 
 const FREE_GIFT_BOX_THRESHOLD = 1500;
@@ -29,6 +30,7 @@ export const CartDrawer: React.FC = () => {
   } = useCart();
 
   const { toggleWishlist } = useWishlist();
+  const { config: checkoutConfig } = useCheckoutConfig();
 
   // Coupon state
   const [couponInput, setCouponInput] = useState('');
@@ -110,7 +112,7 @@ export const CartDrawer: React.FC = () => {
   };
 
   const currentDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-  const shippingFee = calculateShippingFee(subtotal);
+  const shippingFee = calculateShippingFee(subtotal, checkoutConfig);
   const finalTotal = Math.max(0, subtotal - currentDiscount) + shippingFee;
 
   // Free gift box progress

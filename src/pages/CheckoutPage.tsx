@@ -10,7 +10,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { orderService } from '../services';
 import { formatInr } from '../utils/currency';
-import { COD_ENABLED, calculateShippingFee } from '../config/store';
+import { DEFAULT_CHECKOUT_CONFIG, calculateShippingFee } from '../config/store';
+import { useCheckoutConfig } from '../hooks/useCheckoutConfig';
 import { PaymentMethod } from '../types/order';
 import {
   Lock,
@@ -119,13 +120,18 @@ export const CheckoutPage: React.FC = () => {
   const [state, setState] = useState('');
   const [pincode, setPincode] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('online');
+  const { config: checkoutConfig, loading: checkoutConfigLoading } = useCheckoutConfig();
+
+  useEffect(() => {
+    if (!checkoutConfig.codEnabled && paymentMethod === 'cod') setPaymentMethod('online');
+  }, [checkoutConfig.codEnabled, paymentMethod]);
 
   // UI state
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Computed shipping and total
-  const shippingFee = calculateShippingFee(subtotal);
+  const shippingFee = calculateShippingFee(subtotal, checkoutConfig);
   const total = subtotal + shippingFee;
 
   // Validation function
@@ -337,7 +343,7 @@ export const CheckoutPage: React.FC = () => {
     );
   }
 
-  if (isHydrating || items.length === 0) {
+  if (checkoutConfigLoading || isHydrating || items.length === 0) {
     return (
       <div className="min-h-screen bg-[#F7F0FA] flex items-center justify-center p-8">
         <p className="text-xs uppercase tracking-widest text-[#6F6475]">Loading checkout...</p>
@@ -629,7 +635,7 @@ export const CheckoutPage: React.FC = () => {
                   </label>
 
                   {/* Cash on Delivery option (only if COD_ENABLED is true) */}
-                  {COD_ENABLED && (
+                  {checkoutConfig.codEnabled && (
                     <label
                       className={`block p-4 border rounded-sm cursor-pointer transition-colors ${
                         paymentMethod === 'cod'
