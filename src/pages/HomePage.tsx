@@ -118,8 +118,6 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       image: HOMEPAGE_IMAGES.heroSlide1,
       shopLink: '/shop',
       categoriesLink: '#categories',
-      ctaText: 'Discover Jewellery',
-      ctaText: 'Explore Collection',
       ctaText: 'Shop the Collection'
     },
     {
