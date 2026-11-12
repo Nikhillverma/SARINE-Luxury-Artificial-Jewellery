@@ -25,9 +25,6 @@ import {
   ShieldCheck,
   Gem,
   Award,
-  Package,
-  Wallet,
-  MapPin,
   HelpCircle,
   SlidersHorizontal
 } from 'lucide-react';
@@ -325,14 +322,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onMouseLeave={handleAccountMouseLeave}
               >
                 <Link
-                  to="/track-order"
+                  to="/account"
                   className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer group"
-                  aria-label="Track Order"
-                  title="Track Order"
+                  aria-label="My Account"
+                  title="My Account"
                 >
                   <User size={19} strokeWidth={1.5} className="text-[#563568] shrink-0" />
                   <span className="text-[13px] font-medium text-[#302438] group-hover:text-[#563568]">
-                    Track Order
+                    My Account
                   </span>
                   <ChevronDown
                     size={13}
@@ -344,9 +341,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 {/* Mobile Account Icon Only */}
                 <Link
-                  to="/track-order"
+                  to="/account"
                   className="sm:hidden p-2 text-[#302438] hover:text-[#563568] transition-colors rounded-full hover:bg-white/60 flex items-center"
-                  aria-label="Track Order"
+                  aria-label="My Account"
                 >
                   <User size={19} strokeWidth={1.5} className="text-[#563568]" />
                 </Link>
@@ -389,35 +386,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </div>
                     </Link>
 
-                    {/* Order History */}
-                    <Link
-                      to="/track-order?section=orders"
-                      onClick={() => setIsAccountMenuOpen(false)}
-                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
-                    >
-                      <Package size={15} className="text-[#563568] shrink-0" />
-                      <div>
-                        <span className="font-medium block text-xs group-hover:text-[#563568]">Order History</span>
-                        <span className="text-[10px] text-[#6F6475]">Purchases, invoices & tracking</span>
-                      </div>
-                    </Link>
-
-                    {/* Plan of Purchase */}
-                    <Link
-                      to="/track-order?section=plan-of-purchase"
-                      onClick={() => setIsAccountMenuOpen(false)}
-                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
-                    >
-                      <Sparkles size={15} className="text-[#563568] shrink-0" />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-medium text-xs group-hover:text-[#563568]">Plan of Purchase</span>
-                          <span className="text-[9px] uppercase font-bold px-1.5 py-0.2 bg-[#D9B8A0]/30 text-[#563568] rounded-xs">Plan</span>
-                        </div>
-                        <span className="text-[10px] text-[#6F6475]">10+1 Monthly Jewellery Savings</span>
-                      </div>
-                    </Link>
-
                     {/* Saved Wishlist */}
                     <button
                       onClick={() => {
@@ -440,42 +408,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </div>
                     </button>
 
-                    {/* SARINE Wallet */}
-                    <Link
-                      to="/track-order?section=wallet"
-                      onClick={() => setIsAccountMenuOpen(false)}
-                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
-                    >
-                      <Wallet size={15} className="text-[#563568] shrink-0" />
-                      <div>
-                        <span className="font-medium block text-xs group-hover:text-[#563568]">SARINE Wallet</span>
-                        <span className="text-[10px] text-[#6F6475]">Balance, cashback & credits</span>
-                      </div>
-                    </Link>
-
-                    {/* Delivery Addresses */}
-                    <Link
-                      to="/track-order?section=addresses"
-                      onClick={() => setIsAccountMenuOpen(false)}
-                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
-                    >
-                      <MapPin size={15} className="text-[#563568] shrink-0" />
-                      <div>
-                        <span className="font-medium block text-xs group-hover:text-[#563568]">Delivery Addresses</span>
-                        <span className="text-[10px] text-[#6F6475]">Manage shipping destinations</span>
-                      </div>
-                    </Link>
-
                     {/* Concierge & Support */}
                     <div className="border-t border-[#E7DCEB] mt-1 pt-1">
                       <Link
-                        to="/track-order?section=support"
+                        to="/contact"
                         onClick={() => setIsAccountMenuOpen(false)}
                         className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
                       >
                         <HelpCircle size={15} className="text-[#563568] shrink-0" />
                         <div>
-                          <span className="font-medium block text-xs group-hover:text-[#563568]">Support & Concierge</span>
+                          <span className="font-medium block text-xs group-hover:text-[#563568]">Help & Support</span>
                           <span className="text-[10px] text-[#6F6475]">Help, inquiries & FAQs</span>
                         </div>
                       </Link>
@@ -1920,15 +1862,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {/* Account & Utilities Section */}
                 <div className="pt-4 border-t border-[#E7DCEB] space-y-2.5">
                   <Link
-                    to="/track-order"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-2.5 text-xs text-[#302438] hover:text-[#563568] py-1 font-medium"
-                  >
-                    <Truck size={15} className="text-[#563568]" />
-                    <span>Track Your Order</span>
-                  </Link>
-                  <Link
-                    to="/track-order"
+                    to="/account"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center gap-2.5 text-xs text-[#302438] hover:text-[#563568] py-1 font-medium"
                   >
