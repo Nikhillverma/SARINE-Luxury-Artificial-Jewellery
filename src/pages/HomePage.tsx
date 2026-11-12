@@ -17,7 +17,7 @@ import { Product } from '../types/product';
 import { Category } from '../types/category';
 import { ProductCard } from '../components/ProductCard';
 import { formatInr } from '../utils/currency';
-import { hostingerStorefrontService } from '../services/hostinger/hostingerStorefrontService';
+import { hostingerStorefrontService, type EditorialContent } from '../services/hostinger/hostingerStorefrontService';
 import {
   ArrowRight,
   ChevronLeft,
@@ -100,7 +100,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   // Hero Slider State
   const [activeSlide, setActiveSlide] = useState<number>(0);
-  const [managedHeroSlides, setManagedHeroSlides] = useState<Array<{id:string; tagline:string; title:string; subtitle:string; ctaText:string; ctaLink:string; imageUrl:string}>>([]);
+  const [managedHeroSlides, setManagedHeroSlides] = useState<Array<{id:string; tagline:string; title:string; subtitle:string; ctaText:string; ctaLink:string; imageUrl:string}>>([]);\n  const [editorial, setEditorial] = useState<EditorialContent>({ eyebrow: 'EDITORIAL COLLECTION', title: 'The Art of Everyday Elegance', description: 'A curated collection that blends classic beauty with modern sensibilities.', ctaText: 'Explore the Collection', ctaLink: '/shop', imageUrl: HOMEPAGE_IMAGES.editorialBanner, active: true });
 
   // Best Sellers Carousel Scroll Reference
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -153,6 +153,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     ctaText: banner.ctaText
   })) : defaultHeroSlides;
   const slideCount = heroSlides.length;
+
+  useEffect(() => {
+    let cancelled = false;
+    hostingerStorefrontService.getPublicEditorial()
+      .then(result => { if (!cancelled && result.editorial) setEditorial(result.editorial); else if (!cancelled && result.editorial === null) setEditorial(current => ({ ...current, active: false })); })
+      .catch(error => console.warn('[HomePage] Editorial content unavailable; using default content.', error));
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -740,44 +748,20 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           7. EDITORIAL BANNER
           ========================================================================= */}
-      <section className="relative overflow-hidden bg-[#EBDFF2] border-b border-[#E7DCEB]">
-        {/* Full-bleed background image */}
-        <img
-          src={HOMEPAGE_IMAGES.editorialBanner}
-          alt="The Art of Everyday Elegance"
-          className="absolute inset-0 w-full h-full object-cover object-center"
-        />
-
-        {/* Gradient Overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#F0E6F4]/75 to-[#F0E6F4]/95 sm:via-[#F0E6F4]/80 sm:to-[#F0E6F4]/95"></div>
-
-        {/* Centered container with right-aligned content */}
-        <div className="site-container min-h-[320px] sm:min-h-[380px] lg:min-h-[420px] flex items-center justify-end relative z-10">
-          <div className="w-full sm:w-2/3 lg:w-1/2 py-10 sm:py-14 text-left">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
-              EDITORIAL COLLECTION
-            </span>
-
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal leading-tight">
-              The Art of Everyday Elegance
-            </h2>
-
-            <p className="mt-3 text-xs sm:text-sm text-[#6F6475] leading-relaxed max-w-md font-sans">
-              A curated collection that blends classic beauty with modern sensibilities.
-            </p>
-
-            <div className="mt-6">
-              <Link
-                to="/shop"
-                className="px-6 py-3 bg-[#563568] text-white text-xs font-sans font-medium hover:bg-[#A184BD] transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"
-              >
-                <span>Explore the Collection</span>
-                <ArrowRight size={13} />
-              </Link>
+      {editorial.active && (
+        <section className="relative overflow-hidden bg-[#EBDFF2] border-b border-[#E7DCEB]">
+          <img src={editorial.imageUrl || HOMEPAGE_IMAGES.editorialBanner} alt={editorial.title} className="absolute inset-0 w-full h-full object-cover object-center" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#F0E6F4]/75 to-[#F0E6F4]/95 sm:via-[#F0E6F4]/80 sm:to-[#F0E6F4]/95" />
+          <div className="site-container min-h-[320px] sm:min-h-[380px] lg:min-h-[420px] flex items-center justify-end relative z-10">
+            <div className="w-full sm:w-2/3 lg:w-1/2 py-10 sm:py-14 text-left">
+              <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">{editorial.eyebrow}</span>
+              <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal leading-tight">{editorial.title}</h2>
+              <p className="mt-3 text-xs sm:text-sm text-[#6F6475] leading-relaxed max-w-md font-sans">{editorial.description}</p>
+              <div className="mt-6"><Link to={editorial.ctaLink} className="px-6 py-3 bg-[#563568] text-white text-xs font-sans font-medium hover:bg-[#A184BD] transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"><span>{editorial.ctaText}</span><ArrowRight size={13} /></Link></div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* =========================================================================
           8. JEWELLERY CARE & PRESERVATION GUIDE
