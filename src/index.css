@@ -66,3 +66,25 @@
     margin-right: 0;
   }
 }
+
+
+/* Continuous SARINE announcement ticker */
+.sarine-announcement-track {
+  animation: sarine-announcement-scroll 34s linear infinite;
+  will-change: transform;
+}
+.sarine-announcement-track:hover {
+  animation-play-state: paused;
+}
+@keyframes sarine-announcement-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sarine-announcement-track {
+    animation: none;
+    transform: none;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
