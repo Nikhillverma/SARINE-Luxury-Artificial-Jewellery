@@ -8,7 +8,7 @@ export interface CheckoutConfig {
   codEnabled: boolean;
 }
 
-export const SHIPPING_FLAT_FEE = 99;
+export const SHIPPING_FLAT_FEE: number = 99;
 export const FREE_SHIPPING_THRESHOLD: number | null = 1999;
 export const COD_ENABLED = true;
 export const CURRENCY = 'INR';
