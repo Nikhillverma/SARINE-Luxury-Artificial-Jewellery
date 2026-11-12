@@ -16,6 +16,11 @@ export const AdminStorefrontPage: React.FC = () => {
   const [editorialUploading, setEditorialUploading] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const [announcementActive, setAnnouncementActive] = useState(false);
+  const [trustMessages, setTrustMessages] = useState([
+    "Free Shipping Above ₹1,999",
+    "7-Day Easy Returns",
+    "Trusted by 1L+ Happy Customers"
+  ]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -37,6 +42,12 @@ export const AdminStorefrontPage: React.FC = () => {
       setEditorial({ ...defaultEditorial, ...editorialResult.editorial });
       setAnnouncement(announcementResult.announcement.message || "");
       setAnnouncementActive(Boolean(announcementResult.announcement.active));
+      setTrustMessages([
+        ...(announcementResult.announcement.trustMessages || []),
+        "Free Shipping Above ₹1,999",
+        "7-Day Easy Returns",
+        "Trusted by 1L+ Happy Customers"
+      ].slice(0, 3));
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to load storefront content."); }
     finally { setLoading(false); }
   };
@@ -135,7 +146,7 @@ export const AdminStorefrontPage: React.FC = () => {
 
   const saveAnnouncement = async () => {
     setBusy(true); setError(""); setMessage("");
-    try { await hostingerStorefrontService.saveAnnouncement(announcement, announcementActive); setMessage("Announcement saved to MariaDB."); }
+    try { await hostingerStorefrontService.saveAnnouncement(announcement, announcementActive, trustMessages); setMessage("Announcement and trust ticker messages saved to MariaDB."); }
     catch (e) { setError(e instanceof Error ? e.message : "Announcement could not be saved."); }
     finally { setBusy(false); }
   };
@@ -150,10 +161,24 @@ export const AdminStorefrontPage: React.FC = () => {
       {message && <div role="status" className="p-3 rounded-lg bg-green-50 text-green-800 text-sm">{message}</div>}
 
       <section className="bg-white border rounded-2xl p-5 space-y-4">
-        <div><h2 className="font-semibold text-[#2C1838]">Announcement bar</h2><p className="text-xs text-gray-500">Only publish truthful current offers and policies.</p></div>
-        <input value={announcement} maxLength={300} onChange={e => setAnnouncement(e.target.value)} placeholder="Announcement text" className="w-full border rounded-lg p-3 text-sm" />
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={announcementActive} onChange={e => setAnnouncementActive(e.target.checked)} /> Publish announcement</label>
-        <button disabled={busy} onClick={() => void saveAnnouncement()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">Save announcement</button>
+        <div>
+          <h2 className="font-semibold text-[#2C1838]">Announcement & Trust Ticker</h2>
+          <p className="text-xs text-gray-500">Edit all three trust messages and your promotional announcement. Active messages scroll continuously across the top bar.</p>
+        </div>
+        <div className="grid md:grid-cols-3 gap-3">
+          {trustMessages.map((item, index) => (
+            <label key={index} className="text-xs space-y-1">
+              <span className="font-medium">Trust message {index + 1}</span>
+              <input value={item} maxLength={100} onChange={e => setTrustMessages(current => current.map((value, i) => i === index ? e.target.value : value))} className="w-full border rounded-lg p-3 text-sm" />
+            </label>
+          ))}
+        </div>
+        <div className="border-t pt-4 space-y-2">
+          <label className="block text-xs font-medium">Promotional announcement</label>
+          <input value={announcement} maxLength={300} onChange={e => setAnnouncement(e.target.value)} placeholder="e.g. Diwali Sale — Extra 10% Off Today" className="w-full border rounded-lg p-3 text-sm" />
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={announcementActive} onChange={e => setAnnouncementActive(e.target.checked)} /> Publish promotional announcement</label>
+        </div>
+        <button disabled={busy} onClick={() => void saveAnnouncement()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">Save ticker messages</button>
       </section>
 
       <section className="bg-white border rounded-2xl p-5 space-y-4">
