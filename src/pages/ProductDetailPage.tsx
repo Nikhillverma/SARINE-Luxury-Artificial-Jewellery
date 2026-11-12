@@ -733,6 +733,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
           </div>
         </div>
 
+        {reviewMessage && <p role="status" className="mt-4 text-sm text-emerald-700">{reviewMessage}</p>}
         {/* Customer Reviews Section */}
         <section id="reviews" className="mt-14 bg-white p-6 sm:p-10 border border-[#E7DCEB] rounded-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E7DCEB]">
