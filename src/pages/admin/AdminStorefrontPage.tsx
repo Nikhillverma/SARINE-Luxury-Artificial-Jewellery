@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
 import { hostingerMediaService } from "../../services";
-import { hostingerStorefrontService, type StorefrontBanner } from "../../services/hostinger/hostingerStorefrontService";
+import { hostingerStorefrontService, type StorefrontBanner, type EditorialContent } from "../../services/hostinger/hostingerStorefrontService";
 
+const defaultEditorial: EditorialContent = { eyebrow: "EDITORIAL COLLECTION", title: "The Art of Everyday Elegance", description: "A curated collection that blends classic beauty with modern sensibilities.", ctaText: "Explore the Collection", ctaLink: "/shop", imageUrl: "/images/editorial-banner.jpg", active: true };
 const emptyForm = { tagline: "", title: "", subtitle: "", ctaText: "Shop now", ctaLink: "/shop", imageUrl: "", active: false };
 
 export const AdminStorefrontPage: React.FC = () => {
-  const [banners, setBanners] = useState<StorefrontBanner[]>([]);
+  const [banners, setBanners] = useState<StorefrontBanner[]>([]);\n  const [editorial, setEditorial] = useState<EditorialContent>(defaultEditorial);\n  const [editorialFile, setEditorialFile] = useState<File | null>(null);\n  const [editorialUploading, setEditorialUploading] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const [announcementActive, setAnnouncementActive] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -24,7 +25,7 @@ export const AdminStorefrontPage: React.FC = () => {
       const [bannerResult, announcementResult] = await Promise.all([
         hostingerStorefrontService.getBanners(), hostingerStorefrontService.getAnnouncement()
       ]);
-      setBanners(bannerResult.banners);
+      setBanners(bannerResult.banners);\n      setEditorial({ ...defaultEditorial, ...editorialResult.editorial });
       setAnnouncement(announcementResult.announcement.message || "");
       setAnnouncementActive(Boolean(announcementResult.announcement.active));
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to load storefront content."); }
@@ -97,6 +98,18 @@ export const AdminStorefrontPage: React.FC = () => {
     catch (e) { setError(e instanceof Error ? e.message : "Could not reorder banners."); }
     finally { setBusy(false); }
   };
+  const saveEditorial = async () => {
+    setBusy(true); setError(""); setMessage("");
+    try {
+      let imageUrl = editorial.imageUrl;
+      if (editorialFile) imageUrl = await hostingerMediaService.uploadImage(editorialFile);
+      const saved = await hostingerStorefrontService.saveEditorial({ ...editorial, imageUrl });
+      setEditorial(saved.editorial); setEditorialFile(null);
+      setMessage("Editorial Collection saved to MariaDB. Its publish setting controls customer visibility.");
+    } catch (e) { setError(e instanceof Error ? e.message : "Editorial Collection could not be saved."); }
+    finally { setBusy(false); }
+  };
+
   const saveAnnouncement = async () => {
     setBusy(true); setError(""); setMessage("");
     try { await hostingerStorefrontService.saveAnnouncement(announcement, announcementActive); setMessage("Announcement saved to MariaDB."); }
@@ -118,6 +131,20 @@ export const AdminStorefrontPage: React.FC = () => {
         <input value={announcement} maxLength={300} onChange={e => setAnnouncement(e.target.value)} placeholder="Announcement text" className="w-full border rounded-lg p-3 text-sm" />
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={announcementActive} onChange={e => setAnnouncementActive(e.target.checked)} /> Publish announcement</label>
         <button disabled={busy} onClick={() => void saveAnnouncement()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">Save announcement</button>
+      </section>
+
+      <section className="bg-white border rounded-2xl p-5 space-y-4">
+        <div><h2 className="font-semibold text-[#2C1838]">Homepage Sections · Editorial Collection</h2><p className="text-xs text-gray-500">Independent of hero banners. Edit the image, copy and destination shown in the Editorial Collection block.</p></div>
+        <div className="grid md:grid-cols-2 gap-3">
+          <label className="text-xs space-y-1"><span>Eyebrow</span><input value={editorial.eyebrow} maxLength={120} onChange={e=>setEditorial({...editorial,eyebrow:e.target.value})} className="w-full border rounded-lg p-3 text-sm" /></label>
+          <label className="text-xs space-y-1"><span>Heading</span><input value={editorial.title} maxLength={180} onChange={e=>setEditorial({...editorial,title:e.target.value})} className="w-full border rounded-lg p-3 text-sm" /></label>
+          <label className="text-xs space-y-1 md:col-span-2"><span>Description</span><textarea value={editorial.description} maxLength={500} onChange={e=>setEditorial({...editorial,description:e.target.value})} rows={3} className="w-full border rounded-lg p-3 text-sm" /></label>
+          <label className="text-xs space-y-1"><span>Button label</span><input value={editorial.ctaText} maxLength={80} onChange={e=>setEditorial({...editorial,ctaText:e.target.value})} className="w-full border rounded-lg p-3 text-sm" /></label>
+          <label className="text-xs space-y-1"><span>Button destination</span><input value={editorial.ctaLink} maxLength={500} onChange={e=>setEditorial({...editorial,ctaLink:e.target.value})} placeholder="/shop" className="w-full border rounded-lg p-3 text-sm" /></label>
+          <div className="md:col-span-2 space-y-2"><label className="block text-xs font-medium">Background artwork (JPEG, PNG or WebP)</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>setEditorialFile(e.target.files?.[0] || null)} className="block w-full text-sm" />{editorialFile && <button type="button" disabled={editorialUploading || busy} onClick={async()=>{setEditorialUploading(true);setError("");try{const imageUrl=await hostingerMediaService.uploadImage(editorialFile);setEditorial({...editorial,imageUrl});setEditorialFile(null);setMessage("Editorial artwork uploaded. Save changes to publish it.");}catch(e){setError(e instanceof Error?e.message:"Artwork upload failed.");}finally{setEditorialUploading(false);}}} className="px-3 py-2 rounded-lg bg-[#563568] text-white text-xs disabled:opacity-50">{editorialUploading?"Uploading…":"Upload artwork"}</button>}{editorial.imageUrl && <img src={editorial.imageUrl} alt="Editorial Collection preview" className="max-h-48 rounded-lg border object-contain" />}</div>
+          <label className="flex items-center gap-2 text-sm md:col-span-2"><input type="checkbox" checked={editorial.active} onChange={e=>setEditorial({...editorial,active:e.target.checked})} /> Publish Editorial Collection on homepage</label>
+          <div className="flex gap-2 md:col-span-2"><button disabled={busy || editorialUploading} onClick={()=>void saveEditorial()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy?"Saving…":"Save Editorial Collection"}</button><a href="/" target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg border text-sm">Preview homepage</a></div>
+        </div>
       </section>
 
       <section className="bg-white border rounded-2xl p-5 space-y-4">
