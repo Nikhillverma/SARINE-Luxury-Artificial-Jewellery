@@ -45,6 +45,7 @@ interface CustomerReview {
   title: string;
   comment: string;
   verified: boolean;
+  imageUrls: string[];
 }
 
 const PINCODE_STORAGE_KEY = 'sarine_last_pincode';
@@ -97,6 +98,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [newReviewTitle, setNewReviewTitle] = useState('');
   const [newReviewComment, setNewReviewComment] = useState('');
+  const [newReviewImages, setNewReviewImages] = useState<File[]>([]);
+  const [newReviewImagePreviews, setNewReviewImagePreviews] = useState<string[]>([]);
 
   // Fetch product details
   useEffect(() => {
@@ -222,18 +225,33 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
     }
   };
 
+  const handleReviewImageSelection = (files: FileList | null) => {
+    const selected = Array.from(files || []);
+    if (selected.length > 3) { setReviewError("Please choose no more than 3 product photos."); return; }
+    if (selected.some(file => !["image/jpeg", "image/png", "image/webp"].includes(file.type))) { setReviewError("Product photos must be JPEG, PNG or WebP images."); return; }
+    newReviewImagePreviews.forEach(url => URL.revokeObjectURL(url));
+    setNewReviewImages(selected);
+    setNewReviewImagePreviews(selected.map(file => URL.createObjectURL(file)));
+    setReviewError("");
+  };
+
+  useEffect(() => () => { newReviewImagePreviews.forEach(url => URL.revokeObjectURL(url)); }, [newReviewImagePreviews]);
+
   const handleAddReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product) return;
     setReviewSubmitting(true); setReviewError(""); setReviewMessage("");
     try {
+      const imageIds = await Promise.all(newReviewImages.map(file => hostingerStorefrontService.uploadReviewImage(file)));
       const result = await hostingerStorefrontService.submitReview(product.id, {
         name: newReviewName.trim(), email: newReviewEmail.trim(), orderNumber: newReviewOrderNumber.trim(),
-        rating: newReviewRating, title: newReviewTitle.trim(), comment: newReviewComment.trim()
+        rating: newReviewRating, title: newReviewTitle.trim(), comment: newReviewComment.trim(), imageIds
       });
       setReviewMessage(result.message);
       setNewReviewName(''); setNewReviewEmail(''); setNewReviewOrderNumber('');
       setNewReviewTitle(''); setNewReviewComment('');
+      newReviewImagePreviews.forEach(url => URL.revokeObjectURL(url));
+      setNewReviewImages([]); setNewReviewImagePreviews([]);
       setIsReviewModalOpen(false);
     } catch (error) {
       setReviewError(error instanceof Error ? error.message : "Your review could not be submitted.");
@@ -755,6 +773,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
 
                 <h4 className="font-serif text-sm font-medium text-[#302438]">{rev.title}</h4>
                 <p className="text-xs sm:text-sm text-[#6F6475] leading-relaxed">{rev.comment}</p>
+                {rev.imageUrls?.length > 0 && <div className="flex flex-wrap gap-2 pt-2">{rev.imageUrls.map((url, index) => <a key={url} href={url} target="_blank" rel="noreferrer"><img src={url} alt={`Customer photo ${index + 1} of ${product.name}`} loading="lazy" className="h-20 w-20 sm:h-24 sm:w-24 rounded-md border border-[#E7DCEB] object-cover" /></a>)}</div>}
               </div>
             ))}
           </div>
@@ -847,6 +866,13 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                   placeholder="e.g. Stunning kundan detailing"
                   className="w-full p-2 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:outline-none"
                 />
+              </div>
+
+              <div>
+                <label className="block text-[#6F6475] mb-1">Product Photos (optional, up to 3)</label>
+                <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e => handleReviewImageSelection(e.target.files)} className="block w-full text-xs file:mr-3 file:rounded-md file:border-0 file:bg-[#F7F0FA] file:px-3 file:py-2 file:text-xs file:text-[#563568]" />
+                <p className="mt-1 text-[11px] text-[#6F6475]">Share up to 3 photos of the jewellery you received. JPEG, PNG or WebP; images are optimised before upload.</p>
+                {newReviewImagePreviews.length > 0 && <div className="mt-2 flex flex-wrap gap-2">{newReviewImagePreviews.map((url, index) => <div key={url} className="relative"><img src={url} alt={`Selected customer photo ${index + 1}`} className="h-20 w-20 rounded-md border border-[#E7DCEB] object-cover" /><button type="button" onClick={() => { const files = newReviewImages.filter((_, i) => i !== index); const urls = newReviewImagePreviews.filter((_, i) => i !== index); URL.revokeObjectURL(url); setNewReviewImages(files); setNewReviewImagePreviews(urls); }} className="absolute -right-2 -top-2 rounded-full bg-white border px-1.5 py-0.5 text-xs" aria-label={`Remove photo ${index + 1}`}>×</button></div>)}</div>}
               </div>
 
               <div>
