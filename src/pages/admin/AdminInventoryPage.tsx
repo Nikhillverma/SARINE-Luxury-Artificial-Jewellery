@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { productService, categoryService } from '../../services';
+import { productService, categoryService, adminProductService } from '../../services';
 import { Product, isInStock, JEWELLERY_TYPE_LABELS } from '../../types/product';
 import { Category } from '../../types/category';
 import { AdminLayout } from '../../components/admin/AdminLayout';
@@ -39,6 +39,8 @@ export const AdminInventoryPage: React.FC = () => {
   const [stockDelta, setStockDelta] = useState<number>(0);
   const [adjustmentReason, setAdjustmentReason] = useState<string>('Restock from Atelier');
   const [adjustSuccess, setAdjustSuccess] = useState<string | null>(null);
+  const [adjustError, setAdjustError] = useState<string | null>(null);
+  const [savingAdjustment, setSavingAdjustment] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -91,19 +93,37 @@ export const AdminInventoryPage: React.FC = () => {
   const outOfStockCount = products.filter((p) => p.status === 'active' && p.stock <= 0).length;
   const totalStockUnits = products.reduce((sum, p) => sum + (p.stock || 0), 0);
 
-  const handleAdjustStock = (e: React.FormEvent) => {
+  const handleAdjustStock = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adjustingProduct) return;
+    if (!adjustingProduct || savingAdjustment) return;
 
     const newStock = Math.max(0, adjustingProduct.stock + stockDelta);
-    setProducts((prev) =>
-      prev.map((p) => (p.id === adjustingProduct.id ? { ...p, stock: newStock } : p))
-    );
+    setSavingAdjustment(true);
+    setAdjustError(null);
+    setAdjustSuccess(null);
 
-    setAdjustSuccess(`Updated ${adjustingProduct.name} stock to ${newStock} (${adjustmentReason}).`);
-    setTimeout(() => setAdjustSuccess(null), 4000);
-    setAdjustingProduct(null);
-    setStockDelta(0);
+    try {
+      // Persist stock through the authenticated Hostinger admin API.
+      const updatedProduct = await adminProductService.updateProduct(
+        adjustingProduct.id,
+        { stock: newStock }
+      );
+
+      setProducts((prev) =>
+        prev.map((product) =>
+          product.id === updatedProduct.id ? updatedProduct : product
+        )
+      );
+      setAdjustSuccess(`Saved ${adjustingProduct.name} stock in MariaDB: ${newStock} units.`);
+      setAdjustingProduct(null);
+      setStockDelta(0);
+    } catch (err) {
+      setAdjustError(
+        err instanceof Error ? err.message : 'Stock could not be saved. Please try again.'
+      );
+    } finally {
+      setSavingAdjustment(false);
+    }
   };
 
   return (
@@ -127,6 +147,12 @@ export const AdminInventoryPage: React.FC = () => {
         </div>
 
         {/* Feedback Alert */}
+        {adjustError && (
+          <div role="alert" className="p-3 bg-red-50 border border-red-200 text-xs text-red-800 rounded-xs">
+            {adjustError}
+          </div>
+        )}
+
         {adjustSuccess && (
           <div className="p-3 bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 rounded-xs flex items-center gap-2">
             <CheckCircle2 size={15} />
@@ -402,9 +428,10 @@ export const AdminInventoryPage: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-[#563568] text-white hover:bg-[#A184BD] font-medium rounded-xs transition-colors"
+                    disabled={savingAdjustment}
+                    className="px-5 py-2 bg-[#563568] text-white hover:bg-[#A184BD] font-medium rounded-xs transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    Confirm Stock Update
+                    {savingAdjustment ? 'Saving…' : 'Confirm Stock Update'}
                   </button>
                 </div>
               </form>
