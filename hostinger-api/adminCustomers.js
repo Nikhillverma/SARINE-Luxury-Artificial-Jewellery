@@ -20,13 +20,11 @@ function positiveInteger(value, fallback, maximum) {
   return Number.isInteger(parsed) && parsed > 0 ? Math.min(parsed, maximum) : fallback;
 }
 
-const INITIAL_ORDER_DATE = "(
-  SELECT MIN(h.created_at)
-  FROM order_status_history h
-  WHERE h.order_id = o.id
-    AND h.old_status IS NULL
-    AND h.new_status IN ('placed', 'awaiting_payment')
-)";
+const INITIAL_ORDER_DATE = "(SELECT MIN(h.created_at) " +
+  "FROM order_status_history h " +
+  "WHERE h.order_id = o.id " +
+  "AND h.old_status IS NULL " +
+  "AND h.new_status IN ('placed', 'awaiting_payment'))";
 
 router.get("/", async (req, res, next) => {
   try {
