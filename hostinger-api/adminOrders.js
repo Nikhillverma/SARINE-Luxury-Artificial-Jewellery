@@ -36,12 +36,9 @@ function parseJson(value, fallback = {}) {
 }
 
 function toIsoString(dateVal) {
-  if (!dateVal) return undefined;
-  try {
-    return new Date(dateVal).toISOString();
-  } catch {
-    return String(dateVal);
-  }
+  if (dateVal === null || dateVal === undefined || dateVal === "") return undefined;
+  const date = dateVal instanceof Date ? dateVal : new Date(dateVal);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 }
 
 /**
@@ -307,19 +304,19 @@ router.post("/update", async (req, res, next) => {
       const hasCol = await checkAdminNoteColumn(connection);
       if (hasCol) {
         await connection.execute(
-          `UPDATE orders SET admin_note = ?, updated_at = CURRENT_TIMESTAMP(3) WHERE id = ?`,
+          `UPDATE orders SET admin_note = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
           [trimmedNote, order.id]
         );
       } else {
         await connection.execute(
-          `UPDATE orders SET updated_at = CURRENT_TIMESTAMP(3) WHERE id = ?`,
+          `UPDATE orders SET updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
           [order.id]
         );
       }
 
       await connection.execute(
         `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
-         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP(3))`,
+         VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP(3))`,
         [order.id, order.order_status, order.order_status, trimmedNote, adminEmail]
       );
 
@@ -357,7 +354,7 @@ router.post("/update", async (req, res, next) => {
         return res.status(400).json({ error: "Cannot ship a cancelled order." });
       }
 
-      const updateFields = ["order_status = 'shipped'", "shipped_at = CURRENT_TIMESTAMP(3)", "updated_at = CURRENT_TIMESTAMP(3)"];
+      const updateFields = ["order_status = 'shipped'", "shipped_at = UTC_TIMESTAMP(3)", "updated_at = UTC_TIMESTAMP(3)"];
       const updateValues = [];
 
       if (typeof courierName === "string" && courierName.trim()) {
@@ -390,7 +387,7 @@ router.post("/update", async (req, res, next) => {
 
       await connection.execute(
         `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
-         VALUES (?, ?, 'shipped', ?, ?, CURRENT_TIMESTAMP(3))`,
+         VALUES (?, ?, 'shipped', ?, ?, UTC_TIMESTAMP(3))`,
         [order.id, order.order_status, courierName ? `Shipped via ${courierName}` : "Marked shipped", adminEmail]
       );
 
@@ -419,7 +416,7 @@ router.post("/update", async (req, res, next) => {
         });
       }
 
-      const updateFields = ["order_status = 'delivered'", "delivered_at = CURRENT_TIMESTAMP(3)", "updated_at = CURRENT_TIMESTAMP(3)"];
+      const updateFields = ["order_status = 'delivered'", "delivered_at = UTC_TIMESTAMP(3)", "updated_at = UTC_TIMESTAMP(3)"];
       const updateValues = [];
 
       // For COD orders: update payment_status to 'paid' upon delivery (NEVER set razorpay_payment_id)
@@ -435,7 +432,7 @@ router.post("/update", async (req, res, next) => {
 
       await connection.execute(
         `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
-         VALUES (?, 'shipped', 'delivered', ?, ?, CURRENT_TIMESTAMP(3))`,
+         VALUES (?, 'shipped', 'delivered', ?, ?, UTC_TIMESTAMP(3))`,
         [order.id, order.payment_method === "cod" ? "Delivered and COD collected" : "Delivered to recipient", adminEmail]
       );
 
@@ -497,7 +494,7 @@ router.post("/update", async (req, res, next) => {
         for (const line of lines) {
           if (line.product_id && Number(line.quantity) > 0) {
             await connection.execute(
-              `UPDATE products SET stock = stock + ?, updated_at = CURRENT_TIMESTAMP(3) WHERE id = ?`,
+              `UPDATE products SET stock = stock + ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
               [Number(line.quantity), line.product_id]
             );
           }
@@ -508,9 +505,9 @@ router.post("/update", async (req, res, next) => {
 
       const updateFields = [
         "order_status = 'cancelled'",
-        "cancelled_at = CURRENT_TIMESTAMP(3)",
+        "cancelled_at = UTC_TIMESTAMP(3)",
         "cancellation_reason = ?",
-        "updated_at = CURRENT_TIMESTAMP(3)"
+        "updated_at = UTC_TIMESTAMP(3)"
       ];
       const updateValues = [reason];
 
@@ -528,7 +525,7 @@ router.post("/update", async (req, res, next) => {
 
       await connection.execute(
         `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
-         VALUES (?, ?, 'cancelled', ?, ?, CURRENT_TIMESTAMP(3))`,
+         VALUES (?, ?, 'cancelled', ?, ?, UTC_TIMESTAMP(3))`,
         [order.id, currentStatus, reason, adminEmail]
       );
 
