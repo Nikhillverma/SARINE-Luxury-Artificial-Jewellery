@@ -395,7 +395,7 @@ export const BagPage: React.FC = () => {
                     {activeCoupon && (
                       <div className="flex items-baseline justify-between text-emerald-700">
                         <span>Coupon Discount</span>
-                        <span>-{formatInr(appliedCoupon.discount)}</span>
+                        <span>-{formatInr(activeCoupon.discount)}</span>
                       </div>
                     )}
 
