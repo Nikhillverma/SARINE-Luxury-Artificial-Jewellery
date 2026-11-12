@@ -7,7 +7,10 @@ const defaultEditorial: EditorialContent = { eyebrow: "EDITORIAL COLLECTION", ti
 const emptyForm = { tagline: "", title: "", subtitle: "", ctaText: "Shop now", ctaLink: "/shop", imageUrl: "", active: false };
 
 export const AdminStorefrontPage: React.FC = () => {
-  const [banners, setBanners] = useState<StorefrontBanner[]>([]);\n  const [editorial, setEditorial] = useState<EditorialContent>(defaultEditorial);\n  const [editorialFile, setEditorialFile] = useState<File | null>(null);\n  const [editorialUploading, setEditorialUploading] = useState(false);
+  const [banners, setBanners] = useState<StorefrontBanner[]>([]);
+  const [editorial, setEditorial] = useState<EditorialContent>(defaultEditorial);
+  const [editorialFile, setEditorialFile] = useState<File | null>(null);
+  const [editorialUploading, setEditorialUploading] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const [announcementActive, setAnnouncementActive] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -25,7 +28,8 @@ export const AdminStorefrontPage: React.FC = () => {
       const [bannerResult, announcementResult] = await Promise.all([
         hostingerStorefrontService.getBanners(), hostingerStorefrontService.getAnnouncement()
       ]);
-      setBanners(bannerResult.banners);\n      setEditorial({ ...defaultEditorial, ...editorialResult.editorial });
+      setBanners(bannerResult.banners);
+      setEditorial({ ...defaultEditorial, ...editorialResult.editorial });
       setAnnouncement(announcementResult.announcement.message || "");
       setAnnouncementActive(Boolean(announcementResult.announcement.active));
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to load storefront content."); }
