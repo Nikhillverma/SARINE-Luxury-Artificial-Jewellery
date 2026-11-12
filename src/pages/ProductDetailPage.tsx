@@ -50,30 +50,6 @@ interface CustomerReview {
 const PINCODE_STORAGE_KEY = 'sarine_last_pincode';
 const RECENTLY_VIEWED_KEY = 'sarine_recently_viewed_v1';
 
-// Initial authentic reviews per category archetype
-const SAMPLE_REVIEWS: Record<string, CustomerReview[]> = {
-  default: [
-    {
-      id: 'rev-1',
-      name: 'Priyanka Sharma',
-      rating: 5,
-      date: '12 October 2026',
-      title: 'Exquisite finish and very lightweight',
-      comment: 'The gold plating has a soft, regal luster that looks indistinguishable from real heirloom jewellery. Wore it to a cousin wedding and received countless compliments.',
-      verified: true
-    },
-    {
-      id: 'rev-2',
-      name: 'Ananya Deshmukh',
-      rating: 5,
-      date: '28 September 2026',
-      title: 'Packaging was breathtaking',
-      comment: 'Arrived in a sturdy luxury presentation box with a velvet pouch. Perfect for gifting. The craftsmanship is flawless with zero rough edges.',
-      verified: true
-    }
-  ]
-};
-
 export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll }) => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
