@@ -336,9 +336,6 @@ router.post("/update", async (req, res, next) => {
 
     // 2. Action: mark_shipped
     if (action === "mark_shipped") {
-      const isPaid = order.payment_status === "paid";
-      const isCod = order.payment_method === "cod";
-
       if (order.refund_needed || order.order_status === "needs_refund") {
         await connection.rollback();
         connection.release();
