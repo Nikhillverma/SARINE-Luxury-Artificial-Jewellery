@@ -7,6 +7,7 @@ import adminAuthRouter from "./adminAuth.js";
 import adminOrdersRouter from "./adminOrders.js";
 import adminDashboardRouter from "./adminDashboard.js";
 import adminProductsRouter from "./adminProducts.js";
+import adminCategoriesRouter from "./adminCategories.js";
 import adminStorefrontRouter, { publicStorefrontRouter } from "./adminStorefront.js";
 import ordersRouter from "./orders.js";
 import { publicMediaRouter, adminMediaRouter } from "./media.js";
