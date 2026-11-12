@@ -12,6 +12,7 @@ export const AdminStorefrontPage: React.FC = () => {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [artworkUploading, setArtworkUploading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -36,6 +37,26 @@ export const AdminStorefrontPage: React.FC = () => {
     setEditingId(banner.id);
     setForm({ tagline: banner.tagline, title: banner.title, subtitle: banner.subtitle, ctaText: banner.ctaText, ctaLink: banner.ctaLink, imageUrl: banner.imageUrl, active: banner.active });
     setFile(null); setMessage(""); setError("");
+  };
+
+  const uploadArtwork = async () => {
+    if (!file) {
+      setError("Choose a JPEG, PNG or WebP image first.");
+      return;
+    }
+    setArtworkUploading(true);
+    setError("");
+    setMessage("");
+    try {
+      const imageUrl = await hostingerMediaService.uploadImage(file);
+      setForm(current => ({ ...current, imageUrl }));
+      setFile(null);
+      setMessage("Artwork uploaded successfully to Hostinger. Preview it below, then save the banner.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Artwork upload failed. Please try again.");
+    } finally {
+      setArtworkUploading(false);
+    }
   };
 
   const saveBanner = async (event: React.FormEvent) => {
@@ -117,9 +138,23 @@ export const AdminStorefrontPage: React.FC = () => {
           <textarea value={form.subtitle} onChange={e => setForm({...form,subtitle:e.target.value})} maxLength={500} placeholder="Subtitle" className="border rounded-lg p-3 text-sm md:col-span-2" />
           <input value={form.ctaText} onChange={e => setForm({...form,ctaText:e.target.value})} maxLength={80} placeholder="Button text" className="border rounded-lg p-3 text-sm" />
           <input value={form.ctaLink} onChange={e => setForm({...form,ctaLink:e.target.value})} maxLength={500} placeholder="Destination, e.g. /shop" className="border rounded-lg p-3 text-sm" />
-          <div className="md:col-span-2 space-y-2"><label className="block text-sm">Banner image (upload recommended)</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setFile(e.target.files?.[0] || null)} className="block w-full text-sm" />{form.imageUrl && !file && <img src={form.imageUrl} alt="Current banner" className="max-h-36 rounded-lg" />}<p className="text-xs text-gray-500">Image is optimised and stored in Hostinger media storage before banner save.</p></div>
+          <div className="md:col-span-2 space-y-3">
+            <label className="block text-sm font-medium">Banner artwork</label>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={e => { setFile(e.target.files?.[0] || null); setError(""); setMessage(""); }}
+              className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#F5EDF8] file:px-3 file:py-2 file:text-sm file:font-medium file:text-[#563568]"
+            />
+            {file && <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-dashed p-3">
+              <div className="min-w-0"><p className="text-sm font-medium truncate">{file.name}</p><p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB · JPEG, PNG or WebP</p></div>
+              <button type="button" disabled={artworkUploading || busy} onClick={() => void uploadArtwork()} className="rounded-lg bg-[#563568] px-4 py-2 text-sm font-medium text-white disabled:opacity-50">{artworkUploading ? "Uploading artwork…" : "Upload artwork"}</button>
+            </div>}
+            {form.imageUrl && <div className="space-y-2"><p className="text-xs font-medium text-green-700">Artwork uploaded and ready</p><img src={form.imageUrl} alt="Uploaded banner artwork preview" className="max-h-48 w-auto rounded-lg border object-contain" /></div>}
+            <p className="text-xs text-gray-500">Choose an image, click Upload artwork, confirm the preview, then create or save the banner. Images are optimised and stored in Hostinger media storage.</p>
+          </div>
           <label className="flex items-center gap-2 text-sm md:col-span-2"><input type="checkbox" checked={form.active} onChange={e => setForm({...form,active:e.target.checked})} /> Publish immediately after saving</label>
-          <div className="flex gap-2 md:col-span-2"><button disabled={busy} type="submit" className="px-5 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy ? "Saving…" : editingId ? "Save changes" : "Create banner"}</button><button type="button" onClick={beginAdd} className="px-4 py-2 rounded-lg border text-sm">Clear form</button></div>
+          <div className="flex gap-2 md:col-span-2"><button disabled={busy || artworkUploading} type="submit" className="px-5 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy ? "Saving…" : editingId ? "Save changes" : "Create banner"}</button><button type="button" disabled={busy || artworkUploading} onClick={beginAdd} className="px-4 py-2 rounded-lg border text-sm disabled:opacity-50">Clear form</button></div>
         </form>
       </section>
     </div>
