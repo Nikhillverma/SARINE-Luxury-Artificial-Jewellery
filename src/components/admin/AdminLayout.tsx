@@ -166,6 +166,12 @@ interface NavItem {
       match: (p: string) => p.startsWith('/admin/customers')
     },
     {
+      name: 'Marketing & Coupons',
+      path: '/admin/marketing',
+      icon: Tag,
+      match: (p: string) => p.startsWith('/admin/marketing')
+    },
+    {
       name: 'Storefront Studio',
       path: '/admin/storefront',
       icon: LayoutTemplate,
