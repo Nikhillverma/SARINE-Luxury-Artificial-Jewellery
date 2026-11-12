@@ -45,7 +45,7 @@ interface OrderLine {
 
 interface AdminOrder {
   orderNumber: string;
-  createdAt: string;
+  createdAt?: string;
   customer: {
     name: string;
     email: string;
@@ -322,18 +322,21 @@ export const AdminOrdersPage: React.FC = () => {
   };
 
   const formatDate = (isoString?: string) => {
-    if (!isoString) return '—';
-    try {
-      return new Date(isoString).toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return isoString;
-    }
+    if (typeof isoString !== 'string' || !isoString.trim()) return 'Date unavailable';
+
+    const value = isoString.trim();
+    if (/^0000-00-00(?:[ T]|$)/.test(value)) return 'Date unavailable';
+
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return 'Date unavailable';
+
+    return date.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   // Payment Badge Helper
