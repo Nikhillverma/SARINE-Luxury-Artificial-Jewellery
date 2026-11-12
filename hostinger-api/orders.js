@@ -7,6 +7,7 @@ import { pool } from "./db.js";
 const router = Router();
 
 import { calculateShippingFee, getCheckoutConfig } from "./checkoutPolicy.js";
+import { ensureMarketingSchema, lockAndValidateCoupon, reserveCouponRedemption, releaseCouponReservation, confirmCouponRedemption } from "./marketingPolicy.js";
 
 function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -44,7 +45,7 @@ const trackingLimiter = rateLimit({
 router.post("/create", async (req, res, next) => {
   let connection;
   try {
-    const { items, customer, shippingAddress, paymentMethod } = req.body || {};
+    const { items, customer, shippingAddress, paymentMethod, couponCode } = req.body || {};
 
     // 1. Validate customer details
     if (!customer?.name || String(customer.name).trim().length < 2) {
@@ -107,6 +108,7 @@ router.post("/create", async (req, res, next) => {
       }
     }
 
+    await ensureMarketingSchema();
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
@@ -169,8 +171,9 @@ router.post("/create", async (req, res, next) => {
       });
     }
 
+    const { coupon, discountAmount } = await lockAndValidateCoupon(connection, couponCode, calculatedSubtotal, customer.email);
     const shippingFee = calculateShippingFee(calculatedSubtotal, checkoutConfig);
-    const total = calculatedSubtotal + shippingFee;
+    const total = Math.max(0, calculatedSubtotal - discountAmount) + shippingFee;
 
     // 6. Concurrency-safe counter allocation
     await connection.execute(
@@ -237,9 +240,9 @@ router.post("/create", async (req, res, next) => {
       await connection.execute(
         `INSERT INTO orders (
            id, order_number, customer_id, customer_name, customer_email, customer_phone,
-           shipping_address, subtotal, shipping_fee, total, payment_method,
+           shipping_address, subtotal, shipping_fee, total, coupon_code, discount_amount, payment_method,
            payment_status, order_status, public_token_hash, source_document, created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cod', 'pending', 'placed', ?, 'web_checkout', UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cod', 'pending', 'placed', ?, 'web_checkout', UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
         [
           orderNumber,
           orderNumber,
@@ -251,6 +254,8 @@ router.post("/create", async (req, res, next) => {
           calculatedSubtotal,
           shippingFee,
           total,
+          coupon?.code || null,
+          discountAmount,
           publicTokenHash
         ]
       );
@@ -268,6 +273,7 @@ router.post("/create", async (req, res, next) => {
          VALUES (?, NULL, 'placed', 'Order placed via COD', 'customer', UTC_TIMESTAMP(3))`,
         [orderNumber]
       );
+      await reserveCouponRedemption(connection, coupon, orderNumber, customer.email, discountAmount, "redeemed");
 
       await connection.commit();
       connection.release();
@@ -277,6 +283,10 @@ router.post("/create", async (req, res, next) => {
         orderNumber,
         publicToken,
         orderStatus: "placed",
+        subtotal: calculatedSubtotal,
+        shippingFee,
+        discountAmount,
+        couponCode: coupon?.code || null,
         total
       });
     } else {
@@ -284,9 +294,9 @@ router.post("/create", async (req, res, next) => {
       await connection.execute(
         `INSERT INTO orders (
            id, order_number, customer_id, customer_name, customer_email, customer_phone,
-           shipping_address, subtotal, shipping_fee, total, payment_method,
+           shipping_address, subtotal, shipping_fee, total, coupon_code, discount_amount, payment_method,
            payment_status, order_status, public_token_hash, source_document, created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'online', 'pending', 'awaiting_payment', ?, 'web_checkout', UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'online', 'pending', 'awaiting_payment', ?, 'web_checkout', UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
         [
           orderNumber,
           orderNumber,
@@ -315,6 +325,7 @@ router.post("/create", async (req, res, next) => {
          VALUES (?, NULL, 'awaiting_payment', 'Order created awaiting Razorpay payment', 'customer', UTC_TIMESTAMP(3))`,
         [orderNumber]
       );
+      await reserveCouponRedemption(connection, coupon, orderNumber, customer.email, discountAmount, "reserved");
 
       await connection.commit();
       connection.release();
@@ -345,6 +356,7 @@ router.post("/create", async (req, res, next) => {
            VALUES (?, 'awaiting_payment', 'failed', 'Payment gateway order creation failed', 'system', UTC_TIMESTAMP(3))`,
           [orderNumber]
         );
+        await releaseCouponReservation(orderNumber);
         return res.status(500).json({
           error: "Unable to initiate payment with the payment gateway. Please try again."
         });
@@ -553,6 +565,7 @@ router.post("/verify", async (req, res, next) => {
          VALUES (?, ?, 'confirmed', 'Payment verified and captured', 'customer', UTC_TIMESTAMP(3))`,
         [order.id, order.order_status]
       );
+      await confirmCouponRedemption(connection, order.id);
       await connection.commit();
       connection.release();
       connection = null;
