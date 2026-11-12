@@ -77,7 +77,7 @@ export const Footer: React.FC = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="text-xs sm:text-sm font-medium text-[#302438] group-hover:text-[#563568] transition-colors leading-tight font-sans inline-flex items-center gap-1">
-                  <span>Easy support</span>
+                  <span>Help & Support</span>
                   <ArrowRight size={12} className="opacity-0 group-hover:opacity-100 text-[#563568] transition-opacity" />
                 </h4>
                 <p className="text-[11px] text-[#6F6475] font-sans mt-0.5 truncate">
@@ -190,7 +190,7 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2.5 text-xs text-[#E7DCEB]">
               <li>
                 <Link to="/contact" className="hover:text-[#D9B8A0] transition-colors">
-                  Contact Us
+                  Help & Support
                 </Link>
               </li>
               <li>
