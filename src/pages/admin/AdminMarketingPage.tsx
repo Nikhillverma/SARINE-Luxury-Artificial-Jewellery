@@ -28,6 +28,7 @@ export const AdminMarketingPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [editing, setEditing] = useState<MarketingCoupon | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<CouponInput>(blankForm());
 
   const refresh = useCallback(async () => {
@@ -39,9 +40,10 @@ export const AdminMarketingPage: React.FC = () => {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  const startCreate = () => { setEditing(null); setForm(blankForm()); setError(null); setNotice(null); };
+  const startCreate = () => { setEditing(null); setForm(blankForm()); setShowForm(true); setError(null); setNotice(null); };
   const startEdit = (coupon: MarketingCoupon) => {
     setEditing(coupon);
+    setShowForm(true);
     setForm({
       code: coupon.code, discountType: coupon.discountType, discountValue: coupon.discountValue,
       minOrder: coupon.minOrder, maxDiscount: coupon.maxDiscount, usageLimit: coupon.usageLimit,
@@ -60,7 +62,7 @@ export const AdminMarketingPage: React.FC = () => {
       if (editing) await updateMarketingCoupon(editing.id, payload);
       else await createMarketingCoupon(payload);
       setNotice(editing ? "Coupon updated successfully." : "Coupon created successfully.");
-      setEditing(null); setForm(blankForm()); await refresh();
+      setEditing(null); setShowForm(false); setForm(blankForm()); await refresh();
     } catch (err) { setError(err instanceof Error ? err.message : "Could not save coupon."); }
     finally { setSaving(false); }
   };
@@ -98,11 +100,11 @@ export const AdminMarketingPage: React.FC = () => {
         {notice && <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">{notice}</div>}
         {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">{error}</div>}
 
-        {(editing || form.code !== "" || coupons.length === 0) && (
+        {(showForm || coupons.length === 0) && (
           <form onSubmit={submit} className="bg-white border border-[#EADFF0] rounded-2xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-sm text-[#2C1838]">{editing ? `Edit ${editing.code}` : "Create a coupon"}</h2>
-              <button type="button" onClick={() => { setEditing(null); setForm(blankForm()); }} className="text-xs text-[#705E7B]"><X size={16}/></button>
+              <button type="button" onClick={() => { setEditing(null); setShowForm(false); setForm(blankForm()); }} className="text-xs text-[#705E7B]"><X size={16}/></button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <label className="text-xs text-[#705E7B]">Coupon code
@@ -137,7 +139,7 @@ export const AdminMarketingPage: React.FC = () => {
               </label>
             </div>
             <div className="flex justify-end gap-2">
-              <button type="button" onClick={()=>{setEditing(null);setForm(blankForm());}} className="px-4 py-2 border border-[#E7DCEB] rounded-lg text-xs">Cancel</button>
+              <button type="button" onClick={()=>{setEditing(null);setShowForm(false);setForm(blankForm());}} className="px-4 py-2 border border-[#E7DCEB] rounded-lg text-xs">Cancel</button>
               <button disabled={saving} className="inline-flex items-center gap-2 px-4 py-2 bg-[#563568] text-white rounded-lg text-xs font-semibold disabled:opacity-50"><Save size={14}/>{saving?"Saving...":editing?"Save changes":"Create coupon"}</button>
             </div>
           </form>
