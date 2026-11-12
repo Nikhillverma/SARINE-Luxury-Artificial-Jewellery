@@ -79,6 +79,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeAnnouncement, setActiveAnnouncement] = useState(0);
   const [managedAnnouncement, setManagedAnnouncement] = useState('');
+  const [managedTrustMessages, setManagedTrustMessages] = useState<string[]>([]);
 
   // Mobile Accordion state
   const [mobileExpanded, setMobileExpanded] = useState<Record<string, boolean>>({
@@ -96,8 +97,10 @@ export const Navbar: React.FC<NavbarProps> = ({
       .then(({ announcement }) => {
         if (!cancelled && announcement?.active && announcement.message?.trim()) {
           setManagedAnnouncement(announcement.message.trim());
+          setManagedTrustMessages((announcement.trustMessages || []).filter(Boolean));
         } else if (!cancelled) {
           setManagedAnnouncement('');
+          setManagedTrustMessages((announcement.trustMessages || []).filter(Boolean));
         }
       })
       .catch((error) => console.warn('[Navbar] Published announcement unavailable; using default messages.', error));
@@ -206,86 +209,40 @@ export const Navbar: React.FC<NavbarProps> = ({
         className="sticky top-0 z-40 bg-[#FAF5FC] border-b border-[#D9B8A0]/30 shadow-xs"
         onMouseLeave={handleMouseLeave}
       >
-        {/* TIER 1: TOP UTILITY BAR (Deep-Plum #563568 Strip ~36-40px) */}
-        <div className="bg-[#563568] text-[#FAF5FC] text-[11px] sm:text-xs font-sans tracking-wide">
-          <div className="site-container flex items-center justify-between min-h-[36px] sm:min-h-[40px] py-1">
-            {/* Desktop Left: Trust & Delivery Commitments */}
-            <div className="hidden lg:flex items-center space-x-3 text-[12px] font-normal text-[#FAF5FC]/90">
-              <span className="inline-flex items-center gap-1.5">
-                <Truck size={14} className="text-[#D9B8A0] shrink-0" />
-                <span>Free Shipping Above ₹1,999</span>
-              </span>
-              <span className="w-[1px] h-3.5 bg-white/20 inline-block" />
-              <span className="inline-flex items-center gap-1.5">
-                <ShieldCheck size={14} className="text-[#D9B8A0] shrink-0" />
-                <span>7-Day Easy Returns</span>
-              </span>
-              <span className="w-[1px] h-3.5 bg-white/20 inline-block" />
-              <span className="inline-flex items-center gap-1.5">
-                <Sparkles size={14} className="text-[#D9B8A0] shrink-0" />
-                <span>Trusted by 1L+ Happy Customers</span>
-              </span>
-            </div>
-
-            {managedAnnouncement && (
-              <div className="hidden lg:flex flex-1 min-w-0 justify-center px-4 text-center text-[12px] font-medium text-[#FAF5FC]" role="status" aria-live="polite">
-                <span className="inline-flex items-center gap-1.5 max-w-full">
-                  <Sparkles size={12} className="text-[#D9B8A0] shrink-0" />
-                  <span className="truncate">{managedAnnouncement}</span>
-                </span>
+        {/* TIER 1: Continuous, admin-managed announcement ticker */}
+        <div className="bg-[#563568] text-[#FAF5FC] text-[11px] sm:text-xs font-sans tracking-wide overflow-hidden">
+          <div className="site-container flex items-center min-h-[36px] sm:min-h-[40px] gap-4">
+            <div className="flex-1 min-w-0 overflow-hidden" aria-label="Store announcements">
+              <div className="sarine-announcement-track flex w-max items-center">
+                {[...managedTrustMessages, ...(managedAnnouncement ? [managedAnnouncement] : [])].filter(Boolean).length > 0 ? (
+                  [...managedTrustMessages, ...(managedAnnouncement ? [managedAnnouncement] : [])].filter(Boolean).map((item, index) => (
+                    <span key={index} className="inline-flex items-center gap-2 px-6 whitespace-nowrap text-[11px] sm:text-xs text-[#FAF5FC]/95">
+                      <Sparkles size={12} className="text-[#D9B8A0] shrink-0" />
+                      {item}
+                      <span className="text-[#D9B8A0]/70 ml-4">✦</span>
+                    </span>
+                  ))
+                ) : (
+                  <span className="inline-flex items-center gap-2 px-6 whitespace-nowrap">
+                    <Sparkles size={12} className="text-[#D9B8A0]" />
+                    {ANNOUNCEMENT_MESSAGES[activeAnnouncement]}
+                  </span>
+                )}
+                {[...managedTrustMessages, ...(managedAnnouncement ? [managedAnnouncement] : [])].filter(Boolean).length > 0 && (
+                  [...managedTrustMessages, ...(managedAnnouncement ? [managedAnnouncement] : [])].filter(Boolean).map((item, index) => (
+                    <span key={`repeat-${index}`} className="inline-flex items-center gap-2 px-6 whitespace-nowrap text-[11px] sm:text-xs text-[#FAF5FC]/95" aria-hidden="true">
+                      <Sparkles size={12} className="text-[#D9B8A0] shrink-0" />
+                      {item}
+                      <span className="text-[#D9B8A0]/70 ml-4">✦</span>
+                    </span>
+                  ))
+                )}
               </div>
-            )}
-
-            {/* Mobile / Tablet: Published announcement takes priority over fallback messages. */}
-            <div className="flex lg:hidden items-center justify-between w-full min-w-0">
-              {!managedAnnouncement && (
-                <button
-                  onClick={() => setActiveAnnouncement((prev) => (prev - 1 + ANNOUNCEMENT_MESSAGES.length) % ANNOUNCEMENT_MESSAGES.length)}
-                  className="text-[#D9B8A0] hover:text-white px-2 py-0.5 text-xs cursor-pointer transition-colors"
-                  aria-label="Previous announcement"
-                >
-                  ‹
-                </button>
-              )}
-              <div className="text-center flex-1 min-w-0 truncate px-2 text-[11px] font-normal text-[#FAF5FC]" role="status" aria-live="polite">
-                <span className="inline-flex items-center gap-1.5 max-w-full">
-                  <Sparkles size={11} className="text-[#D9B8A0] shrink-0" />
-                  <span className="truncate">{managedAnnouncement || ANNOUNCEMENT_MESSAGES[activeAnnouncement]}</span>
-                </span>
-              </div>
-              {!managedAnnouncement && (
-                <button
-                  onClick={() => setActiveAnnouncement((prev) => (prev + 1) % ANNOUNCEMENT_MESSAGES.length)}
-                  className="text-[#D9B8A0] hover:text-white px-2 py-0.5 text-xs cursor-pointer transition-colors"
-                  aria-label="Next announcement"
-                >
-                  ›
-                </button>
-              )}
             </div>
-
-            {/* Desktop Right: Customer Utility Links */}
-            <div className="hidden lg:flex items-center space-x-3 text-[12px] text-[#FAF5FC]/90">
-              <Link
-                to="/track-order"
-                className="hover:text-white transition-colors cursor-pointer py-1"
-              >
-                Track Order
-              </Link>
+            <div className="hidden lg:flex shrink-0 items-center space-x-3 text-[12px] text-[#FAF5FC]/90">
+              <Link to="/track-order" className="hover:text-white transition-colors cursor-pointer py-1">Track Order</Link>
               <span className="w-[1px] h-3.5 bg-white/20 inline-block" />
-              <Link
-                to="/contact"
-                className="hover:text-white transition-colors cursor-pointer py-1"
-              >
-                Help
-              </Link>
-              <span className="w-[1px] h-3.5 bg-white/20 inline-block" />
-              <Link
-                to="/contact"
-                className="hover:text-white transition-colors cursor-pointer py-1"
-              >
-                Support
-              </Link>
+              <Link to="/contact" className="hover:text-white transition-colors cursor-pointer py-1">Help &amp; Support</Link>
             </div>
           </div>
         </div>

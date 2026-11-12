@@ -134,20 +134,35 @@ adminOnly.put("/announcement", async (req, res, next) => {
     await ensureSchema();
     const message = String(req.body?.message || "").trim();
     const active = req.body?.active === true;
+    const trustMessages = Array.isArray(req.body?.trustMessages)
+      ? req.body.trustMessages.slice(0, 3).map(item => String(item || "").trim())
+      : [];
     if (message.length > 300) return res.status(400).json({ error: "Announcement must be 300 characters or fewer." });
+    if (trustMessages.some(item => item.length > 100)) return res.status(400).json({ error: "Each trust message must be 100 characters or fewer." });
     await pool.execute(
       "INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('announcement', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)",
-      [JSON.stringify({ message, active })]
+      [JSON.stringify({ message, active, trustMessages })]
     );
-    res.json({ success: true, announcement: { message, active } });
+    res.json({ success: true, announcement: { message, active, trustMessages } });
   } catch (error) { next(error); }
 });
 adminOnly.get("/announcement", async (_req, res, next) => {
   try {
     await ensureSchema();
     const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='announcement' LIMIT 1");
-    let announcement = { message: "", active: false };
-    if (rows.length) { try { announcement = JSON.parse(rows[0].setting_value); } catch {} }
+    let announcement = { message: "", active: false, trustMessages: ["Free Shipping Above ₹1,999", "7-Day Easy Returns", "Trusted by 1L+ Happy Customers"] };
+    if (rows.length) {
+      try {
+        const saved = JSON.parse(rows[0].setting_value);
+        announcement = {
+          message: typeof saved.message === "string" ? saved.message : "",
+          active: saved.active === true,
+          trustMessages: Array.isArray(saved.trustMessages) && saved.trustMessages.length
+            ? saved.trustMessages.slice(0, 3).map(item => String(item || "").trim().slice(0, 100))
+            : ["Free Shipping Above ₹1,999", "7-Day Easy Returns", "Trusted by 1L+ Happy Customers"]
+        };
+      } catch {}
+    }
     res.set("Cache-Control", "no-store").json({ announcement });
   } catch (error) { next(error); }
 });
@@ -163,8 +178,19 @@ publicRouter.get("/announcement", async (_req, res, next) => {
   try {
     await ensureSchema();
     const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='announcement' LIMIT 1");
-    let announcement = { message: "", active: false };
-    if (rows.length) { try { announcement = JSON.parse(rows[0].setting_value); } catch {} }
+    let announcement = { message: "", active: false, trustMessages: [] };
+    if (rows.length) {
+      try {
+        const saved = JSON.parse(rows[0].setting_value);
+        announcement = {
+          message: typeof saved.message === "string" ? saved.message : "",
+          active: saved.active === true,
+          trustMessages: Array.isArray(saved.trustMessages)
+            ? saved.trustMessages.slice(0, 3).map(item => String(item || "").trim().slice(0, 100))
+            : []
+        };
+      } catch {}
+    }
     res.set("Cache-Control", "no-store").json({ announcement });
   } catch (error) { next(error); }
 });
