@@ -39,6 +39,7 @@ export const hostingerStorefrontService = {
   reorderBanners: (ids: string[]) =>
     request<{ success: boolean }>("/admin/storefront/banners/reorder", { method: "PUT", body: JSON.stringify({ ids }) }),
   getAnnouncement: () => request<{ announcement: { message: string; active: boolean } }>("/admin/storefront/announcement"),
+  getPublicAnnouncement: () => request<{ announcement: { message: string; active: boolean } }>("/storefront/announcement"),
   saveAnnouncement: (message: string, active: boolean) =>
     request<{ success: boolean }>("/admin/storefront/announcement", { method: "PUT", body: JSON.stringify({ message, active }) }),
   getEditorial: () => request<{ editorial: EditorialContent }>("/admin/storefront/editorial"),
