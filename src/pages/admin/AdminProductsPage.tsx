@@ -98,9 +98,10 @@ export const AdminProductsPage: React.FC = () => {
     try {
       const uploaded: string[] = [];
       for (const file of selected) {
-        uploaded.push(await hostingerMediaService.uploadImage(file));
+        const url = await hostingerMediaService.uploadImage(file);
+        uploaded.push(url);
+        setForm(current => ({ ...current, imageUrls: [...current.imageUrls, url] }));
       }
-      setForm(current => ({ ...current, imageUrls: [...current.imageUrls, ...uploaded] }));
       setNotice(`${uploaded.length} image${uploaded.length === 1 ? '' : 's'} uploaded to Hostinger storage. Save the product to publish them.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Image upload failed.');
