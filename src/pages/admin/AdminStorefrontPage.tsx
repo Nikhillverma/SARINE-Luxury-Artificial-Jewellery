@@ -28,8 +28,8 @@ export const AdminStorefrontPage: React.FC = () => {
   const load = async () => {
     setLoading(true); setError("");
     try {
-      const [bannerResult, announcementResult] = await Promise.all([
-        hostingerStorefrontService.getBanners(), hostingerStorefrontService.getAnnouncement()
+      const [bannerResult, announcementResult, editorialResult] = await Promise.all([
+        hostingerStorefrontService.getBanners(), hostingerStorefrontService.getAnnouncement(), hostingerStorefrontService.getEditorial()
       ]);
       setBanners(bannerResult.banners);
       setEditorial({ ...defaultEditorial, ...editorialResult.editorial });
