@@ -275,7 +275,7 @@ publicRouter.post("/products/:productId/reviews", async (req, res, next) => {
     if (!productId || !name || name.length > 120 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) || email.length > 254 || !orderNumber || orderNumber.length > 64 || !Number.isInteger(rating) || rating < 1 || rating > 5 || !comment || comment.length < 10 || comment.length > 3000 || title.length > 160) {
       return res.status(400).json({ error: "Enter your name, valid checkout email, order number, 1–5 star rating and feedback (10–3000 characters)." });
     }
-    const [orders] = await pool.execute("SELECT id FROM orders WHERE order_number=? AND LOWER(customer_email)=? AND order_status='delivered' AND payment_status IN ('paid','cod') LIMIT 1", [orderNumber, email]);
+    const [orders] = await pool.execute("SELECT id FROM orders WHERE order_number=? AND LOWER(customer_email)=? AND order_status='delivered' LIMIT 1", [orderNumber, email]);
     if (!orders.length) return res.status(400).json({ error: "We could not match that order number and checkout email. Please check both details." });
     const [items] = await pool.execute("SELECT product_id FROM order_items WHERE order_id=? AND product_id=? LIMIT 1", [orders[0].id, productId]);
     if (!items.length) return res.status(403).json({ error: "That product is not included in the supplied order." });
