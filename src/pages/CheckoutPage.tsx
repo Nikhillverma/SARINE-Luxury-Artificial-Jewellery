@@ -11,7 +11,7 @@ import { useCart } from '../context/CartContext';
 import { orderService } from '../services';
 import { formatInr } from '../utils/currency';
 import { DEFAULT_CHECKOUT_CONFIG, calculateShippingFee } from '../config/store';
-import { checkoutSettingsService } from '../services/hostinger/checkoutSettingsService';
+import { useCheckoutConfig } from '../hooks/useCheckoutConfig';
 import { PaymentMethod } from '../types/order';
 import {
   Lock,
@@ -120,17 +120,7 @@ export const CheckoutPage: React.FC = () => {
   const [state, setState] = useState('');
   const [pincode, setPincode] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('online');
-  const [checkoutConfig, setCheckoutConfig] = useState(DEFAULT_CHECKOUT_CONFIG);
-  const [checkoutConfigReady, setCheckoutConfigReady] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    checkoutSettingsService.getPublicConfig()
-      .then(config => { if (active) setCheckoutConfig(config); })
-      .catch(error => { console.warn('[Checkout] Using safe default checkout settings:', error); })
-      .finally(() => { if (active) setCheckoutConfigReady(true); });
-    return () => { active = false; };
-  }, []);
+  const { config: checkoutConfig, loading: checkoutConfigLoading } = useCheckoutConfig();
 
   useEffect(() => {
     if (!checkoutConfig.codEnabled && paymentMethod === 'cod') setPaymentMethod('online');
@@ -353,7 +343,7 @@ export const CheckoutPage: React.FC = () => {
     );
   }
 
-  if (!checkoutConfigReady || isHydrating || items.length === 0) {
+  if (checkoutConfigLoading || isHydrating || items.length === 0) {
     return (
       <div className="min-h-screen bg-[#F7F0FA] flex items-center justify-center p-8">
         <p className="text-xs uppercase tracking-widest text-[#6F6475]">Loading checkout...</p>
