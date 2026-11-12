@@ -169,6 +169,21 @@ router.put("/:id", async (req, res, next) => {
   }
 });
 
+router.patch("/:id/archive", async (req, res, next) => {
+  try {
+    const [result] = await pool.execute(
+      "UPDATE products SET status = 'archived', updated_at = CURRENT_TIMESTAMP(3) WHERE id = ?",
+      [req.params.id]
+    );
+    if (!result.affectedRows) return res.status(404).json({ error: "Product not found." });
+
+    const [rows] = await pool.execute("SELECT * FROM products WHERE id = ? LIMIT 1", [req.params.id]);
+    res.json({ success: true, product: mapProduct(rows[0]) });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.patch("/:id/status", async (req, res, next) => {
   try {
     const status = req.body?.status;
