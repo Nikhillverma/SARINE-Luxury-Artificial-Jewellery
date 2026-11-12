@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { productService, categoryService, adminProductService } from '../../services';
+import { categoryService, adminProductService } from '../../services';
 import { Product, isInStock, JEWELLERY_TYPE_LABELS } from '../../types/product';
 import { Category } from '../../types/category';
 import { AdminLayout } from '../../components/admin/AdminLayout';
@@ -48,7 +48,7 @@ export const AdminInventoryPage: React.FC = () => {
       try {
         const [cats, prods] = await Promise.all([
           categoryService.getCategories({ activeOnly: false }),
-          productService.getProducts({ sortBy: 'newest', inStockOnly: false, includeAll: true })
+          adminProductService.getProducts()
         ]);
         setCategories(cats);
         setProducts(prods);
