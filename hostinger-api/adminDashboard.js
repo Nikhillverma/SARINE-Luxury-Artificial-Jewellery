@@ -22,6 +22,14 @@ function toIsoString(value) {
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
+const INITIAL_ORDER_HISTORY = `
+  SELECT order_id, MIN(created_at) AS initial_created_at
+  FROM order_status_history
+  WHERE old_status IS NULL
+    AND new_status IN ('placed', 'awaiting_payment')
+  GROUP BY order_id
+`;
+
 router.get("/", async (_req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
@@ -30,28 +38,35 @@ router.get("/", async (_req, res, next) => {
       pool.execute(
         `SELECT
            COUNT(*) AS orders,
-           SUM(CASE WHEN order_status IN ('pending', 'awaiting_payment') THEN 1 ELSE 0 END) AS pending_orders,
-           SUM(CASE WHEN order_status IN ('placed', 'confirmed', 'processing') THEN 1 ELSE 0 END) AS processing_orders,
-           SUM(CASE WHEN order_status = 'shipped' THEN 1 ELSE 0 END) AS shipped_orders,
-           SUM(CASE WHEN order_status = 'delivered' THEN 1 ELSE 0 END) AS delivered_orders,
-           SUM(CASE WHEN order_status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_orders,
+           SUM(CASE WHEN o.order_status IN ('pending', 'awaiting_payment') THEN 1 ELSE 0 END) AS pending_orders,
+           SUM(CASE WHEN o.order_status IN ('placed', 'confirmed', 'processing') THEN 1 ELSE 0 END) AS processing_orders,
+           SUM(CASE WHEN o.order_status = 'shipped' THEN 1 ELSE 0 END) AS shipped_orders,
+           SUM(CASE WHEN o.order_status = 'delivered' THEN 1 ELSE 0 END) AS delivered_orders,
+           SUM(CASE WHEN o.order_status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_orders,
            SUM(CASE
-             WHEN payment_status = 'paid'
-               AND order_status NOT IN ('cancelled', 'returned', 'failed')
-               AND (LOWER(COALESCE(payment_method, 'online')) <> 'cod' OR order_status = 'delivered')
-             THEN GREATEST(COALESCE(total, 0) - COALESCE(refund_amount, 0), 0)
+             WHEN o.payment_status = 'paid'
+               AND o.order_status NOT IN ('cancelled', 'returned', 'failed')
+               AND (LOWER(COALESCE(o.payment_method, 'online')) <> 'cod' OR o.order_status = 'delivered')
+             THEN GREATEST(COALESCE(o.total, 0) - COALESCE(o.refund_amount, 0), 0)
              ELSE 0
            END) AS paid_revenue,
            SUM(CASE
-             WHEN DATE(created_at) = CURDATE()
-               AND payment_status = 'paid'
-               AND order_status NOT IN ('cancelled', 'returned', 'failed')
-               AND (LOWER(COALESCE(payment_method, 'online')) <> 'cod' OR order_status = 'delivered')
-             THEN GREATEST(COALESCE(total, 0) - COALESCE(refund_amount, 0), 0)
+             WHEN DATE(DATE_ADD(COALESCE(o.created_at, initial_history.initial_created_at), INTERVAL 330 MINUTE))
+                  = DATE(DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 330 MINUTE))
+               AND o.payment_status = 'paid'
+               AND o.order_status NOT IN ('cancelled', 'returned', 'failed')
+               AND (LOWER(COALESCE(o.payment_method, 'online')) <> 'cod' OR o.order_status = 'delivered')
+             THEN GREATEST(COALESCE(o.total, 0) - COALESCE(o.refund_amount, 0), 0)
              ELSE 0
            END) AS today_revenue,
-           SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) AS today_orders
-         FROM orders`
+           SUM(CASE
+             WHEN DATE(DATE_ADD(COALESCE(o.created_at, initial_history.initial_created_at), INTERVAL 330 MINUTE))
+                  = DATE(DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 330 MINUTE))
+             THEN 1 ELSE 0
+           END) AS today_orders
+         FROM orders o
+         LEFT JOIN (${INITIAL_ORDER_HISTORY}) AS initial_history
+           ON initial_history.order_id = o.id`
       ),
       pool.execute(
         `SELECT
@@ -63,9 +78,13 @@ router.get("/", async (_req, res, next) => {
          FROM products`
       ),
       pool.execute(
-        `SELECT order_number, customer_name, total, payment_status, order_status, created_at
-         FROM orders
-         ORDER BY created_at DESC, id DESC
+        `SELECT
+           o.order_number, o.customer_name, o.total, o.payment_status, o.order_status,
+           COALESCE(o.created_at, initial_history.initial_created_at) AS created_at
+         FROM orders o
+         LEFT JOIN (${INITIAL_ORDER_HISTORY}) AS initial_history
+           ON initial_history.order_id = o.id
+         ORDER BY COALESCE(o.created_at, initial_history.initial_created_at) DESC, o.id DESC
          LIMIT 5`
       ),
       pool.execute(
