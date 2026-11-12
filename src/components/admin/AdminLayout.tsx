@@ -141,6 +141,12 @@ interface NavItem {
       match: (p: string) => p.startsWith('/admin/products')
     },
     {
+      name: 'Categories',
+      path: '/admin/categories',
+      icon: Tag,
+      match: (p: string) => p.startsWith('/admin/categories')
+    },
+    {
       name: 'Inventory & Suppliers',
       path: '/admin/inventory',
       icon: Boxes,
