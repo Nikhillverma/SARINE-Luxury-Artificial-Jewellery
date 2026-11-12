@@ -150,16 +150,16 @@ adminOnly.get("/announcement", async (_req, res, next) => {
   try {
     await ensureSchema();
     const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='announcement' LIMIT 1");
-    let announcement = { message: "", active: false, trustMessages: [] };
+    let announcement = { message: "", active: false, trustMessages: ["Free Shipping Above ₹1,999", "7-Day Easy Returns", "Trusted by 1L+ Happy Customers"] };
     if (rows.length) {
       try {
         const saved = JSON.parse(rows[0].setting_value);
         announcement = {
           message: typeof saved.message === "string" ? saved.message : "",
           active: saved.active === true,
-          trustMessages: Array.isArray(saved.trustMessages)
+          trustMessages: Array.isArray(saved.trustMessages) && saved.trustMessages.length
             ? saved.trustMessages.slice(0, 3).map(item => String(item || "").trim().slice(0, 100))
-            : []
+            : ["Free Shipping Above ₹1,999", "7-Day Easy Returns", "Trusted by 1L+ Happy Customers"]
         };
       } catch {}
     }
