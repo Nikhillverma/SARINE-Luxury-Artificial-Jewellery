@@ -62,6 +62,10 @@ export const BagPage: React.FC = () => {
       setCouponError("Enter a coupon code.");
       return;
     }
+    // A newly entered code replaces any previously saved coupon. If validation
+    // fails, do not leave the old discount silently applied to this basket.
+    setAppliedCoupon(null);
+    localStorage.removeItem('sarine_applied_coupon');
     setIsApplyingCoupon(true);
     try {
       const result = await validateStorefrontCoupon(code, subtotal);
@@ -350,38 +354,40 @@ export const BagPage: React.FC = () => {
                   </h2>
 
                   {/* Coupon Code Module */}
-                  <div>
-                    {activeCoupon ? (
+                  <div className="space-y-2">
+                    {activeCoupon && (
                       <div className="flex items-center justify-between bg-[#F7F0FA] p-2.5 border border-[#B69ACF] rounded-xs text-xs">
                         <span className="text-emerald-700 font-medium flex items-center gap-1.5">
                           <Tag size={13} />
-                          <span>Code {activeCoupon.code} (-{formatInr(activeCoupon.discount)})</span>
+                          <span>Applied: {activeCoupon.code} (-{formatInr(activeCoupon.discount)})</span>
                         </span>
                         <button
+                          type="button"
                           onClick={handleRemoveCoupon}
                           className="text-[#6F6475] hover:text-[#DC2626] cursor-pointer"
+                          aria-label="Remove applied coupon"
                         >
-                          ✕
+                          Remove
                         </button>
                       </div>
-                    ) : (
-                      <form onSubmit={handleApplyCoupon} className="flex gap-2">
-                        <input
-                          type="text"
-                          value={couponInput}
-                          onChange={(e) => setCouponInput(e.target.value)}
-                          placeholder="Enter coupon code"
-                          className="flex-1 p-2 bg-[#F7F0FA] border border-[#E7DCEB] text-xs uppercase rounded-xs focus:outline-none focus:border-[#563568]"
-                        />
-                        <button
-                          type="submit"
-                          disabled={isApplyingCoupon}
-                          className="px-3.5 py-2 bg-[#563568] text-white text-xs font-medium rounded-xs hover:bg-[#A184BD] transition-colors cursor-pointer"
-                        >
-                          {isApplyingCoupon ? 'Checking...' : 'Apply'}
-                        </button>
-                      </form>
                     )}
+                    <form onSubmit={handleApplyCoupon} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value)}
+                        placeholder={activeCoupon ? "Enter a different coupon code" : "Enter coupon code"}
+                        aria-label="Coupon code"
+                        className="flex-1 min-w-0 p-2 bg-[#F7F0FA] border border-[#E7DCEB] text-xs uppercase rounded-xs focus:outline-none focus:border-[#563568]"
+                      />
+                      <button
+                        type="submit"
+                        disabled={isApplyingCoupon}
+                        className="px-3.5 py-2 bg-[#563568] text-white text-xs font-medium rounded-xs hover:bg-[#A184BD] transition-colors cursor-pointer disabled:opacity-60"
+                      >
+                        {isApplyingCoupon ? 'Checking...' : activeCoupon ? 'Replace' : 'Apply'}
+                      </button>
+                    </form>
                     {couponError && <p className="text-[11px] text-[#DC2626] mt-1">{couponError}</p>}
                   </div>
 
