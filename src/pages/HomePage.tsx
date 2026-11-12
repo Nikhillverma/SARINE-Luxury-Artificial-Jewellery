@@ -127,7 +127,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       paragraph: 'Opulent festive adornments crafted with lightweight modern comfort for wedding celebrations and milestones.',
       image: HOMEPAGE_IMAGES.heroSlide2,
       shopLink: '/shop?category=necklaces',
-      categoriesLink: '#categories'
+      categoriesLink: '#categories',
+      ctaText: 'Explore Collection'
     },
     {
       id: 2,
@@ -136,7 +137,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       paragraph: 'Layered gold chains, floral studs, and delicate cuffs tailored for seamless daily refinement.',
       image: HOMEPAGE_IMAGES.heroSlide3,
       shopLink: '/shop?category=earrings',
-      categoriesLink: '#categories'
+      categoriesLink: '#categories',
+      ctaText: 'Discover Jewellery'
     }
   ];
 
