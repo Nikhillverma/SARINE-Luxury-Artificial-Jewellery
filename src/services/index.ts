@@ -57,3 +57,5 @@ export const adminProductService: IAdminProductService =
 
 export { hostingerOrderService };
 export * from './interfaces';
+
+export { hostingerStorefrontService } from './hostinger/hostingerStorefrontService';
