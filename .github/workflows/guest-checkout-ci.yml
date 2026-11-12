@@ -39,3 +39,4 @@ jobs:
           node --check adminAnalytics.js
           node --check adminDashboard.js
           node --check adminCustomers.js
+          node --check customerValidation.js
