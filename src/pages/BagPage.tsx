@@ -12,6 +12,7 @@ import { useWishlist } from '../context/WishlistContext';
 import { formatInr } from '../utils/currency';
 import { calculateShippingFee } from '../config/store';
 import { useCheckoutConfig } from '../hooks/useCheckoutConfig';
+import { validateStorefrontCoupon } from '../services/hostinger/hostingerMarketingService';
 import { ShoppingBag, Trash2, ArrowLeft, ArrowRight, AlertCircle, Heart, Gift, Tag, Sparkles } from 'lucide-react';
 
 const FREE_GIFT_BOX_THRESHOLD = 1500;
@@ -34,49 +35,44 @@ export const BagPage: React.FC = () => {
 
   // Coupon state
   const [couponInput, setCouponInput] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(() => {
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; subtotal: number } | null>(() => {
     try {
       const saved = localStorage.getItem('sarine_applied_coupon');
-      return saved ? JSON.parse(saved) : null;
+      const parsed = saved ? JSON.parse(saved) : null;
+      return parsed && typeof parsed.code === 'string' && Number.isFinite(Number(parsed.subtotal))
+        ? { code: parsed.code, discount: Number(parsed.discount) || 0, subtotal: Number(parsed.subtotal) }
+        : null;
     } catch {
       return null;
     }
   });
   const [couponError, setCouponError] = useState<string | null>(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const activeCoupon = appliedCoupon && appliedCoupon.subtotal === subtotal ? appliedCoupon : null;
 
   // Gifting state
   const [isGift, setIsGift] = useState(false);
   const [giftNote, setGiftNote] = useState('');
 
-  const handleApplyCoupon = (e: React.FormEvent) => {
+  const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
     setCouponError(null);
     const code = couponInput.trim().toUpperCase();
-
-    if (code === 'SARINE10') {
-      const discount = Math.round(subtotal * 0.1);
-      const couponObj = { code, discount };
+    if (!code) {
+      setCouponError("Enter a coupon code.");
+      return;
+    }
+    setIsApplyingCoupon(true);
+    try {
+      const result = await validateStorefrontCoupon(code, subtotal);
+      const couponObj = { code: result.code, discount: result.discountAmount, subtotal };
       setAppliedCoupon(couponObj);
       localStorage.setItem('sarine_applied_coupon', JSON.stringify(couponObj));
       setCouponInput('');
-    } else if (code === 'WELCOME50') {
-      const discount = 50;
-      const couponObj = { code, discount };
-      setAppliedCoupon(couponObj);
-      localStorage.setItem('sarine_applied_coupon', JSON.stringify(couponObj));
-      setCouponInput('');
-    } else if (code === 'FESTIVE100') {
-      if (subtotal < 1500) {
-        setCouponError('FESTIVE100 requires minimum order value of ₹1,500');
-        return;
-      }
-      const discount = 100;
-      const couponObj = { code, discount };
-      setAppliedCoupon(couponObj);
-      localStorage.setItem('sarine_applied_coupon', JSON.stringify(couponObj));
-      setCouponInput('');
-    } else {
-      setCouponError('Invalid code. Try SARINE10 or WELCOME50.');
+    } catch (err) {
+      setCouponError(err instanceof Error ? err.message : "This coupon could not be applied.");
+    } finally {
+      setIsApplyingCoupon(false);
     }
   };
 
@@ -90,7 +86,7 @@ export const BagPage: React.FC = () => {
     removeItem(item.productId);
   };
 
-  const currentDiscount = appliedCoupon ? appliedCoupon.discount : 0;
+  const currentDiscount = activeCoupon ? activeCoupon.discount : 0;
   const shippingFee = calculateShippingFee(subtotal, checkoutConfig);
   const finalTotal = Math.max(0, subtotal - currentDiscount) + shippingFee;
 
@@ -355,11 +351,11 @@ export const BagPage: React.FC = () => {
 
                   {/* Coupon Code Module */}
                   <div>
-                    {appliedCoupon ? (
+                    {activeCoupon ? (
                       <div className="flex items-center justify-between bg-[#F7F0FA] p-2.5 border border-[#B69ACF] rounded-xs text-xs">
                         <span className="text-emerald-700 font-medium flex items-center gap-1.5">
                           <Tag size={13} />
-                          <span>Code {appliedCoupon.code} (-{formatInr(appliedCoupon.discount)})</span>
+                          <span>Code {activeCoupon.code} (-{formatInr(activeCoupon.discount)})</span>
                         </span>
                         <button
                           onClick={handleRemoveCoupon}
@@ -374,14 +370,15 @@ export const BagPage: React.FC = () => {
                           type="text"
                           value={couponInput}
                           onChange={(e) => setCouponInput(e.target.value)}
-                          placeholder="Promo code (SARINE10)"
+                          placeholder="Enter coupon code"
                           className="flex-1 p-2 bg-[#F7F0FA] border border-[#E7DCEB] text-xs uppercase rounded-xs focus:outline-none focus:border-[#563568]"
                         />
                         <button
                           type="submit"
+                          disabled={isApplyingCoupon}
                           className="px-3.5 py-2 bg-[#563568] text-white text-xs font-medium rounded-xs hover:bg-[#A184BD] transition-colors cursor-pointer"
                         >
-                          Apply
+                          {isApplyingCoupon ? 'Checking...' : 'Apply'}
                         </button>
                       </form>
                     )}
@@ -395,7 +392,7 @@ export const BagPage: React.FC = () => {
                       <span className="text-[#302438] font-medium">{formatInr(subtotal)}</span>
                     </div>
 
-                    {appliedCoupon && (
+                    {activeCoupon && (
                       <div className="flex items-baseline justify-between text-emerald-700">
                         <span>Coupon Discount</span>
                         <span>-{formatInr(appliedCoupon.discount)}</span>
