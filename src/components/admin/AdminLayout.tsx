@@ -22,6 +22,7 @@ import {
   Boxes,
   ShoppingBag,
   LayoutTemplate,
+  BarChart3,
   Settings,
   Search,
   Bell,
@@ -163,6 +164,12 @@ interface NavItem {
       path: '/admin/storefront',
       icon: LayoutTemplate,
       match: (p: string) => p.startsWith('/admin/storefront')
+    },
+    {
+      name: 'Analytics & Reports',
+      path: '/admin/analytics',
+      icon: BarChart3,
+      match: (p: string) => p.startsWith('/admin/analytics')
     },
     {
       name: 'Settings & Security',
