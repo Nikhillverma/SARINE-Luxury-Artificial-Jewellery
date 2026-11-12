@@ -171,7 +171,18 @@ router.post("/create", async (req, res, next) => {
       });
     }
 
-    const { coupon, discountAmount } = await lockAndValidateCoupon(connection, couponCode, calculatedSubtotal, customer.email);
+    let coupon = null;
+    let discountAmount = 0;
+    try {
+      const validatedCoupon = await lockAndValidateCoupon(connection, couponCode, calculatedSubtotal, customer.email);
+      coupon = validatedCoupon.coupon;
+      discountAmount = validatedCoupon.discountAmount;
+    } catch (couponError) {
+      await connection.rollback();
+      connection.release();
+      connection = null;
+      return res.status(400).json({ error: couponError.message || "Coupon could not be applied." });
+    }
     const shippingFee = calculateShippingFee(calculatedSubtotal, checkoutConfig);
     const total = Math.max(0, calculatedSubtotal - discountAmount) + shippingFee;
 
@@ -771,6 +782,8 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
       paymentStatus: order.payment_status || "pending",
       subtotal: Number(order.subtotal || 0),
       shippingFee: Number(order.shipping_fee || 0),
+      couponCode: order.coupon_code || undefined,
+      discountAmount: Number(order.discount_amount || 0),
       total: Number(order.total || 0),
       razorpayPaymentId: order.payment_status === "paid" ? (order.razorpay_payment_id || undefined) : undefined,
       shippingAddress: {
