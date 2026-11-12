@@ -209,8 +209,8 @@ adminOnly.put("/editorial", async (req, res, next) => {
     };
     if (!editorial.title || editorial.title.length > 180) return res.status(400).json({ error: "Heading is required (maximum 180 characters)." });
     if (editorial.eyebrow.length > 120 || editorial.description.length > 500 || editorial.ctaText.length > 80) return res.status(400).json({ error: "Editorial text exceeds the allowed length." });
-    if (!editorial.imageUrl || editorial.imageUrl.length > 2048 || (!editorial.imageUrl.startsWith("/") && !/^https:\\/\\//i.test(editorial.imageUrl))) return res.status(400).json({ error: "Choose a valid uploaded image." });
-    if (!(editorial.ctaLink.startsWith("/") && !editorial.ctaLink.startsWith("//")) && !/^https:\\/\\//i.test(editorial.ctaLink)) return res.status(400).json({ error: "Button destination must be a site path or HTTPS URL." });
+    if (!editorial.imageUrl || editorial.imageUrl.length > 2048 || (!editorial.imageUrl.startsWith("/") && !/^https:\/\//i.test(editorial.imageUrl))) return res.status(400).json({ error: "Choose a valid uploaded image." });
+    if (!(editorial.ctaLink.startsWith("/") && !editorial.ctaLink.startsWith("//")) && !/^https:\/\//i.test(editorial.ctaLink)) return res.status(400).json({ error: "Button destination must be a site path or HTTPS URL." });
     if (editorial.ctaLink.length > 500) return res.status(400).json({ error: "Button destination is too long." });
     await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('editorial_collection', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [JSON.stringify(editorial)]);
     res.json({ editorial });
@@ -272,7 +272,7 @@ publicRouter.post("/products/:productId/reviews", async (req, res, next) => {
     const rating = Number(req.body?.rating);
     const title = String(req.body?.title || "").trim();
     const comment = String(req.body?.comment || "").trim();
-    if (!productId || !name || name.length > 120 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) || email.length > 254 || !orderNumber || orderNumber.length > 64 || !Number.isInteger(rating) || rating < 1 || rating > 5 || !comment || comment.length < 10 || comment.length > 3000 || title.length > 160) {
+    if (!productId || !name || name.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || !orderNumber || orderNumber.length > 64 || !Number.isInteger(rating) || rating < 1 || rating > 5 || !comment || comment.length < 10 || comment.length > 3000 || title.length > 160) {
       return res.status(400).json({ error: "Enter your name, valid checkout email, order number, 1–5 star rating and feedback (10–3000 characters)." });
     }
     const [orders] = await pool.execute("SELECT id FROM orders WHERE order_number=? AND LOWER(customer_email)=? AND order_status='delivered' LIMIT 1", [orderNumber, email]);
