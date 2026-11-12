@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { normalizeCustomerEmail } from "../adminCustomers.js";
+import { normalizeCustomerEmail } from "../customerValidation.js";
 
 test("normalizes valid customer emails", () => {
   assert.equal(normalizeCustomerEmail("  BUYER@Example.com "), "buyer@example.com");
