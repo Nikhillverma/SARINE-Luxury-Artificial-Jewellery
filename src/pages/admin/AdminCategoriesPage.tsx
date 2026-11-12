@@ -8,7 +8,7 @@ import { Plus, RefreshCw, Edit2, Trash2, Upload, X, CheckCircle2, Eye, EyeOff } 
 const EMPTY_FORM = { name: '', description: '', image: '', sortOrder: '0', isActive: true };
 
 function slugify(value: string): string {
-  return value.toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '')
+  return value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
