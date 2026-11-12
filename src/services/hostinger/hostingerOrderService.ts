@@ -45,7 +45,8 @@ export class HostingerOrderService implements IOrderService {
           })),
           customer: input.customer,
           shippingAddress: input.shippingAddress,
-          paymentMethod: input.paymentMethod
+          paymentMethod: input.paymentMethod,
+          couponCode: input.couponCode
         })
       });
     } catch (netErr: any) {
@@ -74,9 +75,11 @@ export class HostingerOrderService implements IOrderService {
       lines: [],
       customer: input.customer,
       shippingAddress: input.shippingAddress,
-      subtotal: data.total ? data.total : (data.amount ? Math.round(data.amount / 100) : 0),
+      subtotal: data.subtotal !== undefined ? Number(data.subtotal) : (data.total ? Number(data.total) : (data.amount ? Math.round(data.amount / 100) : 0)),
       shippingFee: data.shippingFee !== undefined ? Number(data.shippingFee) : 0,
-      total: data.total ? data.total : (data.amount ? Math.round(data.amount / 100) : 0),
+      discountAmount: Number(data.discountAmount || 0),
+      couponCode: data.couponCode || undefined,
+      total: data.total ? Number(data.total) : (data.amount ? Math.round(data.amount / 100) : 0),
       paymentMethod: input.paymentMethod,
       paymentStatus: 'pending',
       orderStatus: input.paymentMethod === 'online' ? 'awaiting_payment' : 'placed',

@@ -121,6 +121,16 @@ export const CheckoutPage: React.FC = () => {
   const [pincode, setPincode] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('online');
   const { config: checkoutConfig, loading: checkoutConfigLoading } = useCheckoutConfig();
+  const [appliedCoupon] = useState<{ code: string; discount: number; subtotal: number } | null>(() => {
+    try {
+      const saved = localStorage.getItem('sarine_applied_coupon');
+      const parsed = saved ? JSON.parse(saved) : null;
+      return parsed && typeof parsed.code === 'string' && Number.isFinite(Number(parsed.subtotal))
+        ? { code: parsed.code, discount: Number(parsed.discount) || 0, subtotal: Number(parsed.subtotal) }
+        : null;
+    } catch { return null; }
+  });
+  const activeCoupon = appliedCoupon && appliedCoupon.subtotal === subtotal ? appliedCoupon : null;
 
   useEffect(() => {
     if (!checkoutConfig.codEnabled && paymentMethod === 'cod') setPaymentMethod('online');
@@ -132,7 +142,8 @@ export const CheckoutPage: React.FC = () => {
 
   // Computed shipping and total
   const shippingFee = calculateShippingFee(subtotal, checkoutConfig);
-  const total = subtotal + shippingFee;
+  const discountAmount = activeCoupon?.discount || 0;
+  const total = Math.max(0, subtotal - discountAmount) + shippingFee;
 
   // Validation function
   const validateForm = (): boolean => {
@@ -209,7 +220,8 @@ export const CheckoutPage: React.FC = () => {
           state: state.trim(),
           pincode: pincode.trim()
         },
-        paymentMethod
+        paymentMethod,
+        couponCode: activeCoupon?.code
       });
 
       console.log('[Checkout] Order created on server:', order.orderNumber, order);
@@ -278,6 +290,7 @@ export const CheckoutPage: React.FC = () => {
                   : `/order/${order.orderNumber}`;
                 console.log(`[Checkout] Navigating to: ${targetUrl}`);
                 navigate(targetUrl, { replace: true });
+                localStorage.removeItem('sarine_applied_coupon');
                 clearCart();
               } else {
                 setSubmitError('Payment failed or cancelled, please try again.');
@@ -322,6 +335,7 @@ export const CheckoutPage: React.FC = () => {
           : `/order/${order.orderNumber}`;
         console.log(`[Checkout] Navigating to: ${targetUrl}`);
         navigate(targetUrl, { replace: true });
+        localStorage.removeItem('sarine_applied_coupon');
         clearCart();
         return;
       }
@@ -736,6 +750,12 @@ export const CheckoutPage: React.FC = () => {
                 <span>Standard Delivery (India)</span>
                 <span>{shippingFee === 0 ? 'Complimentary' : formatInr(shippingFee)}</span>
               </div>
+              {activeCoupon && (
+                <div className="flex justify-between text-emerald-700">
+                  <span>Coupon ({activeCoupon.code})</span>
+                  <span>-{formatInr(discountAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-[#302438] font-semibold text-base pt-2 border-t border-[#E7DCEB]">
                 <span className="font-serif">Total Amount</span>
                 <span className="font-serif text-xl">{formatInr(total)}</span>
