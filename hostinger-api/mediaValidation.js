@@ -39,7 +39,7 @@ export function validateImageUpload({ fileName, mimeType, base64 }) {
 
   return {
     buffer,
-    fileName: fileName.replace(/[\\/\\0-\\x1f\\x7f]/g, "_").trim().slice(0, 255),
+    fileName: fileName.replaceAll("/", "_").replaceAll("\\\\", "_").replace(/[\u0000-\u001f\u007f]/g, "_").trim().slice(0, 255),
     mimeType
   };
 }
