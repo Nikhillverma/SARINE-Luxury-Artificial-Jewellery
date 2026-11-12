@@ -67,12 +67,18 @@ const emptyMetrics: DashboardMetrics = {
   archivedProducts: 0, lowStockProducts: 0
 };
 
-function formatDate(value: string | null): string {
+function formatDateTime(value: string | null): string {
   if (!value) return 'Date unavailable';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Date unavailable';
   return new Intl.DateTimeFormat('en-IN', {
-    day: 'numeric', month: 'short', year: 'numeric'
+    timeZone: 'Asia/Kolkata',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
   }).format(date);
 }
 
@@ -284,7 +290,7 @@ export const AdminDashboardPage: React.FC = () => {
                 <tr>
                   <th className="px-5 py-3 font-semibold">Order</th>
                   <th className="px-5 py-3 font-semibold">Customer</th>
-                  <th className="px-5 py-3 font-semibold">Date</th>
+                  <th className="px-5 py-3 font-semibold">Date &amp; Time (IST)</th>
                   <th className="px-5 py-3 font-semibold">Payment</th>
                   <th className="px-5 py-3 font-semibold">Status</th>
                   <th className="px-5 py-3 font-semibold text-right">Total</th>
@@ -297,7 +303,7 @@ export const AdminDashboardPage: React.FC = () => {
                   <tr key={order.orderNumber} className="text-xs text-[#514657]">
                     <td className="px-5 py-3 font-semibold text-[#563568]">{order.orderNumber}</td>
                     <td className="px-5 py-3">{order.customerName || 'Customer'}</td>
-                    <td className="px-5 py-3 whitespace-nowrap">{formatDate(order.createdAt)}</td>
+                    <td className="px-5 py-3 whitespace-nowrap">{formatDateTime(order.createdAt)}</td>
                     <td className="px-5 py-3"><span className={`px-2 py-1 rounded-full text-[10px] ${statusClass(order.paymentStatus)}`}>{order.paymentStatus || 'unknown'}</span></td>
                     <td className="px-5 py-3"><span className={`px-2 py-1 rounded-full text-[10px] ${statusClass(order.orderStatus)}`}>{order.orderStatus || 'unknown'}</span></td>
                     <td className="px-5 py-3 text-right font-semibold text-[#302438]">{formatInr(order.total)}</td>
