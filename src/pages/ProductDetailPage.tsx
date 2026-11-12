@@ -227,11 +227,25 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
 
   const handleReviewImageSelection = (files: FileList | null) => {
     const selected = Array.from(files || []);
-    if (selected.length > 3) { setReviewError("Please choose no more than 3 product photos."); return; }
-    if (selected.some(file => !["image/jpeg", "image/png", "image/webp"].includes(file.type))) { setReviewError("Product photos must be JPEG, PNG or WebP images."); return; }
-    newReviewImagePreviews.forEach(url => URL.revokeObjectURL(url));
-    setNewReviewImages(selected);
-    setNewReviewImagePreviews(selected.map(file => URL.createObjectURL(file)));
+    if (!selected.length) return;
+    if (selected.some(file => !["image/jpeg", "image/png", "image/webp"].includes(file.type))) {
+      setReviewError("Product photos must be JPEG, PNG or WebP images.");
+      return;
+    }
+
+    // Add newly selected photos instead of replacing the previous selection.
+    // Customers can choose photos in multiple passes, up to the three-photo limit.
+    const additions = selected.filter(file =>
+      !newReviewImages.some(existing =>
+        existing.name === file.name && existing.size === file.size && existing.lastModified === file.lastModified
+      )
+    );
+    if (newReviewImages.length + additions.length > 3) {
+      setReviewError("You can attach up to 3 product photos. Remove a photo before adding another.");
+      return;
+    }
+    setNewReviewImages(current => [...current, ...additions]);
+    setNewReviewImagePreviews(current => [...current, ...additions.map(file => URL.createObjectURL(file))]);
     setReviewError("");
   };
 
@@ -868,8 +882,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
 
               <div>
                 <label className="block text-[#6F6475] mb-1">Product Photos (optional, up to 3)</label>
-                <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e => handleReviewImageSelection(e.target.files)} className="block w-full text-xs file:mr-3 file:rounded-md file:border-0 file:bg-[#F7F0FA] file:px-3 file:py-2 file:text-xs file:text-[#563568]" />
-                <p className="mt-1 text-[11px] text-[#6F6475]">Share up to 3 photos of the jewellery you received. JPEG, PNG or WebP; images are optimised before upload.</p>
+                <input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={reviewSubmitting || newReviewImages.length >= 3} onChange={e => { handleReviewImageSelection(e.target.files); e.currentTarget.value = ""; }} className="block w-full text-xs file:mr-3 file:rounded-md file:border-0 file:bg-[#F7F0FA] file:px-3 file:py-2 file:text-xs file:text-[#563568] disabled:opacity-50" />
+                <p className="mt-1 text-[11px] text-[#6F6475]">Add up to 3 photos. You can select several together or use Choose Files again to add more. JPEG, PNG or WebP.</p>
                 {newReviewImagePreviews.length > 0 && <div className="mt-2 flex flex-wrap gap-2">{newReviewImagePreviews.map((url, index) => <div key={url} className="relative"><img src={url} alt={`Selected customer photo ${index + 1}`} className="h-20 w-20 rounded-md border border-[#E7DCEB] object-cover" /><button type="button" onClick={() => { const files = newReviewImages.filter((_, i) => i !== index); const urls = newReviewImagePreviews.filter((_, i) => i !== index); URL.revokeObjectURL(url); setNewReviewImages(files); setNewReviewImagePreviews(urls); }} className="absolute -right-2 -top-2 rounded-full bg-white border px-1.5 py-0.5 text-xs" aria-label={`Remove photo ${index + 1}`}>×</button></div>)}</div>}
               </div>
 
