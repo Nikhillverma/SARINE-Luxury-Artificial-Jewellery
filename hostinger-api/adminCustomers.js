@@ -1,18 +1,13 @@
 import { Router } from "express";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
+import { normalizeCustomerEmail } from "./customerValidation.js";
 
 const router = Router();
 router.use(requireAdminAuth);
 const MAX_PAGE_SIZE = 100;
 const MAX_OFFSET = 10000;
 
-export function normalizeCustomerEmail(value) {
-  if (typeof value !== "string") return "";
-  const email = value.trim().toLowerCase();
-  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "";
-  return email;
-}
 
 function toIsoString(value) {
   if (!value) return null;
