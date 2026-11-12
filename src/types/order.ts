@@ -53,6 +53,8 @@ export interface Order {
   shippingAddress: Address;
   subtotal: number;
   shippingFee: number;
+  discountAmount?: number;
+  couponCode?: string;
   total: number;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
@@ -94,6 +96,7 @@ export interface CreateOrderInput {
   customer: OrderCustomer;
   shippingAddress: Address;
   paymentMethod: PaymentMethod;
+  couponCode?: string;
 }
 
 export interface VerifyPaymentInput {
