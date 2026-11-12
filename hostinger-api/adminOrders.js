@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
+import { canShipOrder, shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
 
 const router = Router();
 
@@ -338,20 +339,22 @@ router.post("/update", async (req, res, next) => {
       const isPaid = order.payment_status === "paid";
       const isCod = order.payment_method === "cod";
 
-      if (!isPaid && !isCod) {
+      if (order.refund_needed || order.order_status === "needs_refund") {
         await connection.rollback();
         connection.release();
         connection = null;
         return res.status(400).json({
-          error: "Cannot mark order as shipped: Payment is neither paid nor configured for Cash on Delivery."
+          error: "This order requires refund handling and cannot be shipped."
         });
       }
 
-      if (order.order_status === "cancelled") {
+      if (!canShipOrder(order)) {
         await connection.rollback();
         connection.release();
         connection = null;
-        return res.status(400).json({ error: "Cannot ship a cancelled order." });
+        return res.status(400).json({
+          error: "This order is not in a shippable state. Confirm payment or verify Cash on Delivery before shipping."
+        });
       }
 
       const updateFields = ["order_status = 'shipped'", "shipped_at = UTC_TIMESTAMP(3)", "updated_at = UTC_TIMESTAMP(3)"];
@@ -482,8 +485,7 @@ router.post("/update", async (req, res, next) => {
       // Determine whether stock was decremented:
       // Stock is decremented for paid online orders and all COD orders (placed)
       const isPaid = order.payment_status === "paid";
-      const isCod = order.payment_method === "cod";
-      const stockWasDecremented = isPaid || isCod;
+      const stockWasDecremented = shouldRestoreStockOnCancellation(order);
 
       if (stockWasDecremented) {
         const [lines] = await connection.execute(
