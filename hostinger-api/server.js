@@ -6,6 +6,7 @@ import { pool, testDatabase } from "./db.js";
 import adminAuthRouter from "./adminAuth.js";
 import adminOrdersRouter from "./adminOrders.js";
 import adminDashboardRouter from "./adminDashboard.js";
+import adminAnalyticsRouter from "./adminAnalytics.js";
 import adminProductsRouter from "./adminProducts.js";
 import adminCategoriesRouter from "./adminCategories.js";
 import adminStorefrontRouter, { publicStorefrontRouter } from "./adminStorefront.js";
@@ -326,6 +327,7 @@ app.use("/api/admin/auth", adminAuthRouter);
 
 // Hostinger admin dashboard, category and product management
 app.use("/api/admin/dashboard", adminDashboardRouter);
+app.use("/api/admin/analytics", adminAnalyticsRouter);
 app.use("/api/admin/categories", adminCategoriesRouter);
 app.use("/api/admin/products", adminProductsRouter);
 
