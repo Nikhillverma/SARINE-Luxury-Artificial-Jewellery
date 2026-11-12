@@ -33,6 +33,7 @@ jobs:
         run: |
           node --check server.js
           node --check orders.js
+          node --check checkoutPolicy.js
           node --check adminAuth.js
           node --check adminOrders.js
           node --check adminStorefront.js

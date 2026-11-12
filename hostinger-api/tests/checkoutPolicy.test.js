@@ -22,3 +22,9 @@ test("checkout policy retains COD and the SARINE free-shipping threshold", () =>
   assert.equal(FREE_SHIPPING_THRESHOLD, 1999);
   assert.equal(COD_ENABLED, true);
 });
+
+test("shipping calculation accepts persisted checkout settings", () => {
+  const custom = { shippingFlatFee: 49, freeShippingThreshold: 1000, codEnabled: false };
+  assert.equal(calculateShippingFee(999, custom), 49);
+  assert.equal(calculateShippingFee(1000, custom), 0);
+});
