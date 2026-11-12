@@ -2,6 +2,8 @@ import { Router } from "express";
 import crypto from "node:crypto";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
+import rateLimit from "express-rate-limit";
+import { validateImageUpload } from "./mediaValidation.js";
 
 const admin = Router();
 const publicRouter = Router();
@@ -238,26 +240,51 @@ async function ensureReviewSchema() {
     comment TEXT NOT NULL,
     status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
     admin_reply VARCHAR(1000) NULL,
+    image_urls TEXT NULL,
     created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     UNIQUE KEY uq_review_order_product (order_id, product_id),
     INDEX idx_reviews_product_status (product_id, status, created_at),
     INDEX idx_reviews_status_date (status, created_at)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  const [columns] = await pool.execute("SHOW COLUMNS FROM product_reviews LIKE 'image_urls'");
+  if (!columns.length) await pool.execute("ALTER TABLE product_reviews ADD COLUMN image_urls TEXT NULL");
 }
+async function ensureReviewMediaTable() {
+  await pool.execute(`CREATE TABLE IF NOT EXISTS media_assets (
+    id CHAR(36) NOT NULL PRIMARY KEY, file_name VARCHAR(255) NOT NULL, mime_type VARCHAR(32) NOT NULL,
+    file_size INT UNSIGNED NOT NULL, image_data MEDIUMBLOB NOT NULL, uploaded_by VARCHAR(255) NOT NULL,
+    created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3), KEY idx_media_created_at (created_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+}
+const reviewImageUploadLimit = rateLimit({ windowMs: 60 * 60 * 1000, limit: 12, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Too many photo uploads. Please try again later." } });
+publicRouter.post("/review-images", reviewImageUploadLimit, async (req, res, next) => {
+  try {
+    const { buffer, fileName, mimeType } = validateImageUpload(req.body || {});
+    await ensureReviewMediaTable();
+    const id = crypto.randomUUID();
+    await pool.execute("INSERT INTO media_assets (id, file_name, mime_type, file_size, image_data, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)", [id, fileName, mimeType, buffer.length, buffer, "customer-review"]);
+    res.status(201).json({ success: true, media: { id, url: "/api/media/" + id } });
+  } catch (error) {
+    if (error.message?.includes("image") || error.message?.includes("filename") || error.message?.includes("JPEG") || error.message?.includes("2 MB")) return res.status(400).json({ error: error.message });
+    next(error);
+  }
+});
 function mapReview(row) {
+  let imageUrls = [];
+  try { imageUrls = row.image_urls ? JSON.parse(row.image_urls) : []; } catch {}
   return {
     id: row.id, productId: row.product_id, name: row.customer_name,
     rating: Number(row.rating), title: row.title, comment: row.comment,
     status: row.status, verified: true, adminReply: row.admin_reply || "",
-    date: row.created_at
+    imageUrls, date: row.created_at
   };
 }
 publicRouter.get("/products/:productId/reviews", async (req, res, next) => {
   try {
     await ensureReviewSchema();
     const productId = String(req.params.productId || "");
-    const [rows] = await pool.execute("SELECT id, product_id, customer_name, rating, title, comment, status, admin_reply, created_at FROM product_reviews WHERE product_id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci AND status='approved' ORDER BY created_at DESC LIMIT 100", [productId]);
+    const [rows] = await pool.execute("SELECT id, product_id, customer_name, rating, title, comment, status, admin_reply, image_urls, created_at FROM product_reviews WHERE product_id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci AND status='approved' ORDER BY created_at DESC LIMIT 100", [productId]);
     const [summary] = await pool.execute("SELECT COUNT(*) AS count, COALESCE(AVG(rating),0) AS average FROM product_reviews WHERE product_id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci AND status='approved'", [productId]);
     res.set("Cache-Control", "no-store").json({ reviews: rows.map(mapReview), count: Number(summary[0].count), average: Number(summary[0].average) });
   } catch (error) { next(error); }
@@ -272,6 +299,8 @@ publicRouter.post("/products/:productId/reviews", async (req, res, next) => {
     const rating = Number(req.body?.rating);
     const title = String(req.body?.title || "").trim();
     const comment = String(req.body?.comment || "").trim();
+    const imageIds = Array.isArray(req.body?.imageIds) ? req.body.imageIds : [];
+    if (imageIds.length > 3 || imageIds.some(id => typeof id !== "string" || !/^[a-f0-9-]{36}$/i.test(id)) || new Set(imageIds).size !== imageIds.length) return res.status(400).json({ error: "You can attach up to 3 valid product photos." });
     if (!productId || !name || name.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || !orderNumber || orderNumber.length > 64 || !Number.isInteger(rating) || rating < 1 || rating > 5 || !comment || comment.length < 10 || comment.length > 3000 || title.length > 160) {
       return res.status(400).json({ error: "Enter your name, valid checkout email, order number, 1–5 star rating and feedback (10–3000 characters)." });
     }
@@ -279,9 +308,16 @@ publicRouter.post("/products/:productId/reviews", async (req, res, next) => {
     if (!orders.length) return res.status(400).json({ error: "We could not match that order number and checkout email. Please check both details." });
     const [items] = await pool.execute("SELECT product_id FROM order_items WHERE order_id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci AND product_id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci LIMIT 1", [orders[0].id, productId]);
     if (!items.length) return res.status(403).json({ error: "That product is not included in the supplied order." });
+    if (imageIds.length) {
+      await ensureReviewMediaTable();
+      const placeholders = imageIds.map(() => "?").join(",");
+      const [mediaRows] = await pool.execute(`SELECT id FROM media_assets WHERE id IN (${placeholders})`, imageIds);
+      if (mediaRows.length !== imageIds.length) return res.status(400).json({ error: "One or more uploaded review photos could not be found. Please upload them again." });
+    }
+    const imageUrls = imageIds.map(id => "/api/media/" + id);
     const id = crypto.randomUUID();
     try {
-      await pool.execute("INSERT INTO product_reviews (id, product_id, order_id, customer_name, customer_email, rating, title, comment, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')", [id, productId, orders[0].id, name, email, rating, title, comment]);
+      await pool.execute("INSERT INTO product_reviews (id, product_id, order_id, customer_name, customer_email, rating, title, comment, image_urls, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')", [id, productId, orders[0].id, name, email, rating, title, comment, JSON.stringify(imageUrls)]);
     } catch (error) {
       if (error.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "A review has already been submitted for this product and order." });
       throw error;
@@ -295,7 +331,7 @@ adminOnly.get("/reviews", async (req, res, next) => {
     const status = ["pending","approved","rejected","all"].includes(String(req.query.status)) ? String(req.query.status) : "pending";
     const where = status === "all" ? "" : "WHERE r.status=?";
     const params = status === "all" ? [] : [status];
-    const [rows] = await pool.execute(`SELECT r.id, r.product_id, r.order_id, r.customer_name, r.customer_email, r.rating, r.title, r.comment, r.status, r.admin_reply, r.created_at, p.name AS product_name, o.order_number FROM product_reviews r LEFT JOIN products p ON p.id COLLATE utf8mb4_unicode_ci = r.product_id COLLATE utf8mb4_unicode_ci LEFT JOIN orders o ON o.id COLLATE utf8mb4_unicode_ci = r.order_id COLLATE utf8mb4_unicode_ci ${where} ORDER BY r.created_at DESC LIMIT 300`, params);
+    const [rows] = await pool.execute(`SELECT r.id, r.product_id, r.order_id, r.customer_name, r.customer_email, r.rating, r.title, r.comment, r.status, r.admin_reply, r.image_urls, r.created_at, p.name AS product_name, o.order_number FROM product_reviews r LEFT JOIN products p ON p.id COLLATE utf8mb4_unicode_ci = r.product_id COLLATE utf8mb4_unicode_ci LEFT JOIN orders o ON o.id COLLATE utf8mb4_unicode_ci = r.order_id COLLATE utf8mb4_unicode_ci ${where} ORDER BY r.created_at DESC LIMIT 300`, params);
     res.set("Cache-Control", "no-store").json({ reviews: rows.map(row => ({ ...mapReview(row), email: row.customer_email, orderNumber: row.order_number, productName: row.product_name })) });
   } catch (error) { next(error); }
 });
