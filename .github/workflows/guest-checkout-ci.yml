@@ -41,3 +41,6 @@ jobs:
           node --check adminDashboard.js
           node --check adminCustomers.js
           node --check customerValidation.js
+          node --check marketingPolicy.js
+          node --check adminMarketing.js
+          node --check publicCoupons.js

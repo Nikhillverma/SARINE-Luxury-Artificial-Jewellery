@@ -10,6 +10,8 @@ import adminAnalyticsRouter from "./adminAnalytics.js";
 import adminProductsRouter from "./adminProducts.js";
 import adminCategoriesRouter from "./adminCategories.js";
 import adminCustomersRouter from "./adminCustomers.js";
+import adminMarketingRouter from "./adminMarketing.js";
+import publicCouponsRouter from "./publicCoupons.js";
 import adminStorefrontRouter, { publicStorefrontRouter } from "./adminStorefront.js";
 import ordersRouter from "./orders.js";
 import { publicMediaRouter, adminMediaRouter } from "./media.js";
@@ -272,6 +274,9 @@ app.get("/api/products/:slug", async (req, res, next) => {
     next(error);
   }
 });
+
+app.use("/api/marketing/coupons", publicCouponsRouter);
+app.use("/api/admin/marketing", adminMarketingRouter);
 
 // Public storefront content managed from the admin panel.
 app.use("/api/storefront", publicStorefrontRouter);
