@@ -58,6 +58,10 @@ export const CartDrawer: React.FC = () => {
       setCouponError('Enter a coupon code.');
       return;
     }
+    // Replace any previous coupon rather than silently retaining its discount
+    // when the shopper enters a different or invalid code.
+    setAppliedCoupon(null);
+    localStorage.removeItem('sarine_applied_coupon');
     setIsApplyingCoupon(true);
     try {
       const result = await validateStorefrontCoupon(code, subtotal);
