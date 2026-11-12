@@ -385,7 +385,12 @@ router.post("/create", async (req, res, next) => {
         publicToken,
         razorpayOrderId: rpOrder.id,
         amount: amountInPaise,
-        keyId: process.env.RAZORPAY_KEY_ID
+        keyId: process.env.RAZORPAY_KEY_ID,
+        subtotal: calculatedSubtotal,
+        shippingFee,
+        discountAmount,
+        couponCode: coupon?.code || null,
+        total
       });
     }
   } catch (error) {
