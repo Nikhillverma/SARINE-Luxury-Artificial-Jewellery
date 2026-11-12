@@ -27,6 +27,7 @@ import { RefundPolicyPage } from './pages/RefundPolicyPage';
 import { AboutPage } from './pages/AboutPage';
 import { TrackOrderPage } from './pages/TrackOrderPage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminProductsPage } from './pages/admin/AdminProductsPage';
 import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
@@ -97,7 +98,7 @@ function MainAppShell() {
           <Route path="/admin/customers" element={<Navigate to="/admin/orders" replace />} />
           <Route path="/admin/marketing" element={<Navigate to="/admin" replace />} />
           <Route path="/admin/storefront" element={<AdminStorefrontPage />} />
-          <Route path="/admin/analytics" element={<Navigate to="/admin" replace />} />
+          <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           <Route path="/admin/copilot" element={<Navigate to="/admin" replace />} />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />
 
