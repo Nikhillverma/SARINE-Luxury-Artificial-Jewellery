@@ -191,7 +191,7 @@ router.get("/", async (req, res, next) => {
 
       return {
         orderNumber: row.order_number,
-        createdAt: toIsoString(row.created_at) || new Date().toISOString(),
+        createdAt: toIsoString(row.created_at),
         customer: {
           name: row.customer_name || shipping.fullName || "",
           email: row.customer_email || "",
