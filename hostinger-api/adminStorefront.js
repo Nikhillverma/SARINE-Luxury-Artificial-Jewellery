@@ -172,3 +172,141 @@ publicRouter.get("/announcement", async (_req, res, next) => {
 admin.use("/", adminOnly);
 export { publicRouter as publicStorefrontRouter };
 export default admin;
+
+
+// Editorial Collection content is stored independently from hero banner records.
+const editorialDefaults = {
+  eyebrow: "EDITORIAL COLLECTION",
+  title: "The Art of Everyday Elegance",
+  description: "A curated collection that blends classic beauty with modern sensibilities.",
+  ctaText: "Explore the Collection",
+  ctaLink: "/shop",
+  imageUrl: "/images/editorial-banner.jpg",
+  active: true
+};
+async function readEditorial() {
+  await ensureSchema();
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='editorial_collection' LIMIT 1");
+  if (!rows.length) return editorialDefaults;
+  try { return { ...editorialDefaults, ...JSON.parse(rows[0].setting_value) }; }
+  catch { return editorialDefaults; }
+}
+adminOnly.get("/editorial", async (_req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ editorial: await readEditorial() }); }
+  catch (error) { next(error); }
+});
+adminOnly.put("/editorial", async (req, res, next) => {
+  try {
+    const input = req.body || {};
+    const editorial = {
+      eyebrow: String(input.eyebrow ?? "").trim(),
+      title: String(input.title ?? "").trim(),
+      description: String(input.description ?? "").trim(),
+      ctaText: String(input.ctaText ?? "").trim(),
+      ctaLink: String(input.ctaLink ?? "").trim(),
+      imageUrl: String(input.imageUrl ?? "").trim(),
+      active: input.active === true
+    };
+    if (!editorial.title || editorial.title.length > 180) return res.status(400).json({ error: "Heading is required (maximum 180 characters)." });
+    if (editorial.eyebrow.length > 120 || editorial.description.length > 500 || editorial.ctaText.length > 80) return res.status(400).json({ error: "Editorial text exceeds the allowed length." });
+    if (!editorial.imageUrl || editorial.imageUrl.length > 2048 || (!editorial.imageUrl.startsWith("/") && !/^https:\\/\\//i.test(editorial.imageUrl))) return res.status(400).json({ error: "Choose a valid uploaded image." });
+    if (!(editorial.ctaLink.startsWith("/") && !editorial.ctaLink.startsWith("//")) && !/^https:\\/\\//i.test(editorial.ctaLink)) return res.status(400).json({ error: "Button destination must be a site path or HTTPS URL." });
+    if (editorial.ctaLink.length > 500) return res.status(400).json({ error: "Button destination is too long." });
+    await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('editorial_collection', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [JSON.stringify(editorial)]);
+    res.json({ editorial });
+  } catch (error) { next(error); }
+});
+publicRouter.get("/editorial", async (_req, res, next) => {
+  try {
+    const editorial = await readEditorial();
+    res.set("Cache-Control", "no-store").json({ editorial: editorial.active ? editorial : null });
+  } catch (error) { next(error); }
+});
+
+// Customer reviews are private until an administrator approves them.
+// A guest proves purchase by supplying the order number and the email used at checkout.
+async function ensureReviewSchema() {
+  await ensureSchema();
+  await pool.execute(`CREATE TABLE IF NOT EXISTS product_reviews (
+    id CHAR(36) NOT NULL PRIMARY KEY,
+    product_id VARCHAR(191) NOT NULL,
+    order_id VARCHAR(191) NOT NULL,
+    customer_name VARCHAR(120) NOT NULL,
+    customer_email VARCHAR(254) NOT NULL,
+    rating TINYINT UNSIGNED NOT NULL,
+    title VARCHAR(160) NOT NULL DEFAULT '',
+    comment TEXT NOT NULL,
+    status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+    admin_reply VARCHAR(1000) NULL,
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+    UNIQUE KEY uq_review_order_product (order_id, product_id),
+    INDEX idx_reviews_product_status (product_id, status, created_at),
+    INDEX idx_reviews_status_date (status, created_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+}
+function mapReview(row) {
+  return {
+    id: row.id, productId: row.product_id, name: row.customer_name,
+    rating: Number(row.rating), title: row.title, comment: row.comment,
+    status: row.status, verified: true, adminReply: row.admin_reply || "",
+    date: row.created_at
+  };
+}
+publicRouter.get("/products/:productId/reviews", async (req, res, next) => {
+  try {
+    await ensureReviewSchema();
+    const productId = String(req.params.productId || "");
+    const [rows] = await pool.execute("SELECT id, product_id, customer_name, rating, title, comment, status, admin_reply, created_at FROM product_reviews WHERE product_id=? AND status='approved' ORDER BY created_at DESC LIMIT 100", [productId]);
+    const [summary] = await pool.execute("SELECT COUNT(*) AS count, COALESCE(AVG(rating),0) AS average FROM product_reviews WHERE product_id=? AND status='approved'", [productId]);
+    res.set("Cache-Control", "no-store").json({ reviews: rows.map(mapReview), count: Number(summary[0].count), average: Number(summary[0].average) });
+  } catch (error) { next(error); }
+});
+publicRouter.post("/products/:productId/reviews", async (req, res, next) => {
+  try {
+    await ensureReviewSchema();
+    const productId = String(req.params.productId || "").trim();
+    const name = String(req.body?.name || "").trim();
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const orderNumber = String(req.body?.orderNumber || "").trim();
+    const rating = Number(req.body?.rating);
+    const title = String(req.body?.title || "").trim();
+    const comment = String(req.body?.comment || "").trim();
+    if (!productId || !name || name.length > 120 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) || email.length > 254 || !orderNumber || orderNumber.length > 64 || !Number.isInteger(rating) || rating < 1 || rating > 5 || !comment || comment.length < 10 || comment.length > 3000 || title.length > 160) {
+      return res.status(400).json({ error: "Enter your name, valid checkout email, order number, 1–5 star rating and feedback (10–3000 characters)." });
+    }
+    const [orders] = await pool.execute("SELECT id FROM orders WHERE order_number=? AND LOWER(customer_email)=? AND order_status NOT IN ('cancelled','needs_refund') AND payment_status IN ('paid','cod','pending') LIMIT 1", [orderNumber, email]);
+    if (!orders.length) return res.status(400).json({ error: "We could not match that order number and checkout email. Please check both details." });
+    const [items] = await pool.execute("SELECT product_id FROM order_items WHERE order_id=? AND product_id=? LIMIT 1", [orders[0].id, productId]);
+    if (!items.length) return res.status(403).json({ error: "That product is not included in the supplied order." });
+    const id = crypto.randomUUID();
+    try {
+      await pool.execute("INSERT INTO product_reviews (id, product_id, order_id, customer_name, customer_email, rating, title, comment, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')", [id, productId, orders[0].id, name, email, rating, title, comment]);
+    } catch (error) {
+      if (error.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "A review has already been submitted for this product and order." });
+      throw error;
+    }
+    res.status(201).json({ success: true, message: "Thank you. Your review has been submitted for moderation." });
+  } catch (error) { next(error); }
+});
+adminOnly.get("/reviews", async (req, res, next) => {
+  try {
+    await ensureReviewSchema();
+    const status = ["pending","approved","rejected","all"].includes(String(req.query.status)) ? String(req.query.status) : "pending";
+    const where = status === "all" ? "" : "WHERE r.status=?";
+    const params = status === "all" ? [] : [status];
+    const [rows] = await pool.execute(`SELECT r.id, r.product_id, r.order_id, r.customer_name, r.customer_email, r.rating, r.title, r.comment, r.status, r.admin_reply, r.created_at, p.name AS product_name, o.order_number FROM product_reviews r LEFT JOIN products p ON p.id=r.product_id LEFT JOIN orders o ON o.id=r.order_id ${where} ORDER BY r.created_at DESC LIMIT 300`, params);
+    res.set("Cache-Control", "no-store").json({ reviews: rows.map(row => ({ ...mapReview(row), email: row.customer_email, orderNumber: row.order_number, productName: row.product_name })) });
+  } catch (error) { next(error); }
+});
+adminOnly.patch("/reviews/:id", async (req, res, next) => {
+  try {
+    await ensureReviewSchema();
+    const status = String(req.body?.status || "");
+    const reply = String(req.body?.adminReply || "").trim();
+    if (!["approved","rejected","pending"].includes(status) || reply.length > 1000) return res.status(400).json({ error: "Choose a valid moderation status and reply (maximum 1000 characters)." });
+    const [result] = await pool.execute("UPDATE product_reviews SET status=?, admin_reply=? WHERE id=?", [status, reply || null, req.params.id]);
+    if (!result.affectedRows) return res.status(404).json({ error: "Review not found." });
+    res.json({ success: true });
+  } catch (error) { next(error); }
+});
