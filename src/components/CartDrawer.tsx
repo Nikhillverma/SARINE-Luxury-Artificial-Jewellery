@@ -9,6 +9,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { formatInr } from '../utils/currency';
+import { calculateShippingFee } from '../config/store';
 import { X, ShoppingBag, Trash2, ArrowRight, AlertCircle, Heart, Tag, Check, Sparkles } from 'lucide-react';
 
 const FREE_GIFT_BOX_THRESHOLD = 1500;
@@ -109,7 +110,8 @@ export const CartDrawer: React.FC = () => {
   };
 
   const currentDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-  const finalTotal = Math.max(0, subtotal - currentDiscount);
+  const shippingFee = calculateShippingFee(subtotal);
+  const finalTotal = Math.max(0, subtotal - currentDiscount) + shippingFee;
 
   // Free gift box progress
   const progressPercent = Math.min(100, Math.round((subtotal / FREE_GIFT_BOX_THRESHOLD) * 100));
@@ -354,7 +356,7 @@ export const CartDrawer: React.FC = () => {
               )}
               <div className="flex items-baseline justify-between">
                 <span>Pan-India Delivery</span>
-                <span className="text-emerald-700 font-medium">Complimentary</span>
+                <span className={shippingFee === 0 ? 'text-emerald-700 font-medium' : 'text-[#302438] font-medium'}>{shippingFee === 0 ? 'Complimentary' : formatInr(shippingFee)}</span>
               </div>
               <div className="flex items-baseline justify-between pt-2 border-t border-[#E7DCEB] text-sm font-medium text-[#302438]">
                 <span>Total Payable</span>

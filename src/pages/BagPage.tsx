@@ -10,6 +10,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { formatInr } from '../utils/currency';
+import { calculateShippingFee } from '../config/store';
 import { ShoppingBag, Trash2, ArrowLeft, ArrowRight, AlertCircle, Heart, Gift, Tag, Sparkles } from 'lucide-react';
 
 const FREE_GIFT_BOX_THRESHOLD = 1500;
@@ -88,7 +89,8 @@ export const BagPage: React.FC = () => {
   };
 
   const currentDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-  const finalTotal = Math.max(0, subtotal - currentDiscount);
+  const shippingFee = calculateShippingFee(subtotal);
+  const finalTotal = Math.max(0, subtotal - currentDiscount) + shippingFee;
 
   const progressPercent = Math.min(100, Math.round((subtotal / FREE_GIFT_BOX_THRESHOLD) * 100));
   const amountToGift = Math.max(0, FREE_GIFT_BOX_THRESHOLD - subtotal);
@@ -400,7 +402,7 @@ export const BagPage: React.FC = () => {
 
                     <div className="flex items-baseline justify-between">
                       <span>Shipping (Pan-India)</span>
-                      <span className="text-emerald-700 font-medium">Complimentary</span>
+                      <span className={shippingFee === 0 ? 'text-emerald-700 font-medium' : 'text-[#302438] font-medium'}>{shippingFee === 0 ? 'Complimentary' : formatInr(shippingFee)}</span>
                     </div>
 
                     <div className="flex items-baseline justify-between pt-3 border-t border-[#E7DCEB] text-sm text-[#302438]">
