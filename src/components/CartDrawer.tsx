@@ -106,43 +106,6 @@ export const CartDrawer: React.FC = () => {
 
   if (!isDrawerOpen) return null;
 
-  const handleApplyCoupon = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCouponError(null);
-    const code = couponInput.trim().toUpperCase();
-
-    if (code === 'SARINE10') {
-      const discount = Math.round(subtotal * 0.1);
-      const couponObj = { code, discount };
-      setAppliedCoupon(couponObj);
-      localStorage.setItem('sarine_applied_coupon', JSON.stringify(couponObj));
-      setCouponInput('');
-    } else if (code === 'WELCOME50') {
-      const discount = 50;
-      const couponObj = { code, discount };
-      setAppliedCoupon(couponObj);
-      localStorage.setItem('sarine_applied_coupon', JSON.stringify(couponObj));
-      setCouponInput('');
-    } else if (code === 'FESTIVE100') {
-      if (subtotal < 1500) {
-        setCouponError('FESTIVE100 requires minimum order value of ₹1,500');
-        return;
-      }
-      const discount = 100;
-      const couponObj = { code, discount };
-      setAppliedCoupon(couponObj);
-      localStorage.setItem('sarine_applied_coupon', JSON.stringify(couponObj));
-      setCouponInput('');
-    } else {
-      setCouponError('Invalid coupon code. Try SARINE10 or WELCOME50.');
-    }
-  };
-
-  const handleRemoveCoupon = () => {
-    setAppliedCoupon(null);
-    localStorage.removeItem('sarine_applied_coupon');
-  };
-
   const handleSaveToWishlist = (item: any) => {
     toggleWishlist(item.product);
     removeItem(item.productId);
