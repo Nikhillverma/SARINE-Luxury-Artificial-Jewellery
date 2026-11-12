@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
 import { hostingerMediaService } from "../../services";
-import { hostingerStorefrontService, type StorefrontBanner, type EditorialContent } from "../../services/hostinger/hostingerStorefrontService";
+import { hostingerStorefrontService, type StorefrontBanner, type EditorialContent, type ProductReview } from "../../services/hostinger/hostingerStorefrontService";
 
 const defaultEditorial: EditorialContent = { eyebrow: "EDITORIAL COLLECTION", title: "The Art of Everyday Elegance", description: "A curated collection that blends classic beauty with modern sensibilities.", ctaText: "Explore the Collection", ctaLink: "/shop", imageUrl: "/images/editorial-banner.jpg", active: true };
 const emptyForm = { tagline: "", title: "", subtitle: "", ctaText: "Shop now", ctaLink: "/shop", imageUrl: "", active: false };
 
 export const AdminStorefrontPage: React.FC = () => {
   const [banners, setBanners] = useState<StorefrontBanner[]>([]);
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
+  const [reviewStatus, setReviewStatus] = useState("pending");
+  const [reviewReplies, setReviewReplies] = useState<Record<string,string>>({});
   const [editorial, setEditorial] = useState<EditorialContent>(defaultEditorial);
   const [editorialFile, setEditorialFile] = useState<File | null>(null);
   const [editorialUploading, setEditorialUploading] = useState(false);
@@ -35,7 +38,11 @@ export const AdminStorefrontPage: React.FC = () => {
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to load storefront content."); }
     finally { setLoading(false); }
   };
-  useEffect(() => { void load(); }, []);
+  const loadReviews = async (status = reviewStatus) => {
+    try { const result = await hostingerStorefrontService.getAdminReviews(status); setReviews(result.reviews); }
+    catch (e) { setError(e instanceof Error ? e.message : "Unable to load customer feedback."); }
+  };
+  useEffect(() => { void load(); void loadReviews("pending"); }, []);
 
   const beginAdd = () => { setEditingId(null); setForm(emptyForm); setFile(null); setMessage(""); setError(""); };
   const beginEdit = (banner: StorefrontBanner) => {
@@ -102,6 +109,16 @@ export const AdminStorefrontPage: React.FC = () => {
     catch (e) { setError(e instanceof Error ? e.message : "Could not reorder banners."); }
     finally { setBusy(false); }
   };
+  const moderateReview = async (review: ProductReview, status: "approved" | "rejected") => {
+    setBusy(true); setError(""); setMessage("");
+    try {
+      await hostingerStorefrontService.moderateReview(review.id, status, reviewReplies[review.id] || "");
+      setMessage(status === "approved" ? "Review approved and visible on its product page." : "Review rejected and hidden from customers.");
+      await loadReviews(reviewStatus);
+    } catch (e) { setError(e instanceof Error ? e.message : "Review moderation failed."); }
+    finally { setBusy(false); }
+  };
+
   const saveEditorial = async () => {
     setBusy(true); setError(""); setMessage("");
     try {
@@ -149,6 +166,11 @@ export const AdminStorefrontPage: React.FC = () => {
           <label className="flex items-center gap-2 text-sm md:col-span-2"><input type="checkbox" checked={editorial.active} onChange={e=>setEditorial({...editorial,active:e.target.checked})} /> Publish Editorial Collection on homepage</label>
           <div className="flex gap-2 md:col-span-2"><button disabled={busy || editorialUploading} onClick={()=>void saveEditorial()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy?"Saving…":"Save Editorial Collection"}</button><a href="/" target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg border text-sm">Preview homepage</a></div>
         </div>
+      </section>
+
+      <section className="bg-white border rounded-2xl p-5 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold text-[#2C1838]">Customer Ratings & Feedback</h2><p className="text-xs text-gray-500">Only delivered-order reviews are accepted. Approve reviews before they appear publicly.</p></div><div className="flex gap-2"><select value={reviewStatus} onChange={e=>{setReviewStatus(e.target.value);void loadReviews(e.target.value);}} className="border rounded-lg p-2 text-xs"><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="all">All reviews</option></select><button onClick={()=>void loadReviews()} className="border rounded-lg px-3 py-2 text-xs">Refresh</button></div></div>
+        {reviews.length===0 ? <p className="text-sm text-gray-500">No reviews found in this view.</p> : <div className="space-y-3">{reviews.map(review=><article key={review.id} className="border rounded-xl p-4 space-y-2"><div className="flex flex-wrap justify-between gap-2"><div><p className="font-medium text-sm">{review.productName || review.productId}</p><p className="text-xs text-gray-500">{review.name} · {review.email} · Order {review.orderNumber || "—"}</p></div><span className="text-xs capitalize">{review.status} · {"★".repeat(review.rating)}</span></div>{review.title && <p className="font-medium text-sm">{review.title}</p>}<p className="text-sm text-gray-700 whitespace-pre-wrap">{review.comment}</p><label className="block text-xs text-gray-500">Admin reply (optional)<textarea value={reviewReplies[review.id] ?? review.adminReply ?? ""} maxLength={1000} rows={2} onChange={e=>setReviewReplies({...reviewReplies,[review.id]:e.target.value})} className="mt-1 w-full border rounded-lg p-2 text-sm" placeholder="Write a response to the customer" /></label><div className="flex flex-wrap gap-2"><button disabled={busy || review.status==="approved"} onClick={()=>void moderateReview(review,"approved")} className="rounded-lg bg-[#563568] text-white px-3 py-2 text-xs disabled:opacity-50">Approve & publish</button><button disabled={busy || review.status==="rejected"} onClick={()=>void moderateReview(review,"rejected")} className="rounded-lg border border-red-200 text-red-700 px-3 py-2 text-xs disabled:opacity-50">Reject</button></div></article>)}</div>}
       </section>
 
       <section className="bg-white border rounded-2xl p-5 space-y-4">
