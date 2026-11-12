@@ -2,6 +2,8 @@ import { Router } from "express";
 import crypto from "node:crypto";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
+import rateLimit from "express-rate-limit";
+import { validateImageUpload } from "./mediaValidation.js";
 
 const admin = Router();
 const publicRouter = Router();
@@ -238,19 +240,44 @@ async function ensureReviewSchema() {
     comment TEXT NOT NULL,
     status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
     admin_reply VARCHAR(1000) NULL,
+    image_urls TEXT NULL,
     created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     UNIQUE KEY uq_review_order_product (order_id, product_id),
     INDEX idx_reviews_product_status (product_id, status, created_at),
     INDEX idx_reviews_status_date (status, created_at)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  const [columns] = await pool.execute("SHOW COLUMNS FROM product_reviews LIKE 'image_urls'");
+  if (!columns.length) await pool.execute("ALTER TABLE product_reviews ADD COLUMN image_urls TEXT NULL");
 }
+async function ensureReviewMediaTable() {
+  await pool.execute(`CREATE TABLE IF NOT EXISTS media_assets (
+    id CHAR(36) NOT NULL PRIMARY KEY, file_name VARCHAR(255) NOT NULL, mime_type VARCHAR(32) NOT NULL,
+    file_size INT UNSIGNED NOT NULL, image_data MEDIUMBLOB NOT NULL, uploaded_by VARCHAR(255) NOT NULL,
+    created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3), KEY idx_media_created_at (created_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+}
+const reviewImageUploadLimit = rateLimit({ windowMs: 60 * 60 * 1000, limit: 12, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Too many photo uploads. Please try again later." } });
+publicRouter.post("/review-images", reviewImageUploadLimit, async (req, res, next) => {
+  try {
+    const { buffer, fileName, mimeType } = validateImageUpload(req.body || {});
+    await ensureReviewMediaTable();
+    const id = crypto.randomUUID();
+    await pool.execute("INSERT INTO media_assets (id, file_name, mime_type, file_size, image_data, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)", [id, fileName, mimeType, buffer.length, buffer, "customer-review"]);
+    res.status(201).json({ success: true, media: { id, url: "/api/media/" + id } });
+  } catch (error) {
+    if (error.message?.includes("image") || error.message?.includes("filename") || error.message?.includes("JPEG") || error.message?.includes("2 MB")) return res.status(400).json({ error: error.message });
+    next(error);
+  }
+});
 function mapReview(row) {
+  let imageUrls = [];
+  try { imageUrls = row.image_urls ? JSON.parse(row.image_urls) : []; } catch {}
   return {
     id: row.id, productId: row.product_id, name: row.customer_name,
     rating: Number(row.rating), title: row.title, comment: row.comment,
     status: row.status, verified: true, adminReply: row.admin_reply || "",
-    date: row.created_at
+    imageUrls, date: row.created_at
   };
 }
 publicRouter.get("/products/:productId/reviews", async (req, res, next) => {
