@@ -174,7 +174,7 @@ router.post("/create", async (req, res, next) => {
     // 6. Concurrency-safe counter allocation
     await connection.execute(
       `INSERT INTO counters (name, seq, updated_at)
-       VALUES ('orders', 0, CURRENT_TIMESTAMP(3))
+       VALUES ('orders', 0, UTC_TIMESTAMP(3))
        ON DUPLICATE KEY UPDATE name = name`
     );
 
@@ -205,7 +205,7 @@ router.post("/create", async (req, res, next) => {
     }
 
     await connection.execute(
-      `UPDATE counters SET seq = ?, updated_at = CURRENT_TIMESTAMP(3) WHERE name = 'orders'`,
+      `UPDATE counters SET seq = ?, updated_at = UTC_TIMESTAMP(3) WHERE name = 'orders'`,
       [allocatedSeq]
     );
 
@@ -228,7 +228,7 @@ router.post("/create", async (req, res, next) => {
       // Deduct stock immediately for COD
       for (const line of verifiedLines) {
         await connection.execute(
-          `UPDATE products SET stock = stock - ?, updated_at = CURRENT_TIMESTAMP(3) WHERE id = ?`,
+          `UPDATE products SET stock = stock - ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
           [line.quantity, line.productId]
         );
       }
@@ -238,7 +238,7 @@ router.post("/create", async (req, res, next) => {
            id, order_number, customer_id, customer_name, customer_email, customer_phone,
            shipping_address, subtotal, shipping_fee, total, payment_method,
            payment_status, order_status, public_token_hash, source_document, created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cod', 'pending', 'placed', ?, 'web_checkout', CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))`,
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cod', 'pending', 'placed', ?, 'web_checkout', UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
         [
           orderNumber,
           orderNumber,
@@ -264,7 +264,7 @@ router.post("/create", async (req, res, next) => {
 
       await connection.execute(
         `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
-         VALUES (?, NULL, 'placed', 'Order placed via COD', 'customer', CURRENT_TIMESTAMP(3))`,
+         VALUES (?, NULL, 'placed', 'Order placed via COD', 'customer', UTC_TIMESTAMP(3))`,
         [orderNumber]
       );
 
@@ -285,7 +285,7 @@ router.post("/create", async (req, res, next) => {
            id, order_number, customer_id, customer_name, customer_email, customer_phone,
            shipping_address, subtotal, shipping_fee, total, payment_method,
            payment_status, order_status, public_token_hash, source_document, created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'online', 'pending', 'awaiting_payment', ?, 'web_checkout', CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))`,
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'online', 'pending', 'awaiting_payment', ?, 'web_checkout', UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
         [
           orderNumber,
           orderNumber,
@@ -311,7 +311,7 @@ router.post("/create", async (req, res, next) => {
 
       await connection.execute(
         `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
-         VALUES (?, NULL, 'awaiting_payment', 'Order created awaiting Razorpay payment', 'customer', CURRENT_TIMESTAMP(3))`,
+         VALUES (?, NULL, 'awaiting_payment', 'Order created awaiting Razorpay payment', 'customer', UTC_TIMESTAMP(3))`,
         [orderNumber]
       );
 
@@ -341,7 +341,7 @@ router.post("/create", async (req, res, next) => {
         );
         await pool.execute(
           `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
-           VALUES (?, 'awaiting_payment', 'failed', 'Payment gateway order creation failed', 'system', CURRENT_TIMESTAMP(3))`,
+           VALUES (?, 'awaiting_payment', 'failed', 'Payment gateway order creation failed', 'system', UTC_TIMESTAMP(3))`,
           [orderNumber]
         );
         return res.status(500).json({
@@ -351,7 +351,7 @@ router.post("/create", async (req, res, next) => {
 
       await pool.execute(
         `UPDATE orders
-         SET razorpay_order_id = ?, razorpay_amount_paise = ?, razorpay_key_id = ?, updated_at = CURRENT_TIMESTAMP(3)
+         SET razorpay_order_id = ?, razorpay_amount_paise = ?, razorpay_key_id = ?, updated_at = UTC_TIMESTAMP(3)
          WHERE id = ?`,
         [rpOrder.id, amountInPaise, process.env.RAZORPAY_KEY_ID || "", orderNumber]
       );
@@ -534,7 +534,7 @@ router.post("/verify", async (req, res, next) => {
       // Deduct stock for verified prepaid items
       for (const item of orderItems) {
         await connection.execute(
-          `UPDATE products SET stock = stock - ?, updated_at = CURRENT_TIMESTAMP(3) WHERE id = ?`,
+          `UPDATE products SET stock = stock - ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
           [item.quantity, item.product_id]
         );
       }
@@ -543,13 +543,13 @@ router.post("/verify", async (req, res, next) => {
          SET payment_status = 'paid',
              order_status = 'confirmed',
              razorpay_payment_id = ?,
-             updated_at = CURRENT_TIMESTAMP(3)
+             updated_at = UTC_TIMESTAMP(3)
          WHERE id = ?`,
         [razorpay_payment_id, order.id]
       );
       await connection.execute(
         `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
-         VALUES (?, ?, 'confirmed', 'Payment verified and captured', 'customer', CURRENT_TIMESTAMP(3))`,
+         VALUES (?, ?, 'confirmed', 'Payment verified and captured', 'customer', UTC_TIMESTAMP(3))`,
         [order.id, order.order_status]
       );
       await connection.commit();
@@ -572,13 +572,13 @@ router.post("/verify", async (req, res, next) => {
              refund_amount = ?,
              cancellation_reason = 'Stock exhausted between order creation and payment authorization.',
              razorpay_payment_id = ?,
-             updated_at = CURRENT_TIMESTAMP(3)
+             updated_at = UTC_TIMESTAMP(3)
          WHERE id = ?`,
         [order.total, razorpay_payment_id, order.id]
       );
       await connection.execute(
         `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
-         VALUES (?, ?, 'needs_refund', 'Stock exhausted between order creation and payment authorization. Flagged for full refund.', 'system', CURRENT_TIMESTAMP(3))`,
+         VALUES (?, ?, 'needs_refund', 'Stock exhausted between order creation and payment authorization. Flagged for full refund.', 'system', UTC_TIMESTAMP(3))`,
         [order.id, order.order_status]
       );
       await connection.commit();
