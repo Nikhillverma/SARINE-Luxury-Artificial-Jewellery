@@ -4,7 +4,6 @@ import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { validateImageUpload } from "./mediaValidation.js";
 
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 let tableReady;
 
 async function ensureMediaTable() {
@@ -53,6 +52,7 @@ publicMediaRouter.get("/:id", async (req, res, next) => {
       "Content-Length": String(image.file_size),
       "Content-Disposition": "inline",
       "X-Content-Type-Options": "nosniff",
+      "Cross-Origin-Resource-Policy": "cross-origin",
       "Cache-Control": "public, max-age=31536000, immutable",
       ETag: etag
     });
