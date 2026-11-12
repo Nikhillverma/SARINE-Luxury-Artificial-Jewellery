@@ -7,6 +7,7 @@ import adminAuthRouter from "./adminAuth.js";
 import adminOrdersRouter from "./adminOrders.js";
 import adminDashboardRouter from "./adminDashboard.js";
 import adminProductsRouter from "./adminProducts.js";
+import adminStorefrontRouter, { publicStorefrontRouter } from "./adminStorefront.js";
 import ordersRouter from "./orders.js";
 import { publicMediaRouter, adminMediaRouter } from "./media.js";
 
@@ -269,7 +270,7 @@ app.get("/api/products/:slug", async (req, res, next) => {
   }
 });
 
-// Public category catalogue
+// Public storefront content managed from the admin panel\napp.use("/api/storefront", publicStorefrontRouter);\n\n// Public category catalogue
 app.get("/api/categories", async (_req, res, next) => {
   try {
     const [rows] = await pool.execute(
