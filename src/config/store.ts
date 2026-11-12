@@ -1,38 +1,28 @@
 /**
- * Global Store Configuration for SARINE.
- * Centralized settings for shipping, payment methods, and currency.
- * Do not hardcode these values in components or pages.
+ * Default checkout configuration used while the Hostinger settings endpoint loads.
+ * Production values are read from MariaDB by the storefront and revalidated by the API.
  */
+export interface CheckoutConfig {
+  shippingFlatFee: number;
+  freeShippingThreshold: number;
+  codEnabled: boolean;
+}
 
-/**
- * Standard flat shipping fee across India in INR for orders below the free-shipping threshold.
- * Kept identical to the nominal fee stated in atelier policies (₹99).
- */
-export const SHIPPING_FLAT_FEE: number = 99;
-
-/**
- * Cart subtotal threshold in INR required for complimentary shipping.
- * Orders of ₹1,999 or more qualify for free shipping.
- */
+export const SHIPPING_FLAT_FEE = 99;
 export const FREE_SHIPPING_THRESHOLD: number | null = 1999;
-
-/**
- * Whether Cash on Delivery (COD) is active on checkout.
- * Enabled for SARINE pan-India deliveries.
- */
 export const COD_ENABLED = true;
-
-/**
- * Store base currency ISO code.
- */
 export const CURRENCY = 'INR';
 
-/**
- * Helper to compute shipping fee based on current subtotal.
- */
-export function calculateShippingFee(subtotal: number): number {
-  if (FREE_SHIPPING_THRESHOLD !== null && subtotal >= FREE_SHIPPING_THRESHOLD) {
-    return 0;
-  }
-  return SHIPPING_FLAT_FEE;
+export const DEFAULT_CHECKOUT_CONFIG: CheckoutConfig = {
+  shippingFlatFee: SHIPPING_FLAT_FEE,
+  freeShippingThreshold: FREE_SHIPPING_THRESHOLD ?? 1999,
+  codEnabled: COD_ENABLED
+};
+
+export function calculateShippingFee(
+  subtotal: number,
+  config: CheckoutConfig = DEFAULT_CHECKOUT_CONFIG
+): number {
+  if (subtotal >= config.freeShippingThreshold) return 0;
+  return config.shippingFlatFee;
 }
