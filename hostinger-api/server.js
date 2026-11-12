@@ -8,6 +8,7 @@ import adminOrdersRouter from "./adminOrders.js";
 import adminDashboardRouter from "./adminDashboard.js";
 import adminProductsRouter from "./adminProducts.js";
 import ordersRouter from "./orders.js";
+import { publicMediaRouter, adminMediaRouter } from "./media.js";
 
 const app = express();
 
@@ -38,7 +39,7 @@ app.use(cors({
 }));
 
 app.use(express.json({
-  limit: "1mb",
+  limit: "4mb",
   verify: (req, _res, buf) => {
     req.rawBody = buf;
   }
@@ -309,6 +310,10 @@ app.get("/api/categories/:slug", async (req, res, next) => {
     next(error);
   }
 });
+
+// Public immutable media URLs and authenticated media uploads.
+app.use("/api/media", publicMediaRouter);
+app.use("/api/admin/media", adminMediaRouter);
 
 // Hostinger admin authentication
 app.use("/api/admin/auth", adminAuthRouter);
