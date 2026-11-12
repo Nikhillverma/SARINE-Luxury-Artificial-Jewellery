@@ -160,6 +160,12 @@ interface NavItem {
       match: (p: string) => p.startsWith('/admin/orders')
     },
     {
+      name: 'Customers',
+      path: '/admin/customers',
+      icon: UserCheck,
+      match: (p: string) => p.startsWith('/admin/customers')
+    },
+    {
       name: 'Storefront Studio',
       path: '/admin/storefront',
       icon: LayoutTemplate,
