@@ -8,7 +8,6 @@ router.use(requireAdminAuth);
 const MAX_PAGE_SIZE = 100;
 const MAX_OFFSET = 10000;
 
-
 function toIsoString(value) {
   if (!value) return null;
   const date = value instanceof Date ? value : new Date(value);
@@ -85,7 +84,8 @@ router.get("/:email/orders", async (req, res, next) => {
     const email = normalizeCustomerEmail(req.params.email);
     if (!email) return res.status(400).json({ error: "Enter a valid customer email address." });
 
-    const sql = "SELECT o.id, o.order_number, o.created_at, o.total, o.payment_method, o.payment_status, o.order_status " +
+    const sql = "SELECT o.id, o.order_number, COALESCE(o.created_at, " + INITIAL_ORDER_DATE + ") AS created_at, " +
+      "o.total, o.payment_method, o.payment_status, o.order_status, o.refund_needed, o.refund_amount " +
       "FROM orders o WHERE LOWER(TRIM(o.customer_email)) = ? " +
       "ORDER BY COALESCE(o.created_at, " + INITIAL_ORDER_DATE + ") DESC, o.id DESC LIMIT 100";
     const [orders] = await pool.execute(sql, [email]);
@@ -118,6 +118,8 @@ router.get("/:email/orders", async (req, res, next) => {
         paymentMethod: order.payment_method || "",
         paymentStatus: order.payment_status || "",
         orderStatus: order.order_status || "",
+        refundNeeded: Boolean(order.refund_needed || order.order_status === "needs_refund"),
+        refundAmount: Number(order.refund_amount) || 0,
         items: itemsByOrder[order.id] || []
       }))
     });
