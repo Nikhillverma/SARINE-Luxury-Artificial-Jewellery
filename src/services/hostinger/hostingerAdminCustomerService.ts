@@ -21,6 +21,8 @@ export interface AdminCustomerOrder {
   paymentMethod: string;
   paymentStatus: string;
   orderStatus: string;
+  refundNeeded: boolean;
+  refundAmount: number;
   items: Array<{ name: string; quantity: number; unitPrice: number }>;
 }
 
