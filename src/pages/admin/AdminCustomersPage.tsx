@@ -5,9 +5,9 @@ import { formatInr } from '../../utils/currency';
 import { Search, RefreshCw, Users, ShoppingBag, X, MapPin, Mail, Phone, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 
 function formatDate(value: string | null) {
-  if (!value) return 'Date unavailable';
+  if (!value) return 'Date not recorded';
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Date unavailable';
+  if (Number.isNaN(date.getTime())) return 'Date not recorded';
   return new Intl.DateTimeFormat('en-IN', {
     timeZone: 'Asia/Kolkata',
     day: 'numeric',
@@ -104,6 +104,10 @@ export const AdminCustomersPage: React.FC = () => {
           </div>
         </div>
 
+        <div className="bg-[#FAF5FC] border border-[#EADFF0] rounded-xl p-3 text-[11px] text-[#705E7B]">
+          Paid lifetime totals reflect orders marked paid (and delivered COD). Refund-required amounts are shown separately as requests; they are not treated as completed refunds.
+        </div>
+
         <div className="bg-white border border-[#EADFF0] rounded-2xl p-3">
           <div className="relative">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8E769E]"/>
@@ -115,7 +119,7 @@ export const AdminCustomersPage: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs min-w-[760px]">
               <thead className="bg-[#FAF5FC] text-[#705E7B] uppercase text-[10px]">
-                <tr><th className="p-3">Customer</th><th className="p-3">Contact</th><th className="p-3">Orders</th><th className="p-3">Paid lifetime spend</th><th className="p-3">Segment</th><th className="p-3">Last order (IST)</th><th className="p-3 text-right">History</th></tr>
+                <tr><th className="p-3">Customer</th><th className="p-3">Contact</th><th className="p-3">Orders</th><th className="p-3">Paid lifetime total</th><th className="p-3">Segment</th><th className="p-3">Last order (IST)</th><th className="p-3 text-right">History</th></tr>
               </thead>
               <tbody className="divide-y divide-[#F5EDF8]">
                 {loading ? <tr><td colSpan={7} className="p-10 text-center text-[#8E769E]">Loading live customer records…</td></tr> :
@@ -156,7 +160,7 @@ export const AdminCustomersPage: React.FC = () => {
                 <div className="flex items-center gap-2"><Mail size={13}/>{selected.email}</div>
                 <div className="flex items-center gap-2"><Phone size={13}/>{selected.phone || 'Phone not provided'}</div>
                 <div className="flex items-center gap-2"><MapPin size={13}/>{[selected.city, selected.state].filter(Boolean).join(', ') || 'Location not available'}</div>
-                <div className="flex items-center gap-2"><ShoppingBag size={13}/>{selected.totalOrders} orders · Paid lifetime spend {formatInr(selected.lifetimeSpend)}</div>
+                <div className="flex items-center gap-2"><ShoppingBag size={13}/>{selected.totalOrders} orders · Paid lifetime total {formatInr(selected.lifetimeSpend)}</div>
               </div>
               {historyLoading ? <p className="py-10 text-center text-xs text-[#8E769E]">Loading order history…</p> :
                historyError ? <p role="alert" className="p-3 bg-red-50 text-red-700 rounded-lg text-xs">{historyError}</p> :
@@ -165,6 +169,12 @@ export const AdminCustomersPage: React.FC = () => {
                  <article key={order.orderNumber} className="bg-white border border-[#EADFF0] rounded-xl p-4 space-y-3">
                    <div className="flex items-start justify-between gap-3"><div><div className="font-semibold text-[#563568]">{order.orderNumber}</div><div className="text-[10px] text-[#8E769E] flex items-center gap-1 mt-1"><Clock size={11}/>{formatDate(order.createdAt)}</div></div><div className="text-right"><div className="font-semibold">{formatInr(order.total)}</div><div className="text-[10px] text-[#705E7B] capitalize">{order.orderStatus.replace(/_/g, ' ')}</div></div></div>
                    <div className="text-[11px] text-[#705E7B] capitalize">{order.paymentMethod} · {order.paymentStatus}</div>
+                   {order.refundNeeded && (
+                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-900">
+                       <div className="font-semibold">Refund required — not recorded as completed</div>
+                       <div>{formatInr(order.refundAmount)} requested for this order. Verify settlement separately before marking it refunded.</div>
+                     </div>
+                   )}
                    <ul className="border-t border-[#F5EDF8] pt-2 space-y-1 text-xs">{order.items.map((item, index) => <li key={index} className="flex justify-between gap-3"><span>{item.name} × {item.quantity}</span><span>{formatInr(item.unitPrice * item.quantity)}</span></li>)}</ul>
                  </article>
                ))}
