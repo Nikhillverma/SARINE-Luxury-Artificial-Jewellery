@@ -302,7 +302,6 @@ export const BagPage: React.FC = () => {
                   </div>
 
                 </div>
-                </div>
               </div>
             </div>
           )}
