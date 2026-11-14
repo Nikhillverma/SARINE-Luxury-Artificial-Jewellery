@@ -270,8 +270,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-1.5 text-[#302438] hover:text-[#563568] transition-colors lg:hidden cursor-pointer rounded-xs"
+                type="button"
+                className="min-w-11 min-h-11 flex items-center justify-center text-[#302438] hover:text-[#563568] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] transition-colors lg:hidden cursor-pointer rounded-xs"
                 aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                aria-expanded={isMobileMenuOpen}
+                aria-controls="sarine-mobile-navigation"
               >
                 {isMobileMenuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
               </button>
