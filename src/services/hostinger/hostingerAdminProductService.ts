@@ -1,5 +1,5 @@
 import type { Product } from '../../types/product';
-import type { IAdminProductService } from '../interfaces';
+import type { IAdminProductService, InventoryMovement } from '../interfaces';
 
 const API_BASE = (
   import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
@@ -46,6 +46,20 @@ export class HostingerAdminProductService implements IAdminProductService {
       body: JSON.stringify(updates)
     });
     return result.product;
+  }
+
+
+  async adjustStock(id: string, quantityDelta: number, reason: string): Promise<InventoryMovement> {
+    const result = await request<{ movement: InventoryMovement }>('/admin/inventory/adjustments', {
+      method: 'POST',
+      body: JSON.stringify({ productId: id, quantityDelta, reason })
+    });
+    return result.movement;
+  }
+
+  async getInventoryMovements(): Promise<InventoryMovement[]> {
+    const result = await request<{ movements: InventoryMovement[] }>('/admin/inventory/movements');
+    return result.movements;
   }
 
   async deleteProduct(id: string): Promise<boolean> {
