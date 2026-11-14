@@ -15,7 +15,6 @@ import { ProductCard } from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import {
-  ArrowLeft,
   ShoppingBag,
   Heart,
   CheckCircle2,
@@ -26,7 +25,6 @@ import {
   Share2,
   Gift,
   HelpCircle,
-  Star,
   MapPin,
   X,
   Maximize2
