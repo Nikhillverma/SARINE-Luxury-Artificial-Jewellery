@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import rateLimit from "express-rate-limit";
 import Razorpay from "razorpay";
 import { pool } from "./db.js";
+import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 
 const router = Router();
 
@@ -109,11 +110,13 @@ router.post("/create", async (req, res, next) => {
     }
 
     await ensureMarketingSchema();
+    await ensureInventoryTable();
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
     // 5. Authoritative price and stock check in MariaDB
     const verifiedLines = [];
+    const reservedStockByProduct = new Map();
     let calculatedSubtotal = 0;
     for (let i = 0; i < items.length; i++) {
       const itm = items[i];
@@ -140,20 +143,21 @@ router.post("/create", async (req, res, next) => {
         });
       }
       const availableStock = Number(p.stock || 0);
-      if (availableStock <= 0) {
-        await connection.rollback();
-        connection.release();
-        connection = null;
-        return res.status(400).json({ error: `"${p.name}" is currently out of stock.` });
-      }
-      if (Number(itm.quantity) > availableStock) {
+      const reservation = reservedStockByProduct.get(p.id) || {
+        previousStock: availableStock,
+        quantity: 0
+      };
+      const remainingStock = reservation.previousStock - reservation.quantity;
+      if (Number(itm.quantity) > remainingStock) {
         await connection.rollback();
         connection.release();
         connection = null;
         return res.status(400).json({
-          error: `Only ${availableStock} ${availableStock === 1 ? 'piece is' : 'pieces are'} available for "${p.name}".`
+          error: `Only ${Math.max(0, remainingStock)} ${remainingStock === 1 ? 'piece is' : 'pieces are'} available for "${p.name}".`
         });
       }
+      reservation.quantity += Number(itm.quantity);
+      reservedStockByProduct.set(p.id, reservation);
       const unitPrice = Math.round(Number(p.price) || 0);
       calculatedSubtotal += unitPrice * Number(itm.quantity);
       let images = [];
@@ -165,6 +169,7 @@ router.post("/create", async (req, res, next) => {
         name: p.name,
         unitPrice,
         quantity: Number(itm.quantity),
+        previousStock: availableStock,
         image: Array.isArray(images) && images[0] ? String(images[0]) : "",
         sku: null, // The live products table has no SKU column.
         sourceLine: i
@@ -240,12 +245,24 @@ router.post("/create", async (req, res, next) => {
 
     // 7. Insert Order record and items based on paymentMethod
     if (paymentMethod === "cod") {
-      // Deduct stock immediately for COD
-      for (const line of verifiedLines) {
+      // Deduct each distinct product once and record the movement in this transaction.
+      for (const [productId, reservation] of reservedStockByProduct) {
+        const newStock = reservation.previousStock - reservation.quantity;
+        const productLine = verifiedLines.find((line) => line.productId === productId);
         await connection.execute(
-          `UPDATE products SET stock = stock - ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
-          [line.quantity, line.productId]
+          `UPDATE products SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
+          [newStock, productId]
         );
+        await recordInventoryMovement(connection, {
+          productId,
+          productName: productLine?.name || "Product",
+          previousStock: reservation.previousStock,
+          quantityDelta: -reservation.quantity,
+          newStock,
+          reason: `COD order placed ${orderNumber}`,
+          actorName: "Customer checkout",
+          actorEmail: "system@sarine.local"
+        });
       }
 
       await connection.execute(
@@ -486,6 +503,7 @@ router.post("/verify", async (req, res, next) => {
     }
 
     // 3. Atomic database transaction for stock decrement and payment confirmation
+    await ensureInventoryTable();
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
@@ -547,25 +565,54 @@ router.post("/verify", async (req, res, next) => {
       [order.id]
     );
 
-    let hasSufficientStock = true;
+    const aggregatedItems = new Map();
     for (const item of orderItems) {
-      const [prod] = await connection.execute(
-        `SELECT id, stock FROM products WHERE id = ? FOR UPDATE`,
-        [item.product_id]
-      );
-      if (!prod.length || Number(prod[0].stock || 0) < Number(item.quantity)) {
-        hasSufficientStock = false;
-        break;
+      if (!item.product_id) continue;
+      const existing = aggregatedItems.get(item.product_id);
+      if (existing) {
+        existing.quantity += Number(item.quantity);
+      } else {
+        aggregatedItems.set(item.product_id, {
+          productId: item.product_id,
+          productName: item.product_name || "Product",
+          quantity: Number(item.quantity),
+          previousStock: null
+        });
       }
     }
 
+    let hasSufficientStock = true;
+    for (const item of aggregatedItems.values()) {
+      const [prod] = await connection.execute(
+        `SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE`,
+        [item.productId]
+      );
+      if (!prod.length || Number(prod[0].stock || 0) < item.quantity) {
+        hasSufficientStock = false;
+        break;
+      }
+      item.productName = prod[0].name || item.productName;
+      item.previousStock = Number(prod[0].stock || 0);
+    }
+
     if (hasSufficientStock) {
-      // Deduct stock for verified prepaid items
-      for (const item of orderItems) {
+      // Deduct each distinct product once and record the movement atomically.
+      for (const item of aggregatedItems.values()) {
+        const newStock = item.previousStock - item.quantity;
         await connection.execute(
-          `UPDATE products SET stock = stock - ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
-          [item.quantity, item.product_id]
+          `UPDATE products SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
+          [newStock, item.productId]
         );
+        await recordInventoryMovement(connection, {
+          productId: item.productId,
+          productName: item.productName,
+          previousStock: item.previousStock,
+          quantityDelta: -item.quantity,
+          newStock,
+          reason: `Online payment captured ${cleanOrderNumber}`,
+          actorName: "Razorpay payment",
+          actorEmail: "system@sarine.local"
+        });
       }
       await connection.execute(
         `UPDATE orders
