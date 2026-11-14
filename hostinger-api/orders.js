@@ -812,4 +812,89 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
   }
 });
 
+
+// POST /api/orders/returns — customer-initiated return/exchange request.
+// Authenticates using the order number plus the checkout mobile number, then
+// enforces delivered status and the 7-day return window before inserting a request.
+router.post("/returns", trackingLimiter, async (req, res, next) => {
+  let connection;
+  try {
+    const orderNumber = String(req.body?.orderNumber || "").trim().toUpperCase();
+    const phone = String(req.body?.phone || "").replace(/\\D/g, "");
+    const requestType = String(req.body?.requestType || "").trim().toLowerCase();
+    const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
+    const notes = typeof req.body?.notes === "string" ? req.body.notes.trim() : "";
+
+    if (!/^SAR-\\d{6}$/.test(orderNumber) || phone.length < 10) {
+      return res.status(404).json({ error: "We couldn't verify this order. Check the order number and checkout mobile number." });
+    }
+    if (!["return", "exchange"].includes(requestType)) {
+      return res.status(400).json({ error: "Choose return or exchange." });
+    }
+    if (reason.length < 3 || reason.length > 500) {
+      return res.status(400).json({ error: "Please provide a reason between 3 and 500 characters." });
+    }
+    if (notes.length > 2000) {
+      return res.status(400).json({ error: "Additional notes must be 2,000 characters or fewer." });
+    }
+
+    const last10Phone = phone.slice(-10);
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const [orders] = await connection.execute(
+      "SELECT id, customer_phone, shipping_address, order_status, delivered_at FROM orders WHERE order_number = ? FOR UPDATE",
+      [orderNumber]
+    );
+    if (!orders.length) {
+      await connection.rollback();
+      return res.status(404).json({ error: "We couldn't verify this order. Check the order number and checkout mobile number." });
+    }
+
+    const order = orders[0];
+    let shippingPhone = "";
+    try {
+      const address = typeof order.shipping_address === "string" ? JSON.parse(order.shipping_address) : (order.shipping_address || {});
+      shippingPhone = String(address.phone || "").replace(/\\D/g, "").slice(-10);
+    } catch {}
+    const customerPhone = String(order.customer_phone || "").replace(/\\D/g, "").slice(-10);
+    if (customerPhone !== last10Phone && shippingPhone !== last10Phone) {
+      await connection.rollback();
+      return res.status(404).json({ error: "We couldn't verify this order. Check the order number and checkout mobile number." });
+    }
+    if (order.order_status !== "delivered" || !order.delivered_at) {
+      await connection.rollback();
+      return res.status(400).json({ error: "Return or exchange requests can only be submitted after delivery." });
+    }
+    const [windowRows] = await connection.execute(
+      "SELECT (UTC_TIMESTAMP(3) <= DATE_ADD(?, INTERVAL 7 DAY)) AS within_window",
+      [order.delivered_at]
+    );
+    if (!Number(windowRows[0]?.within_window)) {
+      await connection.rollback();
+      return res.status(400).json({ error: "The 7-day return request window has ended for this order." });
+    }
+
+    const [existing] = await connection.execute(
+      "SELECT id FROM returns WHERE order_id = ? AND status NOT IN ('rejected', 'closed') LIMIT 1 FOR UPDATE",
+      [order.id]
+    );
+    if (existing.length) {
+      await connection.rollback();
+      return res.status(409).json({ error: "A return or exchange request is already open for this order." });
+    }
+
+    const [insertResult] = await connection.execute(
+      "INSERT INTO returns (order_id, request_type, reason, notes, status, created_at) VALUES (?, ?, ?, ?, 'pending', UTC_TIMESTAMP(3))",
+      [order.id, requestType, reason, notes || null]
+    );
+    await connection.commit();
+    return res.status(201).json({ success: true, requestId: Number(insertResult.insertId), orderNumber, status: "pending" });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    next(error);
+  } finally {
+    connection?.release();
+  }
+});
+
 export default router;
