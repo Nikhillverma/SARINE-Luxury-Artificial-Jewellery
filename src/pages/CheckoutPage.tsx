@@ -418,11 +418,11 @@ export const CheckoutPage: React.FC = () => {
                     <label htmlFor="checkout-full-name" className="block text-xs uppercase tracking-wider text-[#6F6475] font-medium mb-1">
                       Full Name *
                     </label>
-                    <input id="checkout-full-name" autoComplete="name"
+                    <input id="checkout-full-name" autoComplete="name" required aria-invalid={Boolean(errors.fullName)} aria-describedby={errors.fullName ? "checkout-full-name-error" : undefined}
                       type="text"
                       autoCapitalize="words"
                       value={fullName}
-                      onChange={(e) = required aria-invalid={Boolean(errors.fullName)} aria-describedby={errors.fullName ? "checkout-full-name-error" : undefined}> setFullName(e.target.value)}
+                      onChange={(e) => setFullName(e.target.value)}
                       placeholder="e.g. Radhika Sharma"
                       disabled={isSubmitting}
                       className={`w-full min-h-11 px-3 py-3 text-sm bg-[#F7F0FA] border rounded-xs focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#563568] focus-visible:ring-offset-1 transition-colors ${
@@ -438,11 +438,11 @@ export const CheckoutPage: React.FC = () => {
                     <label htmlFor="checkout-email" className="block text-xs uppercase tracking-wider text-[#6F6475] font-medium mb-1">
                       Email Address *
                     </label>
-                    <input id="checkout-email" autoComplete="email"
+                    <input id="checkout-email" autoComplete="email" required aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? "checkout-email-error" : undefined}
                       type="email"
                       autoCapitalize="none"
                       value={email}
-                      onChange={(e) = required aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? "checkout-email-error" : undefined}> setEmail(e.target.value)}
+                      onChange={(e) => setEmail(e.target.value)}
                       placeholder="e.g. radhika@example.com"
                       disabled={isSubmitting}
                       className={`w-full px-3 py-2 text-sm bg-[#F7F0FA] border rounded-xs focus:bg-white focus:outline-none transition-colors ${
@@ -463,10 +463,10 @@ export const CheckoutPage: React.FC = () => {
                     <span className="inline-flex items-center px-3 text-xs bg-[#F0E6F4] border border-r-0 border-[#E7DCEB] text-[#6F6475] font-mono rounded-l-xs">
                       +91
                     </span>
-                    <input id="checkout-phone" autoComplete="tel-national" inputMode="numeric"
+                    <input id="checkout-phone" autoComplete="tel-national" inputMode="numeric" required aria-invalid={Boolean(errors.phone)} aria-describedby={errors.phone ? "checkout-phone-error" : undefined}
                       type="tel"
                       value={phone}
-                      onChange={(e) = required aria-invalid={Boolean(errors.phone)} aria-describedby={errors.phone ? "checkout-phone-error" : undefined}> setPhone(e.target.value)}
+                      onChange={(e) => setPhone(e.target.value)}
                       placeholder="9876543210"
                       maxLength={10}
                       disabled={isSubmitting}
@@ -496,11 +496,11 @@ export const CheckoutPage: React.FC = () => {
                     <label htmlFor="checkout-address-line1" className="block text-xs uppercase tracking-wider text-[#6F6475] font-medium mb-1">
                       Street Address / House / Flat No. *
                     </label>
-                    <input id="checkout-address-line1" autoComplete="address-line1"
+                    <input id="checkout-address-line1" autoComplete="address-line1" required aria-invalid={Boolean(errors.line1)} aria-describedby={errors.line1 ? "checkout-address-line1-error" : undefined}
                       type="text"
                       autoCapitalize="words"
                       value={line1}
-                      onChange={(e) = required aria-invalid={Boolean(errors.line1)} aria-describedby={errors.line1 ? "checkout-address-line1-error" : undefined}> setLine1(e.target.value)}
+                      onChange={(e) => setLine1(e.target.value)}
                       placeholder="e.g. 402, Lotus Apartments, 14th Main Road"
                       disabled={isSubmitting}
                       className={`w-full px-3 py-2 text-sm bg-[#F7F0FA] border rounded-xs focus:bg-white focus:outline-none transition-colors ${
@@ -531,11 +531,11 @@ export const CheckoutPage: React.FC = () => {
                       <label htmlFor="checkout-city" className="block text-xs uppercase tracking-wider text-[#6F6475] font-medium mb-1">
                         City *
                       </label>
-                      <input id="checkout-city" autoComplete="address-level2"
+                      <input id="checkout-city" autoComplete="address-level2" required aria-invalid={Boolean(errors.city)} aria-describedby={errors.city ? "checkout-city-error" : undefined}
                         type="text"
                         autoCapitalize="words"
                         value={city}
-                        onChange={(e) = required aria-invalid={Boolean(errors.city)} aria-describedby={errors.city ? "checkout-city-error" : undefined}> setCity(e.target.value)}
+                        onChange={(e) => setCity(e.target.value)}
                         placeholder="e.g. Jaipur"
                         disabled={isSubmitting}
                         className={`w-full px-3 py-2 text-sm bg-[#F7F0FA] border rounded-xs focus:bg-white focus:outline-none transition-colors ${
@@ -551,9 +551,9 @@ export const CheckoutPage: React.FC = () => {
                       <label htmlFor="checkout-state" className="block text-xs uppercase tracking-wider text-[#6F6475] font-medium mb-1">
                         State / UT *
                       </label>
-                      <select id="checkout-state" autoComplete="address-level1"
+                      <select id="checkout-state" autoComplete="address-level1" required aria-invalid={Boolean(errors.state)} aria-describedby={errors.state ? "checkout-state-error" : undefined}
                         value={state}
-                        onChange={(e) = required aria-invalid={Boolean(errors.state)} aria-describedby={errors.state ? "checkout-state-error" : undefined}> setState(e.target.value)}
+                        onChange={(e) => setState(e.target.value)}
                         disabled={isSubmitting}
                         className={`w-full px-3 py-2 text-sm bg-[#F7F0FA] border rounded-xs focus:bg-white focus:outline-none transition-colors ${
                           errors.state ? 'border-[#DC2626]' : 'border-[#E7DCEB] focus:border-[#B69ACF]'
@@ -575,10 +575,10 @@ export const CheckoutPage: React.FC = () => {
                       <label htmlFor="checkout-pincode" className="block text-xs uppercase tracking-wider text-[#6F6475] font-medium mb-1">
                         PIN Code *
                       </label>
-                      <input id="checkout-pincode" autoComplete="postal-code" inputMode="numeric"
+                      <input id="checkout-pincode" autoComplete="postal-code" inputMode="numeric" required aria-invalid={Boolean(errors.pincode)} aria-describedby={errors.pincode ? "checkout-pincode-error" : undefined}
                         type="text"
                         value={pincode}
-                        onChange={(e) = required aria-invalid={Boolean(errors.pincode)} aria-describedby={errors.pincode ? "checkout-pincode-error" : undefined}> setPincode(e.target.value)}
+                        onChange={(e) => setPincode(e.target.value)}
                         placeholder="e.g. 302001"
                         maxLength={6}
                         disabled={isSubmitting}
