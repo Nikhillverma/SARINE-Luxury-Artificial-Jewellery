@@ -1,18 +1,18 @@
 /**
  * BagPage component for SARINE.
  * Full-page shopping bag view with item rows, quantity adjustment bounded by stock,
- * save to wishlist, coupon discounts, gifting options, subtotal summary in INR,
+ * save to wishlist, configured shipping calculation, subtotal summary in INR,
  * and seamless checkout progression.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { formatInr } from '../utils/currency';
-import { ShoppingBag, Trash2, ArrowLeft, ArrowRight, AlertCircle, Heart, Gift, Tag, Sparkles } from 'lucide-react';
-
-const FREE_GIFT_BOX_THRESHOLD = 1500;
+import { calculateShippingFee, FREE_SHIPPING_THRESHOLD } from '../config/store';
+import type { CartItem } from '../types/cart';
+import { ShoppingBag, Trash2, ArrowLeft, ArrowRight, AlertCircle, Heart } from 'lucide-react';
 
 export const BagPage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,69 +29,19 @@ export const BagPage: React.FC = () => {
 
   const { toggleWishlist } = useWishlist();
 
-  // Coupon state
-  const [couponInput, setCouponInput] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(() => {
-    try {
-      const saved = localStorage.getItem('sarine_applied_coupon');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-  const [couponError, setCouponError] = useState<string | null>(null);
-
-  // Gifting state
-  const [isGift, setIsGift] = useState(false);
-  const [giftNote, setGiftNote] = useState('');
-
-  const handleApplyCoupon = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCouponError(null);
-    const code = couponInput.trim().toUpperCase();
-
-    if (code === 'SARINE10') {
-      const discount = Math.round(subtotal * 0.1);
-      const couponObj = { code, discount };
-      setAppliedCoupon(couponObj);
-      localStorage.setItem('sarine_applied_coupon', JSON.stringify(couponObj));
-      setCouponInput('');
-    } else if (code === 'WELCOME50') {
-      const discount = 50;
-      const couponObj = { code, discount };
-      setAppliedCoupon(couponObj);
-      localStorage.setItem('sarine_applied_coupon', JSON.stringify(couponObj));
-      setCouponInput('');
-    } else if (code === 'FESTIVE100') {
-      if (subtotal < 1500) {
-        setCouponError('FESTIVE100 requires minimum order value of ₹1,500');
-        return;
-      }
-      const discount = 100;
-      const couponObj = { code, discount };
-      setAppliedCoupon(couponObj);
-      localStorage.setItem('sarine_applied_coupon', JSON.stringify(couponObj));
-      setCouponInput('');
-    } else {
-      setCouponError('Invalid code. Try SARINE10 or WELCOME50.');
-    }
-  };
-
-  const handleRemoveCoupon = () => {
-    setAppliedCoupon(null);
-    localStorage.removeItem('sarine_applied_coupon');
-  };
-
-  const handleSaveToWishlist = (item: any) => {
+  const handleSaveToWishlist = (item: CartItem) => {
     toggleWishlist(item.product);
     removeItem(item.productId);
   };
 
-  const currentDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-  const finalTotal = Math.max(0, subtotal - currentDiscount);
-
-  const progressPercent = Math.min(100, Math.round((subtotal / FREE_GIFT_BOX_THRESHOLD) * 100));
-  const amountToGift = Math.max(0, FREE_GIFT_BOX_THRESHOLD - subtotal);
+  const shippingFee = calculateShippingFee(subtotal);
+  const amountToFreeShipping = FREE_SHIPPING_THRESHOLD === null
+    ? 0
+    : Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
+  const shippingProgressPercent = FREE_SHIPPING_THRESHOLD === null
+    ? 100
+    : Math.min(100, Math.round((subtotal / FREE_SHIPPING_THRESHOLD) * 100));
+  const finalTotal = subtotal + shippingFee;
 
   return (
     <div className="min-h-screen bg-[#F7F0FA] pb-20 text-[#302438] font-sans">
@@ -154,26 +104,32 @@ export const BagPage: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Free Gift Packaging Tracker Banner */}
-              <div className="bg-white p-4 border border-[#E7DCEB] rounded-xs shadow-2xs">
-                <div className="flex items-center justify-between text-xs mb-1.5">
-                  <span className="text-[#563568] font-medium flex items-center gap-1.5">
-                    <Sparkles size={14} className="text-[#D9B8A0]" />
-                    {amountToGift > 0 ? (
-                      <span>Add {formatInr(amountToGift)} more to receive Complimentary Velvet Presentation Box</span>
-                    ) : (
-                      <span className="text-emerald-700">Congratulations! You unlocked Complimentary Luxury Velvet Presentation Box</span>
-                    )}
-                  </span>
-                  <span className="text-[#6F6475] font-mono">{progressPercent}%</span>
-                </div>
-                <div className="w-full bg-[#F0E6F4] h-2 rounded-full overflow-hidden">
+              {/* Free shipping progress */}
+              {FREE_SHIPPING_THRESHOLD !== null && (
+                <div className="bg-white p-4 border border-[#E7DCEB] rounded-xs shadow-2xs">
+                  <div className="flex items-center justify-between text-xs mb-1.5 gap-3">
+                    <span className="text-[#563568] font-medium">
+                      {amountToFreeShipping > 0
+                        ? `Add ${formatInr(amountToFreeShipping)} more for complimentary shipping`
+                        : 'Complimentary shipping unlocked'}
+                    </span>
+                    <span className="text-[#6F6475] font-mono">{shippingProgressPercent}%</span>
+                  </div>
                   <div
-                    className="bg-[#563568] h-full transition-all duration-500 ease-out"
-                    style={{ width: `${progressPercent}%` }}
-                  ></div>
+                    className="w-full bg-[#F0E6F4] h-2 rounded-full overflow-hidden"
+                    role="progressbar"
+                    aria-label="Progress towards complimentary shipping"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={shippingProgressPercent}
+                  >
+                    <div
+                      className="bg-[#563568] h-full transition-all duration-500 ease-out"
+                      style={{ width: `${shippingProgressPercent}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Two-column layout: Items List (Left 8 cols) & Order Summary (Right 4 cols) */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -289,42 +245,6 @@ export const BagPage: React.FC = () => {
                     })}
                   </div>
 
-                  {/* Gifting Section in Bag */}
-                  <div className="p-4 sm:p-5 bg-[#FAF5FC] border-t border-[#E7DCEB]">
-                    <label className="flex items-start gap-2.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isGift}
-                        onChange={(e) => setIsGift(e.target.checked)}
-                        className="mt-0.5 accent-[#563568] rounded-xs cursor-pointer"
-                      />
-                      <div>
-                        <span className="text-xs font-medium text-[#302438] flex items-center gap-1.5">
-                          <Gift size={13} className="text-[#563568]" />
-                          <span>This order is a gift (Complimentary packaging & message card)</span>
-                        </span>
-                        <p className="text-[11px] text-[#6F6475] mt-0.5">
-                          We will conceal prices on packing slips and pack your pieces in our signature satin-ribbon box.
-                        </p>
-                      </div>
-                    </label>
-
-                    {isGift && (
-                      <div className="mt-3 pl-6">
-                        <textarea
-                          value={giftNote}
-                          onChange={(e) => setGiftNote(e.target.value.slice(0, 200))}
-                          placeholder="Add your personalized message for the recipient..."
-                          rows={2}
-                          className="w-full p-2.5 text-xs bg-white border border-[#E7DCEB] focus:border-[#563568] rounded-xs focus:outline-none resize-none"
-                        />
-                        <div className="text-right text-[10px] text-[#6F6475] mt-1">
-                          {giftNote.length}/200 characters
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
                   {/* Actions Footer */}
                   <div className="p-4 bg-[#F7F0FA] border-t border-[#E7DCEB] flex items-center justify-between">
                     <Link
@@ -349,41 +269,6 @@ export const BagPage: React.FC = () => {
                     Order Summary
                   </h2>
 
-                  {/* Coupon Code Module */}
-                  <div>
-                    {appliedCoupon ? (
-                      <div className="flex items-center justify-between bg-[#F7F0FA] p-2.5 border border-[#B69ACF] rounded-xs text-xs">
-                        <span className="text-emerald-700 font-medium flex items-center gap-1.5">
-                          <Tag size={13} />
-                          <span>Code {appliedCoupon.code} (-{formatInr(appliedCoupon.discount)})</span>
-                        </span>
-                        <button
-                          onClick={handleRemoveCoupon}
-                          className="text-[#6F6475] hover:text-[#DC2626] cursor-pointer"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ) : (
-                      <form onSubmit={handleApplyCoupon} className="flex gap-2">
-                        <input
-                          type="text"
-                          value={couponInput}
-                          onChange={(e) => setCouponInput(e.target.value)}
-                          placeholder="Promo code (SARINE10)"
-                          className="flex-1 p-2 bg-[#F7F0FA] border border-[#E7DCEB] text-xs uppercase rounded-xs focus:outline-none focus:border-[#563568]"
-                        />
-                        <button
-                          type="submit"
-                          className="px-3.5 py-2 bg-[#563568] text-white text-xs font-medium rounded-xs hover:bg-[#A184BD] transition-colors cursor-pointer"
-                        >
-                          Apply
-                        </button>
-                      </form>
-                    )}
-                    {couponError && <p className="text-[11px] text-[#DC2626] mt-1">{couponError}</p>}
-                  </div>
-
                   {/* Price Breakdown */}
                   <div className="space-y-2 pt-2 border-t border-[#E7DCEB] text-xs font-sans text-[#6F6475]">
                     <div className="flex items-baseline justify-between">
@@ -391,16 +276,11 @@ export const BagPage: React.FC = () => {
                       <span className="text-[#302438] font-medium">{formatInr(subtotal)}</span>
                     </div>
 
-                    {appliedCoupon && (
-                      <div className="flex items-baseline justify-between text-emerald-700">
-                        <span>Coupon Discount</span>
-                        <span>-{formatInr(appliedCoupon.discount)}</span>
-                      </div>
-                    )}
-
                     <div className="flex items-baseline justify-between">
-                      <span>Shipping (Pan-India)</span>
-                      <span className="text-emerald-700 font-medium">Complimentary</span>
+                      <span>Shipping</span>
+                      <span className={shippingFee === 0 ? "text-emerald-700 font-medium" : "text-[#302438] font-medium"}>
+                        {shippingFee === 0 ? 'Complimentary' : formatInr(shippingFee)}
+                      </span>
                     </div>
 
                     <div className="flex items-baseline justify-between pt-3 border-t border-[#E7DCEB] text-sm text-[#302438]">
@@ -421,12 +301,6 @@ export const BagPage: React.FC = () => {
                     </button>
                   </div>
 
-                  {/* Reassurance notes */}
-                  <div className="pt-4 border-t border-[#E7DCEB] text-[11px] text-[#6F6475] space-y-1.5 font-sans">
-                    <p>• Complimentary tamper-evident presentation packaging</p>
-                    <p>• Verified Razorpay payments (UPI, Cards, NetBanking)</p>
-                    <p>• Track your order anytime with live updates</p>
-                  </div>
                 </div>
               </div>
             </div>
