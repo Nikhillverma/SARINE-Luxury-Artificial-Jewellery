@@ -277,6 +277,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <img
               src={slide.image}
               alt={slide.heading}
+              loading={idx === 0 ? 'eager' : 'lazy'}
+              decoding="async"
+              fetchPriority={idx === 0 ? 'high' : 'low'}
               className="absolute inset-0 w-full h-full object-cover object-[70%_center] shadow-none"
             />
           </div>
@@ -554,6 +557,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                   <img
                     src={item.image}
                     alt={item.title}
+                    loading="lazy"
+                    decoding="async"
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
                   />
@@ -639,6 +644,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 <img
                   src={HOMEPAGE_IMAGES.ourStory}
                   alt="SARINE Craftsmanship and Jewellery Details"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover object-center"
                 />
               </div>
@@ -734,6 +741,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         <img
           src={HOMEPAGE_IMAGES.editorialBanner}
           alt="The Art of Everyday Elegance"
+          loading="lazy"
+          decoding="async"
           className="absolute inset-0 w-full h-full object-cover object-center"
         />
 
