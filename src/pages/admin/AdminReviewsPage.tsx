@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { hostingerStorefrontService, type ProductReview } from '../../services/hostinger/hostingerStorefrontService';
-import { Check, Image as ImageIcon, MessageSquare, RefreshCw, Star, X } from 'lucide-react';
+import { Check, MessageSquare, RefreshCw, Star, X } from 'lucide-react';
 
 type ReviewFilter = 'pending' | 'approved' | 'rejected' | 'all';
 
