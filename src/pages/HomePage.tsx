@@ -102,7 +102,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const [isHeroPaused, setIsHeroPaused] = useState(false);
   const slideCount = 3;
 
-  // Best Sellers Carousel Scroll Reference
+  // Featured products section reference
   const carouselRef = useRef<HTMLDivElement>(null);
 
   // Wishlist State (Local interactive set)
@@ -232,7 +232,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     setActiveSlide((prev) => (prev + 1) % slideCount);
   };
 
-  // 3. Best Sellers Carousel Controls
+  // 3. Featured Products Controls
   const scrollCarousel = (direction: 'left' | 'right') => {
     if (carouselRef.current) {
       const scrollAmount = 300;
@@ -515,8 +515,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       </section>
 
       {/* =========================================================================
-          BEST SELLERS
-          Shared container: mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10
+          FEATURED PIECES
+          Curated from the currently available in-stock catalogue
           Heading row: flex items-end justify-between mb-6
           Scrolling track INSIDE container: gap-4 lg:gap-6 snap-x snap-mandatory
           Card widths: w-[calc((100%-1rem)/2)] md:w-[calc((100%-3rem)/3)] lg:w-[calc((100%-6rem)/5)]
@@ -528,14 +528,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-8 sm:mb-10">
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
-              Best Sellers
+              Featured Pieces
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
-              Our most cherished pieces, loved for their enduring finish and timeless beauty.
+              A considered edit of in-stock designs selected from the SARINE collection.
             </p>
             <div className="mt-3">
               <Link
-                to="/shop?sort=bestseller"
+                to="/shop?sort=newest"
                 className="text-xs sm:text-[13px] text-[#302438] hover:text-[#563568] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
               >
                 <span>View All</span>
@@ -544,11 +544,13 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </div>
           </div>
 
-          {/* Product Grid using plain CSS .product-grid */}
+          {/* Featured products are currently drawn from the newest in-stock catalogue.
+              Avoid presenting them as sales-ranked best sellers until reliable sales
+              ranking data is available from the storefront API. */}
           {loading ? (
-            <div className="product-grid">
+            <div className="product-grid" aria-label="Loading featured jewellery">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="animate-pulse w-full">
+                <div key={i} className="animate-pulse w-full" aria-hidden="true">
                   <div className="bg-[#F0E6F4] aspect-[3/4] w-full border border-[#E7DCEB]"></div>
                   <div className="h-4 bg-[#F0E6F4] w-2/3 mt-3"></div>
                   <div className="h-3 bg-[#F0E6F4] w-1/3 mt-2"></div>
@@ -561,7 +563,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
-          ) : null}
+          ) : (
+            <div className="py-10 text-center">
+              <p className="text-sm text-[#6F6475]">New pieces are being prepared for the collection.</p>
+              <Link to="/shop" className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-[#563568] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#563568]">
+                Explore the full collection
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
