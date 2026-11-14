@@ -566,8 +566,12 @@ router.post("/verify", async (req, res, next) => {
     );
 
     const aggregatedItems = new Map();
+    let hasSufficientStock = orderItems.length > 0;
     for (const item of orderItems) {
-      if (!item.product_id) continue;
+      if (!item.product_id) {
+        hasSufficientStock = false;
+        break;
+      }
       const existing = aggregatedItems.get(item.product_id);
       if (existing) {
         existing.quantity += Number(item.quantity);
@@ -581,7 +585,6 @@ router.post("/verify", async (req, res, next) => {
       }
     }
 
-    let hasSufficientStock = true;
     for (const item of aggregatedItems.values()) {
       const [prod] = await connection.execute(
         `SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE`,
