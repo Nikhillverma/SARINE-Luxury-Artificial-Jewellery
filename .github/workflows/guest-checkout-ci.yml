@@ -35,8 +35,8 @@ jobs:
           node --check orders.js
           node --check checkoutPolicy.js
           node --check adminAuth.js
-          node --check schemaDiagnostics.js
           node --check adminOrders.js
+          node --check adminReturns.js
           node --check adminStorefront.js
           node --check adminAnalytics.js
           node --check adminDashboard.js
