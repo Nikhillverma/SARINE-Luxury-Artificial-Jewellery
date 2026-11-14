@@ -541,16 +541,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               onMouseEnter={() => handleMouseEnter('bestsellers')}
             >
               <Link
-                to="/shop?sort=bestseller"
+                to="/shop?sort=newest"
                 className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
-                  activeDropdown === 'bestsellers' || location.search.includes('sort=bestseller')
+                  activeDropdown === 'bestsellers' || location.search.includes('sort=newest')
                     ? 'text-[#563568] font-medium'
                     : 'text-[#302438]'
                 }`}
                 aria-expanded={activeDropdown === 'bestsellers'}
                 aria-haspopup="true"
               >
-                <span>Bestsellers</span>
+                <span>Featured Styles</span>
                 <ChevronDown
                   size={12}
                   className={`transition-transform duration-200 text-[#563568] ${
@@ -814,7 +814,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <div className="col-span-8 grid grid-cols-2 gap-6">
                   <div>
                     <h3 className="text-xs uppercase tracking-wider text-[#563568] font-semibold mb-3">
-                      Customer Favourites
+                      Shop by Category
                     </h3>
                     <ul className="space-y-2.5 text-[13px]">
                       <li>
@@ -822,34 +822,31 @@ export const Navbar: React.FC<NavbarProps> = ({
                           to="/shop?sort=bestseller"
                           className="text-[#302438] hover:text-[#563568] transition-colors flex items-center justify-between"
                         >
-                          <span>Most-Loved Pieces (Over 5,000+ Patrons)</span>
-                          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#D9B8A0]/25 text-[#563568] rounded-xs font-medium">
-                            Iconic
-                          </span>
+                          <span>Explore the Jewellery Collection</span>
                         </Link>
                       </li>
                       <li>
                         <Link
-                          to="/shop?category=earrings&sort=bestseller"
+                          to="/shop?category=earrings&sort=newest"
                           className="text-[#6F6475] hover:text-[#563568] transition-colors block"
                         >
-                          Temple Coin & Kundan Chandbalis
+                          Earrings
                         </Link>
                       </li>
                       <li>
                         <Link
-                          to="/shop?category=necklaces&sort=bestseller"
+                          to="/shop?category=necklaces&sort=newest"
                           className="text-[#6F6475] hover:text-[#563568] transition-colors block"
                         >
-                          Meera Royal Polki Choker Set
+                          Necklaces
                         </Link>
                       </li>
                       <li>
                         <Link
-                          to="/shop?category=bracelets&sort=bestseller"
+                          to="/shop?category=bracelets&sort=newest"
                           className="text-[#6F6475] hover:text-[#563568] transition-colors block"
                         >
-                          Zoya Open-Cuff Leaf Bangle
+                          Bracelets
                         </Link>
                       </li>
                     </ul>
@@ -857,15 +854,15 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                   <div>
                     <h3 className="text-xs uppercase tracking-wider text-[#563568] font-semibold mb-3">
-                      Best-Rated Categories
+                      Explore More
                     </h3>
                     <ul className="space-y-2.5 text-[13px]">
                       <li>
                         <Link
-                          to="/shop?category=rings&sort=bestseller"
+                          to="/shop?category=rings&sort=newest"
                           className="text-[#6F6475] hover:text-[#563568] transition-colors block"
                         >
-                          Ananya Navratna Heritage Rings
+                          Rings
                         </Link>
                       </li>
                       <li>
@@ -873,7 +870,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                           to="/shop?type=anklet"
                           className="text-[#6F6475] hover:text-[#563568] transition-colors block"
                         >
-                          Payal & Ghungroo Silver Anklets
+                          Anklets
                         </Link>
                       </li>
                       <li>
@@ -881,15 +878,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                           to="/shop?type=set"
                           className="text-[#6F6475] hover:text-[#563568] transition-colors block"
                         >
-                          Complete Festive & Bridal Sets
+                          Jewellery Sets
                         </Link>
                       </li>
                       <li>
                         <Link
-                          to="/shop?sort=bestseller&price=under-999"
+                          to="/shop?price=under-999"
                           className="text-[#6F6475] hover:text-[#563568] transition-colors block"
                         >
-                          Bestsellers Under ₹999
+                          Styles Under ₹999
                         </Link>
                       </li>
                     </ul>
@@ -900,24 +897,24 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <div className="col-span-4 bg-[#F7F0FA] border border-[#E7DCEB] p-4 flex gap-4 items-center">
                   <img
                     src="https://images.unsplash.com/photo-1635767798638-3e25273a8236?auto=format&fit=crop&w=400&q=80"
-                    alt="Bestselling earrings"
+                    alt="Jewellery collection"
                     className="w-24 h-24 object-cover shrink-0"
                   />
                   <div>
                     <span className="text-[10px] uppercase tracking-wider text-[#563568] font-semibold block mb-1">
-                      Highest Rated
+                      The SARINE Edit
                     </span>
                     <h4 className="font-serif text-sm text-[#302438] mb-1 leading-snug">
-                      Chandbali & Jhumka Heritage
+                      Discover Occasion Styles
                     </h4>
                     <p className="text-[11px] text-[#6F6475] mb-2 line-clamp-2">
-                      Micro-pearl accents with genuine 18K gold micron plating.
+                      Explore jewellery styles selected for celebrations and everyday dressing.
                     </p>
                     <Link
                       to="/shop?sort=bestseller"
                       className="text-xs text-[#563568] hover:text-[#80609A] font-medium inline-flex items-center gap-1 group"
                     >
-                      <span>Shop bestsellers</span>
+                      <span>Explore Styles</span>
                       <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
                     </Link>
                   </div>
@@ -1609,7 +1606,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] hover:border-[#B69ACF] flex items-center justify-between transition-colors"
                   >
-                    <span className="text-xs font-medium text-[#302438]">Bestsellers</span>
+                    <span className="text-xs font-medium text-[#302438]">Featured Styles</span>
                     <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-[#D9B8A0]/30 text-[#563568] rounded-xs font-medium">
                       Hot
                     </span>
