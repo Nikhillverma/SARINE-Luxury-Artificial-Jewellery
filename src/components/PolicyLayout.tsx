@@ -52,10 +52,6 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
             {subtitle}
           </p>
 
-          <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-[#6F6475] font-sans">
-            <Clock size={12} className="text-[#563568]" />
-            <span>Last updated: 21 October 2026</span>
-          </div>
         </div>
       </section>
 
