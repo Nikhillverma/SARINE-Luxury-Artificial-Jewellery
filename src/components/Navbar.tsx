@@ -391,15 +391,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 >
                   <div className="px-4 py-2 border-b border-[#E7DCEB]">
                     <p className="text-[10px] uppercase tracking-wider text-[#563568] font-semibold">
-                      Customer Account & Orders
+                      Your Orders
                     </p>
                     <p className="text-[11px] text-[#6F6475] mt-0.5">
-                      Track shipments & manage account
+                      Look up an order using its number and phone number.
                     </p>
                   </div>
 
                   <div className="py-1 text-xs">
-                    {/* Track Order */}
                     <Link
                       to="/track-order"
                       onClick={() => setIsAccountMenuOpen(false)}
@@ -407,41 +406,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                     >
                       <Truck size={15} className="text-[#563568] shrink-0" />
                       <div>
-                        <span className="font-medium block text-xs group-hover:text-[#563568]">Track My Order</span>
-                        <span className="text-[10px] text-[#6F6475]">Check live delivery status</span>
+                        <span className="font-medium block text-xs group-hover:text-[#563568]">Track an Order</span>
+                        <span className="text-[10px] text-[#6F6475]">View the latest available order status</span>
                       </div>
                     </Link>
-
-                    {/* Order History */}
-                    <Link
-                      to="/track-order?section=orders"
-                      onClick={() => setIsAccountMenuOpen(false)}
-                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
-                    >
-                      <Package size={15} className="text-[#563568] shrink-0" />
-                      <div>
-                        <span className="font-medium block text-xs group-hover:text-[#563568]">Order History</span>
-                        <span className="text-[10px] text-[#6F6475]">Purchases, invoices & tracking</span>
-                      </div>
-                    </Link>
-
-                    {/* Plan of Purchase */}
-                    <Link
-                      to="/track-order?section=plan-of-purchase"
-                      onClick={() => setIsAccountMenuOpen(false)}
-                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
-                    >
-                      <Sparkles size={15} className="text-[#563568] shrink-0" />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-medium text-xs group-hover:text-[#563568]">Plan of Purchase</span>
-                          <span className="text-[9px] uppercase font-bold px-1.5 py-0.2 bg-[#D9B8A0]/30 text-[#563568] rounded-xs">Plan</span>
-                        </div>
-                        <span className="text-[10px] text-[#6F6475]">10+1 Monthly Jewellery Savings</span>
-                      </div>
-                    </Link>
-
-                    {/* Saved Wishlist */}
                     <button
                       onClick={() => {
                         setIsAccountMenuOpen(false);
@@ -453,7 +421,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <div className="flex-1 flex items-center justify-between">
                         <div>
                           <span className="font-medium block text-xs group-hover:text-[#563568]">Saved Wishlist</span>
-                          <span className="text-[10px] text-[#6F6475]">All your favourite pieces</span>
+                          <span className="text-[10px] text-[#6F6475]">Your saved jewellery pieces</span>
                         </div>
                         {wishlistCount > 0 && (
                           <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-[#B69ACF] text-[#302438]">
@@ -462,47 +430,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                         )}
                       </div>
                     </button>
-
-                    {/* SARINE Wallet */}
                     <Link
-                      to="/track-order?section=wallet"
+                      to="/contact"
                       onClick={() => setIsAccountMenuOpen(false)}
                       className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
                     >
-                      <Wallet size={15} className="text-[#563568] shrink-0" />
+                      <HelpCircle size={15} className="text-[#563568] shrink-0" />
                       <div>
-                        <span className="font-medium block text-xs group-hover:text-[#563568]">SARINE Wallet</span>
-                        <span className="text-[10px] text-[#6F6475]">Balance, cashback & credits</span>
+                        <span className="font-medium block text-xs group-hover:text-[#563568]">Order Help</span>
+                        <span className="text-[10px] text-[#6F6475]">Contact SARINE support</span>
                       </div>
                     </Link>
-
-                    {/* Delivery Addresses */}
-                    <Link
-                      to="/track-order?section=addresses"
-                      onClick={() => setIsAccountMenuOpen(false)}
-                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
-                    >
-                      <MapPin size={15} className="text-[#563568] shrink-0" />
-                      <div>
-                        <span className="font-medium block text-xs group-hover:text-[#563568]">Delivery Addresses</span>
-                        <span className="text-[10px] text-[#6F6475]">Manage shipping destinations</span>
-                      </div>
-                    </Link>
-
-                    {/* Concierge & Support */}
-                    <div className="border-t border-[#E7DCEB] mt-1 pt-1">
-                      <Link
-                        to="/track-order?section=support"
-                        onClick={() => setIsAccountMenuOpen(false)}
-                        className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
-                      >
-                        <HelpCircle size={15} className="text-[#563568] shrink-0" />
-                        <div>
-                          <span className="font-medium block text-xs group-hover:text-[#563568]">Support & Concierge</span>
-                          <span className="text-[10px] text-[#6F6475]">Help, inquiries & FAQs</span>
-                        </div>
-                      </Link>
-                    </div>
                   </div>
                 </div>
               </div>
