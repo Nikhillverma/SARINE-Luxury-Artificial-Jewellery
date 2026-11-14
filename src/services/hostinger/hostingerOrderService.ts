@@ -185,5 +185,24 @@ export class HostingerOrderService implements IOrderService {
     }
 
     return data;
+
+
+  /** Submit a return or exchange request using the same order-number + phone verification as tracking. */
+  async requestReturn(orderNumber: string, phone: string, requestType: 'return' | 'exchange', reason: string, notes: string) {
+    const apiBase = resolveApiBase();
+    const res = await fetch(`${apiBase}/orders/returns`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ orderNumber: orderNumber.trim(), phone: phone.trim(), requestType, reason, notes })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err: any = new Error(data.error || 'Could not submit your return request.');
+      err.status = res.status;
+      throw err;
+    }
+    return data as { success: boolean; requestId: number; orderNumber: string; status: string };
+  }
+
   }
 }
