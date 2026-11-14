@@ -178,21 +178,23 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
           const customerFeatured = customerProducts(featured);
           const customerNewest = customerProducts(newest);
-          const bestList =
-            customerFeatured.length >= 5
-              ? customerFeatured
-              : customerNewest.length > 0
-                ? customerNewest
-                : customerFeatured;
-          setBestsellers(bestList);
 
-          // 4 newest customer-facing products sorted by createdAt descending.
+          // Keep the two homepage collections distinct. The current API's featured
+          // endpoint is newest-first, not a sales-ranking endpoint, so do not label
+          // these products as bestsellers or repeat the New Arrivals cards.
           const sortedNewest = [...customerNewest].sort((a, b) => {
             const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
             const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
             return dateB - dateA;
           });
-          setNewArrivals(sortedNewest.slice(0, 4));
+          const latestProducts = sortedNewest.slice(0, 4);
+          setNewArrivals(latestProducts);
+
+          const latestIds = new Set(latestProducts.map((product) => product.id));
+          const editCandidates = customerFeatured.length > 0 ? customerFeatured : sortedNewest;
+          setBestsellers(
+            editCandidates.filter((product) => !latestIds.has(product.id)).slice(0, 8)
+          );
         }
       } catch (err) {
         console.error('[HomePage] Error loading storefront collections:', err);
@@ -515,7 +517,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       </section>
 
       {/* =========================================================================
-          BEST SELLERS
+          MORE TO ADORE
           Shared container: mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10
           Heading row: flex items-end justify-between mb-6
           Scrolling track INSIDE container: gap-4 lg:gap-6 snap-x snap-mandatory
@@ -528,14 +530,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-8 sm:mb-10">
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
-              Best Sellers
+              More to Adore
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
-              Our most cherished pieces, loved for their enduring finish and timeless beauty.
+              Explore more pieces from the SARINE collection, beyond our latest arrivals.
             </p>
             <div className="mt-3">
               <Link
-                to="/shop?sort=bestseller"
+                to="/shop"
                 className="text-xs sm:text-[13px] text-[#302438] hover:text-[#563568] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
               >
                 <span>View All</span>
@@ -544,10 +546,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </div>
           </div>
 
-          {/* Product Grid using plain CSS .product-grid */}
+          {/* Distinct collection, excluding the four latest arrivals. */}
           {loading ? (
             <div className="product-grid">
-              {[...Array(8)].map((_, i) => (
+              {[...Array(4)].map((_, i) => (
                 <div key={i} className="animate-pulse w-full">
                   <div className="bg-[#F0E6F4] aspect-[3/4] w-full border border-[#E7DCEB]"></div>
                   <div className="h-4 bg-[#F0E6F4] w-2/3 mt-3"></div>
@@ -561,7 +563,11 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
-          ) : null}
+          ) : (
+            <p className="py-8 text-center text-sm text-[#6F6475]" role="status">
+              More pieces are being added to the collection. Explore the full shop to discover what is available.
+            </p>
+          )}
         </div>
       </section>
 
