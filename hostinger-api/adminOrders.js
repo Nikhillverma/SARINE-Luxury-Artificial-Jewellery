@@ -2,6 +2,7 @@ import { Router } from "express";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { canShipOrder, shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
+import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 
 const router = Router();
 
@@ -271,6 +272,7 @@ router.post("/update", async (req, res, next) => {
 
     const cleanOrderNumber = orderNumber.trim();
     const adminEmail = req.admin?.email || "admin";
+    if (action === "cancel") await ensureInventoryTable();
 
     connection = await pool.getConnection();
     await connection.beginTransaction();
@@ -486,17 +488,45 @@ router.post("/update", async (req, res, next) => {
 
       if (stockWasDecremented) {
         const [lines] = await connection.execute(
-          `SELECT product_id, quantity FROM order_items WHERE order_id = ?`,
+          `SELECT product_id, SUM(quantity) AS quantity
+           FROM order_items
+           WHERE order_id = ? AND product_id IS NOT NULL
+           GROUP BY product_id`,
           [order.id]
         );
 
         for (const line of lines) {
-          if (line.product_id && Number(line.quantity) > 0) {
-            await connection.execute(
-              `UPDATE products SET stock = stock + ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
-              [Number(line.quantity), line.product_id]
-            );
+          const quantity = Number(line.quantity);
+          if (!line.product_id || !Number.isSafeInteger(quantity) || quantity <= 0) continue;
+
+          const [products] = await connection.execute(
+            `SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE`,
+            [line.product_id]
+          );
+          if (!products.length) continue;
+
+          const product = products[0];
+          const previousStock = Number(product.stock || 0);
+          const newStock = previousStock + quantity;
+          if (!Number.isSafeInteger(newStock) || newStock > 2147483647) {
+            throw new Error("Stock restoration would exceed the supported inventory balance.");
           }
+
+          await connection.execute(
+            `UPDATE products SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
+            [newStock, line.product_id]
+          );
+          await recordInventoryMovement(connection, {
+            productId: product.id,
+            productName: product.name,
+            previousStock,
+            quantityDelta: quantity,
+            newStock,
+            reason: `Order cancellation restock ${cleanOrderNumber}`,
+            actorId: req.admin?.id || "admin",
+            actorName: req.admin?.name || adminEmail,
+            actorEmail: adminEmail
+          });
         }
       }
 

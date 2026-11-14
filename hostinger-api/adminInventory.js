@@ -1,7 +1,7 @@
 import { Router } from "express";
-import crypto from "node:crypto";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
+import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -12,34 +12,6 @@ const REASONS = new Set([
   "Inventory Physical Reconciliation",
   "Customer Return Restored"
 ]);
-
-let tableReady;
-function ensureInventoryTable() {
-  if (!tableReady) {
-    tableReady = pool.query(`
-      CREATE TABLE IF NOT EXISTS inventory_movements (
-        id CHAR(36) NOT NULL PRIMARY KEY,
-        product_id VARCHAR(191) NOT NULL,
-        product_name VARCHAR(255) NOT NULL,
-        sku VARCHAR(191) NOT NULL,
-        admin_id VARCHAR(191) NOT NULL,
-        admin_name VARCHAR(255) NOT NULL,
-        admin_email VARCHAR(254) NOT NULL,
-        previous_stock INT UNSIGNED NOT NULL,
-        quantity_delta INT NOT NULL,
-        new_stock INT UNSIGNED NOT NULL,
-        reason VARCHAR(100) NOT NULL,
-        created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-        INDEX idx_inventory_movements_created (created_at),
-        INDEX idx_inventory_movements_product (product_id, created_at)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `).catch(error => {
-      tableReady = null;
-      throw error;
-    });
-  }
-  return tableReady;
-}
 
 // GET /api/admin/inventory/movements — newest audited stock changes.
 router.get("/movements", async (_req, res, next) => {
@@ -103,29 +75,21 @@ router.post("/adjustments", async (req, res, next) => {
       [newStock, productId]
     );
 
-    const movementId = crypto.randomUUID();
-    await connection.execute(
-      `INSERT INTO inventory_movements
-       (id, product_id, product_name, sku, admin_id, admin_name, admin_email,
-        previous_stock, quantity_delta, new_stock, reason)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        movementId, product.id, product.name, product.id,
-        String(req.admin.id), String(req.admin.name || req.admin.email),
-        String(req.admin.email), previousStock, delta, newStock, reason
-      ]
-    );
+    const movement = await recordInventoryMovement(connection, {
+      productId: product.id,
+      productName: product.name,
+      previousStock,
+      quantityDelta: delta,
+      newStock,
+      reason,
+      actorId: req.admin.id,
+      actorName: req.admin.name || req.admin.email,
+      actorEmail: req.admin.email
+    });
 
     await connection.commit();
     res.set("Cache-Control", "no-store");
-    return res.status(201).json({
-      movement: {
-        id: movementId, productId: product.id, productName: product.name,
-        sku: product.id, adminName: req.admin.name || req.admin.email,
-        adminEmail: req.admin.email, previousStock, quantityDelta: delta,
-        newStock, reason, createdAt: new Date().toISOString()
-      }
-    });
+    return res.status(201).json({ movement });
   } catch (error) {
     if (connection) await connection.rollback().catch(() => {});
     return next(error);
