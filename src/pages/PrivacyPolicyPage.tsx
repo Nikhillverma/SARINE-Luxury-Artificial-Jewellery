@@ -1,7 +1,7 @@
 /**
  * Privacy Policy page for SARINE.
  * Transparent disclosure of personal information collected, legitimate processing reasons,
- * Razorpay PCI-DSS payment separation, data non-sale guarantee, and deletion request rights.
+ * Customer information, payment-provider handling, and privacy requests.
  */
 
 import React from 'react';
