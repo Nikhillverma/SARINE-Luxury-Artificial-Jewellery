@@ -30,9 +30,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     ? '/images/zoya-open-cuff-leaf-bangle.jpg'
     : (product.images[0] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80');
   const secondaryImage = isAnanya
-    ? '/src/assets/images/temple_coin_bracelet_1792768038164.jpg'
+    ? '/images/ananya-temple-coin-bracelet.jpg'
     : isZoya
-    ? '/src/assets/images/zoya_leaf_bangle_1792768482264.jpg'
+    ? '/images/zoya-open-cuff-leaf-bangle.jpg'
     : product.images[1];
 
   const handleWishlistClick = (e: React.MouseEvent) => {
