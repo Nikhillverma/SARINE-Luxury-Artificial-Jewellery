@@ -147,6 +147,9 @@ router.put("/:id", async (req, res, next) => {
     const [existingRows] = await pool.execute("SELECT * FROM products WHERE id = ? LIMIT 1", [req.params.id]);
     if (!existingRows.length) return res.status(404).json({ error: "Product not found." });
     const existing = mapProduct(existingRows[0]);
+    if (body.stock !== undefined && Number(body.stock) !== existing.stock) {
+      return res.status(400).json({ error: "Use Inventory & Physical Stock Control to adjust stock so the change is recorded in inventory history." });
+    }
     const data = valuesFromBody(body, existing);
     if (!data.slug) return res.status(400).json({ error: "A valid product slug is required." });
     await pool.execute(
