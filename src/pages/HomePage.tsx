@@ -412,43 +412,54 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </div>
           </div>
 
-          {/* 5 Category Cards using plain CSS .category-grid */}
+          {/* Five consistent, resilient category cards */}
           <div className="category-grid">
             {categories.slice(0, 5).map((cat) => {
-              const catImage =
+              const categoryImage =
                 cat.slug === 'bracelets' || cat.id === 'cat-bracelets'
-                  ? HOMEPAGE_IMAGES.categoryBracelets || cat.image
+                  ? HOMEPAGE_IMAGES.categoryBracelets
                   : cat.image;
+              const fallbackImage =
+                'https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=900&q=80';
 
               return (
                 <Link
                   key={cat.id}
-                  to={`/shop?category=${cat.slug}`}
-                  className="group flex flex-col items-center text-center w-full"
+                  to={`/shop?category=${encodeURIComponent(cat.slug)}`}
+                  aria-label={`Shop ${cat.name}`}
+                  className="group flex w-full flex-col items-center text-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#563568]"
                 >
-                  {/* Landscape image wrapper: aspect-[3/2] */}
-                  <div className="aspect-[3/2] w-full overflow-hidden bg-[#F0E6F4] border border-[#E7DCEB] rounded-xs relative group-hover:border-[#B69ACF] transition-colors">
+                  <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-[#E7DCEB] bg-[#F0E6F4] transition-colors duration-300 group-hover:border-[#B69ACF]">
                     <img
-                      src={catImage}
-                      alt={cat.name}
+                      src={categoryImage || fallbackImage}
+                      alt={`${cat.name} jewellery collection`}
+                      loading="lazy"
+                      decoding="async"
                       referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
+                      onError={(event) => {
+                        const image = event.currentTarget;
+                        if (image.dataset.fallbackApplied !== 'true') {
+                          image.dataset.fallbackApplied = 'true';
+                          image.src = fallbackImage;
+                        }
+                      }}
+                      className="h-full w-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-105"
                     />
+                    <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#302438]/15 via-transparent to-transparent opacity-70 transition-opacity group-hover:opacity-100" />
                   </div>
 
-                {/* Title & Link */}
-                <div className="pt-3 text-center flex flex-col items-center">
-                  <h3 className="text-sm sm:text-base font-normal text-[#302438] font-sans text-center group-hover:text-[#563568] transition-colors">
-                    {cat.name}
-                  </h3>
-                  <span className="text-xs text-[#6F6475] group-hover:text-[#563568] transition-colors inline-flex items-center justify-center gap-1 mt-0.5 font-sans">
-                    <span>Shop Now</span>
-                    <ArrowRight size={11} />
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
+                  <div className="flex flex-col items-center pt-3 text-center">
+                    <h3 className="font-sans text-sm font-medium text-[#302438] transition-colors group-hover:text-[#563568] sm:text-base">
+                      {cat.name}
+                    </h3>
+                    <span className="mt-1 inline-flex min-h-8 items-center justify-center gap-1 font-sans text-xs text-[#6F6475] transition-colors group-hover:text-[#563568]">
+                      <span>Explore Collection</span>
+                      <ArrowRight size={11} />
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
