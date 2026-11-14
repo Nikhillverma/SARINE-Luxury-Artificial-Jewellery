@@ -68,6 +68,16 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
     };
   }, [isOpen]);
 
+  // Close search with Escape while the overlay is open.
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   // Lock scroll
   useEffect(() => {
     if (isOpen) {
