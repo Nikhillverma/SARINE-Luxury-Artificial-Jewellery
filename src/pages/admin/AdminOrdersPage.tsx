@@ -79,6 +79,18 @@ interface AdminOrder {
   updatedAt?: string;
 }
 
+function canMarkOrderAsShipped(order: AdminOrder): boolean {
+  if (!order || order.refundNeeded || order.orderStatus === 'needs_refund') return false;
+
+  const paymentMethod = order.paymentMethod?.toLowerCase();
+  const paymentStatus = order.paymentStatus?.toLowerCase();
+  const statusAllowsShipment =
+    (order.orderStatus === 'placed' && paymentMethod === 'cod') ||
+    ['confirmed', 'processing'].includes(order.orderStatus);
+
+  return statusAllowsShipment && (paymentStatus === 'paid' || paymentMethod === 'cod');
+}
+
 export const AdminOrdersPage: React.FC = () => {
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
@@ -463,7 +475,7 @@ export const AdminOrdersPage: React.FC = () => {
               Customer Orders
             </h1>
             <p className="mt-1 text-xs text-[#6F6475]">
-              Real-time fulfillment ledger, courier tracking assignment, and order cancellation.
+              Order fulfilment, manual status updates, and optional courier tracking.
             </p>
           </div>
 
@@ -973,10 +985,16 @@ export const AdminOrdersPage: React.FC = () => {
                     Fulfillment Actions
                   </h3>
 
+                  {!canMarkOrderAsShipped(selectedOrder) &&
+                    !['shipped', 'delivered', 'cancelled'].includes(selectedOrder.orderStatus) && (
+                      <p className="text-[11px] leading-relaxed text-[#6F6475] bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs p-3">
+                        Shipment can be marked after an online payment is paid or a Cash on Delivery order is placed.
+                        Orders flagged for refund cannot be shipped.
+                      </p>
+                    )}
+
                   {/* 1. Mark as Shipped Form */}
-                  {selectedOrder.orderStatus !== 'shipped' &&
-                    selectedOrder.orderStatus !== 'delivered' &&
-                    selectedOrder.orderStatus !== 'cancelled' && (
+                  {canMarkOrderAsShipped(selectedOrder) && (
                       <div className="space-y-2">
                         {!showShipForm ? (
                           <button
@@ -991,41 +1009,45 @@ export const AdminOrdersPage: React.FC = () => {
                         ) : (
                           <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs space-y-3 animate-fadeIn">
                             <h4 className="font-medium text-xs text-[#302438]">
-                              Record Dispatch Details
+                              Record Dispatch Details (Optional)
                             </h4>
+                            <p className="text-[11px] leading-relaxed text-[#6F6475]">
+                              No delivery partner has to be selected yet. Leave courier and tracking fields blank if they are not available.
+                              Confirm shipment only after the parcel has actually been dispatched.
+                            </p>
                             <div>
                               <label className="block text-[11px] text-[#6F6475] mb-1">
-                                Courier Partner Name
+                                Courier Partner Name (Optional)
                               </label>
                               <input
                                 type="text"
                                 value={courierName}
                                 onChange={(e) => setCourierName(e.target.value)}
-                                placeholder="e.g. Blue Dart, Delhivery, DTDC"
+                                placeholder="Enter when a delivery partner is assigned"
                                 className="w-full px-3 py-2 bg-white border border-[#E7DCEB] text-xs text-[#302438] rounded-xs focus:outline-none focus:border-[#B69ACF]"
                               />
                             </div>
                             <div>
                               <label className="block text-[11px] text-[#6F6475] mb-1">
-                                Airway Bill (AWB) / Tracking Number
+                                AWB / Tracking Number (Optional)
                               </label>
                               <input
                                 type="text"
                                 value={trackingNumber}
                                 onChange={(e) => setTrackingNumber(e.target.value)}
-                                placeholder="e.g. BLU12345678"
+                                placeholder="Enter when a tracking number is available"
                                 className="w-full px-3 py-2 bg-white border border-[#E7DCEB] text-xs text-[#302438] rounded-xs focus:outline-none focus:border-[#B69ACF]"
                               />
                             </div>
                             <div>
                               <label className="block text-[11px] text-[#6F6475] mb-1">
-                                Online Tracking URL (must start with https://)
+                                Online Tracking URL (Optional; must start with https://)
                               </label>
                               <input
                                 type="url"
                                 value={trackingUrl}
                                 onChange={(e) => setTrackingUrl(e.target.value)}
-                                placeholder="https://track.bluedart.com/..."
+                                placeholder="Add a tracking link when available"
                                 className="w-full px-3 py-2 bg-white border border-[#E7DCEB] text-xs text-[#302438] rounded-xs focus:outline-none focus:border-[#B69ACF]"
                               />
                             </div>
