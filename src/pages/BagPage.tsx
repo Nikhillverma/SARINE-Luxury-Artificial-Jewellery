@@ -276,13 +276,6 @@ export const BagPage: React.FC = () => {
                       <span className="text-[#302438] font-medium">{formatInr(subtotal)}</span>
                     </div>
 
-                    {appliedCoupon && (
-                      <div className="flex items-baseline justify-between text-emerald-700">
-                        <span>Coupon Discount</span>
-                        <span>-{formatInr(appliedCoupon.discount)}</span>
-                      </div>
-                    )}
-
                     <div className="flex items-baseline justify-between">
                       <span>Shipping</span>
                       <span className={shippingFee === 0 ? "text-emerald-700 font-medium" : "text-[#302438] font-medium"}>
