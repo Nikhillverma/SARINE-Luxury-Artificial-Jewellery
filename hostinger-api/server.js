@@ -4,8 +4,8 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { pool, testDatabase } from "./db.js";
 import adminAuthRouter from "./adminAuth.js";
-import schemaDiagnosticsRouter from "./schemaDiagnostics.js";
 import adminOrdersRouter from "./adminOrders.js";
+import adminReturnsRouter from "./adminReturns.js";
 import adminDashboardRouter from "./adminDashboard.js";
 import adminAnalyticsRouter from "./adminAnalytics.js";
 import adminProductsRouter from "./adminProducts.js";
@@ -332,9 +332,6 @@ app.use("/api/admin/media", adminMediaRouter);
 // Hostinger admin authentication
 app.use("/api/admin/auth", adminAuthRouter);
 
-// Temporary read-only database schema inspection for Returns & Refunds audit.
-app.use("/api/admin/diagnostics", schemaDiagnosticsRouter);
-
 // Hostinger admin dashboard, category and product management
 app.use("/api/admin/dashboard", adminDashboardRouter);
 app.use("/api/admin/analytics", adminAnalyticsRouter);
@@ -342,8 +339,9 @@ app.use("/api/admin/categories", adminCategoriesRouter);
 app.use("/api/admin/customers", adminCustomersRouter);
 app.use("/api/admin/products", adminProductsRouter);
 
-// Hostinger admin orders
+// Hostinger admin orders and returns/refund request queues
 app.use("/api/admin/orders", adminOrdersRouter);
+app.use("/api/admin/returns", adminReturnsRouter);
 
 // Hostinger orders router
 app.use("/api/orders", ordersRouter);
