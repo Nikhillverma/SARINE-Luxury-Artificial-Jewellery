@@ -34,7 +34,7 @@ export const ShippingPolicyPage: React.FC = () => {
             </h2>
           </div>
           <p>
-            SARINE delivers to almost all serviceable postal PIN codes across India through established domestic logistics partners (including Blue Dart, Delhivery, and DTDC).
+            Delivery availability depends on whether the destination PIN code can be serviced. Please review the delivery information shown during checkout before placing an order.
           </p>
           <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] flex items-start gap-3 rounded-xs">
             <AlertCircle size={18} className="text-[#563568] shrink-0 mt-0.5" />
@@ -59,10 +59,10 @@ export const ShippingPolicyPage: React.FC = () => {
                 Dispatch Window
               </h3>
               <p className="font-serif text-xl text-[#563568] mt-1">
-                2 – 3 Business Days
+                Varies by order
               </p>
               <p className="text-xs text-[#6F6475] mt-2">
-                Every piece undergoes a multi-point quality check, secure polishing inspection, and protective packaging prior to dispatch from our atelier.
+                Order processing time can vary. Any available dispatch estimate will be shared with your order information.
               </p>
             </div>
 
@@ -71,15 +71,15 @@ export const ShippingPolicyPage: React.FC = () => {
                 Transit & Delivery
               </h3>
               <p className="font-serif text-xl text-[#563568] mt-1">
-                5 – 7 Business Days
+                Varies by destination
               </p>
               <p className="text-xs text-[#6F6475] mt-2">
-                Standard transit across India takes 5 to 7 business days following dispatch. Metro areas typically arrive in 4 to 5 days.
+                Delivery time depends on the destination and delivery service. Use the order tracking page for status updates when tracking information is available.
               </p>
             </div>
           </div>
           <p className="text-xs text-[#6F6475] mt-1">
-            * Note: Business days exclude Sundays and gazetted national holidays. Severe weather conditions, regional lockdowns, or festival peak volumes may occasionally add 1–2 days to courier transit.
+            Delivery estimates are not guaranteed and may change due to destination serviceability or delivery-partner conditions.
           </p>
         </section>
 
@@ -102,11 +102,11 @@ export const ShippingPolicyPage: React.FC = () => {
             <div className="flex justify-between items-center py-1 border-b border-[#E7DCEB]">
               <span className="text-[#6F6475]">Free Shipping Eligibility:</span>
               <span className="font-medium text-[#302438]">
-                {FREE_SHIPPING_THRESHOLD !== null ? `On orders above ${thresholdDisplay}` : 'All orders across India'}
+                {FREE_SHIPPING_THRESHOLD !== null ? `On orders of ${thresholdDisplay} or more` : 'All orders across India'}
               </span>
             </div>
             <p className="text-[#6F6475] pt-1">
-              Standard delivery is currently complimentary across all prepaid orders nationwide.
+              The shipping fee and any free-shipping eligibility are calculated from the current store settings and displayed with your order total.
             </p>
           </div>
         </section>
@@ -123,9 +123,9 @@ export const ShippingPolicyPage: React.FC = () => {
             As soon as your parcel is dispatched from our atelier:
           </p>
           <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6F6475]">
-            <li>An automated notification containing your courier Airway Bill (AWB) number and direct online tracking URL will be sent to your registered email address and mobile number.</li>
-            <li>You can monitor the live movement of your parcel from the logistics provider&apos;s real-time portal.</li>
-            <li>If you need assistance locating your package, contact our team at <a href="mailto:care@sarinejewelry.com" className="text-[#563568] hover:text-[#A184BD] underline underline-offset-2">care@sarinejewelry.com</a> with your SARINE order number (e.g., SAR-000001).</li>
+            <li>When tracking information is available, check the Track Order page using your SARINE order number.</li>
+            <li>Order status and any available tracking details are shown on the Track Order page.</li>
+            <li>The public customer-support contact details are being finalised. Please keep your order number available when support channels are published.</li>
           </ul>
         </section>
       </div>
