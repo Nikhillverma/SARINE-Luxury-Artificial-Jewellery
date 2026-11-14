@@ -36,27 +36,10 @@ export interface IOrderService {
   getOrderByNumber(orderNumber: string, publicToken?: string): Promise<Order | null>;
   verifyPayment?(input: VerifyPaymentInput): Promise<VerifyPaymentResult>;
 }
-
-export interface InventoryMovement {
-  id: string;
-  productId: string;
-  productName: string;
-  sku: string;
-  adminName: string;
-  adminEmail: string;
-  previousStock: number;
-  quantityDelta: number;
-  newStock: number;
-  reason: string;
-  createdAt: string;
-}
-
 export interface IAdminProductService {
   getProducts(): Promise<Product[]>;
   createProduct(product: Omit<Product, 'id' | 'createdAt'>): Promise<Product>;
   updateProduct(id: string, updates: Partial<Product>): Promise<Product>;
-  adjustStock(id: string, quantityDelta: number, reason: string): Promise<InventoryMovement>;
-  getInventoryMovements(): Promise<InventoryMovement[]>;
   deleteProduct(id: string): Promise<boolean>;
   archiveProduct(id: string): Promise<Product>;
 }

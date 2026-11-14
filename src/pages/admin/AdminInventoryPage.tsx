@@ -6,8 +6,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { categoryService, adminProductService } from '../../services';
-import { Product, JEWELLERY_TYPE_LABELS } from '../../types/product';
-import type { InventoryMovement } from '../../services/interfaces';
+import { Product, isInStock, JEWELLERY_TYPE_LABELS } from '../../types/product';
 import { Category } from '../../types/category';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { formatInr } from '../../utils/currency';
@@ -28,7 +27,6 @@ const LOW_STOCK_THRESHOLD = 5;
 
 export const AdminInventoryPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [movements, setMovements] = useState<InventoryMovement[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -50,12 +48,10 @@ export const AdminInventoryPage: React.FC = () => {
       try {
         const [cats, prods] = await Promise.all([
           categoryService.getCategories({ activeOnly: false }),
-          adminProductService.getProducts(),
-          adminProductService.getInventoryMovements()
+          adminProductService.getProducts()
         ]);
         setCategories(cats);
         setProducts(prods);
-        setMovements(movements);
       } catch (err) {
         console.error('[AdminInventoryPage] Failed to load inventory:', err);
       } finally {
@@ -108,17 +104,17 @@ export const AdminInventoryPage: React.FC = () => {
 
     try {
       // Persist stock through the authenticated Hostinger admin API.
-      const movement = await adminProductService.adjustStock(
+      const updatedProduct = await adminProductService.updateProduct(
         adjustingProduct.id,
-        stockDelta,
-        adjustmentReason
+        { stock: newStock }
       );
 
-      setProducts((prev) => prev.map((product) =>
-        product.id === movement.productId ? { ...product, stock: movement.newStock } : product
-      ));
-      setMovements((prev) => [movement, ...prev].slice(0, 100));
-      setAdjustSuccess(`Recorded ${adjustingProduct.name} stock adjustment in inventory history: ${newStock} units.`);
+      setProducts((prev) =>
+        prev.map((product) =>
+          product.id === updatedProduct.id ? updatedProduct : product
+        )
+      );
+      setAdjustSuccess(`Saved ${adjustingProduct.name} stock in MariaDB: ${newStock} units.`);
       setAdjustingProduct(null);
       setStockDelta(0);
     } catch (err) {
@@ -360,45 +356,6 @@ export const AdminInventoryPage: React.FC = () => {
           </div>
         </div>
 
-
-        {/* Inventory movement audit trail */}
-        <section className="bg-white border border-[#E7DCEB] rounded-xs shadow-2xs overflow-hidden">
-          <div className="p-4 border-b border-[#E7DCEB]">
-            <h2 className="font-serif text-xl text-[#302438]">Inventory Movement History</h2>
-            <p className="text-[11px] text-[#6F6475] mt-1">Latest 100 recorded stock adjustments, including the admin and reason.</p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-sans">
-              <thead className="bg-[#F7F0FA] text-[#6F6475] uppercase tracking-wider text-[10px]">
-                <tr>
-                  <th className="p-3">Date & Time</th>
-                  <th className="p-3">Piece</th>
-                  <th className="p-3">Previous</th>
-                  <th className="p-3">Change</th>
-                  <th className="p-3">New Balance</th>
-                  <th className="p-3">Reason</th>
-                  <th className="p-3">Updated By</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E7DCEB]">
-                {movements.length === 0 ? (
-                  <tr><td colSpan={7} className="p-6 text-center text-[#6F6475]">No stock adjustments have been recorded yet. Future adjustments will appear here.</td></tr>
-                ) : movements.map((movement) => (
-                  <tr key={movement.id}>
-                    <td className="p-3 whitespace-nowrap text-[#6F6475]">{new Date(movement.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</td>
-                    <td className="p-3"><span className="font-medium text-[#302438]">{movement.productName}</span><span className="block text-[10px] text-[#6F6475] font-mono">{movement.sku}</span></td>
-                    <td className="p-3 font-mono">{movement.previousStock}</td>
-                    <td className={`p-3 font-mono font-semibold ${movement.quantityDelta > 0 ? 'text-emerald-700' : 'text-red-700'}`}>{movement.quantityDelta > 0 ? '+' : ''}{movement.quantityDelta}</td>
-                    <td className="p-3 font-mono font-semibold">{movement.newStock}</td>
-                    <td className="p-3">{movement.reason}</td>
-                    <td className="p-3"><span className="block">{movement.adminName}</span><span className="text-[10px] text-[#6F6475]">{movement.adminEmail}</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
         {/* Adjust Stock Modal */}
         {adjustingProduct && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -471,7 +428,7 @@ export const AdminInventoryPage: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    disabled={savingAdjustment || stockDelta === 0}
+                    disabled={savingAdjustment}
                     className="px-5 py-2 bg-[#563568] text-white hover:bg-[#A184BD] font-medium rounded-xs transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {savingAdjustment ? 'Saving…' : 'Confirm Stock Update'}
