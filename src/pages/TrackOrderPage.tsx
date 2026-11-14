@@ -87,12 +87,13 @@ export const TrackOrderPage: React.FC = () => {
     try {
       const data = await hostingerOrderService.trackOrder(cleanNumber, cleanPhone);
       setOrder(data);
-    } catch (err: any) {
-      console.error('[TrackOrder] Network or function error:', err);
-      if (err?.status === 429) {
-        setError(err.message || 'Too many attempts. Please try again later.');
+    } catch (err: unknown) {
+      console.error('[TrackOrder] Request failed.');
+      const status = typeof err === 'object' && err !== null && 'status' in err ? err.status : undefined;
+      if (status === 429) {
+        setError('Too many attempts. Please try again later.');
       } else {
-        setError(err?.message || "We couldn't find an order with those details.");
+        setError("We couldn't retrieve this order right now. Check the details and try again.");
       }
     } finally {
       setLoading(false);
@@ -256,7 +257,7 @@ export const TrackOrderPage: React.FC = () => {
               Track Your Order
             </h1>
             <p className="mt-2 text-xs sm:text-sm text-[#6F6475] leading-relaxed max-w-md mx-auto">
-              Check the live status of your jewellery shipment across India. No account required.
+              Check the latest order status available to us. No account required.
             </p>
           </div>
 
@@ -277,7 +278,9 @@ export const TrackOrderPage: React.FC = () => {
                   onChange={(e) => setOrderNumberInput(e.target.value)}
                   placeholder="SAR-000111"
                   required
-                  className="w-full px-4 py-2.5 bg-[#F7F0FA] border border-[#E7DCEB] text-xs sm:text-sm text-[#302438] placeholder-[#9E90A2] rounded-xs focus:outline-none focus:border-[#B69ACF] focus:ring-1 focus:ring-[#80609A] transition-colors font-mono uppercase"
+                  autoComplete="off"
+                  aria-describedby={error ? "track-order-error" : undefined}
+                  className="w-full min-h-11 px-4 py-2.5 bg-[#F7F0FA] border border-[#E7DCEB] text-xs sm:text-sm text-[#302438] placeholder-[#9E90A2] rounded-xs focus:outline-none focus:border-[#B69ACF] focus:ring-1 focus:ring-[#80609A] transition-colors font-mono uppercase"
                 />
               </div>
 
@@ -300,13 +303,16 @@ export const TrackOrderPage: React.FC = () => {
                     placeholder="9876543210"
                     maxLength={14}
                     required
-                    className="w-full px-4 py-2.5 bg-[#F7F0FA] border border-[#E7DCEB] text-xs sm:text-sm text-[#302438] placeholder-[#9E90A2] rounded-r-xs focus:outline-none focus:border-[#B69ACF] focus:ring-1 focus:ring-[#80609A] transition-colors font-sans"
+                    autoComplete="tel"
+                    inputMode="numeric"
+                    aria-describedby={error ? "track-order-error" : undefined}
+                    className="w-full min-h-11 px-4 py-2.5 bg-[#F7F0FA] border border-[#E7DCEB] text-xs sm:text-sm text-[#302438] placeholder-[#9E90A2] rounded-r-xs focus:outline-none focus:border-[#B69ACF] focus:ring-1 focus:ring-[#80609A] transition-colors font-sans"
                   />
                 </div>
               </div>
 
               {error && (
-                <div className="p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs flex items-start gap-2 text-xs text-[#DC2626] animate-fadeIn">
+                <div id="track-order-error" role="alert" aria-live="polite" className="p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs flex items-start gap-2 text-xs text-[#DC2626] animate-fadeIn">
                   <AlertCircle size={15} className="shrink-0 mt-0.5" />
                   <p>{error}</p>
                 </div>
@@ -315,7 +321,8 @@ export const TrackOrderPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-[#563568] text-white text-xs sm:text-[13px] font-medium uppercase tracking-wider hover:bg-[#A184BD] transition-colors rounded-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                aria-busy={loading}
+                className="w-full min-h-11 py-3 bg-[#563568] text-white text-xs sm:text-[13px] font-medium uppercase tracking-wider hover:bg-[#A184BD] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] transition-colors rounded-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
               >
                 {loading ? (
                   <span>Checking status...</span>
@@ -337,7 +344,7 @@ export const TrackOrderPage: React.FC = () => {
 
           {/* Result Order Summary Card */}
           {order && (
-            <div className="bg-white border border-[#E7DCEB] rounded-xs shadow-xs p-6 sm:p-8 space-y-6 animate-fadeIn">
+            <div role="region" aria-label="Order tracking result" aria-live="polite" className="bg-white border border-[#E7DCEB] rounded-xs shadow-xs p-6 sm:p-8 space-y-6 animate-fadeIn">
               {/* Header Row */}
               <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-[#E7DCEB]">
                 <div>
@@ -391,7 +398,7 @@ export const TrackOrderPage: React.FC = () => {
                         href={order.trackingUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#563568] hover:text-[#A184BD] font-medium inline-flex items-center gap-1.5 transition-colors"
+                        className="min-h-11 text-[#563568] hover:text-[#A184BD] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] font-medium inline-flex items-center gap-1.5 transition-colors"
                       >
                         <span>Open courier tracking</span>
                         <ExternalLink size={12} />
