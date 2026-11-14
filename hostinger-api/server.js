@@ -9,6 +9,7 @@ import adminReturnsRouter from "./adminReturns.js";
 import adminDashboardRouter from "./adminDashboard.js";
 import adminAnalyticsRouter from "./adminAnalytics.js";
 import adminProductsRouter from "./adminProducts.js";
+import adminInventoryRouter from "./adminInventory.js";
 import adminCategoriesRouter from "./adminCategories.js";
 import adminCustomersRouter from "./adminCustomers.js";
 import adminMarketingRouter from "./adminMarketing.js";
