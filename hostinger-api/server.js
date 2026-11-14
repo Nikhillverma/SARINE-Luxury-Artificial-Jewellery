@@ -339,6 +339,7 @@ app.use("/api/admin/analytics", adminAnalyticsRouter);
 app.use("/api/admin/categories", adminCategoriesRouter);
 app.use("/api/admin/customers", adminCustomersRouter);
 app.use("/api/admin/products", adminProductsRouter);
+app.use("/api/admin/inventory", adminInventoryRouter);
 
 // Hostinger admin orders and returns/refund request queues
 app.use("/api/admin/orders", adminOrdersRouter);
