@@ -333,14 +333,14 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
             {/* Mobile Filter Button */}
             <button
               onClick={() => setShowMobileFilters(!showMobileFilters)}
-              className="lg:hidden flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-[#563568] bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs cursor-pointer"
+              className="lg:hidden flex min-h-11 items-center gap-2 px-3.5 py-2 text-xs font-medium text-[#563568] bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568]"
             >
               <SlidersHorizontal size={14} />
               <span>Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}</span>
             </button>
 
             {/* In-Stock Toggle */}
-            <label className="hidden sm:flex items-center gap-2 text-xs text-[#6F6475] cursor-pointer select-none">
+            <label className="flex min-h-11 items-center gap-2 px-2 text-xs text-[#6F6475] cursor-pointer select-none rounded-xs focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[#563568]">
               <input
                 type="checkbox"
                 checked={inStockOnly}
@@ -364,7 +364,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                 <option value="newest">Newest Additions</option>
                 <option value="price-asc">Price: Low to High</option>
                 <option value="price-desc">Price: High to Low</option>
-                <option value="bestseller">Popular Pieces</option>
+                
               </select>
             </div>
           </div>
@@ -643,7 +643,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                   No matching jewellery found
                 </h3>
                 <p className="text-xs text-[#6F6475] mt-2 max-w-md mx-auto leading-relaxed">
-                  We couldn't find any pieces matching your current filters. Try resetting your search or exploring our recommended bestsellers below.
+                  We couldn't find pieces matching these filters. Try adjusting your search or clearing one or more filters to explore the full collection.
                 </p>
                 <div className="mt-6 flex flex-wrap justify-center gap-3">
                   <button
