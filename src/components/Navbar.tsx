@@ -543,7 +543,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Link
                 to="/shop?sort=newest"
                 className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
-                  activeDropdown === 'bestsellers' || location.search.includes('sort=newest')
+                  activeDropdown === 'bestsellers'
                     ? 'text-[#563568] font-medium'
                     : 'text-[#302438]'
                 }`}
@@ -819,7 +819,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <ul className="space-y-2.5 text-[13px]">
                       <li>
                         <Link
-                          to="/shop?sort=bestseller"
+                          to="/shop?sort=newest"
                           className="text-[#302438] hover:text-[#563568] transition-colors flex items-center justify-between"
                         >
                           <span>Explore the Jewellery Collection</span>
@@ -911,7 +911,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       Explore jewellery styles selected for celebrations and everyday dressing.
                     </p>
                     <Link
-                      to="/shop?sort=bestseller"
+                      to="/shop?sort=newest"
                       className="text-xs text-[#563568] hover:text-[#80609A] font-medium inline-flex items-center gap-1 group"
                     >
                       <span>Explore Styles</span>
@@ -1602,14 +1602,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </Link>
 
                   <Link
-                    to="/shop?sort=bestseller"
+                    to="/shop?sort=newest"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] hover:border-[#B69ACF] flex items-center justify-between transition-colors"
                   >
                     <span className="text-xs font-medium text-[#302438]">Featured Styles</span>
-                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-[#D9B8A0]/30 text-[#563568] rounded-xs font-medium">
-                      Hot
-                    </span>
                   </Link>
                 </div>
 
