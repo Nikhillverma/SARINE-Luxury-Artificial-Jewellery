@@ -820,12 +820,12 @@ router.post("/returns", trackingLimiter, async (req, res, next) => {
   let connection;
   try {
     const orderNumber = String(req.body?.orderNumber || "").trim().toUpperCase();
-    const phone = String(req.body?.phone || "").replace(/\\D/g, "");
+    const phone = String(req.body?.phone || "").replace(/\D/g, "");
     const requestType = String(req.body?.requestType || "").trim().toLowerCase();
     const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
     const notes = typeof req.body?.notes === "string" ? req.body.notes.trim() : "";
 
-    if (!/^SAR-\\d{6}$/.test(orderNumber) || phone.length < 10) {
+    if (!/^SAR-\d{6}$/.test(orderNumber) || phone.length < 10) {
       return res.status(404).json({ error: "We couldn't verify this order. Check the order number and checkout mobile number." });
     }
     if (!["return", "exchange"].includes(requestType)) {
@@ -854,9 +854,9 @@ router.post("/returns", trackingLimiter, async (req, res, next) => {
     let shippingPhone = "";
     try {
       const address = typeof order.shipping_address === "string" ? JSON.parse(order.shipping_address) : (order.shipping_address || {});
-      shippingPhone = String(address.phone || "").replace(/\\D/g, "").slice(-10);
+      shippingPhone = String(address.phone || "").replace(/\D/g, "").slice(-10);
     } catch {}
-    const customerPhone = String(order.customer_phone || "").replace(/\\D/g, "").slice(-10);
+    const customerPhone = String(order.customer_phone || "").replace(/\D/g, "").slice(-10);
     if (customerPhone !== last10Phone && shippingPhone !== last10Phone) {
       await connection.rollback();
       return res.status(404).json({ error: "We couldn't verify this order. Check the order number and checkout mobile number." });
