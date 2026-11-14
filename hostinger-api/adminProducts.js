@@ -6,60 +6,6 @@ import { requireAdminAuth } from "./adminAuth.js";
 const router = Router();
 router.use(requireAdminAuth);
 
-// Read-only, narrowly scoped diagnostic for the known affected catalogue item.
-// HEX(description) reports the bytes MariaDB stores; no product fields are modified.
-router.get("/:id/encoding-diagnostic", async (req, res, next) => {
-  if (req.params.id !== "prod-004") {
-    return res.status(404).json({ error: "Diagnostic is not enabled for this product." });
-  }
-
-  try {
-    res.set("Cache-Control", "no-store");
-    const [rows] = await pool.execute(
-      `SELECT id, slug, name, description,
-              HEX(description) AS description_hex,
-              CHARSET(description) AS description_charset,
-              COLLATION(description) AS description_collation,
-              LENGTH(description) AS description_byte_length,
-              CHAR_LENGTH(description) AS description_char_length
-       FROM products
-       WHERE id = ?
-       LIMIT 1`,
-      [req.params.id]
-    );
-
-    if (!rows.length) {
-      return res.status(404).json({ error: "Product not found." });
-    }
-
-    const row = rows[0];
-    const description = row.description || "";
-    const descriptionCodePoints = Array.from(description, (character) => ({
-      character,
-      codePoint: "U+" + character.codePointAt(0).toString(16).toUpperCase().padStart(4, "0")
-    }));
-
-    return res.json({
-      product: {
-        id: row.id,
-        slug: row.slug,
-        name: row.name,
-        description
-      },
-      storage: {
-        hex: row.description_hex,
-        charset: row.description_charset,
-        collation: row.description_collation,
-        byteLength: Number(row.description_byte_length),
-        characterLength: Number(row.description_char_length)
-      },
-      decodedCodePoints: descriptionCodePoints
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
 const STATUSES = new Set(["active", "draft", "archived"]);
 const parseJson = (value, fallback) => {
   if (Array.isArray(value)) return value;
