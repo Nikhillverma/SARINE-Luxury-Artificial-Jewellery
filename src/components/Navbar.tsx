@@ -41,10 +41,10 @@ interface NavbarProps {
 }
 
 const ANNOUNCEMENT_MESSAGES = [
-  'Complimentary Express Delivery on orders across India',
-  'Handcrafted in Demi-Fine 18K Gold Polish & Sterling Silver Motifs',
-  'Complimentary Luxury Gift Packaging on all orders this week',
-  'Need styling help? Chat with our jewellery concierge on WhatsApp'
+  'Discover timeless jewellery for every occasion',
+  'Explore thoughtfully curated everyday and occasion styles',
+  'Find a meaningful gift for every celebration',
+  'Need help? Our Contact page is here for you'
 ];
 
 type DropdownId =
@@ -200,12 +200,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="w-[1px] h-3.5 bg-white/20 inline-block" />
               <span className="inline-flex items-center gap-1.5">
                 <ShieldCheck size={14} className="text-[#D9B8A0] shrink-0" />
-                <span>7-Day Easy Returns</span>
+                <span>7-Day Atelier Quality Guarantee</span>
               </span>
               <span className="w-[1px] h-3.5 bg-white/20 inline-block" />
               <span className="inline-flex items-center gap-1.5">
                 <Sparkles size={14} className="text-[#D9B8A0] shrink-0" />
-                <span>Trusted by 1L+ Happy Customers</span>
+                <span>Curated for Everyday & Occasion Wear</span>
               </span>
             </div>
 
