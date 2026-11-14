@@ -1604,14 +1604,21 @@ export const Navbar: React.FC<NavbarProps> = ({
         {isMobileMenuOpen && (
           <div className="fixed inset-0 z-50 lg:hidden flex">
             {/* Backdrop */}
-            <div
-              className="fixed inset-0 bg-[#302438]/50 backdrop-blur-xs transition-opacity"
+            <button
+              type="button"
+              className="fixed inset-0 bg-[#302438]/50 backdrop-blur-xs transition-opacity cursor-default"
               onClick={() => setIsMobileMenuOpen(false)}
-              aria-hidden="true"
+              aria-label="Close navigation menu"
             />
 
             {/* Slide-out Menu Panel */}
-            <div className="relative w-[85%] max-w-sm bg-white h-full shadow-2xl flex flex-col z-10 overflow-hidden">
+            <div
+              id="sarine-mobile-navigation"
+              role="dialog"
+              aria-modal="true"
+              aria-label="SARINE mobile navigation"
+              className="relative w-[85%] max-w-sm bg-white h-full shadow-2xl flex flex-col z-10 overflow-hidden"
+            >
               {/* Drawer Header */}
               <div className="h-16 border-b border-[#E7DCEB] px-5 flex items-center justify-between shrink-0 bg-white">
                 <Link
@@ -1623,7 +1630,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </Link>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer"
+                  type="button"
+                  className="min-w-11 min-h-11 flex items-center justify-center text-[#302438] hover:text-[#563568] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] transition-colors cursor-pointer"
                   aria-label="Close menu"
                 >
                   <X size={20} strokeWidth={1.5} />
@@ -1638,7 +1646,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setIsMobileMenuOpen(false);
                     setIsSearchOpen(true);
                   }}
-                  className="flex items-center bg-[#F7F0FA] border border-[#E7DCEB] rounded-full px-3.5 py-2.5 w-full text-xs text-[#6F6475] cursor-pointer"
+                  type="button"
+                  className="flex min-h-11 items-center bg-[#F7F0FA] border border-[#E7DCEB] rounded-full px-3.5 py-2.5 w-full text-xs text-[#6F6475] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568]"
                 >
                   <Search size={14} className="text-[#563568] shrink-0 mr-2.5" />
                   <span>Search earrings, chokers, bangles...</span>
