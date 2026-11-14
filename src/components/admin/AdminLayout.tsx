@@ -40,7 +40,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   UserCheck,
-  RotateCcw
+  RotateCcw,
+  Star
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -171,6 +172,12 @@ interface NavItem {
       path: '/admin/returns',
       icon: RotateCcw,
       match: (p: string) => p.startsWith('/admin/returns')
+    },
+    {
+      name: 'Reviews & Ratings',
+      path: '/admin/reviews',
+      icon: Star,
+      match: (p: string) => p.startsWith('/admin/reviews')
     },
     {
       name: 'Marketing & Coupons',
