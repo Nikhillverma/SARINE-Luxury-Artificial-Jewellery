@@ -391,7 +391,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                 <span>Category: {currentCategory?.name || selectedCategorySlug}</span>
                 <button
                   onClick={() => updateFilter({ category: null })}
-                  className="hover:text-[#DC2626] cursor-pointer"
+                  aria-label="Remove filter" className="min-w-8 min-h-8 inline-flex items-center justify-center hover:text-[#DC2626] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568]"
                 >
                   <X size={11} />
                 </button>
@@ -472,7 +472,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
 
             <button
               onClick={handleClearAll}
-              className="ml-auto text-xs text-[#563568] hover:underline font-medium cursor-pointer"
+              className="ml-auto min-h-10 px-2 text-xs text-[#563568] hover:underline font-medium cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568]"
             >
               Clear All ({activeFiltersCount})
             </button>
@@ -492,7 +492,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                 {activeFiltersCount > 0 && (
                   <button
                     onClick={handleClearAll}
-                    className="text-[11px] text-[#6F6475] hover:text-[#DC2626] cursor-pointer"
+                    className="min-h-10 px-2 text-[11px] text-[#6F6475] hover:text-[#DC2626] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568]"
                   >
                     Reset
                   </button>
@@ -507,7 +507,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                 <div className="space-y-1.5 text-xs font-sans">
                   <button
                     onClick={() => updateFilter({ category: null })}
-                    className={`w-full text-left py-1 px-2 rounded-xs transition-colors flex items-center justify-between ${
+                    className={`w-full text-left min-h-10 py-2 px-2 rounded-xs transition-colors flex items-center justify-between focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568] ${
                       !selectedCategorySlug ? 'bg-[#F7F0FA] text-[#563568] font-medium' : 'text-[#6F6475] hover:text-[#302438]'
                     }`}
                   >
@@ -521,7 +521,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                       <button
                         key={cat.id}
                         onClick={() => updateFilter({ category: cat.slug })}
-                        className={`w-full text-left py-1 px-2 rounded-xs transition-colors flex items-center justify-between ${
+                        className={`w-full text-left min-h-10 py-2 px-2 rounded-xs transition-colors flex items-center justify-between focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568] ${
                           active ? 'bg-[#F7F0FA] text-[#563568] font-medium' : 'text-[#6F6475] hover:text-[#302438]'
                         }`}
                       >
@@ -553,7 +553,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                         setCustomMax('');
                         updateFilter({ price: preset.id === 'all' ? null : preset.id });
                       }}
-                      className={`w-full text-left py-1 px-2 rounded-xs transition-colors ${
+                      className={`w-full text-left min-h-10 py-2 px-2 rounded-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568] ${
                         pricePreset === preset.id && !customMin && !customMax
                           ? 'bg-[#F7F0FA] text-[#563568] font-medium'
                           : 'text-[#6F6475] hover:text-[#302438]'
@@ -603,7 +603,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                       setSelectedOccasion('');
                       updateFilter({ occasion: null });
                     }}
-                    className={`w-full text-left py-1 px-2 rounded-xs transition-colors ${
+                    className={`w-full text-left min-h-10 py-2 px-2 rounded-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568] ${
                       !selectedOccasion ? 'bg-[#F7F0FA] text-[#563568] font-medium' : 'text-[#6F6475] hover:text-[#302438]'
                     }`}
                   >
@@ -616,7 +616,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                         setSelectedOccasion(occ.id);
                         updateFilter({ occasion: occ.id });
                       }}
-                      className={`w-full text-left py-1 px-2 rounded-xs transition-colors ${
+                      className={`w-full text-left min-h-10 py-2 px-2 rounded-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568] ${
                         selectedOccasion === occ.id
                           ? 'bg-[#F7F0FA] text-[#563568] font-medium'
                           : 'text-[#6F6475] hover:text-[#302438]'
