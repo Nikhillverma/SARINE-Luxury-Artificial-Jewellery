@@ -143,7 +143,8 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-[#302438]/50 backdrop-blur-xs transition-opacity duration-200"\n        aria-hidden="true"
+        className="fixed inset-0 bg-[#302438]/50 backdrop-blur-xs transition-opacity duration-200"
+        aria-hidden="true"
       />
 
       {/* Main Container */}
@@ -153,7 +154,9 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
           <div className="site-container py-4 sm:py-5">
             <form onSubmit={handleSearchSubmit} className="flex items-center gap-3">
               <Search size={22} className="text-[#563568] shrink-0" />
+              <label className="sr-only" htmlFor="sarine-search-input">Search jewellery</label>
               <input
+                id="sarine-search-input"
                 ref={inputRef}
                 type="text"
                 value={query}
@@ -216,7 +219,9 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
                     >
                       <div className="w-16 h-20 bg-white border border-[#E7DCEB] shrink-0 overflow-hidden rounded-xs">
                         <img
-                          loading="lazy"\n                          decoding="async"\n                          src={product.images[0]}
+                          loading="lazy"
+                          decoding="async"
+                          src={product.images[0]}
                           alt={product.name}
                           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform"
                         />
@@ -349,7 +354,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
             </div>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 };
