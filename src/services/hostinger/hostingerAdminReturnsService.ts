@@ -1,7 +1,7 @@
 const API_BASE = (
   import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
   (import.meta.env.DEV ? '/api' : 'https://lavender-goldfish-844589.hostingersite.com/api')
-).replace(/\\/+$/, '');
+).replace(/\/+$/, '');
 
 export type ReturnStatus = 'pending' | 'under_review' | 'approved' | 'rejected' | 'item_received' | 'inspection_passed' | 'inspection_failed' | 'resolved' | 'closed';
 export interface AdminReturnRequest {
