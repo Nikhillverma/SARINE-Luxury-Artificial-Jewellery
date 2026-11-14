@@ -4,7 +4,7 @@
  * from customer storefront views.
  */
 
-import { IAdminProductService } from '../interfaces';
+import { IAdminProductService, InventoryMovement } from '../interfaces';
 import { Product } from '../../types/product';
 import { MockProductService } from './mockProductService';
 
@@ -16,6 +16,7 @@ function sleep(ms: number): Promise<void> {
 
 export class MockAdminProductService implements IAdminProductService {
   private productService: MockProductService;
+  private movements: InventoryMovement[] = [];
 
   constructor(productService: MockProductService) {
     this.productService = productService;
@@ -55,6 +56,30 @@ export class MockAdminProductService implements IAdminProductService {
 
     products[index] = updated;
     return updated;
+  }
+
+  async adjustStock(id: string, quantityDelta: number, reason: string): Promise<InventoryMovement> {
+    await sleep(NETWORK_DELAY_MS);
+    const product = this.productService._getAllInternal().find((item) => item.id === id);
+    if (!product) throw new Error(`Product with ID "${id}" not found.`);
+    const previousStock = product.stock;
+    const newStock = previousStock + quantityDelta;
+    if (!Number.isInteger(quantityDelta) || quantityDelta === 0 || newStock < 0) {
+      throw new Error('Invalid stock adjustment.');
+    }
+    product.stock = newStock;
+    const movement: InventoryMovement = {
+      id: `mock-${Date.now()}`, productId: product.id, productName: product.name,
+      sku: product.id, adminName: 'Mock Admin', adminEmail: '',
+      previousStock, quantityDelta, newStock, reason, createdAt: new Date().toISOString()
+    };
+    this.movements.unshift(movement);
+    return movement;
+  }
+
+  async getInventoryMovements(): Promise<InventoryMovement[]> {
+    await sleep(NETWORK_DELAY_MS);
+    return [...this.movements];
   }
 
   async deleteProduct(id: string): Promise<boolean> {

@@ -2,7 +2,7 @@
  * Central Service Switch for SARINE.
  * Storefront catalogue and administrative product writes use Hostinger MariaDB.
  */
-import type { IProductService, ICategoryService, IAdminProductService, IOrderService } from './interfaces';
+import type { IProductService, ICategoryService, IAdminProductService, IOrderService, InventoryMovement } from './interfaces';
 import { MockProductService } from './mock/mockProductService';
 import { MockCategoryService } from './mock/mockCategoryService';
 import { HostingerProductService } from './hostinger/hostingerProductService';
@@ -41,6 +41,21 @@ export const adminProductService: IAdminProductService =
       Object.assign(item, updates);
       return item;
     },
+    adjustStock: async (id, quantityDelta, reason): Promise<InventoryMovement> => {
+      const item = mockProductService._getAllInternal().find(p => p.id === id);
+      if (!item) throw new Error('Product not found.');
+      const previousStock = item.stock;
+      const newStock = previousStock + quantityDelta;
+      if (!Number.isInteger(quantityDelta) || quantityDelta === 0 || newStock < 0) throw new Error('Invalid stock adjustment.');
+      item.stock = newStock;
+      return {
+        id: `mock-${Date.now()}`, productId: item.id, productName: item.name, sku: item.id,
+        adminName: 'Mock Admin', adminEmail: '', previousStock, quantityDelta, newStock,
+        reason, createdAt: new Date().toISOString()
+      };
+    },
+    getInventoryMovements: async () => [],
+
     deleteProduct: async id => {
       const item = mockProductService._getAllInternal().find(p => p.id === id);
       if (!item) return false;
