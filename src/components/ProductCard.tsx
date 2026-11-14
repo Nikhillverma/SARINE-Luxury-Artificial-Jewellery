@@ -24,16 +24,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const isAnanya = product.slug === 'ananya-temple-coin-bracelet' || product.id === 'prod-003';
   const isZoya = product.slug === 'zoya-open-cuff-leaf-bangle' || product.id === 'prod-008';
+  const fallbackImage =
+    'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80';
   const primaryImage = isAnanya
     ? '/images/ananya-temple-coin-bracelet.jpg'
     : isZoya
-    ? '/images/zoya-open-cuff-leaf-bangle.jpg'
-    : (product.images[0] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80');
-  const secondaryImage = isAnanya
-    ? '/images/ananya-temple-coin-bracelet.jpg'
-    : isZoya
-    ? '/images/zoya-open-cuff-leaf-bangle.jpg'
-    : product.images[1];
+      ? '/images/zoya-open-cuff-leaf-bangle.jpg'
+      : product.images?.[0] || fallbackImage;
+  // Only show a hover image when the catalogue provides a genuinely different photo.
+  const secondaryImage = product.images?.find(
+    (image, index) => index > 0 && Boolean(image) && image !== primaryImage
+  );
 
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -51,6 +52,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             alt={product.name}
             loading="lazy"
             referrerPolicy="no-referrer"
+            decoding="async"
+            onError={(event) => {
+              const image = event.currentTarget;
+              if (image.dataset.fallbackApplied !== 'true') {
+                image.dataset.fallbackApplied = 'true';
+                image.src = fallbackImage;
+              }
+            }}
             className={`absolute inset-0 h-full w-full object-cover object-center transition-all duration-500 ease-out ${
               secondaryImage ? 'group-hover:opacity-0' : 'group-hover:scale-105'
             }`}
@@ -63,6 +72,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               alt={`${product.name} detail`}
               loading="lazy"
               referrerPolicy="no-referrer"
+              decoding="async"
+              onError={(event) => {
+                // A missing alternate photo should not cover the valid primary image.
+                event.currentTarget.remove();
+              }}
               className="absolute inset-0 h-full w-full object-cover object-center opacity-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 ease-out"
             />
           )}
