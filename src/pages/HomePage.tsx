@@ -75,25 +75,25 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       title: 'Daily Wear',
       subtitle: 'Effortless everyday minimalism',
       image: '/images/ananya-temple-coin-bracelet.jpg',
-      link: '/shop?search=everyday'
+      link: '/shop?occasion=everyday'
     },
     {
       title: 'Festive',
       subtitle: 'Celebratory sparkle and classic motifs',
       image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=80',
-      link: '/shop?search=festive'
+      link: '/shop?occasion=festive'
     },
     {
       title: 'Wedding',
       subtitle: 'Regal bridal sets & heritage chokers',
       image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=80',
-      link: '/shop?search=wedding'
+      link: '/shop?occasion=wedding'
     },
     {
       title: 'Gifting',
       subtitle: 'Precious tokens of affection',
       image: '/images/zoya-open-cuff-leaf-bangle.jpg',
-      link: '/shop?category=bracelets'
+      link: '/shop?occasion=gifting'
     }
   ];
 
@@ -627,7 +627,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
       {/* =========================================================================
           SHOP BY PRICE
-          4 pill buttons: Under ₹999, ₹1,000 to ₹1,999, ₹2,000 and above, All pieces
+          4 pill buttons: Under ₹999, ₹1,000 to ₹2,000, ₹2,000 and above, All pieces
           Linking to /shop with price presets
           ========================================================================= */}
       <section className="py-12 sm:py-16 border-t border-[#E7DCEB] bg-[#F7F0FA]">
