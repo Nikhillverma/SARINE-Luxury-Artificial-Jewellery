@@ -34,6 +34,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
   const [categories, setCategories] = useState<Category[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<boolean>(false);
+  const [retryCount, setRetryCount] = useState<number>(0);
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false);
 
   // URL Query Parameters
@@ -93,6 +95,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     let isCancelled = false;
     async function loadProducts() {
       setLoading(true);
+      setLoadError(false);
       try {
         const fetched = await productService.getProducts({
           sortBy: 'newest',
@@ -104,6 +107,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
         }
       } catch (err) {
         console.error('Failed to load catalogue products', err);
+        if (!isCancelled) setLoadError(true);
       } finally {
         if (!isCancelled) setLoading(false);
       }
@@ -112,7 +116,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     return () => {
       isCancelled = true;
     };
-  }, [includeAll]);
+  }, [includeAll, retryCount]);
 
   // Load recently viewed
   useEffect(() => {
@@ -306,8 +310,10 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
           {/* Search within collection */}
           <div className="relative flex-1 max-w-md">
             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6F6475]" />
+            <label htmlFor="catalogue-search" className="sr-only">Search the catalogue</label>
             <input
-              type="text"
+              id="catalogue-search"
+              type="search"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -322,7 +328,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                   setSearchQuery('');
                   updateFilter({ search: null });
                 }}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#6F6475] hover:text-[#302438]"
+                aria-label="Clear catalogue search"
+                className="absolute right-1 top-1/2 -translate-y-1/2 min-w-11 min-h-11 flex items-center justify-center text-[#6F6475] hover:text-[#302438] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568]"
               >
                 <X size={13} />
               </button>
@@ -333,6 +340,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
             {/* Mobile Filter Button */}
             <button
               onClick={() => setShowMobileFilters(!showMobileFilters)}
+              aria-expanded={showMobileFilters}
+              aria-controls="catalogue-filters"
               className="lg:hidden flex min-h-11 items-center gap-2 px-3.5 py-2 text-xs font-medium text-[#563568] bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568]"
             >
               <SlidersHorizontal size={14} />
@@ -352,14 +361,16 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
 
             {/* Sort Selector */}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-[#6F6475] hidden sm:inline">Sort:</span>
+              <label htmlFor="catalogue-sort" className="text-xs text-[#6F6475] hidden sm:inline">Sort:</label>
               <select
+                id="catalogue-sort"
+                aria-label="Sort products"
                 value={sortBy}
                 onChange={(e) => {
                   setSortBy(e.target.value);
                   updateFilter({ sort: e.target.value });
                 }}
-                className="text-xs bg-[#F7F0FA] border border-[#E7DCEB] text-[#302438] py-2 px-3 rounded-xs focus:outline-none cursor-pointer"
+                className="min-h-11 text-xs bg-[#F7F0FA] border border-[#E7DCEB] text-[#302438] py-2 px-3 rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] cursor-pointer"
               >
                 <option value="newest">Newest Additions</option>
                 <option value="price-asc">Price: Low to High</option>
@@ -380,7 +391,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                 <span>Category: {currentCategory?.name || selectedCategorySlug}</span>
                 <button
                   onClick={() => updateFilter({ category: null })}
-                  className="hover:text-[#DC2626] cursor-pointer"
+                  aria-label="Remove filter" className="min-w-8 min-h-8 inline-flex items-center justify-center hover:text-[#DC2626] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568]"
                 >
                   <X size={11} />
                 </button>
@@ -461,7 +472,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
 
             <button
               onClick={handleClearAll}
-              className="ml-auto text-xs text-[#563568] hover:underline font-medium cursor-pointer"
+              className="ml-auto min-h-10 px-2 text-xs text-[#563568] hover:underline font-medium cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568]"
             >
               Clear All ({activeFiltersCount})
             </button>
@@ -471,7 +482,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
         {/* 2-Column Desktop Grid: Filters Sidebar (3 cols) + Products (9 cols) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Desktop Filter Sidebar */}
-          <aside className={`lg:col-span-3 space-y-6 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
+          <aside id="catalogue-filters" aria-label="Catalogue filters" className={`lg:col-span-3 space-y-6 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
             <div className="bg-white p-5 border border-[#E7DCEB] rounded-xs space-y-6">
               <div className="flex items-center justify-between pb-3 border-b border-[#E7DCEB]">
                 <h3 className="font-serif text-base text-[#302438] font-normal flex items-center gap-2">
@@ -481,7 +492,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                 {activeFiltersCount > 0 && (
                   <button
                     onClick={handleClearAll}
-                    className="text-[11px] text-[#6F6475] hover:text-[#DC2626] cursor-pointer"
+                    className="min-h-10 px-2 text-[11px] text-[#6F6475] hover:text-[#DC2626] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568]"
                   >
                     Reset
                   </button>
@@ -496,7 +507,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                 <div className="space-y-1.5 text-xs font-sans">
                   <button
                     onClick={() => updateFilter({ category: null })}
-                    className={`w-full text-left py-1 px-2 rounded-xs transition-colors flex items-center justify-between ${
+                    className={`w-full text-left min-h-10 py-2 px-2 rounded-xs transition-colors flex items-center justify-between focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568] ${
                       !selectedCategorySlug ? 'bg-[#F7F0FA] text-[#563568] font-medium' : 'text-[#6F6475] hover:text-[#302438]'
                     }`}
                   >
@@ -510,7 +521,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                       <button
                         key={cat.id}
                         onClick={() => updateFilter({ category: cat.slug })}
-                        className={`w-full text-left py-1 px-2 rounded-xs transition-colors flex items-center justify-between ${
+                        className={`w-full text-left min-h-10 py-2 px-2 rounded-xs transition-colors flex items-center justify-between focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568] ${
                           active ? 'bg-[#F7F0FA] text-[#563568] font-medium' : 'text-[#6F6475] hover:text-[#302438]'
                         }`}
                       >
@@ -542,7 +553,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                         setCustomMax('');
                         updateFilter({ price: preset.id === 'all' ? null : preset.id });
                       }}
-                      className={`w-full text-left py-1 px-2 rounded-xs transition-colors ${
+                      className={`w-full text-left min-h-10 py-2 px-2 rounded-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568] ${
                         pricePreset === preset.id && !customMin && !customMax
                           ? 'bg-[#F7F0FA] text-[#563568] font-medium'
                           : 'text-[#6F6475] hover:text-[#302438]'
@@ -555,16 +566,24 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
 
                 {/* Custom Price Inputs */}
                 <div className="mt-3 pt-3 border-t border-[#E7DCEB]/60 flex items-center gap-2 text-xs">
+                  <label htmlFor="catalogue-min-price" className="sr-only">Minimum price in rupees</label>
                   <input
+                    id="catalogue-min-price"
                     type="number"
+                    inputMode="numeric"
+                    min="0"
                     placeholder="Min ₹"
                     value={customMin}
                     onChange={(e) => setCustomMin(e.target.value)}
                     className="w-1/2 p-1.5 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs text-xs focus:outline-none"
                   />
                   <span className="text-[#6F6475]">-</span>
+                  <label htmlFor="catalogue-max-price" className="sr-only">Maximum price in rupees</label>
                   <input
+                    id="catalogue-max-price"
                     type="number"
+                    inputMode="numeric"
+                    min="0"
                     placeholder="Max ₹"
                     value={customMax}
                     onChange={(e) => setCustomMax(e.target.value)}
@@ -584,7 +603,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                       setSelectedOccasion('');
                       updateFilter({ occasion: null });
                     }}
-                    className={`w-full text-left py-1 px-2 rounded-xs transition-colors ${
+                    className={`w-full text-left min-h-10 py-2 px-2 rounded-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568] ${
                       !selectedOccasion ? 'bg-[#F7F0FA] text-[#563568] font-medium' : 'text-[#6F6475] hover:text-[#302438]'
                     }`}
                   >
@@ -597,7 +616,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                         setSelectedOccasion(occ.id);
                         updateFilter({ occasion: occ.id });
                       }}
-                      className={`w-full text-left py-1 px-2 rounded-xs transition-colors ${
+                      className={`w-full text-left min-h-10 py-2 px-2 rounded-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#563568] ${
                         selectedOccasion === occ.id
                           ? 'bg-[#F7F0FA] text-[#563568] font-medium'
                           : 'text-[#6F6475] hover:text-[#302438]'
@@ -614,7 +633,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
           {/* Product Grid Area (9 cols) */}
           <main className="lg:col-span-9">
             {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 lg:gap-6">
+              <div role="status" aria-label="Loading catalogue products" className="grid grid-cols-2 md:grid-cols-3 gap-4 lg:gap-6">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="animate-pulse bg-white p-2.5 border border-[#E7DCEB] rounded-xs">
                     <div className="aspect-[3/4] bg-[#F7F0FA] rounded-xs w-full"></div>
@@ -623,10 +642,22 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                   </div>
                 ))}
               </div>
+            ) : loadError ? (
+              <div role="alert" className="bg-white border border-[#E7DCEB] p-10 sm:p-14 text-center rounded-xs shadow-2xs">
+                <h2 className="font-serif text-xl sm:text-2xl text-[#302438] font-normal">We couldn’t load the catalogue</h2>
+                <p className="text-xs text-[#6F6475] mt-2 max-w-md mx-auto leading-relaxed">Please check your connection and try again. Your filters will stay in place.</p>
+                <button
+                  type="button"
+                  onClick={() => setRetryCount((count) => count + 1)}
+                  className="min-h-11 mt-6 px-6 py-2.5 bg-[#563568] text-white hover:bg-[#A184BD] text-xs font-medium rounded-xs transition-colors cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568]"
+                >
+                  Try Again
+                </button>
+              </div>
             ) : sortedProducts.length > 0 ? (
               <div>
                 <div className="flex items-center justify-between mb-4 text-xs text-[#6F6475]">
-                  <span>Showing {sortedProducts.length} handcrafted pieces</span>
+                  <span role="status" aria-live="polite">Showing {sortedProducts.length} pieces</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
@@ -648,13 +679,13 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                 <div className="mt-6 flex flex-wrap justify-center gap-3">
                   <button
                     onClick={handleClearAll}
-                    className="px-6 py-2.5 bg-[#563568] text-white hover:bg-[#A184BD] text-xs font-medium rounded-xs transition-colors cursor-pointer"
+                    className="min-h-11 px-6 py-2.5 bg-[#563568] text-white hover:bg-[#A184BD] text-xs font-medium rounded-xs transition-colors cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568]"
                   >
                     Reset All Filters
                   </button>
                   <Link
                     to="/shop"
-                    className="px-6 py-2.5 bg-transparent border border-[#563568] text-[#563568] hover:bg-[#F7F0FA] text-xs font-medium rounded-xs transition-colors"
+                    className="min-h-11 px-6 py-2.5 bg-transparent border border-[#563568] text-[#563568] hover:bg-[#F7F0FA] text-xs font-medium rounded-xs transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568]"
                   >
                     Browse All Catalogue
                   </Link>
