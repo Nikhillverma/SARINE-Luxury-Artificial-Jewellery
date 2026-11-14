@@ -595,7 +595,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               <Link
                 key={item.title}
                 to={item.link}
-                className="group flex flex-col items-center text-center w-full"
+                className="group flex flex-col items-center text-center w-full rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#563568]"
               >
                 <div className="aspect-[4/5] w-full overflow-hidden bg-[#F0E6F4] border border-[#E7DCEB] rounded-xs relative group-hover:border-[#B69ACF] transition-colors">
                   <img
@@ -655,7 +655,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               to="/shop?price=1000-2000"
               className="px-6 sm:px-8 py-3 bg-white border border-[#E7DCEB] hover:border-[#B69ACF] hover:text-[#563568] hover:bg-[#F0E6F4] text-[#302438] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
             >
-              ₹1,000 to ₹1,999
+              ₹1,000 to ₹2,000
             </Link>
             <Link
               to="/shop?price=above-2000"
