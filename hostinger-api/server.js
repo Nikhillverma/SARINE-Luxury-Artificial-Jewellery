@@ -4,6 +4,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { pool, testDatabase } from "./db.js";
 import adminAuthRouter from "./adminAuth.js";
+import adminDatabaseAuditRouter from "./adminDatabaseAudit.js";
 import adminOrdersRouter from "./adminOrders.js";
 import adminReturnsRouter from "./adminReturns.js";
 import adminDashboardRouter from "./adminDashboard.js";
@@ -332,6 +333,7 @@ app.use("/api/admin/media", adminMediaRouter);
 
 // Hostinger admin authentication
 app.use("/api/admin/auth", adminAuthRouter);
+app.use("/api/admin/database-audit", adminDatabaseAuditRouter);
 
 // Hostinger admin dashboard, category and product management
 app.use("/api/admin/dashboard", adminDashboardRouter);
