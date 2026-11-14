@@ -15,7 +15,6 @@ import { ProductCard } from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import {
-  ArrowLeft,
   ShoppingBag,
   Heart,
   CheckCircle2,
@@ -26,7 +25,6 @@ import {
   Share2,
   Gift,
   HelpCircle,
-  Star,
   MapPin,
   X,
   Maximize2
@@ -36,42 +34,8 @@ interface ProductDetailPageProps {
   includeAll: boolean;
 }
 
-interface CustomerReview {
-  id: string;
-  name: string;
-  rating: number;
-  date: string;
-  title: string;
-  comment: string;
-  verified: boolean;
-}
-
 const PINCODE_STORAGE_KEY = 'sarine_last_pincode';
 const RECENTLY_VIEWED_KEY = 'sarine_recently_viewed_v1';
-
-// Initial authentic reviews per category archetype
-const SAMPLE_REVIEWS: Record<string, CustomerReview[]> = {
-  default: [
-    {
-      id: 'rev-1',
-      name: 'Priyanka Sharma',
-      rating: 5,
-      date: '12 October 2026',
-      title: 'Exquisite finish and very lightweight',
-      comment: 'The gold plating has a soft, regal luster that looks indistinguishable from real heirloom jewellery. Wore it to a cousin wedding and received countless compliments.',
-      verified: true
-    },
-    {
-      id: 'rev-2',
-      name: 'Ananya Deshmukh',
-      rating: 5,
-      date: '28 September 2026',
-      title: 'Packaging was breathtaking',
-      comment: 'Arrived in a sturdy luxury presentation box with a velvet pouch. Perfect for gifting. The craftsmanship is flawless with zero rough edges.',
-      verified: true
-    }
-  ]
-};
 
 export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll }) => {
   const { slug } = useParams<{ slug: string }>();
@@ -106,14 +70,6 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
   // Active Specifications Tab
   const [activeTab, setActiveTab] = useState<'details' | 'care' | 'shipping'>('details');
 
-  // Customer Reviews
-  const [reviews, setReviews] = useState<CustomerReview[]>([]);
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [newReviewRating, setNewReviewRating] = useState(5);
-  const [newReviewName, setNewReviewName] = useState('');
-  const [newReviewTitle, setNewReviewTitle] = useState('');
-  const [newReviewComment, setNewReviewComment] = useState('');
-
   // Fetch product details
   useEffect(() => {
     let isCancelled = false;
@@ -138,19 +94,6 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(updated));
             } catch {
               // Ignore
-            }
-
-            // Load reviews from local storage or defaults
-            try {
-              const revKey = `sarine_reviews_${found.id}`;
-              const saved = localStorage.getItem(revKey);
-              if (saved) {
-                setReviews(JSON.parse(saved));
-              } else {
-                setReviews(SAMPLE_REVIEWS.default);
-              }
-            } catch {
-              setReviews(SAMPLE_REVIEWS.default);
             }
 
             // Load related pieces
@@ -199,17 +142,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
 
     localStorage.setItem(PINCODE_STORAGE_KEY, clean);
 
-    // Calculate delivery date (3-5 days out)
-    const now = new Date();
-    const minDays = 3;
-    const maxDays = 5;
-    const minDate = new Date(now.setDate(now.getDate() + minDays));
-    const maxDate = new Date(now.setDate(now.getDate() + (maxDays - minDays)));
-
-    const dateOptions: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-    const dateStr = `${minDate.toLocaleDateString('en-IN', dateOptions)} - ${maxDate.toLocaleDateString('en-IN', dateOptions)}`;
-
-    setPincodeResult(`Delivery available to ${clean} by ${dateStr}. Complimentary Express Shipping.`);
+    setPincodeResult(`PIN ${clean} saved. Final delivery availability, charges and estimated date will be confirmed at checkout.`);
   };
 
   const handleAddToCart = () => {
@@ -236,34 +169,6 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
       setShareToast(true);
       setTimeout(() => setShareToast(false), 3000);
     }
-  };
-
-  const handleAddReview = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newReviewName.trim() || !newReviewComment.trim() || !product) return;
-
-    const newRev: CustomerReview = {
-      id: `rev-${Date.now()}`,
-      name: newReviewName.trim(),
-      rating: newReviewRating,
-      date: 'Just now',
-      title: newReviewTitle.trim() || 'Verified Purchase Review',
-      comment: newReviewComment.trim(),
-      verified: true
-    };
-
-    const updated = [newRev, ...reviews];
-    setReviews(updated);
-    try {
-      localStorage.setItem(`sarine_reviews_${product.id}`, JSON.stringify(updated));
-    } catch {
-      // Ignore
-    }
-
-    setIsReviewModalOpen(false);
-    setNewReviewName('');
-    setNewReviewTitle('');
-    setNewReviewComment('');
   };
 
   const resolvedImages = useMemo<string[]>(() => {
@@ -376,6 +281,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                 {resolvedImages.map((img, idx) => (
                   <button
                     key={idx}
+                    type="button"
+                    aria-label={`View image ${idx + 1} of ${resolvedImages.length}`}
+                    aria-pressed={activeImageIndex === idx}
                     onClick={() => setActiveImageIndex(idx)}
                     className={`aspect-[3/4] w-16 sm:w-20 bg-white border rounded-xs overflow-hidden transition-all cursor-pointer ${
                       activeImageIndex === idx ? 'border-[#563568] ring-1 ring-[#563568]' : 'border-[#E7DCEB] opacity-70 hover:opacity-100'
@@ -432,19 +340,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                 {product.name}
               </h1>
 
-              {/* Customer Rating snippet */}
-              <div className="flex items-center gap-2 mt-2.5 text-xs text-[#6F6475]">
-                <div className="flex items-center text-[#D9B8A0]">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={14} className="fill-[#D9B8A0]" />
-                  ))}
-                </div>
-                <span className="font-medium text-[#302438]">5.0</span>
-                <span>·</span>
-                <a href="#reviews" className="hover:text-[#563568] underline underline-offset-2">
-                  {reviews.length} Verified Reviews
-                </a>
-              </div>
+              <p className="mt-2.5 text-xs text-[#6F6475]">Product details and availability are shown below.</p>
 
               {/* Pricing Display */}
               <div className="mt-4 pt-4 border-t border-[#E7DCEB] flex items-baseline gap-3">
@@ -462,7 +358,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-[#6F6475] mt-1">Inclusive of all taxes & complimentary delivery</p>
+              <p className="text-[11px] text-[#6F6475] mt-1">Inclusive of applicable taxes. Delivery charges, if any, are shown at checkout.</p>
             </div>
 
             {/* Size Guide Trigger (for rings/bracelets) */}
@@ -497,7 +393,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                     type="button"
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                     disabled={quantity <= 1 || !inStock}
-                    className="w-9 h-9 flex items-center justify-center text-sm text-[#302438] hover:bg-white disabled:opacity-30 transition-colors"
+                    aria-label="Decrease quantity"
+                    className="w-11 h-11 flex items-center justify-center text-sm text-[#302438] hover:bg-white disabled:opacity-30 transition-colors"
                   >
                     -
                   </button>
@@ -508,7 +405,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                     type="button"
                     onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
                     disabled={quantity >= product.stock || !inStock}
-                    className="w-9 h-9 flex items-center justify-center text-sm text-[#302438] hover:bg-white disabled:opacity-30 transition-colors"
+                    aria-label="Increase quantity"
+                    className="w-11 h-11 flex items-center justify-center text-sm text-[#302438] hover:bg-white disabled:opacity-30 transition-colors"
                   >
                     +
                   </button>
@@ -531,6 +429,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                   onClick={() => toggleWishlist(product)}
                   className="p-3 border border-[#E7DCEB] hover:border-[#563568] bg-white rounded-xs transition-colors cursor-pointer"
                   title={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+                  aria-label={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
                 >
                   <Heart
                     size={16}
@@ -562,10 +461,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                 <div className="text-xs">
                   <span className="font-medium text-[#302438] flex items-center gap-1.5">
                     <Gift size={13} className="text-[#563568]" />
-                    <span>Send as a Gift (Complimentary Gift Packaging)</span>
+                    <span>Send as a Gift</span>
                   </span>
                   <p className="text-[11px] text-[#6F6475] mt-0.5 leading-snug">
-                    Includes our signature hardbound gift box, ribbon tie, and personalised message card.
+                    Add a gift message for the recipient. Packaging options, if available, are confirmed at checkout.
                   </p>
                 </div>
               </label>
@@ -626,19 +525,19 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
             <div className="pt-4 border-t border-[#E7DCEB] grid grid-cols-2 gap-3 text-xs text-[#6F6475]">
               <div className="flex items-center gap-2">
                 <ShieldCheck size={16} className="text-[#563568] shrink-0" />
-                <span>100% Certified Quality</span>
+                <span>7-Day Atelier Quality Guarantee</span>
               </div>
               <div className="flex items-center gap-2">
                 <Truck size={16} className="text-[#563568] shrink-0" />
-                <span>Insured Pan-India Transit</span>
+                <span>Delivery details at checkout</span>
               </div>
               <div className="flex items-center gap-2">
                 <RotateCcw size={16} className="text-[#563568] shrink-0" />
-                <span>Easy 7-Day Replacements</span>
+                <span>After-sales support</span>
               </div>
               <div className="flex items-center gap-2">
                 <Sparkles size={16} className="text-[#563568] shrink-0" />
-                <span>Luxury Presentation Box</span>
+                <span>Thoughtful gifting options</span>
               </div>
             </div>
           </div>
@@ -688,19 +587,19 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-8 pt-4 border-t border-[#E7DCEB]">
                   <div className="flex justify-between py-1 border-b border-[#E7DCEB]/50">
                     <span className="text-[#6F6475]">Base Metal</span>
-                    <span className="font-medium text-[#302438]">{product.baseMetal || 'Brass with Sterling Silver Accent'}</span>
+                    <span className="font-medium text-[#302438]">{product.baseMetal || 'Not specified'}</span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-[#E7DCEB]/50">
                     <span className="text-[#6F6475]">Plating Finish</span>
-                    <span className="font-medium text-[#302438]">{product.platingFinish || '18K Demi-Fine Gold Polish'}</span>
+                    <span className="font-medium text-[#302438]">{product.platingFinish || 'Not specified'}</span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-[#E7DCEB]/50">
                     <span className="text-[#6F6475]">Stones & Embellishments</span>
-                    <span className="font-medium text-[#302438]">{product.stoneType || 'High-Grade Polki & Kundan Stones'}</span>
+                    <span className="font-medium text-[#302438]">{product.stoneType || 'Not specified'}</span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-[#E7DCEB]/50">
                     <span className="text-[#6F6475]">Closure & Fastening</span>
-                    <span className="font-medium text-[#302438]">{product.closureType || 'Adjustable Dori / Push-back'}</span>
+                    <span className="font-medium text-[#302438]">{product.closureType || 'Not specified'}</span>
                   </div>
                 </div>
               </div>
@@ -710,9 +609,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               <div className="space-y-3">
                 <h4 className="font-serif text-base text-[#302438]">Maintaining Your SARINE Pieces</h4>
                 <ul className="list-disc pl-5 space-y-2 text-[#6F6475]">
-                  <li>Store separately in the provided zip pouch or air-tight box to prevent atmospheric oxidation.</li>
+                  <li>Store separately in a clean, dry pouch or jewellery box to help prevent scratches and tarnishing.</li>
                   <li>Avoid direct exposure to perfume, hairsprays, sanitizers, and direct water contact.</li>
-                  <li>Clean gently using a dry, lint-free microfiber cloth after every festive wear.</li>
+                  <li>Clean gently with a soft, dry, lint-free cloth after wearing.</li>
                   <li>Put your jewellery on last when getting dressed, and take it off first before sleeping.</li>
                 </ul>
               </div>
@@ -720,69 +619,14 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
 
             {activeTab === 'shipping' && (
               <div className="space-y-3">
-                <h4 className="font-serif text-base text-[#302438]">Authenticity Guarantee & Delivery Timeline</h4>
-                <p>
-                  Every SARINE piece undergoes stringent quality checks to ensure premium polish, sturdy prongs, and skin-friendly hypoallergenic finishes.
-                </p>
-                <p>
-                  • Orders are dispatched within 24 hours via premium insured courier partners (Bluedart, Delhivery, DTDC).
-                </p>
-                <p>
-                  • Tracking details are sent via SMS/Email and accessible anytime via our Track Order portal.
-                </p>
+                <h4 className="font-serif text-base text-[#302438]">Shipping & Order Support</h4>
+                <p>Available delivery options, charges and estimated timelines are shown during checkout after you enter your delivery PIN code.</p>
+                <p>Once an order is dispatched, tracking information will be shared when it is available.</p>
+                <p>For questions about an order or a product, please use the Contact SARINE page.</p>
               </div>
             )}
           </div>
         </div>
-
-        {/* Customer Reviews Section */}
-        <section id="reviews" className="mt-14 bg-white p-6 sm:p-10 border border-[#E7DCEB] rounded-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E7DCEB]">
-            <div>
-              <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block">
-                AUTHENTIC SOCIAL PROOF
-              </span>
-              <h2 className="font-serif text-2xl text-[#302438] font-normal mt-0.5">
-                Customer Reviews ({reviews.length})
-              </h2>
-            </div>
-
-            <button
-              onClick={() => setIsReviewModalOpen(true)}
-              className="px-5 py-2.5 bg-[#563568] text-white hover:bg-[#A184BD] text-xs font-medium rounded-xs transition-colors cursor-pointer self-start sm:self-auto"
-            >
-              Write a Review
-            </button>
-          </div>
-
-          {/* Review List */}
-          <div className="divide-y divide-[#E7DCEB]">
-            {reviews.map((rev) => (
-              <div key={rev.id} className="py-6 first:pt-4 last:pb-0 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-xs sm:text-sm text-[#302438]">{rev.name}</span>
-                    {rev.verified && (
-                      <span className="text-[10px] px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xs">
-                        Verified Purchase
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[11px] text-[#6F6475]">{rev.date}</span>
-                </div>
-
-                <div className="flex items-center text-[#D9B8A0]">
-                  {[...Array(rev.rating)].map((_, i) => (
-                    <Star key={i} size={13} className="fill-[#D9B8A0]" />
-                  ))}
-                </div>
-
-                <h4 className="font-serif text-sm font-medium text-[#302438]">{rev.title}</h4>
-                <p className="text-xs sm:text-sm text-[#6F6475] leading-relaxed">{rev.comment}</p>
-              </div>
-            ))}
-          </div>
-        </section>
 
         {/* Related Products Carousel / Grid */}
         {relatedProducts.length > 0 && (
@@ -806,96 +650,6 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
           </section>
         )}
       </div>
-
-      {/* Write Review Modal */}
-      {isReviewModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            onClick={() => setIsReviewModalOpen(false)}
-            className="fixed inset-0 bg-[#302438]/50 backdrop-blur-xs"
-          />
-          <div className="relative bg-white w-full max-w-md p-6 border border-[#E7DCEB] rounded-xs shadow-2xl z-10 animate-in fade-in duration-200">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E7DCEB]">
-              <h3 className="font-serif text-lg text-[#302438]">Review this Piece</h3>
-              <button onClick={() => setIsReviewModalOpen(false)} className="text-[#6F6475] hover:text-[#302438]">
-                <X size={18} />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddReview} className="mt-4 space-y-4 text-xs font-sans">
-              <div>
-                <label className="block text-[#6F6475] mb-1">Your Rating</label>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      type="button"
-                      key={star}
-                      onClick={() => setNewReviewRating(star)}
-                      className="cursor-pointer"
-                    >
-                      <Star
-                        size={20}
-                        className={star <= newReviewRating ? 'text-[#D9B8A0] fill-[#D9B8A0]' : 'text-[#E7DCEB]'}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[#6F6475] mb-1">Your Name</label>
-                <input
-                  type="text"
-                  required
-                  value={newReviewName}
-                  onChange={(e) => setNewReviewName(e.target.value)}
-                  placeholder="e.g. Radhika V."
-                  className="w-full p-2 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[#6F6475] mb-1">Review Headline</label>
-                <input
-                  type="text"
-                  value={newReviewTitle}
-                  onChange={(e) => setNewReviewTitle(e.target.value)}
-                  placeholder="e.g. Stunning kundan detailing"
-                  className="w-full p-2 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[#6F6475] mb-1">Detailed Feedback</label>
-                <textarea
-                  required
-                  rows={3}
-                  value={newReviewComment}
-                  onChange={(e) => setNewReviewComment(e.target.value)}
-                  placeholder="Tell other jewellery lovers about the fit, finish, and comfort..."
-                  className="w-full p-2 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:outline-none resize-none"
-                />
-              </div>
-
-              <div className="pt-2 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsReviewModalOpen(false)}
-                  className="px-4 py-2 border border-[#E7DCEB] text-[#6F6475] rounded-xs hover:bg-[#F7F0FA]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-[#563568] text-white hover:bg-[#A184BD] font-medium rounded-xs transition-colors"
-                >
-                  Submit Review
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Size Guide Modal */}
       {isSizeGuideOpen && (
