@@ -39,7 +39,8 @@ import {
   X,
   CheckCircle2,
   AlertTriangle,
-  UserCheck
+  UserCheck,
+  RotateCcw
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -164,6 +165,12 @@ interface NavItem {
       path: '/admin/customers',
       icon: UserCheck,
       match: (p: string) => p.startsWith('/admin/customers')
+    },
+    {
+      name: 'Returns & Refunds',
+      path: '/admin/returns',
+      icon: RotateCcw,
+      match: (p: string) => p.startsWith('/admin/returns')
     },
     {
       name: 'Marketing & Coupons',
