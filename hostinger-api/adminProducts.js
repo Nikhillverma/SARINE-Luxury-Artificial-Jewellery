@@ -2,6 +2,7 @@ import { Router } from "express";
 import crypto from "node:crypto";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
+import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -113,6 +114,7 @@ router.get("/", async (req, res, next) => {
 });
 
 router.post("/", async (req, res, next) => {
+  let connection;
   try {
     const body = req.body || {};
     const errors = validateProduct(body);
@@ -120,7 +122,11 @@ router.post("/", async (req, res, next) => {
     const data = valuesFromBody(body);
     if (!data.slug) return res.status(400).json({ error: "A valid product slug could not be generated." });
     const id = crypto.randomUUID();
-    await pool.execute(
+
+    await ensureInventoryTable();
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    await connection.execute(
       `INSERT INTO products
        (id, slug, name, description, short_description, price, compare_at_price, cost_price,
         images, category_id, collection_slugs, jewellery_type, stock, status, tags,
@@ -131,11 +137,30 @@ router.post("/", async (req, res, next) => {
        data.collection_slugs, data.jewellery_type, data.stock, data.status, data.tags,
        data.base_metal, data.plating_finish, data.stone_type, data.closure_type, data.care_instructions]
     );
-    const [rows] = await pool.execute("SELECT * FROM products WHERE id = ? LIMIT 1", [id]);
+
+    if (data.stock > 0) {
+      await recordInventoryMovement(connection, {
+        productId: id,
+        productName: data.name,
+        previousStock: 0,
+        quantityDelta: data.stock,
+        newStock: data.stock,
+        reason: "Initial product stock",
+        actorId: req.admin?.id || "admin",
+        actorName: req.admin?.name || req.admin?.email || "Atelier admin",
+        actorEmail: req.admin?.email || "admin"
+      });
+    }
+
+    const [rows] = await connection.execute("SELECT * FROM products WHERE id = ? LIMIT 1", [id]);
+    await connection.commit();
     res.status(201).json({ success: true, product: mapProduct(rows[0]) });
   } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
     if (error.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "A product with this slug already exists." });
     next(error);
+  } finally {
+    connection?.release();
   }
 });
 
