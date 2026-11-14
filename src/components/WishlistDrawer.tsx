@@ -8,6 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import { formatInr } from '../utils/currency';
+import { Product } from '../types/product';
 import { X, Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
 
 export const WishlistDrawer: React.FC = () => {
@@ -40,7 +41,7 @@ export const WishlistDrawer: React.FC = () => {
 
   if (!isWishlistOpen) return null;
 
-  const handleMoveToBag = (product: any) => {
+  const handleMoveToBag = (product: Product) => {
     addItem(product, 1);
     removeFromWishlist(product.id);
     closeWishlist();
@@ -60,12 +61,13 @@ export const WishlistDrawer: React.FC = () => {
       <aside
         className="relative w-full max-w-md bg-white text-[#302438] h-full shadow-2xl flex flex-col z-10 border-l border-[#E7DCEB] animate-in slide-in-from-right duration-300"
         role="dialog"
-        aria-label="Your Saved Pieces"
+        aria-modal="true"
+        aria-labelledby="wishlist-dialog-title"
       >
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-[#E7DCEB] flex items-center justify-between bg-white">
           <div className="flex items-baseline gap-2">
-            <h2 className="font-serif text-xl sm:text-2xl font-normal tracking-tight text-[#302438]">
+            <h2 id="wishlist-dialog-title" className="font-serif text-xl sm:text-2xl font-normal tracking-tight text-[#302438]">
               Saved Pieces
             </h2>
             <span className="text-[11px] uppercase tracking-widest text-[#6F6475]">
@@ -74,7 +76,7 @@ export const WishlistDrawer: React.FC = () => {
           </div>
           <button
             onClick={closeWishlist}
-            className="p-1.5 text-[#6F6475] hover:text-[#563568] transition-colors cursor-pointer"
+            className="min-w-11 min-h-11 flex items-center justify-center p-1.5 text-[#6F6475] hover:text-[#563568] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] transition-colors cursor-pointer"
             aria-label="Close Wishlist"
           >
             <X size={20} strokeWidth={1.5} />
@@ -117,6 +119,8 @@ export const WishlistDrawer: React.FC = () => {
                     className="w-20 h-24 bg-[#F7F0FA] border border-[#E7DCEB] shrink-0 overflow-hidden rounded-xs"
                   >
                     <img
+                      loading="lazy"
+                      decoding="async"
                       src={product.images[0] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80'}
                       alt={product.name}
                       className="w-full h-full object-cover object-center"
@@ -136,7 +140,7 @@ export const WishlistDrawer: React.FC = () => {
                         </Link>
                         <button
                           onClick={() => removeFromWishlist(product.id)}
-                          className="text-[#6F6475] hover:text-[#DC2626] transition-colors p-1 cursor-pointer"
+                          className="min-w-11 min-h-11 flex items-center justify-center text-[#6F6475] hover:text-[#DC2626] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] transition-colors p-1 cursor-pointer"
                           title="Remove from wishlist"
                           aria-label={`Remove ${product.name}`}
                         >
@@ -160,7 +164,7 @@ export const WishlistDrawer: React.FC = () => {
                       {inStock ? (
                         <button
                           onClick={() => handleMoveToBag(product)}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#563568] text-white hover:bg-[#A184BD] text-xs font-medium rounded-xs transition-colors shadow-2xs cursor-pointer"
+                          className="min-h-11 inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#563568] text-white hover:bg-[#A184BD] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] text-xs font-medium rounded-xs transition-colors shadow-2xs cursor-pointer"
                         >
                           <ShoppingBag size={13} />
                           <span>Move to Bag</span>

@@ -22,6 +22,7 @@ const TRENDING_SEARCHES = ['Temple Jewellery', 'Choker', 'Rose Gold', 'Daily Wea
 export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
+  const focusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [query, setQuery] = useState('');
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [results, setResults] = useState<Product[]>([]);
@@ -56,12 +57,26 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
     }
     if (isOpen) {
       loadCatalogue();
-      setTimeout(() => inputRef.current?.focus(), 100);
+      focusTimerRef.current = setTimeout(() => inputRef.current?.focus(), 100);
     }
     return () => {
       isCancelled = true;
+      if (focusTimerRef.current) {
+        clearTimeout(focusTimerRef.current);
+        focusTimerRef.current = null;
+      }
     };
   }, [isOpen]);
+
+  // Close search with Escape while the overlay is open.
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   // Lock scroll
   useEffect(() => {
@@ -139,28 +154,31 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
       <div
         onClick={onClose}
         className="fixed inset-0 bg-[#302438]/50 backdrop-blur-xs transition-opacity duration-200"
+        aria-hidden="true"
       />
 
       {/* Main Container */}
-      <div className="relative w-full bg-white border-b border-[#E7DCEB] shadow-2xl z-10 max-h-[85vh] flex flex-col animate-in slide-in-from-top duration-300">
+      <section role="dialog" aria-modal="true" aria-label="Search jewellery" className="relative w-full bg-white border-b border-[#E7DCEB] shadow-2xl z-10 max-h-[85vh] flex flex-col animate-in slide-in-from-top duration-300">
         {/* Search Input Bar */}
         <div className="border-b border-[#E7DCEB] bg-white">
           <div className="site-container py-4 sm:py-5">
             <form onSubmit={handleSearchSubmit} className="flex items-center gap-3">
               <Search size={22} className="text-[#563568] shrink-0" />
+              <label className="sr-only" htmlFor="sarine-search-input">Search jewellery</label>
               <input
+                id="sarine-search-input"
                 ref={inputRef}
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search jewellery by piece, design, material, or occasion..."
-                className="w-full text-base sm:text-xl font-serif text-[#302438] placeholder-[#6F6475]/50 focus:outline-none bg-transparent"
+                className="w-full min-h-11 text-base sm:text-xl font-serif text-[#302438] placeholder-[#6F6475]/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] bg-transparent"
               />
               {query && (
                 <button
                   type="button"
                   onClick={() => setQuery('')}
-                  className="p-1.5 text-[#6F6475] hover:text-[#302438] transition-colors cursor-pointer"
+                  className="min-w-11 min-h-11 flex items-center justify-center p-1.5 text-[#6F6475] hover:text-[#302438] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] transition-colors cursor-pointer"
                   title="Clear input"
                 >
                   <X size={18} />
@@ -169,7 +187,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
               <button
                 type="button"
                 onClick={onClose}
-                className="px-3 py-1.5 text-xs text-[#6F6475] hover:text-[#563568] font-medium border border-[#E7DCEB] hover:border-[#B69ACF] rounded-xs transition-colors cursor-pointer"
+                className="min-h-11 px-3 py-1.5 text-xs text-[#6F6475] hover:text-[#563568] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] font-medium border border-[#E7DCEB] hover:border-[#B69ACF] rounded-xs transition-colors cursor-pointer"
               >
                 ESC
               </button>
@@ -178,7 +196,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
         </div>
 
         {/* Dynamic Search Body */}
-        <div className="site-container py-6 overflow-y-auto flex-1">
+        <div className="site-container py-6 overflow-y-auto flex-1" aria-live="polite" aria-busy={loading}>
           {query.trim() ? (
             /* Autocomplete Results */
             <div>
@@ -211,6 +229,8 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
                     >
                       <div className="w-16 h-20 bg-white border border-[#E7DCEB] shrink-0 overflow-hidden rounded-xs">
                         <img
+                          loading="lazy"
+                          decoding="async"
                           src={product.images[0]}
                           alt={product.name}
                           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform"
@@ -269,7 +289,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
                       <button
                         key={term}
                         onClick={() => handleSelectTerm(term)}
-                        className="px-3 py-1.5 bg-[#F7F0FA] hover:bg-[#F0E6F4] text-xs text-[#302438] hover:text-[#563568] border border-[#E7DCEB] hover:border-[#B69ACF] rounded-xs transition-colors cursor-pointer"
+                        className="min-h-11 px-3 py-2 bg-[#F7F0FA] hover:bg-[#F0E6F4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] text-xs text-[#302438] hover:text-[#563568] border border-[#E7DCEB] hover:border-[#B69ACF] rounded-xs transition-colors cursor-pointer"
                       >
                         {term}
                       </button>
@@ -282,14 +302,14 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
               <div>
                 <span className="text-xs uppercase tracking-wider text-[#6F6475] font-medium flex items-center gap-1.5 mb-3">
                   <Sparkles size={13} className="text-[#563568]" />
-                  <span>Trending Collections</span>
+                  <span>Explore Searches</span>
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {TRENDING_SEARCHES.map((term) => (
                     <button
                       key={term}
                       onClick={() => handleSelectTerm(term)}
-                      className="px-3 py-1.5 bg-[#FAF5FC] hover:bg-[#F0E6F4] text-xs text-[#563568] border border-[#E7DCEB] hover:border-[#B69ACF] rounded-xs transition-colors cursor-pointer"
+                      className="min-h-11 px-3 py-2 bg-[#FAF5FC] hover:bg-[#F0E6F4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] text-xs text-[#563568] border border-[#E7DCEB] hover:border-[#B69ACF] rounded-xs transition-colors cursor-pointer"
                     >
                       {term}
                     </button>
@@ -344,7 +364,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
             </div>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 };
