@@ -203,6 +203,4 @@ export class HostingerOrderService implements IOrderService {
     }
     return data as { success: boolean; requestId: number; orderNumber: string; status: string };
   }
-
-  }
 }
