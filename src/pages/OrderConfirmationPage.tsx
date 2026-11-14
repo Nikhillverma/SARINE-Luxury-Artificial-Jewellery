@@ -32,10 +32,7 @@ export const OrderConfirmationPage: React.FC = () => {
     let isCancelled = false;
 
     async function loadOrder() {
-      console.log('[OrderConfirmation] Page load for order:', orderNumber, 'token present:', Boolean(token));
-
       if (!orderNumber) {
-        console.error('[OrderConfirmation] Could not find order: orderNumber parameter is undefined or empty.');
         setLoading(false);
         return;
       }
@@ -44,17 +41,10 @@ export const OrderConfirmationPage: React.FC = () => {
       try {
         const found = await orderService.getOrderByNumber(orderNumber, token);
         if (!isCancelled) {
-          if (!found) {
-            console.error(
-              `[OrderConfirmation] Could not find order: No order found matching reference "${orderNumber}" with authorization token.`
-            );
-          } else {
-            console.log('[OrderConfirmation] Order found and loaded successfully:', found);
-          }
           setOrder(found);
         }
       } catch (err) {
-        console.error(`[OrderConfirmation] Failed to load order "${orderNumber}" due to error:`, err);
+        console.error('[OrderConfirmation] Unable to retrieve order confirmation.');
       } finally {
         if (!isCancelled) {
           setLoading(false);
