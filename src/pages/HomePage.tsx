@@ -828,46 +828,46 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         <div className="site-container">
           <div className="max-w-[720px] mx-auto text-center mb-10">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
-              ATELIER CARE PHILOSOPHY
+              JEWELLERY CARE GUIDE
             </span>
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
-              The Art of Jewellery Preservation
+              Care for Your SARINE Pieces
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed">
-              Every SARINE piece is crafted with protective seals and demi-fine gold plating. Follow these four timeless steps to preserve its radiant shine for generations.
+              A little care helps keep your jewellery looking its best. Materials and finishes can vary, so always follow any care notes provided with your piece.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="p-5 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-center space-y-2">
               <span className="w-8 h-8 rounded-full bg-[#563568] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">1</span>
-              <h3 className="font-serif text-base text-[#302438]">The Last Touch</h3>
+              <h3 className="font-serif text-base text-[#302438]">Avoid Chemicals</h3>
               <p className="text-xs text-[#6F6475] leading-relaxed">
-                Put your jewellery on last after perfumes, lotions, and hair styling sprays have dried completely.
+                Apply perfume, lotion, and hair products before putting on your jewellery. Let them dry first.
               </p>
             </div>
 
             <div className="p-5 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-center space-y-2">
               <span className="w-8 h-8 rounded-full bg-[#563568] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">2</span>
-              <h3 className="font-serif text-base text-[#302438]">Air-Tight Storage</h3>
+              <h3 className="font-serif text-base text-[#302438]">Store Separately</h3>
               <p className="text-xs text-[#6F6475] leading-relaxed">
-                Store each piece in its individual velvet pouch or zip bag to prevent moisture and accidental scratches.
+                Keep pieces separate in a clean, dry pouch or jewellery box to help prevent tangles and scratches.
               </p>
             </div>
 
             <div className="p-5 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-center space-y-2">
               <span className="w-8 h-8 rounded-full bg-[#563568] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">3</span>
-              <h3 className="font-serif text-base text-[#302438]">Gentle Cleaning</h3>
+              <h3 className="font-serif text-base text-[#302438]">Wipe with Care</h3>
               <p className="text-xs text-[#6F6475] leading-relaxed">
-                Wipe gently with a dry soft microfiber cloth after wear to remove skin oils before returning to storage.
+                After wearing, gently wipe with a clean, soft, dry cloth. Avoid abrasive cleaners and polishing compounds.
               </p>
             </div>
 
             <div className="p-5 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-center space-y-2">
               <span className="w-8 h-8 rounded-full bg-[#563568] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">4</span>
-              <h3 className="font-serif text-base text-[#302438]">Moisture Barrier</h3>
+              <h3 className="font-serif text-base text-[#302438]">Keep Away from Water</h3>
               <p className="text-xs text-[#6F6475] leading-relaxed">
-                Keep pieces away from steam, pool chlorine, and water basins to maintain pristine prong tension.
+                Remove jewellery before bathing, swimming, exercising, or doing activities that expose it to water and perspiration.
               </p>
             </div>
           </div>
