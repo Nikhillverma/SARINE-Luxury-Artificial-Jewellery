@@ -168,17 +168,30 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
           setCategories(sortedCats);
 
-          const bestList = featured.length >= 5 ? featured : (newest.length > 0 ? newest : featured);
+          // Keep internal migration/test catalogue entries out of customer-facing sections.
+          // The live catalogue can contain active test records during migration checks.
+          const customerProducts = (items: Product[]) =>
+            items.filter((product) =>
+              !/migration[-_ ]?test|test[-_ ]?product/i.test(`${product.slug} ${product.name}`)
+            );
+
+          const customerFeatured = customerProducts(featured);
+          const customerNewest = customerProducts(newest);
+          const bestList =
+            customerFeatured.length >= 5
+              ? customerFeatured
+              : customerNewest.length > 0
+                ? customerNewest
+                : customerFeatured;
           setBestsellers(bestList);
 
-          // 4 newest products sorted by createdAt descending
-          const sortedNewest = [...newest].sort((a, b) => {
+          // 4 newest customer-facing products sorted by createdAt descending.
+          const sortedNewest = [...customerNewest].sort((a, b) => {
             const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
             const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
             return dateB - dateA;
           });
-          const arrivalList = sortedNewest.slice(0, 4);
-          setNewArrivals(arrivalList.length > 0 ? arrivalList : newest.slice(0, 4));
+          setNewArrivals(sortedNewest.slice(0, 4));
         }
       } catch (err) {
         console.error('[HomePage] Error loading storefront collections:', err);
