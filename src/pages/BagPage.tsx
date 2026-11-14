@@ -1,7 +1,7 @@
 /**
  * BagPage component for SARINE.
  * Full-page shopping bag view with item rows, quantity adjustment bounded by stock,
- * save to wishlist, coupon discounts, gifting options, subtotal summary in INR,
+ * save to wishlist, configured shipping calculation, subtotal summary in INR,
  * and seamless checkout progression.
  */
 
