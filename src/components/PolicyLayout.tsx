@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 interface PolicyLayoutProps {
   title: string;
@@ -52,10 +52,6 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
             {subtitle}
           </p>
 
-          <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-[#6F6475] font-sans">
-            <Clock size={12} className="text-[#563568]" />
-            <span>Last updated: 21 October 2026</span>
-          </div>
         </div>
       </section>
 
@@ -69,7 +65,8 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`whitespace-nowrap px-3.5 py-1.5 text-xs font-sans tracking-wider transition-colors uppercase rounded-xs ${
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`whitespace-nowrap min-h-11 px-3.5 py-2 text-xs font-sans tracking-wider transition-colors uppercase rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] ${
                     isActive
                       ? 'bg-[#563568] text-white font-medium'
                       : 'text-[#6F6475] hover:text-[#563568] hover:bg-[#F0E6F4]'
@@ -90,7 +87,7 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
           <div className="mb-8">
             <Link
               to="/shop"
-              className="inline-flex items-center gap-1.5 text-xs text-[#6F6475] hover:text-[#563568] tracking-wider uppercase font-sans transition-colors"
+              className="inline-flex min-h-11 items-center gap-1.5 text-xs text-[#6F6475] hover:text-[#563568] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] tracking-wider uppercase font-sans transition-colors"
             >
               <ArrowLeft size={13} />
               <span>Return to Collection</span>

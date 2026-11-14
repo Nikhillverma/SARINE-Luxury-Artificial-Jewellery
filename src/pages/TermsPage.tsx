@@ -48,11 +48,11 @@ export const TermsPage: React.FC = () => {
             </h2>
           </div>
           <p>
-            All products offered on SARINE represent premium Indian artificial, brass-based, and handcrafted fashion jewellery.
+            SARINE offers fashion and artificial jewellery. Materials, finishes, dimensions, and product features may vary by item; please review the individual product description before ordering.
           </p>
           <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6F6475]">
             <li><strong className="text-[#302438]">Currency:</strong> All prices are displayed and charged strictly in <strong>Indian National Rupees (INR, ₹)</strong>.</li>
-            <li><strong className="text-[#302438]">Taxes:</strong> All product prices include applicable Indian Goods and Services Tax (GST) unless indicated otherwise.</li>
+            <li><strong className="text-[#302438]">Taxes and charges:</strong> Review the final order summary at checkout for the amount payable and any applicable charges.</li>
             <li><strong className="text-[#302438]">Pricing Accuracy:</strong> While we endeavor to ensure all pricing information is exact, in the rare event of a typographical or system error, SARINE reserves the right to notify the customer and cancel the affected order with a full refund.</li>
           </ul>
         </section>
@@ -87,7 +87,7 @@ export const TermsPage: React.FC = () => {
             Online payments on our website are facilitated securely through <strong>Razorpay</strong>. Accepted payment modes include UPI (Google Pay, PhonePe, Paytm, BHIM), major Credit &amp; Debit Cards (Visa, MasterCard, RuPay), and NetBanking.
           </p>
           <p className="text-xs text-[#6F6475]">
-            Orders are only processed for packaging and dispatch once payment capture is verified by our secure serverless verification endpoints. Any transaction failure or bank reversal is handled according to standard RBI clearing protocols.
+            An online order is processed after the payment status has been checked and matched to the order. A payment confirmation shown by a bank or payment app alone may not mean that the store has confirmed the order.
           </p>
         </section>
 
@@ -100,7 +100,7 @@ export const TermsPage: React.FC = () => {
             </h2>
           </div>
           <p>
-            Our jewellery is handcrafted and photographed under professional studio lighting to capture intricate heritage filigree, kundan work, and semi-precious stone textures.
+            Product photographs are provided to help illustrate each item. The actual product details and materials are described on the individual product page.
           </p>
           <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] text-xs text-[#6F6475] space-y-1.5 rounded-xs">
             <p>
@@ -108,10 +108,10 @@ export const TermsPage: React.FC = () => {
             </p>
             <ul className="list-disc pl-5 space-y-1">
               <li>Individual screen calibrations, display brightness, and color gamut settings on your phone or computer.</li>
-              <li>The authentic handcrafted nature of Indian artisanal jewellery making.</li>
+              <li>Differences in lighting and screen settings when viewing product images.</li>
             </ul>
             <p className="mt-1">
-              We provide accurate dimensions, piece weight, and material descriptions on every product page to help guide your selection.
+              Please review the specifications shown on each product page. If a detail is not listed, do not assume a particular material, dimension, or weight.
             </p>
           </div>
         </section>
@@ -128,7 +128,7 @@ export const TermsPage: React.FC = () => {
             These Terms &amp; Conditions and any transactions conducted on SARINE are governed by and construed in accordance with the laws of the Republic of India.
           </p>
           <p className="text-xs text-[#6F6475]">
-            Any dispute, claim, or controversy arising out of or relating to your purchase or use of the SARINE store shall be subject to the exclusive jurisdiction of the competent courts located in <strong className="text-[#302438]">Gurugram, Haryana / New Delhi, India</strong>.
+            Disputes will be subject to the jurisdiction of the competent courts as determined under applicable Indian law.
           </p>
         </section>
       </div>

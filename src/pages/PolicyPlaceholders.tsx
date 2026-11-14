@@ -18,10 +18,10 @@ export const SustainabilityPage: React.FC = () => {
             Sustainability &amp; Conscious Craft
           </h1>
           <p className="text-xs sm:text-sm text-[#6F6475] leading-relaxed mb-4">
-            At SARINE, thoughtful craftsmanship extends beyond aesthetics. We focus on mindful small-batch production, minimal packaging waste, and long-lasting wearable designs that transcend fleeting seasonal cycles.
+            We are working to publish clear, verifiable information about our materials, sourcing, production, and packaging. We will update this page as those details are confirmed.
           </p>
           <p className="text-xs sm:text-sm text-[#6F6475] leading-relaxed">
-            Each order is shipped in reusable keepsake pouches and protective recyclable cardboard mailers designed to minimize single-use plastics.
+            Packaging may vary by product and order. Please check the product and order information for details about the packaging included with your purchase.
           </p>
           <div className="mt-8 pt-6 border-t border-[#E7DCEB]">
             <Link to="/" className="text-xs uppercase tracking-wider text-[#563568] hover:text-[#A184BD] transition-colors underline underline-offset-4">
@@ -55,7 +55,7 @@ export const BlogPage: React.FC = () => {
             </div>
             <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs">
               <h3 className="font-serif text-lg text-[#302438]">Jewellery Care Guide</h3>
-              <p className="text-xs text-[#6F6475] mt-1">Simple daily practices to keep your micron gold-plated jewellery radiant for years.</p>
+              <p className="text-xs text-[#6F6475] mt-1">Simple care habits to help look after your jewellery. Materials and finishes vary by product.</p>
             </div>
           </div>
         </div>
@@ -79,10 +79,8 @@ export const CareersPage: React.FC = () => {
             We are always eager to connect with passionate individuals in jewellery merchandising, e-commerce operations, digital design, and customer experience.
           </p>
           <p className="text-xs text-[#6F6475]">
-            Send your portfolio and resume to{' '}
-            <a href="mailto:careers@sarinejewelry.com" className="text-[#563568] hover:text-[#A184BD] underline font-medium">
-              careers@sarinejewelry.com
-            </a>.
+            We do not currently list open positions or accept applications through this page.
+            
           </p>
         </div>
       </div>
@@ -102,7 +100,7 @@ export const CancellationPolicyPage: React.FC = () => {
             Cancellation Policy
           </h1>
           <p className="text-xs sm:text-sm text-[#6F6475] leading-relaxed mb-4">
-            You may request cancellation of your order at any time before it has been dispatched from our studio (typically within 24 hours of placement).
+            You may request cancellation before your order is handed over to the delivery partner. Cancellation may no longer be possible after dispatch.
           </p>
           <p className="text-xs sm:text-sm text-[#6F6475] leading-relaxed mb-4">
             Once an order has been dispatched and handed over to our courier partners, cancellation is no longer possible, but you may avail of our 7-day return assistance upon delivery in accordance with our{' '}
@@ -111,10 +109,8 @@ export const CancellationPolicyPage: React.FC = () => {
             </Link>.
           </p>
           <p className="text-xs text-[#6F6475]">
-            Last updated: 21 October 2026. For cancellation requests, email{' '}
-            <a href="mailto:care@sarinejewelry.com" className="underline font-medium text-[#563568] hover:text-[#A184BD] transition-colors">
-              care@sarinejewelry.com
-            </a>.
+            For cancellation requests, use the customer support channel shown in your order communication. The public support contact details on this website are being finalised.
+            
           </p>
         </div>
       </div>

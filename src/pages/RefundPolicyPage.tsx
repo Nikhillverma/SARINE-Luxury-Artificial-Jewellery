@@ -34,8 +34,8 @@ export const RefundPolicyPage: React.FC = () => {
             You may cancel your order at any time <strong>before the parcel has been packaged and handed over to our courier partner</strong>.
           </p>
           <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6F6475]">
-            <li>To cancel an order before dispatch, immediately email our concierge team at <a href="mailto:care@sarinejewelry.com" className="text-[#563568] hover:text-[#A184BD] underline underline-offset-2">care@sarinejewelry.com</a> or message on WhatsApp at <strong className="text-[#302438]">+91 98765 43210</strong> with your order number.</li>
-            <li>If the order has not yet been dispatched, we will cancel the order immediately and issue a 100% full refund to your original payment method.</li>
+            <li>To request a cancellation, use the customer-support contact details included with your order communication. The public support contact details on this website are being finalised.</li>
+            <li>If cancellation is accepted before dispatch, the order will be cancelled and any applicable refund will be processed to the original payment method.</li>
             <li>Once an order has been picked up by the courier and an AWB tracking number has been generated, it cannot be canceled in transit.</li>
           </ul>
         </section>
@@ -79,9 +79,9 @@ export const RefundPolicyPage: React.FC = () => {
             To prevent fraudulent claims and ensure fair verification:
           </p>
           <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6F6475]">
-            <li><strong className="text-[#302438]">Unboxing Video / Photos:</strong> For claims of damage or wrong items, a clear, continuous unboxing video or photographs taken immediately upon opening the outer package is mandatory.</li>
-            <li><strong className="text-[#302438]">Unused Condition:</strong> All returned jewellery must be completely unused, unworn, and free of perfume, makeup, moisture, or alterations.</li>
-            <li><strong className="text-[#302438]">Original Packaging:</strong> The item must be returned with all original tags, velvet pouch, gift box, and authenticity inserts intact.</li>
+            <li><strong className="text-[#302438]">Unboxing Video / Photos:</strong> If an item arrives damaged or incorrect, photographs or an unboxing video can help document the issue. Please retain the outer packaging until the request is reviewed.</li>
+            <li><strong className="text-[#302438]">Unused Condition:</strong> Please keep the item unused and include the packaging and accessories that arrived with it while the return request is reviewed.</li>
+            <li><strong className="text-[#302438]">Original Packaging:</strong> Include any tags, packaging, or accessories that were supplied with the item.</li>
           </ul>
         </section>
 
@@ -101,14 +101,14 @@ export const RefundPolicyPage: React.FC = () => {
               <CheckCircle2 size={16} className="text-[#563568] shrink-0 mt-0.5" />
               <div>
                 <strong className="text-[#302438] block">Online Prepaid Orders (Razorpay):</strong>
-                Approved refunds are initiated back to the original source method (UPI account, Credit/Debit Card, or NetBanking) within <strong>5 to 7 business days</strong>. The time required for the credit to reflect on your card or bank statement depends on your issuing bank.
+                Approved prepaid refunds are returned through the original payment method where supported. Processing and credit timelines depend on the payment provider and the customer’s bank; the applicable details will be shared when the refund is approved.
               </div>
             </div>
             <div className="flex items-start gap-2.5 pt-2 border-t border-[#E7DCEB]">
               <CheckCircle2 size={16} className="text-[#563568] shrink-0 mt-0.5" />
               <div>
                 <strong className="text-[#302438] block">Cash on Delivery (COD) Orders:</strong>
-                For verified COD returns, refunds are transferred via direct <strong>NEFT / IMPS bank transfer</strong> to the customer’s verified bank account within 5 to 7 business days following return approval.
+                For an approved COD return, the refund method and any information required from the customer will be confirmed as part of the return approval.
               </div>
             </div>
           </div>
@@ -123,13 +123,13 @@ export const RefundPolicyPage: React.FC = () => {
             </h2>
           </div>
           <p>
-            To begin a return request within the 7-day delivery window:
+            To request a return within the 7-day delivery window:
           </p>
           <ol className="list-decimal pl-5 space-y-2 text-xs text-[#6F6475]">
-            <li>Send an email to <a href="mailto:care@sarinejewelry.com" className="text-[#563568] hover:text-[#A184BD] font-medium underline underline-offset-2">care@sarinejewelry.com</a> with the subject: <em>&ldquo;Return Request: [Your Order Number]&rdquo;</em>.</li>
+            <li>Use the customer-support contact details included with your order communication to request a return. The public support contact details on this website are being finalised.</li>
             <li>Attach the unboxing video/photos clearly illustrating the damage, defect, or wrong item received.</li>
             <li>Provide a brief description of the issue along with your registered contact phone number.</li>
-            <li>Our concierge will verify the claim within 24 to 48 hours and coordinate reverse pickup instructions or provide the return shipping address.</li>
+            <li>The return request will need to be reviewed before return instructions or a return address can be provided.</li>
           </ol>
         </section>
       </div>

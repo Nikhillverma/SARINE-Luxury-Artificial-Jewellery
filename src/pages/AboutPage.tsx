@@ -29,19 +29,19 @@ export const AboutPage: React.FC = () => {
           <div className="bg-white p-6 border border-[#E7DCEB] rounded-xs shadow-2xs">
             <h3 className="font-serif text-xl text-[#302438] mb-2 font-normal">Thoughtfully Designed</h3>
             <p className="text-xs text-[#6F6475] leading-relaxed">
-              Every curve, setting, and gemstone is curated to transition seamlessly from morning elegance to evening celebration.
+              Discover designs selected to move easily from everyday plans to special occasions.
             </p>
           </div>
           <div className="bg-white p-6 border border-[#E7DCEB] rounded-xs shadow-2xs">
-            <h3 className="font-serif text-xl text-[#302438] mb-2 font-normal">Skin-Friendly & Comfortable</h3>
+            <h3 className="font-serif text-xl text-[#302438] mb-2 font-normal">Made for Your Style</h3>
             <p className="text-xs text-[#6F6475] leading-relaxed">
-              Crafted with high-grade brass alloy foundations, durable plating, and smooth closures engineered for extended wear.
+              Explore a range of styles selected to complement everyday outfits and special occasions. Please refer to each product page for its available material and care details.
             </p>
           </div>
           <div className="bg-white p-6 border border-[#E7DCEB] rounded-xs shadow-2xs">
             <h3 className="font-serif text-xl text-[#302438] mb-2 font-normal">Accessible Luxury</h3>
             <p className="text-xs text-[#6F6475] leading-relaxed">
-              Fine jewellery aesthetics at honest, direct prices. No unnecessary markups, just pure craftsmanship.
+              A considered range of jewellery styles at accessible price points, with product details presented clearly to help you choose.
             </p>
           </div>
         </div>
