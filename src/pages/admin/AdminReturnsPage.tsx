@@ -89,7 +89,7 @@ export const AdminReturnsPage: React.FC = () => {
         {error && <div role="alert" className="p-3 rounded-xl bg-red-50 text-red-700 text-xs">{error}</div>}
         {loading ? <div className="bg-white border border-[#EADFF0] rounded-2xl p-10 text-center text-xs text-[#8E769E]">Loading live records from MariaDB…</div> :
           tab === 'returns' ? (returns.length ? <div className="space-y-3">{returns.map(item => <ReturnCard key={item.id} item={item} onSaved={() => void load()}/>)}</div> :
-            <div className="bg-white border border-[#EADFF0] rounded-2xl p-10 text-center"><RotateCcw size={24} className="mx-auto text-[#8E769E]"/><h2 className="font-serif text-xl text-[#302438] mt-3">No return requests recorded</h2><p className="text-xs text-[#705E7B] mt-2">New requests will appear here when the customer return-request form is connected to the MariaDB returns table.</p></div>) :
+            <div className="bg-white border border-[#EADFF0] rounded-2xl p-10 text-center"><RotateCcw size={24} className="mx-auto text-[#8E769E]"/><h2 className="font-serif text-xl text-[#302438] mt-3">No return requests recorded</h2><p className="text-xs text-[#705E7B] mt-2">Customer return and exchange requests submitted through Track Order will appear here.</p></div>) :
           (refunds.length ? <div className="space-y-3">{refunds.map(item => <RefundCard key={item.orderNumber} item={item}/>)}</div> :
             <div className="bg-white border border-[#EADFF0] rounded-2xl p-10 text-center"><IndianRupee size={24} className="mx-auto text-[#8E769E]"/><h2 className="font-serif text-xl text-[#302438] mt-3">No refund-required orders</h2><p className="text-xs text-[#705E7B] mt-2">Orders flagged for refund handling will appear here.</p></div>)}
       </div>
