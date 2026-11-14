@@ -99,6 +99,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   // Hero Slider State
   const [activeSlide, setActiveSlide] = useState<number>(0);
+  const [isHeroPaused, setIsHeroPaused] = useState(false);
   const slideCount = 3;
 
   // Best Sellers Carousel Scroll Reference
@@ -209,14 +210,19 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     };
   }, [includeAll]);
 
-  // 2. Hero Slider Auto-advance every 5 seconds
+  // 2. Hero Slider Auto-advance; pause on hover, hidden tabs, and reduced-motion preference.
   useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % slideCount);
-    }, 5000);
+    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (isHeroPaused || motionPreference.matches) return;
 
-    return () => clearInterval(timer);
-  }, [slideCount]);
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        setActiveSlide((prev) => (prev + 1) % slideCount);
+      }
+    }, 6000);
+
+    return () => window.clearInterval(timer);
+  }, [slideCount, isHeroPaused]);
 
   const prevSlide = () => {
     setActiveSlide((prev) => (prev - 1 + slideCount) % slideCount);
@@ -265,7 +271,19 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Text in centered container (max-w-[1280px]) with soft lavender gradient overlay
           Slide indicators bottom-left, arrow buttons bottom-right inside container
           ========================================================================= */}
-      <section className="relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[#F0E6F4] border-b border-[#E7DCEB]">
+      <section
+        aria-label="SARINE featured collections"
+        aria-roledescription="carousel"
+        onMouseEnter={() => setIsHeroPaused(true)}
+        onMouseLeave={() => setIsHeroPaused(false)}
+        onFocusCapture={() => setIsHeroPaused(true)}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+            setIsHeroPaused(false);
+          }
+        }}
+        className="relative w-full min-h-[460px] h-[460px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[#F0E6F4] border-b border-[#E7DCEB]"
+      >
         {/* Stacked background slide images */}
         {heroSlides.map((slide, idx) => (
           <div
@@ -285,14 +303,20 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           </div>
         ))}
 
+        {/* Responsive contrast overlay keeps the copy readable over every campaign image. */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 z-[1] bg-gradient-to-t from-[#F7F0FA]/95 via-[#F7F0FA]/75 to-[#F7F0FA]/10 md:bg-gradient-to-r md:from-[#F7F0FA]/95 md:via-[#F7F0FA]/75 md:to-transparent"
+        />
+
         {/* Centered content overlay container */}
-        <div className="site-container h-full flex flex-col justify-between py-8 md:py-12 pointer-events-none relative z-10">
+        <div className="site-container h-full flex flex-col justify-between py-7 sm:py-8 md:py-12 pointer-events-none relative z-10">
           {/* Slide text in left half vertically centered */}
           <div className="my-auto max-w-xl md:max-w-lg lg:max-w-xl pointer-events-auto">
             <span className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 sm:mb-3">
               {currentHero.eyebrow}
             </span>
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-[46px] leading-[1.16] text-[#302438] font-normal tracking-tight">
+            <h1 className="font-serif text-[30px] sm:text-4xl lg:text-[46px] leading-[1.12] sm:leading-[1.16] text-[#302438] font-normal tracking-tight max-w-[15ch]">
               {currentHero.heading}
             </h1>
             <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-[#6F6475] leading-relaxed max-w-md font-sans">
@@ -307,8 +331,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 <ArrowRight size={13} />
               </Link>
               <a
-                href="#categories"
-                className="px-6 sm:px-7 py-3 bg-transparent border border-[#563568] text-[#563568] text-xs sm:text-[13px] font-sans font-medium hover:bg-[#EBDFF2] hover:text-[#563568] transition-colors rounded-xs"
+                href={currentHero.categoriesLink}
+                className="min-h-11 px-5 sm:px-7 py-3 bg-white/55 border border-[#563568]/70 text-[#563568] text-xs sm:text-[13px] font-sans font-medium hover:bg-[#EBDFF2] hover:text-[#563568] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] transition-colors rounded-xs"
               >
                 Explore Categories
               </a>
@@ -322,11 +346,13 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               {heroSlides.map((slide, idx) => (
                 <button
                   key={slide.id}
+                  type="button"
                   onClick={() => setActiveSlide(idx)}
-                  className={`pb-1 transition-all cursor-pointer ${
+                  aria-current={activeSlide === idx ? 'true' : undefined}
+                  className={`min-w-11 min-h-11 inline-flex items-center justify-center border-b-2 transition-colors cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] ${
                     activeSlide === idx
-                      ? 'text-[#563568] font-semibold border-b-2 border-[#B69ACF]'
-                      : 'hover:text-[#B69ACF]'
+                      ? 'text-[#563568] font-semibold border-[#B69ACF]'
+                      : 'text-[#6F6475] border-transparent hover:text-[#563568]'
                   }`}
                   aria-label={`Go to slide 0${idx + 1}`}
                 >
@@ -339,7 +365,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="flex items-center space-x-3">
               <button
                 onClick={prevSlide}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E7DCEB] bg-white/90 hover:bg-[#F0E6F4] hover:border-[#B69ACF] text-[#302438] hover:text-[#563568] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
+                type="button"
+                className="w-11 h-11 rounded-full border border-[#E7DCEB] bg-white/95 hover:bg-[#F0E6F4] hover:border-[#B69ACF] text-[#302438] hover:text-[#563568] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
                 aria-label="Previous slide"
               >
                 <ChevronLeft size={18} />
