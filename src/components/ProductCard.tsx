@@ -116,7 +116,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Quick View / Detail Link Indicator */}
         <Link
           to={`/product/${product.slug}`}
-          className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-300 flex justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#563568]"
+          className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-300 flex justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#563568]"
         >
           <span className="text-[10px] uppercase tracking-[0.2em] text-[#563568] bg-white/95 border border-[#B69ACF] shadow-xs px-3 py-1 font-sans font-medium rounded-xs">
             View Piece
