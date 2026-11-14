@@ -59,6 +59,13 @@ export const TrackOrderPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<TrackedOrder | null>(null);
+  const [returnFormOpen, setReturnFormOpen] = useState(false);
+  const [returnType, setReturnType] = useState<'return' | 'exchange'>('return');
+  const [returnReason, setReturnReason] = useState('Item arrived damaged or scratched');
+  const [returnNotes, setReturnNotes] = useState('');
+  const [returnLoading, setReturnLoading] = useState(false);
+  const [returnError, setReturnError] = useState<string | null>(null);
+  const [returnSuccess, setReturnSuccess] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,6 +103,27 @@ export const TrackOrderPage: React.FC = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+
+  const handleReturnRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!order) return;
+    setReturnLoading(true);
+    setReturnError(null);
+    setReturnSuccess(null);
+    try {
+      const result = await hostingerOrderService.requestReturn(
+        order.orderNumber, phoneInput, returnType, returnReason, returnNotes
+      );
+      setReturnSuccess(`Your ${returnType} request has been submitted. Reference #${result.requestId}. Our team will review it.`);
+      setReturnFormOpen(false);
+      setReturnNotes('');
+    } catch (err: any) {
+      setReturnError(err?.message || 'Could not submit your request. Please try again.');
+    } finally {
+      setReturnLoading(false);
     }
   };
 
@@ -472,6 +500,45 @@ export const TrackOrderPage: React.FC = () => {
                   <span className="tabular-nums font-serif text-base">{formatInr(order.total)}</span>
                 </div>
               </div>
+
+
+              {order.orderStatus === 'delivered' && order.deliveredAt && (
+                <div className="pt-3 border-t border-[#E7DCEB] space-y-3">
+                  {returnSuccess ? (
+                    <div role="status" className="rounded-xs border border-[#D8E8D7] bg-[#F2FAF1] p-3 text-xs text-[#27633A]">{returnSuccess}</div>
+                  ) : (
+                    <>
+                      {!returnFormOpen ? (
+                        <button type="button" onClick={() => { setReturnFormOpen(true); setReturnError(null); }} className="w-full py-3 border border-[#563568] text-[#563568] text-xs font-medium rounded-xs hover:bg-[#FAF5FC]">
+                          Request a return or exchange
+                        </button>
+                      ) : (
+                        <form onSubmit={handleReturnRequest} className="rounded-xs border border-[#E7DCEB] bg-[#FAF5FC] p-4 space-y-3">
+                          <div><h4 className="font-serif text-lg text-[#302438]">Return or exchange request</h4><p className="text-[11px] text-[#6F6475] mt-1">Requests must be submitted within 7 days of delivery. Your checkout mobile number is used to verify this order.</p></div>
+                          <label className="block text-xs text-[#302438]">Request type
+                            <select value={returnType} onChange={e => setReturnType(e.target.value as 'return' | 'exchange')} className="mt-1 w-full p-2.5 border border-[#E7DCEB] bg-white rounded-xs text-xs">
+                              <option value="return">Return</option><option value="exchange">Exchange</option>
+                            </select>
+                          </label>
+                          <label className="block text-xs text-[#302438]">Reason
+                            <select value={returnReason} onChange={e => setReturnReason(e.target.value)} className="mt-1 w-full p-2.5 border border-[#E7DCEB] bg-white rounded-xs text-xs">
+                              <option>Item arrived damaged or scratched</option><option>Received a different item than ordered</option><option>Manufacturing defect</option><option>Size or fit adjustment required</option><option>Finish or polish not as expected</option><option>Other reason</option>
+                            </select>
+                          </label>
+                          <label className="block text-xs text-[#302438]">Additional details (optional)
+                            <textarea value={returnNotes} onChange={e => setReturnNotes(e.target.value)} maxLength={2000} rows={3} placeholder="Describe the issue…" className="mt-1 w-full p-2.5 border border-[#E7DCEB] bg-white rounded-xs text-xs" />
+                          </label>
+                          {returnError && <p role="alert" className="text-xs text-red-700">{returnError}</p>}
+                          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
+                            <button type="button" onClick={() => setReturnFormOpen(false)} disabled={returnLoading} className="px-4 py-2 text-xs border border-[#E7DCEB] rounded-xs">Cancel</button>
+                            <button type="submit" disabled={returnLoading} className="px-4 py-2 text-xs bg-[#563568] text-white rounded-xs disabled:opacity-50">{returnLoading ? 'Submitting…' : 'Submit request'}</button>
+                          </div>
+                        </form>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
 
               {/* View Full Order Details button */}
               {order.publicToken && (
