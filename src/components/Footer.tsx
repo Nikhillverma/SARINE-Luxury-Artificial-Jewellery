@@ -47,7 +47,7 @@ export const Footer: React.FC = () => {
               </div>
               <div>
                 <h4 className="text-xs sm:text-sm font-medium text-[#302438] leading-tight font-sans">
-                  Delivery across India
+                  Delivery availability at checkout
                 </h4>
               </div>
             </div>
@@ -142,8 +142,8 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/shop?sort=bestseller" className="hover:text-[#D9B8A0] transition-colors">
-                  Best Sellers
+                <Link to="/shop" className="hover:text-[#D9B8A0] transition-colors">
+                  More to Adore
                 </Link>
               </li>
               <li>
