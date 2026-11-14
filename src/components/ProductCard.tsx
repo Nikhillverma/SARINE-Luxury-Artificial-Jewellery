@@ -46,7 +46,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <article className="group flex flex-col w-full bg-white p-2 sm:p-2.5 border border-[#E7DCEB] rounded-md transition-all duration-300 hover:border-[#B69ACF] hover:shadow-xs relative">
       {/* 3:4 Portrait Image Container */}
       <div className="relative block w-full overflow-hidden bg-[#F7F0FA] aspect-[3/4] border border-[#E7DCEB] rounded-xs group-hover:border-[#B69ACF]/60 transition-colors">
-        <Link to={`/product/${product.slug}`} className="block w-full h-full">
+        <Link to={`/product/${product.slug}`} className="block w-full h-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#563568]">
           <img
             src={primaryImage}
             alt={product.name}
@@ -86,7 +86,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <button
           onClick={handleWishlistClick}
           aria-label={wishlisted ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
-          className="absolute top-2.5 right-2.5 z-20 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-[#302438] flex items-center justify-center border border-[#E7DCEB] transition-all cursor-pointer shadow-2xs backdrop-blur-xs"
+          className="absolute top-2 right-2.5 z-20 w-11 h-11 rounded-full bg-white/90 hover:bg-white text-[#302438] flex items-center justify-center border border-[#E7DCEB] transition-all cursor-pointer shadow-2xs backdrop-blur-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568]"
         >
           <Heart
             size={16}
@@ -116,7 +116,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Quick View / Detail Link Indicator */}
         <Link
           to={`/product/${product.slug}`}
-          className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center"
+          className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-300 flex justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#563568]"
         >
           <span className="text-[10px] uppercase tracking-[0.2em] text-[#563568] bg-white/95 border border-[#B69ACF] shadow-xs px-3 py-1 font-sans font-medium rounded-xs">
             View Piece
@@ -140,7 +140,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Product Title */}
         <h3 className="font-serif text-[15px] sm:text-base text-[#302438] font-normal leading-snug line-clamp-1 group-hover:text-[#563568] transition-colors">
-          <Link to={`/product/${product.slug}`}>
+          <Link to={`/product/${product.slug}`} className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568]">
             {product.name}
           </Link>
         </h3>
