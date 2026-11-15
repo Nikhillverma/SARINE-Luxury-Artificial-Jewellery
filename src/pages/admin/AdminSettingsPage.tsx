@@ -1,207 +1,122 @@
-/**
- * AdminSettingsPage for SARINE.
- * Business and Storefront Configuration Console.
- * Allows store owners to manage shipping rules, promotional thresholds,
- * announcement bar banners, and customer support channels.
- */
-
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin/AdminLayout';
-import { SHIPPING_FLAT_FEE, FREE_SHIPPING_THRESHOLD, COD_ENABLED } from '../../config/store';
-import { formatInr } from '../../utils/currency';
-import {
-  Settings,
-  Truck,
-  Sparkles,
-  Save,
-  CheckCircle2,
-  AlertCircle,
-  Phone,
-  Mail,
-  ShieldAlert
-} from 'lucide-react';
-
-const SETTINGS_STORAGE_KEY = 'sarine_admin_store_settings';
+import { checkoutSettingsService, type CheckoutConfig } from '../../services/hostinger/checkoutSettingsService';
+import { Save, RefreshCw, CheckCircle2, AlertCircle, Truck, ShieldCheck, LayoutTemplate } from 'lucide-react';
 
 export const AdminSettingsPage: React.FC = () => {
-  const [flatFee, setFlatFee] = useState<number>(SHIPPING_FLAT_FEE);
-  const [freeThreshold, setFreeThreshold] = useState<number>(FREE_SHIPPING_THRESHOLD || 999);
-  const [codActive, setCodActive] = useState<boolean>(COD_ENABLED);
-  const [supportPhone, setSupportPhone] = useState<string>('+91 98765 43210');
-  const [supportEmail, setSupportEmail] = useState<string>('care@sarine.in');
-  const [announcementMsg, setAnnouncementMsg] = useState<string>(
-    'Complimentary Express Delivery on orders across India'
-  );
-  const [success, setSuccess] = useState<string | null>(null);
+  const [config, setConfig] = useState<CheckoutConfig>({
+    shippingFlatFee: 99,
+    freeShippingThreshold: 1999,
+    codEnabled: true
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
-  useEffect(() => {
+  const load = async () => {
+    setLoading(true);
+    setError('');
     try {
-      const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.flatFee !== undefined) setFlatFee(parsed.flatFee);
-        if (parsed.freeThreshold !== undefined) setFreeThreshold(parsed.freeThreshold);
-        if (parsed.codActive !== undefined) setCodActive(parsed.codActive);
-        if (parsed.supportPhone) setSupportPhone(parsed.supportPhone);
-        if (parsed.supportEmail) setSupportEmail(parsed.supportEmail);
-        if (parsed.announcementMsg) setAnnouncementMsg(parsed.announcementMsg);
-      }
-    } catch {
-      // Ignore
-    }
-  }, []);
-
-  const handleSaveSettings = (e: React.FormEvent) => {
-    e.preventDefault();
-    const config = {
-      flatFee,
-      freeThreshold,
-      codActive,
-      supportPhone,
-      supportEmail,
-      announcementMsg
-    };
-    try {
-      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(config));
-      setSuccess('Storefront configuration saved successfully.');
-      setTimeout(() => setSuccess(null), 3500);
+      setConfig(await checkoutSettingsService.getAdminConfig());
     } catch (err) {
-      console.error('Failed to persist store settings:', err);
+      setError(err instanceof Error ? err.message : 'Store settings could not be loaded.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { void load(); }, []);
+
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (saving) return;
+    setSaving(true);
+    setError('');
+    setNotice('');
+    try {
+      const saved = await checkoutSettingsService.saveAdminConfig(config);
+      setConfig(saved);
+      setNotice('Checkout settings saved securely in Hostinger MariaDB and applied to new checkouts.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Settings could not be saved.');
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
     <AdminLayout>
-      <div className="space-y-6 font-sans max-w-4xl">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E7DCEB]">
+      <div className="max-w-4xl space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-[#E7DCEB]">
           <div>
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block">
-              ATELIER CONFIGURATION
-            </span>
-            <h1 className="font-serif text-2xl sm:text-3xl text-[#302438] font-normal mt-0.5">
-              Storefront & Business Settings
-            </h1>
+            <p className="text-[10px] uppercase tracking-[0.22em] text-[#8E769E]">Store configuration</p>
+            <h1 className="font-serif text-2xl sm:text-3xl text-[#302438]">Settings & Security</h1>
+            <p className="text-xs text-[#705E7B] mt-1">Persistent checkout and delivery rules used by both the storefront and order API.</p>
           </div>
+          <button onClick={() => void load()} disabled={loading || saving} className="inline-flex items-center justify-center gap-2 px-3 py-2 border border-[#E7DCEB] rounded-xl text-xs disabled:opacity-50">
+            <RefreshCw size={14}/> Refresh
+          </button>
         </div>
 
-        {success && (
-          <div className="p-3 bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 rounded-xs flex items-center gap-2">
-            <CheckCircle2 size={15} />
-            <span>{success}</span>
-          </div>
-        )}
+        {error && <div role="alert" className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex gap-2"><AlertCircle size={15}/>{error}</div>}
+        {notice && <div role="status" className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex gap-2"><CheckCircle2 size={15}/>{notice}</div>}
 
-        <form onSubmit={handleSaveSettings} className="space-y-6">
-          {/* Section 1: Shipping & Delivery Rules */}
-          <div className="bg-white p-6 border border-[#E7DCEB] rounded-xs shadow-2xs space-y-4">
-            <h3 className="font-serif text-base text-[#302438] flex items-center gap-2">
-              <Truck size={16} className="text-[#563568]" />
-              <span>Pan-India Logistics & Delivery</span>
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-sans">
-              <div>
-                <label className="block text-[#6F6475] mb-1 font-medium">Standard Flat Shipping Fee (₹)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={flatFee}
-                  onChange={(e) => setFlatFee(parseInt(e.target.value, 10) || 0)}
-                  className="w-full p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:outline-none"
-                />
-                <span className="text-[11px] text-[#6F6475] mt-1 block">Set 0 for uniform complimentary delivery</span>
-              </div>
-
-              <div>
-                <label className="block text-[#6F6475] mb-1 font-medium">Free Shipping Minimum Threshold (₹)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={freeThreshold}
-                  onChange={(e) => setFreeThreshold(parseInt(e.target.value, 10) || 0)}
-                  className="w-full p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:outline-none"
-                />
-                <span className="text-[11px] text-[#6F6475] mt-1 block">Orders equal or above this qualify for free shipping</span>
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <label className="flex items-center gap-2.5 cursor-pointer text-xs">
-                <input
-                  type="checkbox"
-                  checked={codActive}
-                  onChange={(e) => setCodActive(e.target.checked)}
-                  className="accent-[#563568] rounded-xs cursor-pointer"
-                />
-                <div>
-                  <span className="font-medium text-[#302438]">Enable Cash on Delivery (COD)</span>
-                  <p className="text-[11px] text-[#6F6475]">Allow customers to select COD on checkout with delivery agent collection</p>
+        <form onSubmit={save} className="space-y-5">
+          <section className="bg-white rounded-2xl border border-[#EADFF0] p-5 sm:p-6 space-y-5">
+            <div className="flex items-center gap-2"><Truck size={17} className="text-[#563568]"/><h2 className="font-serif text-lg">Shipping & delivery</h2></div>
+            {loading ? <p className="text-xs text-[#8E769E] py-5">Loading saved settings…</p> : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <label className="block text-xs text-[#5D5068]">
+                    Standard shipping fee (₹)
+                    <input type="number" min="0" max="5000" step="1" required value={config.shippingFlatFee} onChange={e => setConfig(current => ({ ...current, shippingFlatFee: Number(e.target.value) }))} className="mt-1.5 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl text-sm text-[#302438]"/>
+                    <span className="block mt-1 text-[10px] text-[#8E769E]">Applied when the order subtotal is below the free-shipping threshold.</span>
+                  </label>
+                  <label className="block text-xs text-[#5D5068]">
+                    Free-shipping threshold (₹)
+                    <input type="number" min="1" max="100000" step="1" required value={config.freeShippingThreshold} onChange={e => setConfig(current => ({ ...current, freeShippingThreshold: Number(e.target.value) }))} className="mt-1.5 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl text-sm text-[#302438]"/>
+                    <span className="block mt-1 text-[10px] text-[#8E769E]">Orders at or above this subtotal receive free shipping.</span>
+                  </label>
                 </div>
-              </label>
+                <div className="p-4 bg-[#FAF5FC] border border-[#EADFF0] rounded-xl flex items-start gap-3">
+                  <input id="cod-enabled" type="checkbox" checked={config.codEnabled} onChange={e => setConfig(current => ({ ...current, codEnabled: e.target.checked }))} className="mt-0.5 accent-[#563568]"/>
+                  <label htmlFor="cod-enabled" className="text-xs">
+                    <span className="font-semibold text-[#302438]">Enable Cash on Delivery (COD)</span>
+                    <span className="block text-[10px] text-[#705E7B] mt-1">When disabled, COD is hidden at checkout and rejected by the server for new orders. Existing orders are not changed.</span>
+                  </label>
+                </div>
+              </>
+            )}
+            <div className="pt-2 border-t border-[#F5EDF8] flex justify-end">
+              <button type="submit" disabled={loading || saving} className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#563568] text-white rounded-xl text-xs font-semibold disabled:opacity-50">
+                <Save size={14}/>{saving ? 'Saving…' : 'Save checkout settings'}
+              </button>
             </div>
-          </div>
-
-          {/* Section 2: Announcement Bar */}
-          <div className="bg-white p-6 border border-[#E7DCEB] rounded-xs shadow-2xs space-y-4">
-            <h3 className="font-serif text-base text-[#302438] flex items-center gap-2">
-              <Sparkles size={16} className="text-[#563568]" />
-              <span>Promotional Announcement Bar</span>
-            </h3>
-
-            <div className="text-xs font-sans">
-              <label className="block text-[#6F6475] mb-1 font-medium">Active Header Message</label>
-              <input
-                type="text"
-                value={announcementMsg}
-                onChange={(e) => setAnnouncementMsg(e.target.value)}
-                placeholder="e.g. Complimentary Express Delivery on all orders across India"
-                className="w-full p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:outline-none"
-              />
-              <span className="text-[11px] text-[#6F6475] mt-1 block">Displayed on the top Deep Plum strip across all pages</span>
-            </div>
-          </div>
-
-          {/* Section 3: Customer Care & Concierge */}
-          <div className="bg-white p-6 border border-[#E7DCEB] rounded-xs shadow-2xs space-y-4">
-            <h3 className="font-serif text-base text-[#302438] flex items-center gap-2">
-              <Mail size={16} className="text-[#563568]" />
-              <span>Customer Care Channels</span>
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-sans">
-              <div>
-                <label className="block text-[#6F6475] mb-1 font-medium">Official Support Email</label>
-                <input
-                  type="email"
-                  value={supportEmail}
-                  onChange={(e) => setSupportEmail(e.target.value)}
-                  className="w-full p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[#6F6475] mb-1 font-medium">WhatsApp Concierge Phone</label>
-                <input
-                  type="text"
-                  value={supportPhone}
-                  onChange={(e) => setSupportPhone(e.target.value)}
-                  className="w-full p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:outline-none"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="py-3 px-8 bg-[#563568] hover:bg-[#A184BD] text-white text-xs uppercase tracking-[0.2em] font-medium rounded-xs transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
-            >
-              <Save size={14} />
-              <span>Save Business Settings</span>
-            </button>
-          </div>
+          </section>
         </form>
+
+        <section className="bg-white rounded-2xl border border-[#EADFF0] p-5 sm:p-6 space-y-3">
+          <div className="flex items-center gap-2"><LayoutTemplate size={17} className="text-[#563568]"/><h2 className="font-serif text-lg">Storefront content</h2></div>
+          <p className="text-xs text-[#705E7B]">Homepage banners, the announcement bar and the Editorial Collection are managed separately in Storefront Studio.</p>
+          <Link to="/admin/storefront" className="inline-flex items-center gap-2 px-4 py-2 border border-[#E7DCEB] rounded-xl text-xs text-[#563568]">Open Storefront Studio</Link>
+        </section>
+
+        <section className="bg-white rounded-2xl border border-[#EADFF0] p-5 sm:p-6 space-y-3">
+          <div className="flex items-center gap-2"><ShieldCheck size={17} className="text-[#563568]"/><h2 className="font-serif text-lg">Admin session security</h2></div>
+          <ul className="text-xs text-[#705E7B] list-disc pl-5 space-y-1.5">
+            <li>Admin pages and management APIs require a valid Hostinger admin session.</li>
+            <li>Admin sessions expire automatically after 8 hours.</li>
+            <li>Sign out when using a shared or public computer.</li>
+          </ul>
+          <p className="text-[10px] text-[#8E769E]">Admin user and role management is not yet available in this panel.</p>
+        </section>
+
+        <section className="bg-[#FAF5FC] border border-[#EADFF0] rounded-2xl p-5">
+          <h2 className="text-sm font-semibold text-[#302438]">Customer support details</h2>
+          <p className="text-xs text-[#705E7B] mt-1">No official support email or WhatsApp number has been configured here. Placeholder contact details are intentionally not shown or published.</p>
+        </section>
       </div>
     </AdminLayout>
   );
