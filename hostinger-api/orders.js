@@ -50,24 +50,25 @@ router.post("/create", async (req, res, next) => {
     const { items, customer, shippingAddress, paymentMethod, couponCode } = req.body || {};
     const authenticatedCustomer = await getAuthenticatedCustomer(req);
 
-    // 1. Validate customer details
-    if (!customer?.name || String(customerName).trim().length < 2) {
+    // 1. Validate customer details. When signed in, identity fields come only from the session.
+    const submittedCustomerName = String(customer?.name || "").trim();
+    const submittedCustomerEmail = String(customer?.email || "").trim().toLowerCase();
+    const customerId = authenticatedCustomer?.id || null;
+    const customerName = authenticatedCustomer?.name || submittedCustomerName;
+    const customerEmail = authenticatedCustomer?.email || submittedCustomerEmail;
+    if (customerName.length < 2 || customerName.length > 120) {
       return res.status(400).json({ error: "Please enter a valid customer name." });
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!customerEmail || !emailRegex.test(String(customerEmail).trim())) {
+    if (!customerEmail || !emailRegex.test(customerEmail)) {
       return res.status(400).json({ error: "Please enter a valid email address." });
     }
-    const cleanCustomerPhone = String(customer.phone || "").replace(/\D/g, "");
+    const cleanCustomerPhone = String(customer?.phone || authenticatedCustomer?.phone || "").replace(/\D/g, "");
     if (!/^[6-9]\d{9}$/.test(cleanCustomerPhone)) {
       return res.status(400).json({
         error: "Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9."
       });
     }
-
-    const customerId = authenticatedCustomer?.id || null;
-    const customerName = authenticatedCustomer?.name || String(customerName).trim();
-    const customerEmail = authenticatedCustomer?.email || String(customerEmail).trim().toLowerCase();
 
     // 2. Validate shipping address
     if (!shippingAddress?.fullName || String(shippingAddress.fullName).trim().length < 2) {
