@@ -22,15 +22,8 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  updateProfile,
-  User
-} from 'firebase/auth';
-import { getFirebaseAuth, isFirebaseConfigured } from '../lib/firebase';
+import { CustomerIdentity } from '../types/customer';
+import { customerAuthService } from '../services/customerAuthService';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import { customerOrderService } from '../services/customerOrderService';
@@ -76,7 +69,7 @@ export const AccountPage: React.FC = () => {
   const { addItem, openDrawer } = useCart();
 
   // Authentication State
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<CustomerIdentity | null>(null);
   const [loadingAuth, setLoadingAuth] = useState<boolean>(true);
   const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'track'>(() => {
     return searchParams.get('tab') === 'track' ? 'track' : 'signin';
@@ -136,23 +129,17 @@ export const AccountPage: React.FC = () => {
   // Logout Dialog State
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  // 1. Listen for Firebase Auth Changes
+  // 1. Restore the secure Hostinger/MariaDB customer session.
   useEffect(() => {
-    if (!isFirebaseConfigured()) {
+    let active = true;
+    customerAuthService.getSession().then((customer) => {
+      if (!active) return;
+      setCurrentUser(customer);
       setLoadingAuth(false);
-      return;
-    }
-
-    try {
-      const auth = getFirebaseAuth();
-      const unsub = onAuthStateChanged(auth, (user) => {
-        setCurrentUser(user);
-        setLoadingAuth(false);
-      });
-      return () => unsub();
-    } catch {
-      setLoadingAuth(false);
-    }
+    }).catch(() => {
+      if (active) setLoadingAuth(false);
+    });
+    return () => { active = false; };
   }, []);
 
   // 2. Fetch Customer Orders when signed in
@@ -162,12 +149,7 @@ export const AccountPage: React.FC = () => {
     setOrderFetchError(null);
 
     try {
-      const idToken = await currentUser.getIdToken();
-      const userOrders = await customerOrderService.getCustomerOrders(
-        idToken,
-        currentUser.email || '',
-        currentUser.displayName || ''
-      );
+      const userOrders = await customerOrderService.getCustomerOrders();
       setOrders(userOrders);
     } catch (err: any) {
       console.error('[AccountPage] Failed to fetch orders:', err);
@@ -276,30 +258,14 @@ export const AccountPage: React.FC = () => {
     setIsAuthSubmitting(true);
 
     try {
-      const auth = getFirebaseAuth();
-      if (authMode === 'signin') {
-        await signInWithEmailAndPassword(auth, authEmail.trim(), authPassword);
-      } else {
-        const cred = await createUserWithEmailAndPassword(auth, authEmail.trim(), authPassword);
-        if (authFullName.trim()) {
-          await updateProfile(cred.user, { displayName: authFullName.trim() });
-        }
-      }
+      const customer = authMode === 'signin'
+        ? await customerAuthService.login(authEmail.trim(), authPassword)
+        : await customerAuthService.register(authFullName.trim(), authEmail.trim(), authPassword);
+      setCurrentUser(customer);
+      setAuthPassword('');
     } catch (err: any) {
       console.error('[AccountPage] Auth error:', err);
-      if (
-        err.code === 'auth/user-not-found' ||
-        err.code === 'auth/wrong-password' ||
-        err.code === 'auth/invalid-credential'
-      ) {
-        setAuthError('Invalid email address or password.');
-      } else if (err.code === 'auth/email-already-in-use') {
-        setAuthError('An account with this email address already exists. Please sign in instead.');
-      } else if (err.code === 'auth/weak-password') {
-        setAuthError('Password should be at least 6 characters.');
-      } else {
-        setAuthError('Unable to authenticate. Please check your credentials and try again.');
-      }
+      setAuthError(err instanceof Error ? err.message : 'Unable to authenticate. Please check your details and try again.');
     } finally {
       setIsAuthSubmitting(false);
     }
@@ -307,8 +273,9 @@ export const AccountPage: React.FC = () => {
 
   const handleSignOut = async () => {
     try {
-      const auth = getFirebaseAuth();
-      await signOut(auth);
+      await customerAuthService.logout();
+      setCurrentUser(null);
+      setOrders([]);
       setShowLogoutConfirm(false);
       navigate('/account');
     } catch (err) {
@@ -326,13 +293,7 @@ export const AccountPage: React.FC = () => {
   // 6. Action Handlers for Orders
   const handleCancelOrder = async (orderNumber: string, reason: string) => {
     if (!currentUser) return;
-    const idToken = await currentUser.getIdToken();
-    await customerOrderService.cancelOrder(
-      idToken,
-      orderNumber,
-      reason,
-      currentUser.email || ''
-    );
+    await customerOrderService.cancelOrder(orderNumber, reason);
     await loadOrders();
     if (selectedOrder && selectedOrder.orderNumber === orderNumber) {
       setSelectedOrder((prev) =>
@@ -355,15 +316,7 @@ export const AccountPage: React.FC = () => {
     notes: string
   ) => {
     if (!currentUser) return;
-    const idToken = await currentUser.getIdToken();
-    await customerOrderService.requestReturnOrExchange(
-      idToken,
-      orderNumber,
-      reason,
-      actionType,
-      notes,
-      currentUser.email || ''
-    );
+    await customerOrderService.requestReturnOrExchange(orderNumber, reason, actionType, notes);
     await loadOrders();
     if (selectedOrder && selectedOrder.orderNumber === orderNumber) {
       setSelectedOrder((prev) =>
@@ -545,7 +498,7 @@ export const AccountPage: React.FC = () => {
                     required
                     value={authPassword}
                     onChange={(e) => setAuthPassword(e.target.value)}
-                    placeholder="At least 6 characters"
+                    placeholder="At least 8 characters"
                     className="w-full min-h-[44px] p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#563568] rounded-xs focus:outline-none"
                   />
                 </div>
