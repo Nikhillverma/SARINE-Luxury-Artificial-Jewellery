@@ -61,5 +61,20 @@ jobs:
           node --check checkoutPolicy.js
           node --check paymentValidation.js
           node --check orderItems.js
+          node --check adminDatabaseAudit.js
+          node --check adminReturns.js
+          node --check adminAnalytics.js
+          node --check adminInventory.js
+          node --check adminCategories.js
+          node --check adminCustomers.js
+          node --check adminMarketing.js
+          node --check adminStorefront.js
+          node --check customerValidation.js
+          node --check inventoryLedger.js
+          node --check marketingPolicy.js
+          node --check media.js
+          node --check mediaValidation.js
+          node --check orderAdminPolicy.js
+          node --check publicCoupons.js
       - name: Run backend tests
         run: npm test
