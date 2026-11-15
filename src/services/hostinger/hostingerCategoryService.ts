@@ -8,7 +8,7 @@ function resolveApiBase(): string {
   if (import.meta.env.DEV) {
     return '/api';
   }
-  return 'https://greenyellow-cat-956048.hostingersite.com/api';
+  return 'https://lavender-goldfish-844589.hostingersite.com/api';
 }
 
 interface CategoriesResponse {
