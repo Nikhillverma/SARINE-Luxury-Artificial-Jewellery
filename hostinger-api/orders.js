@@ -8,6 +8,7 @@ const router = Router();
 
 import { calculateShippingFee, COD_ENABLED } from "./checkoutPolicy.js";
 import { matchesOrderRazorpayId } from "./paymentValidation.js";
+import { aggregateOrderItems } from "./orderItems.js";
 
 function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -102,10 +103,14 @@ router.post("/create", async (req, res, next) => {
       if (!itm.productId || typeof itm.productId !== "string") {
         return res.status(400).json({ error: "Invalid product in order list." });
       }
-      if (!Number.isInteger(Number(itm.quantity)) || Number(itm.quantity) <= 0) {
+      if (!Number.isSafeInteger(Number(itm.quantity)) || Number(itm.quantity) <= 0) {
         return res.status(400).json({ error: "Product quantity must be a positive integer." });
       }
     }
+
+    // Merge duplicate product IDs before stock checks and order-line creation.
+    // This prevents repeated lines from each passing the same stock check.
+    const requestedItems = aggregateOrderItems(items);
 
     connection = await pool.getConnection();
     await connection.beginTransaction();
@@ -113,8 +118,8 @@ router.post("/create", async (req, res, next) => {
     // 5. Authoritative price and stock check in MariaDB
     const verifiedLines = [];
     let calculatedSubtotal = 0;
-    for (let i = 0; i < items.length; i++) {
-      const itm = items[i];
+    for (let i = 0; i < requestedItems.length; i++) {
+      const itm = requestedItems[i];
       const [pRows] = await connection.execute(
         `SELECT id, name, price, stock, status, images, sku
          FROM products
@@ -527,23 +532,28 @@ router.post("/verify", async (req, res, next) => {
     );
 
     let hasSufficientStock = true;
-    for (const item of orderItems) {
+    const aggregatedOrderItems = aggregateOrderItems(orderItems.map(item => ({
+      productId: item.product_id,
+      quantity: item.quantity
+    })));
+
+    for (const item of aggregatedOrderItems) {
       const [prod] = await connection.execute(
         `SELECT id, stock FROM products WHERE id = ? FOR UPDATE`,
-        [item.product_id]
+        [item.productId]
       );
-      if (!prod.length || Number(prod[0].stock || 0) < Number(item.quantity)) {
+      if (!prod.length || Number(prod[0].stock || 0) < item.quantity) {
         hasSufficientStock = false;
         break;
       }
     }
 
     if (hasSufficientStock) {
-      // Deduct stock for verified prepaid items
-      for (const item of orderItems) {
+      // Deduct each product's combined quantity exactly once.
+      for (const item of aggregatedOrderItems) {
         await connection.execute(
           `UPDATE products SET stock = stock - ?, updated_at = CURRENT_TIMESTAMP(3) WHERE id = ?`,
-          [item.quantity, item.product_id]
+          [item.quantity, item.productId]
         );
       }
       await connection.execute(
