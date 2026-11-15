@@ -160,6 +160,39 @@ export class HostingerOrderService implements IOrderService {
   /**
    * Tracks order status via phone verification against Hostinger MariaDB.
    */
+  /** Submit a phone-verified return or exchange request for an eligible delivered order. */
+  async requestReturn(
+    orderNumber: string,
+    phone: string,
+    requestType: 'return' | 'exchange',
+    reason: string,
+    notes: string
+  ): Promise<{ success: boolean; requestId: number; orderNumber: string; status: string }> {
+    const apiBase = resolveApiBase();
+    const response = await fetch(`${apiBase}/orders/returns`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
+      body: JSON.stringify({
+        orderNumber: orderNumber.trim(),
+        phone: phone.trim(),
+        requestType,
+        reason,
+        notes
+      })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message = typeof data.error === 'string' ? data.error : 'Could not submit your return request.';
+      const error = new Error(message) as Error & { status?: number };
+      error.status = response.status;
+      throw error;
+    }
+    return data as { success: boolean; requestId: number; orderNumber: string; status: string };
+  }
+
   async trackOrder(orderNumber: string, phone: string): Promise<any> {
     const apiBase = resolveApiBase();
     const res = await fetch(`${apiBase}/orders/track`, {
