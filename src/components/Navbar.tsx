@@ -34,6 +34,7 @@ import {
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { SearchOverlay } from './SearchOverlay';
+import { hostingerStorefrontService } from '../services/hostinger/hostingerStorefrontService';
 
 interface NavbarProps {
   includeAll: boolean;
@@ -77,6 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeAnnouncement, setActiveAnnouncement] = useState(0);
+  const [managedAnnouncement, setManagedAnnouncement] = useState('');
 
   // Mobile Accordion state
   const [mobileExpanded, setMobileExpanded] = useState<Record<string, boolean>>({
@@ -87,13 +89,27 @@ export const Navbar: React.FC<NavbarProps> = ({
     about: false
   });
 
-  // Rotate announcement bar every 5 seconds
+  // Load the active announcement managed in Storefront Studio.
   useEffect(() => {
+    let cancelled = false;
+    hostingerStorefrontService.getPublicAnnouncement()
+      .then(({ announcement }) => {
+        if (!cancelled && announcement?.active && announcement.message?.trim()) {
+          setManagedAnnouncement(announcement.message.trim());
+        }
+      })
+      .catch((error) => console.warn('[Navbar] Published announcement unavailable; using safe defaults.', error));
+    return () => { cancelled = true; };
+  }, []);
+
+  // Rotate safe fallback messages only when no managed announcement is active.
+  useEffect(() => {
+    if (managedAnnouncement) return;
     const timer = setInterval(() => {
       setActiveAnnouncement((prev) => (prev + 1) % ANNOUNCEMENT_MESSAGES.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [managedAnnouncement]);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -225,7 +241,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="text-center flex-1 truncate px-2 text-[11px] font-normal text-[#FAF5FC]">
                 <span className="inline-flex items-center gap-1.5">
                   <Sparkles size={11} className="text-[#D9B8A0] shrink-0" />
-                  <span>{ANNOUNCEMENT_MESSAGES[activeAnnouncement]}</span>
+                  <span>{managedAnnouncement || ANNOUNCEMENT_MESSAGES[activeAnnouncement]}</span>
                 </span>
               </div>
               <button

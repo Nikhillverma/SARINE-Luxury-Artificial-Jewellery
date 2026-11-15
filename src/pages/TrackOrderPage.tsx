@@ -59,6 +59,13 @@ export const TrackOrderPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<TrackedOrder | null>(null);
+  const [returnFormOpen, setReturnFormOpen] = useState(false);
+  const [returnType, setReturnType] = useState<'return' | 'exchange'>('return');
+  const [returnReason, setReturnReason] = useState('Item arrived damaged or scratched');
+  const [returnNotes, setReturnNotes] = useState('');
+  const [returnLoading, setReturnLoading] = useState(false);
+  const [returnError, setReturnError] = useState<string | null>(null);
+  const [returnSuccess, setReturnSuccess] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,16 +94,36 @@ export const TrackOrderPage: React.FC = () => {
     try {
       const data = await hostingerOrderService.trackOrder(cleanNumber, cleanPhone);
       setOrder(data);
-    } catch (err: unknown) {
-      console.error('[TrackOrder] Request failed.');
-      const status = typeof err === 'object' && err !== null && 'status' in err ? err.status : undefined;
-      if (status === 429) {
-        setError('Too many attempts. Please try again later.');
+    } catch (err: any) {
+      console.error('[TrackOrder] Network or function error:', err);
+      if (err?.status === 429) {
+        setError(err.message || 'Too many attempts. Please try again later.');
       } else {
-        setError("We couldn't retrieve this order right now. Check the details and try again.");
+        setError(err?.message || "We couldn't find an order with those details.");
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+
+  const handleReturnRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!order) return;
+    setReturnLoading(true);
+    setReturnError(null);
+    setReturnSuccess(null);
+    try {
+      const result = await hostingerOrderService.requestReturn(
+        order.orderNumber, phoneInput, returnType, returnReason, returnNotes
+      );
+      setReturnSuccess(`Your ${returnType} request has been submitted. Reference #${result.requestId}. Our team will review it.`);
+      setReturnFormOpen(false);
+      setReturnNotes('');
+    } catch (err: any) {
+      setReturnError(err?.message || 'Could not submit your request. Please try again.');
+    } finally {
+      setReturnLoading(false);
     }
   };
 
@@ -257,7 +284,7 @@ export const TrackOrderPage: React.FC = () => {
               Track Your Order
             </h1>
             <p className="mt-2 text-xs sm:text-sm text-[#6F6475] leading-relaxed max-w-md mx-auto">
-              Check the latest order status available to us. No account required.
+              Check the live status of your jewellery shipment across India. No account required.
             </p>
           </div>
 
@@ -278,9 +305,7 @@ export const TrackOrderPage: React.FC = () => {
                   onChange={(e) => setOrderNumberInput(e.target.value)}
                   placeholder="SAR-000111"
                   required
-                  autoComplete="off"
-                  aria-describedby={error ? "track-order-error" : undefined}
-                  className="w-full min-h-11 px-4 py-2.5 bg-[#F7F0FA] border border-[#E7DCEB] text-xs sm:text-sm text-[#302438] placeholder-[#9E90A2] rounded-xs focus:outline-none focus:border-[#B69ACF] focus:ring-1 focus:ring-[#80609A] transition-colors font-mono uppercase"
+                  className="w-full px-4 py-2.5 bg-[#F7F0FA] border border-[#E7DCEB] text-xs sm:text-sm text-[#302438] placeholder-[#9E90A2] rounded-xs focus:outline-none focus:border-[#B69ACF] focus:ring-1 focus:ring-[#80609A] transition-colors font-mono uppercase"
                 />
               </div>
 
@@ -303,16 +328,13 @@ export const TrackOrderPage: React.FC = () => {
                     placeholder="9876543210"
                     maxLength={14}
                     required
-                    autoComplete="tel"
-                    inputMode="numeric"
-                    aria-describedby={error ? "track-order-error" : undefined}
-                    className="w-full min-h-11 px-4 py-2.5 bg-[#F7F0FA] border border-[#E7DCEB] text-xs sm:text-sm text-[#302438] placeholder-[#9E90A2] rounded-r-xs focus:outline-none focus:border-[#B69ACF] focus:ring-1 focus:ring-[#80609A] transition-colors font-sans"
+                    className="w-full px-4 py-2.5 bg-[#F7F0FA] border border-[#E7DCEB] text-xs sm:text-sm text-[#302438] placeholder-[#9E90A2] rounded-r-xs focus:outline-none focus:border-[#B69ACF] focus:ring-1 focus:ring-[#80609A] transition-colors font-sans"
                   />
                 </div>
               </div>
 
               {error && (
-                <div id="track-order-error" role="alert" aria-live="polite" className="p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs flex items-start gap-2 text-xs text-[#DC2626] animate-fadeIn">
+                <div className="p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs flex items-start gap-2 text-xs text-[#DC2626] animate-fadeIn">
                   <AlertCircle size={15} className="shrink-0 mt-0.5" />
                   <p>{error}</p>
                 </div>
@@ -321,8 +343,7 @@ export const TrackOrderPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                aria-busy={loading}
-                className="w-full min-h-11 py-3 bg-[#563568] text-white text-xs sm:text-[13px] font-medium uppercase tracking-wider hover:bg-[#A184BD] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] transition-colors rounded-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                className="w-full py-3 bg-[#563568] text-white text-xs sm:text-[13px] font-medium uppercase tracking-wider hover:bg-[#A184BD] transition-colors rounded-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
               >
                 {loading ? (
                   <span>Checking status...</span>
@@ -344,7 +365,7 @@ export const TrackOrderPage: React.FC = () => {
 
           {/* Result Order Summary Card */}
           {order && (
-            <div role="region" aria-label="Order tracking result" aria-live="polite" className="bg-white border border-[#E7DCEB] rounded-xs shadow-xs p-6 sm:p-8 space-y-6 animate-fadeIn">
+            <div className="bg-white border border-[#E7DCEB] rounded-xs shadow-xs p-6 sm:p-8 space-y-6 animate-fadeIn">
               {/* Header Row */}
               <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-[#E7DCEB]">
                 <div>
@@ -398,7 +419,7 @@ export const TrackOrderPage: React.FC = () => {
                         href={order.trackingUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="min-h-11 text-[#563568] hover:text-[#A184BD] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] font-medium inline-flex items-center gap-1.5 transition-colors"
+                        className="text-[#563568] hover:text-[#A184BD] font-medium inline-flex items-center gap-1.5 transition-colors"
                       >
                         <span>Open courier tracking</span>
                         <ExternalLink size={12} />
@@ -479,6 +500,45 @@ export const TrackOrderPage: React.FC = () => {
                   <span className="tabular-nums font-serif text-base">{formatInr(order.total)}</span>
                 </div>
               </div>
+
+
+              {order.orderStatus === 'delivered' && order.deliveredAt && (
+                <div className="pt-3 border-t border-[#E7DCEB] space-y-3">
+                  {returnSuccess ? (
+                    <div role="status" className="rounded-xs border border-[#D8E8D7] bg-[#F2FAF1] p-3 text-xs text-[#27633A]">{returnSuccess}</div>
+                  ) : (
+                    <>
+                      {!returnFormOpen ? (
+                        <button type="button" onClick={() => { setReturnFormOpen(true); setReturnError(null); }} className="w-full py-3 border border-[#563568] text-[#563568] text-xs font-medium rounded-xs hover:bg-[#FAF5FC]">
+                          Request a return or exchange
+                        </button>
+                      ) : (
+                        <form onSubmit={handleReturnRequest} className="rounded-xs border border-[#E7DCEB] bg-[#FAF5FC] p-4 space-y-3">
+                          <div><h4 className="font-serif text-lg text-[#302438]">Return or exchange request</h4><p className="text-[11px] text-[#6F6475] mt-1">Requests must be submitted within 7 days of delivery. Your checkout mobile number is used to verify this order.</p></div>
+                          <label className="block text-xs text-[#302438]">Request type
+                            <select value={returnType} onChange={e => setReturnType(e.target.value as 'return' | 'exchange')} className="mt-1 w-full p-2.5 border border-[#E7DCEB] bg-white rounded-xs text-xs">
+                              <option value="return">Return</option><option value="exchange">Exchange</option>
+                            </select>
+                          </label>
+                          <label className="block text-xs text-[#302438]">Reason
+                            <select value={returnReason} onChange={e => setReturnReason(e.target.value)} className="mt-1 w-full p-2.5 border border-[#E7DCEB] bg-white rounded-xs text-xs">
+                              <option>Item arrived damaged or scratched</option><option>Received a different item than ordered</option><option>Manufacturing defect</option><option>Size or fit adjustment required</option><option>Finish or polish not as expected</option><option>Other reason</option>
+                            </select>
+                          </label>
+                          <label className="block text-xs text-[#302438]">Additional details (optional)
+                            <textarea value={returnNotes} onChange={e => setReturnNotes(e.target.value)} maxLength={2000} rows={3} placeholder="Describe the issue…" className="mt-1 w-full p-2.5 border border-[#E7DCEB] bg-white rounded-xs text-xs" />
+                          </label>
+                          {returnError && <p role="alert" className="text-xs text-red-700">{returnError}</p>}
+                          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
+                            <button type="button" onClick={() => setReturnFormOpen(false)} disabled={returnLoading} className="px-4 py-2 text-xs border border-[#E7DCEB] rounded-xs">Cancel</button>
+                            <button type="submit" disabled={returnLoading} className="px-4 py-2 text-xs bg-[#563568] text-white rounded-xs disabled:opacity-50">{returnLoading ? 'Submitting…' : 'Submit request'}</button>
+                          </div>
+                        </form>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
 
               {/* View Full Order Details button */}
               {order.publicToken && (

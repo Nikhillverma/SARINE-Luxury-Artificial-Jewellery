@@ -6,7 +6,7 @@ import { pool } from "./db.js";
 
 const router = Router();
 
-import { calculateShippingFee, COD_ENABLED } from "./checkoutPolicy.js";
+import { calculateShippingFee, getCheckoutConfig } from "./checkoutPolicy.js";
 import { matchesOrderRazorpayId } from "./paymentValidation.js";
 import { aggregateOrderItems } from "./orderItems.js";
 
@@ -46,6 +46,7 @@ const trackingLimiter = rateLimit({
 router.post("/create", async (req, res, next) => {
   let connection;
   try {
+    const checkoutConfig = await getCheckoutConfig();
     const { items, customer, shippingAddress, paymentMethod } = req.body || {};
 
     // 1. Validate customer details
@@ -89,7 +90,7 @@ router.post("/create", async (req, res, next) => {
     if (paymentMethod !== "online" && paymentMethod !== "cod") {
       return res.status(400).json({ error: "Invalid payment method." });
     }
-    if (paymentMethod === "cod" && !COD_ENABLED) {
+    if (paymentMethod === "cod" && !checkoutConfig.codEnabled) {
       return res.status(400).json({
         error: "Cash on Delivery is currently unavailable. Please choose online payment."
       });
@@ -174,7 +175,7 @@ router.post("/create", async (req, res, next) => {
       });
     }
 
-    const shippingFee = calculateShippingFee(calculatedSubtotal);
+    const shippingFee = calculateShippingFee(calculatedSubtotal, checkoutConfig);
     const total = calculatedSubtotal + shippingFee;
 
     // 6. Concurrency-safe counter allocation
@@ -795,6 +796,111 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+});
+
+
+// POST /api/orders/returns — phone-verified return or exchange request.
+router.post("/returns", trackingLimiter, async (req, res, next) => {
+  let connection;
+  try {
+    const orderNumber = String(req.body?.orderNumber || "").trim().toUpperCase();
+    const phone = String(req.body?.phone || "").replace(/\D/g, "").slice(-10);
+    const requestType = String(req.body?.requestType || "").trim().toLowerCase();
+    const reason = String(req.body?.reason || "").trim();
+    const notes = typeof req.body?.notes === "string" ? req.body.notes.trim() : "";
+    const allowedReasons = new Set([
+      "Item arrived damaged or scratched",
+      "Received a different item than ordered",
+      "Manufacturing defect",
+      "Size or fit adjustment required",
+      "Finish or polish not as expected",
+      "Other reason"
+    ]);
+    const genericNotFound = "We couldn't find an eligible delivered order with those details.";
+
+    if (!/^SAR-\d{6}$/.test(orderNumber) || phone.length !== 10) {
+      return res.status(404).json({ error: genericNotFound });
+    }
+    if (!["return", "exchange"].includes(requestType)) {
+      return res.status(400).json({ error: "Choose a valid return or exchange request type." });
+    }
+    if (!allowedReasons.has(reason)) {
+      return res.status(400).json({ error: "Choose a valid reason for your request." });
+    }
+    if (notes.length > 2000) {
+      return res.status(400).json({ error: "Additional details must be 2,000 characters or fewer." });
+    }
+
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const [orders] = await connection.execute(
+      `SELECT id, order_number, customer_phone, shipping_address, order_status, delivered_at
+       FROM orders WHERE order_number = ? LIMIT 1 FOR UPDATE`,
+      [orderNumber]
+    );
+    if (!orders.length) {
+      await connection.rollback();
+      return res.status(404).json({ error: genericNotFound });
+    }
+
+    const order = orders[0];
+    let address = {};
+    try {
+      address = typeof order.shipping_address === "string"
+        ? JSON.parse(order.shipping_address)
+        : (order.shipping_address || {});
+    } catch {
+      address = {};
+    }
+    const customerPhone = String(order.customer_phone || "").replace(/\D/g, "").slice(-10);
+    const shippingPhone = String(address.phone || "").replace(/\D/g, "").slice(-10);
+    if (phone !== customerPhone && phone !== shippingPhone) {
+      await connection.rollback();
+      return res.status(404).json({ error: genericNotFound });
+    }
+
+    if (order.order_status !== "delivered" || !order.delivered_at) {
+      await connection.rollback();
+      return res.status(400).json({ error: "Return and exchange requests are available only after delivery." });
+    }
+    const deliveredAt = order.delivered_at instanceof Date
+      ? order.delivered_at
+      : new Date(order.delivered_at);
+    const ageMs = Date.now() - deliveredAt.getTime();
+    if (!Number.isFinite(ageMs) || ageMs < 0 || ageMs > 7 * 24 * 60 * 60 * 1000) {
+      await connection.rollback();
+      return res.status(400).json({ error: "The 7-day return and exchange request window has ended." });
+    }
+
+    const [existing] = await connection.execute(
+      "SELECT id FROM returns WHERE order_id = ? AND status NOT IN ('rejected', 'closed') LIMIT 1 FOR UPDATE",
+      [order.id]
+    );
+    if (existing.length) {
+      await connection.rollback();
+      return res.status(409).json({ error: "A return or exchange request is already open for this order." });
+    }
+
+    const [insert] = await connection.execute(
+      `INSERT INTO returns
+       (order_id, request_type, reason, notes, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'pending', UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
+      [order.id, requestType, reason, notes || null]
+    );
+    await connection.commit();
+    res.set("Cache-Control", "no-store");
+    return res.status(201).json({
+      success: true,
+      requestId: Number(insert.insertId),
+      orderNumber,
+      status: "pending"
+    });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    return next(error);
+  } finally {
+    connection?.release();
   }
 });
 

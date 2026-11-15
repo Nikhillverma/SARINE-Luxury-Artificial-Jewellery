@@ -9,7 +9,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { formatInr } from '../utils/currency';
-import { X, ShoppingBag, Trash2, ArrowRight, AlertCircle, Heart, Tag, Check, Sparkles } from 'lucide-react';
+import { calculateShippingFee } from '../config/store';
+import { useCheckoutConfig } from '../hooks/useCheckoutConfig';
+import { X, ShoppingBag, Trash2, ArrowRight, AlertCircle, Heart, Check, Sparkles } from 'lucide-react';
 
 const FREE_GIFT_BOX_THRESHOLD = 1500;
 
@@ -28,18 +30,7 @@ export const CartDrawer: React.FC = () => {
   } = useCart();
 
   const { toggleWishlist } = useWishlist();
-
-  // Coupon state
-  const [couponInput, setCouponInput] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(() => {
-    try {
-      const saved = localStorage.getItem('sarine_applied_coupon');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-  const [couponError, setCouponError] = useState<string | null>(null);
+  const { config: checkoutConfig } = useCheckoutConfig();
 
   // Close drawer on Escape key press
   useEffect(() => {
@@ -66,50 +57,13 @@ export const CartDrawer: React.FC = () => {
 
   if (!isDrawerOpen) return null;
 
-  const handleApplyCoupon = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCouponError(null);
-    const code = couponInput.trim().toUpperCase();
-
-    if (code === 'SARINE10') {
-      const discount = Math.round(subtotal * 0.1);
-      const couponObj = { code, discount };
-      setAppliedCoupon(couponObj);
-      localStorage.setItem('sarine_applied_coupon', JSON.stringify(couponObj));
-      setCouponInput('');
-    } else if (code === 'WELCOME50') {
-      const discount = 50;
-      const couponObj = { code, discount };
-      setAppliedCoupon(couponObj);
-      localStorage.setItem('sarine_applied_coupon', JSON.stringify(couponObj));
-      setCouponInput('');
-    } else if (code === 'FESTIVE100') {
-      if (subtotal < 1500) {
-        setCouponError('FESTIVE100 requires minimum order value of ₹1,500');
-        return;
-      }
-      const discount = 100;
-      const couponObj = { code, discount };
-      setAppliedCoupon(couponObj);
-      localStorage.setItem('sarine_applied_coupon', JSON.stringify(couponObj));
-      setCouponInput('');
-    } else {
-      setCouponError('Invalid coupon code. Try SARINE10 or WELCOME50.');
-    }
-  };
-
-  const handleRemoveCoupon = () => {
-    setAppliedCoupon(null);
-    localStorage.removeItem('sarine_applied_coupon');
-  };
-
   const handleSaveToWishlist = (item: any) => {
     toggleWishlist(item.product);
     removeItem(item.productId);
   };
 
-  const currentDiscount = appliedCoupon ? appliedCoupon.discount : 0;
-  const finalTotal = Math.max(0, subtotal - currentDiscount);
+  const shippingFee = calculateShippingFee(subtotal, checkoutConfig);
+  const finalTotal = subtotal + shippingFee;
 
   // Free gift box progress
   const progressPercent = Math.min(100, Math.round((subtotal / FREE_GIFT_BOX_THRESHOLD) * 100));
@@ -305,56 +259,15 @@ export const CartDrawer: React.FC = () => {
         {/* Footer Summary */}
         {items.length > 0 && (
           <div className="p-4 sm:p-5 border-t border-[#E7DCEB] bg-[#F7F0FA] space-y-3">
-            {/* Coupon Code Section */}
-            <div>
-              {appliedCoupon ? (
-                <div className="flex items-center justify-between bg-white px-3 py-2 border border-[#B69ACF] rounded-xs text-xs">
-                  <span className="text-emerald-700 font-medium flex items-center gap-1.5">
-                    <Tag size={13} />
-                    <span>Coupon {appliedCoupon.code} applied (-{formatInr(appliedCoupon.discount)})</span>
-                  </span>
-                  <button
-                    onClick={handleRemoveCoupon}
-                    className="text-[#6F6475] hover:text-[#DC2626] text-xs font-semibold cursor-pointer"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleApplyCoupon} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={couponInput}
-                    onChange={(e) => setCouponInput(e.target.value)}
-                    placeholder="Enter coupon (e.g. SARINE10)"
-                    className="flex-1 px-3 py-1.5 bg-white border border-[#E7DCEB] rounded-xs text-xs uppercase focus:outline-none focus:border-[#563568]"
-                  />
-                  <button
-                    type="submit"
-                    className="px-3 py-1.5 bg-white border border-[#563568] text-[#563568] hover:bg-[#563568] hover:text-white text-xs font-medium rounded-xs transition-colors cursor-pointer"
-                  >
-                    Apply
-                  </button>
-                </form>
-              )}
-              {couponError && <p className="text-[11px] text-[#DC2626] mt-1">{couponError}</p>}
-            </div>
-
             {/* Calculations Breakdown */}
             <div className="space-y-1.5 pt-1 text-xs text-[#6F6475]">
               <div className="flex items-baseline justify-between">
                 <span>Subtotal</span>
                 <span className="font-medium text-[#302438]">{formatInr(subtotal)}</span>
               </div>
-              {appliedCoupon && (
-                <div className="flex items-baseline justify-between text-emerald-700">
-                  <span>Promotional Discount</span>
-                  <span>-{formatInr(appliedCoupon.discount)}</span>
-                </div>
-              )}
               <div className="flex items-baseline justify-between">
                 <span>Pan-India Delivery</span>
-                <span className="text-emerald-700 font-medium">Complimentary</span>
+                <span className={shippingFee === 0 ? 'text-emerald-700 font-medium' : 'text-[#302438] font-medium'}>{shippingFee === 0 ? 'Complimentary' : formatInr(shippingFee)}</span>
               </div>
               <div className="flex items-baseline justify-between pt-2 border-t border-[#E7DCEB] text-sm font-medium text-[#302438]">
                 <span>Total Payable</span>
