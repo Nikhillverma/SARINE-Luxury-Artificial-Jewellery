@@ -77,6 +77,17 @@ interface AdminOrder {
   refundNeeded?: boolean;
   cancelledAt?: string;
   updatedAt?: string;
+
+}
+
+function canMarkOrderAsShipped(order: AdminOrder): boolean {
+  if (!order || order.refundNeeded || order.orderStatus === 'needs_refund') return false;
+  const paymentMethod = order.paymentMethod?.toLowerCase();
+  const paymentStatus = order.paymentStatus?.toLowerCase();
+  const statusAllowsShipment =
+    (order.orderStatus === 'placed' && paymentMethod === 'cod') ||
+    ['confirmed', 'processing'].includes(order.orderStatus);
+  return statusAllowsShipment && (paymentStatus === 'paid' || paymentMethod === 'cod');
 }
 
 export const AdminOrdersPage: React.FC = () => {
@@ -971,9 +982,7 @@ export const AdminOrdersPage: React.FC = () => {
                   </h3>
 
                   {/* 1. Mark as Shipped Form */}
-                  {selectedOrder.orderStatus !== 'shipped' &&
-                    selectedOrder.orderStatus !== 'delivered' &&
-                    selectedOrder.orderStatus !== 'cancelled' && (
+                  {canMarkOrderAsShipped(selectedOrder) && (
                       <div className="space-y-2">
                         {!showShipForm ? (
                           <button
