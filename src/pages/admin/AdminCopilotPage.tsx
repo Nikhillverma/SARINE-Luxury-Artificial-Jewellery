@@ -1,6 +1,6 @@
 /**
  * AdminCopilotPage for SARINE.
- * Dedicated AI Business Copilot Workspace grounded strictly in live Firestore product catalogue,
+ * Dedicated AI Business Copilot Workspace grounded strictly in the live Hostinger product catalogue,
  * real physical stock levels, and store order metrics.
  */
 
@@ -8,8 +8,6 @@ import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { productService } from '../../services';
 import { Product } from '../../types/product';
-import { getFirebaseAuth, getDb, isFirebaseConfigured } from '../../lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
 import { formatInr } from '../../utils/currency';
 import {
   Sparkles,
@@ -31,7 +29,7 @@ const INITIAL_MESSAGES: ChatMessage[] = [
   {
     id: 'm1',
     sender: 'copilot',
-    text: 'Welcome! I am your SARINE AI Business Copilot. I am synchronized with your live Firestore product catalogue, inventory stock on hand, and store sales. How can I assist with your atelier operations today?',
+    text: 'Welcome! I am your SARINE AI Business Copilot. I am synchronized with your live Hostinger product catalogue, inventory stock on hand, and store sales. How can I assist with your atelier operations today?',
     timestamp: 'Just now'
   }
 ];
@@ -45,31 +43,26 @@ export const AdminCopilotPage: React.FC = () => {
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
 
   useEffect(() => {
+    let active = true;
     async function loadData() {
       try {
-        const prods = await productService.getProducts({ sortBy: 'newest', inStockOnly: false, includeAll: true });
+        const apiBase = (import.meta.env.VITE_HOSTINGER_API_BASE_URL || (import.meta.env.DEV ? '/api' : 'https://lavender-goldfish-844589.hostingersite.com/api')).replace(/\/+$/, '');
+        const [prods, response] = await Promise.all([
+          productService.getProducts({ sortBy: 'newest', inStockOnly: false, includeAll: true }),
+          fetch(`${apiBase}/admin/dashboard`, { credentials: 'include' })
+        ]);
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Unable to load Hostinger dashboard metrics.');
+        if (!active) return;
         setProducts(prods);
-
-        if (isFirebaseConfigured()) {
-          const db = getDb();
-          const snap = await getDocs(collection(db, 'orders'));
-          let rev = 0;
-          let count = 0;
-          snap.forEach((d) => {
-            const data = d.data();
-            count++;
-            if (data.paymentStatus === 'paid' && data.orderStatus !== 'cancelled') {
-              rev += Number(data.total) || 0;
-            }
-          });
-          setOrdersCount(count);
-          setTotalRevenue(rev);
-        }
+        setOrdersCount(Number(data.metrics?.orders) || 0);
+        setTotalRevenue(Number(data.metrics?.paidRevenue) || 0);
       } catch (err) {
-        console.warn('[AdminCopilotPage] Data load notice:', err);
+        console.warn('[AdminCopilotPage] Hostinger data load failed:', err);
       }
     }
     loadData();
+    return () => { active = false; };
   }, []);
 
   const handleSend = (text: string) => {
