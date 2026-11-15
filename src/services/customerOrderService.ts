@@ -22,8 +22,11 @@ class CustomerOrderService {
     return Array.isArray(result.orders) ? result.orders : [];
   }
 
-  async cancelOrder(_orderNumber: string, _reason: string): Promise<{ success: boolean; message: string }> {
-    throw new Error("Online order cancellation from the account portal is being connected to SARINE support. Please contact our concierge for assistance.");
+  async cancelOrder(orderNumber: string, reason: string): Promise<{ success: boolean; message: string }> {
+    return customerRequest<{ success: boolean; message: string }>("cancel", {
+      method: "POST",
+      body: JSON.stringify({ orderNumber, reason })
+    });
   }
 
   async requestReturnOrExchange(
