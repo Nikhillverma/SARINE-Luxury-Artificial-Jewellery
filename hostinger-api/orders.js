@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import rateLimit from "express-rate-limit";
 import Razorpay from "razorpay";
 import { pool } from "./db.js";
+import { getAuthenticatedCustomer } from "./customerAuth.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 
 const router = Router();
@@ -47,13 +48,14 @@ router.post("/create", async (req, res, next) => {
   let connection;
   try {
     const { items, customer, shippingAddress, paymentMethod, couponCode } = req.body || {};
+    const authenticatedCustomer = await getAuthenticatedCustomer(req);
 
     // 1. Validate customer details
-    if (!customer?.name || String(customer.name).trim().length < 2) {
+    if (!customer?.name || String(customerName).trim().length < 2) {
       return res.status(400).json({ error: "Please enter a valid customer name." });
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!customer.email || !emailRegex.test(String(customer.email).trim())) {
+    if (!customerEmail || !emailRegex.test(String(customerEmail).trim())) {
       return res.status(400).json({ error: "Please enter a valid email address." });
     }
     const cleanCustomerPhone = String(customer.phone || "").replace(/\D/g, "");
@@ -62,6 +64,10 @@ router.post("/create", async (req, res, next) => {
         error: "Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9."
       });
     }
+
+    const customerId = authenticatedCustomer?.id || null;
+    const customerName = authenticatedCustomer?.name || String(customerName).trim();
+    const customerEmail = authenticatedCustomer?.email || String(customerEmail).trim().toLowerCase();
 
     // 2. Validate shipping address
     if (!shippingAddress?.fullName || String(shippingAddress.fullName).trim().length < 2) {
@@ -179,7 +185,7 @@ router.post("/create", async (req, res, next) => {
     let coupon = null;
     let discountAmount = 0;
     try {
-      const validatedCoupon = await lockAndValidateCoupon(connection, couponCode, calculatedSubtotal, customer.email);
+      const validatedCoupon = await lockAndValidateCoupon(connection, couponCode, calculatedSubtotal, customerEmail);
       coupon = validatedCoupon.coupon;
       discountAmount = validatedCoupon.discountAmount;
     } catch (couponError) {
@@ -193,13 +199,13 @@ router.post("/create", async (req, res, next) => {
 
     // 6. Concurrency-safe counter allocation
     await connection.execute(
-      `INSERT INTO counters (name, seq, updated_at)
+      `INSERT INTO counters (counter_key, counter_value, updated_at)
        VALUES ('orders', 0, UTC_TIMESTAMP(3))
-       ON DUPLICATE KEY UPDATE name = name`
+       ON DUPLICATE KEY UPDATE counter_key = counter_key`
     );
 
     const [counterRows] = await connection.execute(
-      `SELECT seq FROM counters WHERE name = 'orders' FOR UPDATE`
+      `SELECT counter_value FROM counters WHERE counter_key = 'orders' FOR UPDATE`
     );
 
     const [maxOrderRows] = await connection.execute(
@@ -208,7 +214,7 @@ router.post("/create", async (req, res, next) => {
        WHERE order_number LIKE 'SAR-%'`
     );
 
-    const currentCounterSeq = Number(counterRows[0]?.seq || 0);
+    const currentCounterSeq = Number(counterRows[0]?.counter_value || 0);
     const maxExistingSeq = Number(maxOrderRows[0]?.max_order_seq || 0);
     const currentCeiling = Math.max(currentCounterSeq, maxExistingSeq, 124);
     let allocatedSeq = currentCeiling + 1;
@@ -225,7 +231,7 @@ router.post("/create", async (req, res, next) => {
     }
 
     await connection.execute(
-      `UPDATE counters SET seq = ?, updated_at = UTC_TIMESTAMP(3) WHERE name = 'orders'`,
+      `UPDATE counters SET counter_value = ?, updated_at = UTC_TIMESTAMP(3) WHERE counter_key = 'orders'`,
       [allocatedSeq]
     );
 
@@ -274,9 +280,9 @@ router.post("/create", async (req, res, next) => {
         [
           orderNumber,
           orderNumber,
-          customer.userId || null,
-          String(customer.name).trim(),
-          String(customer.email).trim().toLowerCase(),
+          customerId,
+          String(customerName).trim(),
+          String(customerEmail).trim().toLowerCase(),
           cleanCustomerPhone,
           serializedShippingAddress,
           calculatedSubtotal,
@@ -301,7 +307,7 @@ router.post("/create", async (req, res, next) => {
          VALUES (?, NULL, 'placed', 'Order placed via COD', 'customer', UTC_TIMESTAMP(3))`,
         [orderNumber]
       );
-      await reserveCouponRedemption(connection, coupon, orderNumber, customer.email, discountAmount, "redeemed");
+      await reserveCouponRedemption(connection, coupon, orderNumber, customerEmail, discountAmount, "redeemed");
 
       await connection.commit();
       connection.release();
@@ -328,9 +334,9 @@ router.post("/create", async (req, res, next) => {
         [
           orderNumber,
           orderNumber,
-          customer.userId || null,
-          String(customer.name).trim(),
-          String(customer.email).trim().toLowerCase(),
+          customerId,
+          String(customerName).trim(),
+          String(customerEmail).trim().toLowerCase(),
           cleanCustomerPhone,
           serializedShippingAddress,
           calculatedSubtotal,
@@ -353,7 +359,7 @@ router.post("/create", async (req, res, next) => {
          VALUES (?, NULL, 'awaiting_payment', 'Order created awaiting Razorpay payment', 'customer', UTC_TIMESTAMP(3))`,
         [orderNumber]
       );
-      await reserveCouponRedemption(connection, coupon, orderNumber, customer.email, discountAmount, "reserved");
+      await reserveCouponRedemption(connection, coupon, orderNumber, customerEmail, discountAmount, "reserved");
 
       await connection.commit();
       connection.release();
@@ -370,7 +376,7 @@ router.post("/create", async (req, res, next) => {
           receipt: orderNumber,
           notes: {
             orderNumber,
-            customerName: String(customer.name).trim().slice(0, 40)
+            customerName: String(customerName).trim().slice(0, 40)
           }
         });
       } catch (rpErr) {
