@@ -23,6 +23,16 @@ import {
   Gift
 } from 'lucide-react';
 
+interface AdminCustomerApiRecord {
+  email: string;
+  name?: string;
+  phone?: string;
+  city?: string;
+  totalOrders?: number;
+  lifetimeSpend?: number;
+  lastOrderAt?: string | null;
+}
+
 interface CustomerProfile {
   id: string;
   name: string;
@@ -49,9 +59,9 @@ export const AdminCustomersPage: React.FC = () => {
       try {
         const apiBase = (import.meta.env.VITE_HOSTINGER_API_BASE_URL || (import.meta.env.DEV ? '/api' : 'https://lavender-goldfish-844589.hostingersite.com/api')).replace(/\/+$/, '');
         const response = await fetch(`${apiBase}/admin/customers?limit=100`, { credentials: 'include' });
-        const data = await response.json().catch(() => ({}));
+        const data = await response.json().catch(() => ({})) as { error?: string; customers?: AdminCustomerApiRecord[] };
         if (!response.ok) throw new Error(data.error || 'Failed to load customers.');
-        const list: CustomerProfile[] = (Array.isArray(data.customers) ? data.customers : []).map((customer: any) => {
+        const list: CustomerProfile[] = (Array.isArray(data.customers) ? data.customers : []).map((customer) => {
           const totalOrders = Number(customer.totalOrders) || 0;
           const lifetimeSpend = Number(customer.lifetimeSpend) || 0;
           const segment: CustomerProfile['segment'] = totalOrders >= 5 || lifetimeSpend >= 10000
