@@ -1,7 +1,7 @@
 /**
  * TrackOrderPage component for SARINE.
  * Public customer order tracking using Order Number and 10-digit mobile number.
- * Communicates with /.netlify/functions/track-order.
+ * Communicates with the Hostinger order-tracking API.
  * Honest status labels, no fake data, no black hovers, strictly privacy-safe.
  */
 

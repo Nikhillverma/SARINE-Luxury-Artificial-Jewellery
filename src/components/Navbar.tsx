@@ -34,7 +34,6 @@ import {
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { SearchOverlay } from './SearchOverlay';
-import { DevFirebaseSeedModal } from './DevFirebaseSeedModal';
 
 interface NavbarProps {
   includeAll: boolean;
@@ -77,7 +76,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   // Search & Mobile Drawer states
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isSeedModalOpen, setIsSeedModalOpen] = useState(false);
   const [activeAnnouncement, setActiveAnnouncement] = useState(0);
 
   // Mobile Accordion state
@@ -2019,15 +2017,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                     >
                       includeAll: {includeAll ? 'ON' : 'OFF'}
                     </button>
-                    <button
-                      onClick={() => {
-                        setIsMobileMenuOpen(false);
-                        setIsSeedModalOpen(true);
-                      }}
-                      className="text-[11px] uppercase tracking-wider text-[#563568] hover:text-[#B69ACF] underline"
-                    >
-                      Seed Firestore
-                    </button>
                   </div>
                 )}
               </div>
@@ -2039,13 +2028,6 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Global Search Overlay */}
       <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
-      {/* Dev Seed Modal */}
-      {import.meta.env.DEV && (
-        <DevFirebaseSeedModal
-          isOpen={isSeedModalOpen}
-          onClose={() => setIsSeedModalOpen(false)}
-        />
-      )}
     </>
   );
 };

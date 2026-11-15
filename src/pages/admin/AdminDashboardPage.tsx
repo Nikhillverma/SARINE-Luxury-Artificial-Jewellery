@@ -1,11 +1,11 @@
 /**
  * AdminDashboardPage for SARINE.
- * Luxury administrative dashboard connected exclusively to live Firestore & Firebase Authentication data.
+ * Luxury administrative dashboard connected to Hostinger MariaDB and Hostinger admin sessions.
  *
  * Real-Time Architecture:
- * - Dynamic admin greeting with real authenticated user's displayName / email prefix (never "Priya" or hardcoded names)
+ * - Dynamic admin greeting with real authenticated admin's name / email prefix (never "Priya" or hardcoded names)
  * - Dynamic live Indian date selector without hardcoded dates
- * - Auth-aware Firestore subscriptions (onSnapshot) for orders and products (waits for auth resolution)
+ * - Auth-aware Hostinger API requests for orders, products and customers
  * - 4 Real KPI cards: Total Sales (paid orders only), Total Orders, Total Customers, Low Stock Alerts
  * - Dynamic Sales Overview SVG chart plotted from real order revenues & dates (flat baseline & empty state when ₹0)
  * - Dynamic Order Status donut chart computed from real order fulfillment states (0 count when empty)
@@ -14,24 +14,17 @@
  * - Real Recent Orders table with live statuses, customer details, and amounts
  * - Real Low Stock Products inventory table
  * - Real-data-driven 30-Day Sales Forecast (displays ₹0 and flatline when no sales history exists)
- * - Real Campaigns loaded from Firestore (clean empty state when no campaigns exist; no fake Diwali/wedding cards)
+ * - Campaigns show a clean empty state until campaign management is configured
  * - Contextual AI Business Copilot grounded strictly in real store inventory & metrics
- * - Clear Firestore permission notice banner if security rules reject access
+ * - Clear Hostinger API error notice if access or data loading fails
  * - Clean empty states with ₹0 and 0 counts when database has zero orders
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { getAdminSession, type AdminIdentity } from '../../lib/adminAuth';
 import { Link } from 'react-router-dom';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import {
-  collection,
-  onSnapshot,
-  getDocs
-} from 'firebase/firestore';
 import { AdminLayout } from '../../components/admin/AdminLayout';
-import { getFirebaseAuth, getDb, isFirebaseConfigured } from '../../lib/firebase';
 import { productService } from '../../services';
-import { docToProduct } from '../../services/firebase/firebaseHelpers';
 import { Product } from '../../types/product';
 import { formatInr } from '../../utils/currency';
 import {
@@ -40,7 +33,6 @@ import {
   getOrderRealizedRevenue,
   isRealizedRevenueOrder
 } from '../../utils/revenue';
-import { getApiEndpoint } from '../../config/api';
 import {
   ShoppingBag,
   TrendingUp,
@@ -105,7 +97,7 @@ interface CampaignItem {
 
 export const AdminDashboardPage: React.FC = () => {
   // 1. Auth & Admin Identity State
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AdminIdentity | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   // 2. Date Filter State (Live Indian Date Formatting)
@@ -131,7 +123,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(true);
   const [campaignsLoading, setCampaignsLoading] = useState(true);
-  const [firestorePermissionError, setFirestorePermissionError] = useState<string | null>(null);
+  const [dataLoadError, setDataLoadError] = useState<string | null>(null);
 
   // 4. AI Copilot state
   const [copilotQuery, setCopilotQuery] = useState('');
@@ -141,8 +133,8 @@ export const AdminDashboardPage: React.FC = () => {
   // Derive Admin Display Name & First Name for greeting
   const adminDisplayName = useMemo(() => {
     if (authLoading) return '...';
-    if (user?.displayName && user.displayName.trim()) {
-      return user.displayName.trim();
+    if (user?.name && user.name.trim()) {
+      return user.name.trim();
     }
     if (user?.email && user.email.trim()) {
       const prefix = user.email.split('@')[0];
@@ -153,8 +145,8 @@ export const AdminDashboardPage: React.FC = () => {
 
   const adminFirstName = useMemo(() => {
     if (authLoading) return '...';
-    if (user?.displayName && user.displayName.trim()) {
-      return user.displayName.trim().split(/\s+/)[0];
+    if (user?.name && user.name.trim()) {
+      return user.name.trim().split(/\s+/)[0];
     }
     if (user?.email && user.email.trim()) {
       const prefix = user.email.split('@')[0];
@@ -171,251 +163,90 @@ export const AdminDashboardPage: React.FC = () => {
     return 'Good Evening';
   }, [now]);
 
-  // Monitor Auth State First
+  // Restore the Hostinger admin session, then load dashboard data from MariaDB APIs.
   useEffect(() => {
-    if (!isFirebaseConfigured()) {
-      setAuthLoading(false);
-      setOrdersLoading(false);
-      setProductsLoading(false);
-      setCampaignsLoading(false);
-      return;
-    }
-    try {
-      const auth = getFirebaseAuth();
-      const unsub = onAuthStateChanged(auth, (currentUser) => {
-        setUser(currentUser);
+    let active = true;
+    async function loadDashboard() {
+      try {
+        const admin = await getAdminSession();
+        if (!active) return;
+        setUser(admin);
         setAuthLoading(false);
-      });
-      return () => unsub();
-    } catch (e) {
-      console.error('[AdminDashboard] Auth listener error:', e);
-      setAuthLoading(false);
-    }
-  }, []);
-
-  // Fetch orders fallback via Netlify / Admin API if direct Firestore subscription is rejected
-  const fetchOrdersViaApi = useCallback(async () => {
-    try {
-      if (!isFirebaseConfigured()) {
-        setOrders([]);
-        setOrdersLoading(false);
-        return;
-      }
-      const auth = getFirebaseAuth();
-      const curr = auth.currentUser;
-      if (!curr) {
-        setOrders([]);
-        setOrdersLoading(false);
-        return;
-      }
-
-      const idToken = await curr.getIdToken();
-      const res = await fetch(getApiEndpoint('admin-list-orders?limit=100'), {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.orders)) {
-          const mapped: DashboardOrder[] = data.orders.map((d: any) => ({
-            id: d.orderNumber || d.id || '',
-            orderNumber: d.orderNumber || d.id || '',
-            createdAt: d.createdAt || new Date().toISOString(),
-            customer: {
-              name: d.customer?.name || (d.customer?.email ? d.customer.email.split('@')[0] : 'Customer'),
-              email: d.customer?.email || '',
-              phone: d.customer?.phone || ''
-            },
-            lines: Array.isArray(d.lines)
-              ? d.lines.map((l: any) => ({
-                  productId: l.productId || '',
-                  name: l.name || '',
-                  image: l.image || '',
-                  quantity: Number(l.quantity) || 1,
-                  unitPrice: Number(l.unitPrice) || 0,
-                  sku: l.sku || ''
-                }))
-              : [],
-            subtotal: Number(d.subtotal) || 0,
-            shippingFee: Number(d.shippingFee) || 0,
-            total: Number(d.total) || 0,
-            paymentMethod: d.paymentMethod || 'online',
-            paymentStatus: d.paymentStatus || 'pending',
-            orderStatus: d.orderStatus || 'placed',
-            courierName: d.courierName,
-            trackingNumber: d.trackingNumber
-          }));
-          setOrders(mapped);
-          setFirestorePermissionError(null);
-        }
-      }
-    } catch (e) {
-      console.warn('[AdminDashboard] Fallback API fetch failed:', e);
-    } finally {
-      setOrdersLoading(false);
-    }
-  }, []);
-
-  // Real-time Firestore Subscriptions — runs once auth state is resolved and user is authenticated
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (!user) {
-      setOrders([]);
-      setOrdersLoading(false);
-      setProductsLoading(false);
-      setCampaignsLoading(false);
-      return;
-    }
-
-    if (!isFirebaseConfigured()) {
-      setOrdersLoading(false);
-      setProductsLoading(false);
-      setCampaignsLoading(false);
-      return;
-    }
-
-    setOrdersLoading(true);
-    setProductsLoading(true);
-    setCampaignsLoading(true);
-    setFirestorePermissionError(null);
-
-    let unsubOrders: (() => void) | undefined;
-    let unsubProducts: (() => void) | undefined;
-
-    try {
-      const db = getDb();
-
-      // 1. Live Products Subscription
-      const productsRef = collection(db, 'products');
-      unsubProducts = onSnapshot(
-        productsRef,
-        (snapshot) => {
-          const liveProducts: Product[] = [];
-          snapshot.forEach((docSnap) => {
-            const prod = docToProduct(docSnap);
-            if (prod) liveProducts.push(prod);
-          });
-          setProducts(liveProducts);
-          setProductsLoading(false);
-        },
-        (err) => {
-          console.warn('[AdminDashboard] Firestore products error, falling back to service:', err);
-          productService
-            .getProducts({ sortBy: 'newest', inStockOnly: false, includeAll: true })
-            .then(setProducts)
-            .catch(() => setProducts([]))
-            .finally(() => setProductsLoading(false));
-        }
-      );
-
-      // 2. Live Orders Subscription
-      const ordersRef = collection(db, 'orders');
-      unsubOrders = onSnapshot(
-        ordersRef,
-        (snapshot) => {
-          const liveOrders: DashboardOrder[] = [];
-          snapshot.forEach((docSnap) => {
-            const d = docSnap.data();
-            liveOrders.push({
-              id: docSnap.id,
-              orderNumber: d.orderNumber || docSnap.id,
-              createdAt: d.createdAt || new Date().toISOString(),
-              customer: {
-                name: d.customer?.name || (d.customer?.email ? d.customer.email.split('@')[0] : 'Customer'),
-                email: d.customer?.email || '',
-                phone: d.customer?.phone || ''
-              },
-              lines: Array.isArray(d.lines)
-                ? d.lines.map((l: any) => ({
-                    productId: l.productId || '',
-                    name: l.name || '',
-                    image: l.image || '',
-                    quantity: Number(l.quantity) || 1,
-                    unitPrice: Number(l.unitPrice) || 0,
-                    sku: l.sku || ''
-                  }))
-                : [],
-              subtotal: Number(d.subtotal) || 0,
-              shippingFee: Number(d.shippingFee) || 0,
-              total: Number(d.total) || 0,
-              paymentMethod: d.paymentMethod || 'online',
-              paymentStatus: d.paymentStatus || 'pending',
-              orderStatus: d.orderStatus || 'placed',
-              courierName: d.courierName,
-              trackingNumber: d.trackingNumber
-            });
-          });
-
-          // Sort client-side by date descending
-          liveOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-          setOrders(liveOrders);
-          setOrdersLoading(false);
-          setFirestorePermissionError(null);
-        },
-        (err: any) => {
-          console.warn('[AdminDashboard] Firestore orders error:', err);
-          if (err?.code === 'permission-denied') {
-            setFirestorePermissionError(
-              `Firestore Permission Notice: The authenticated account (${user.email}) does not have permission to read /orders. Under SARINE security rules, admin access requires verified email nikhilvermav1999@gmail.com, an Admin custom claim, or an /admins/{uid} registry document.`
-            );
-          }
-          // Attempt fallback to admin API
-          fetchOrdersViaApi();
-        }
-      );
-
-      // 3. Count registered users
-      const usersRef = collection(db, 'users');
-      getDocs(usersRef)
-        .then((usersSnap) => {
-          setRegisteredUsersCount(usersSnap.size);
-        })
-        .catch(() => {
-          // Users collection might be restricted to admin; fallback to unique order customers
-        });
-
-      // 4. Live Campaigns query from Firestore
-      const campaignsRef = collection(db, 'campaigns');
-      getDocs(campaignsRef)
-        .then((snap) => {
-          const list: CampaignItem[] = [];
-          snap.forEach((docSnap) => {
-            const data = docSnap.data();
-            list.push({
-              id: docSnap.id,
-              title: data.title || docSnap.id,
-              date: data.date || data.expiryDate || 'Active',
-              badge: data.badge || (data.active ? 'Live' : 'Scheduled'),
-              badgeColor: data.active ? 'bg-[#DCFCE7] text-[#16A34A]' : 'bg-[#F3E8FF] text-[#78469C]',
-              img: data.img || data.imageUrl
-            });
-          });
-          setCampaigns(list);
-        })
-        .catch(() => {
+        if (!admin) {
+          setOrders([]);
+          setProducts([]);
           setCampaigns([]);
-        })
-        .finally(() => {
+          setRegisteredUsersCount(0);
+          setOrdersLoading(false);
+          setProductsLoading(false);
           setCampaignsLoading(false);
-        });
-    } catch (e) {
-      console.error('[AdminDashboard] Firestore initialization error:', e);
-      setOrdersLoading(false);
-      setProductsLoading(false);
-      setCampaignsLoading(false);
-    }
+          return;
+        }
 
-    return () => {
-      if (unsubOrders) unsubOrders();
-      if (unsubProducts) unsubProducts();
-    };
-  }, [user, authLoading, fetchOrdersViaApi]);
+        const apiBase = (import.meta.env.VITE_HOSTINGER_API_BASE_URL || (import.meta.env.DEV ? '/api' : 'https://lavender-goldfish-844589.hostingersite.com/api')).replace(/\/+$/, '');
+        const [ordersResponse, customersResponse, productResult] = await Promise.all([
+          fetch(`${apiBase}/admin/orders?limit=100`, { credentials: 'include' }),
+          fetch(`${apiBase}/admin/customers?limit=1`, { credentials: 'include' }),
+          productService.getProducts({ sortBy: 'newest', inStockOnly: false, includeAll: true })
+        ]);
+        const [ordersData, customersData] = await Promise.all([
+          ordersResponse.json().catch(() => ({})),
+          customersResponse.json().catch(() => ({}))
+        ]);
+        if (!ordersResponse.ok) throw new Error(ordersData.error || 'Unable to load orders from Hostinger.');
+        if (!customersResponse.ok) throw new Error(customersData.error || 'Unable to load customer metrics from Hostinger.');
+        if (!active) return;
+
+        const mappedOrders: DashboardOrder[] = (Array.isArray(ordersData.orders) ? ordersData.orders : []).map((order: {
+          orderNumber: string; createdAt?: string; customer?: { name?: string; email?: string; phone?: string };
+          lines?: Array<{ productId?: string; name?: string; image?: string; quantity?: number; unitPrice?: number; sku?: string }>;
+          subtotal?: number; shippingFee?: number; total?: number; paymentMethod?: string;
+          paymentStatus?: string; orderStatus?: string; courierName?: string; trackingNumber?: string;
+        }) => ({
+          id: order.orderNumber,
+          orderNumber: order.orderNumber,
+          createdAt: order.createdAt || new Date().toISOString(),
+          customer: {
+            name: order.customer?.name || 'Customer',
+            email: order.customer?.email || '',
+            phone: order.customer?.phone || ''
+          },
+          lines: (order.lines || []).map((line) => ({
+            productId: line.productId || '',
+            name: line.name || '',
+            image: line.image || '',
+            quantity: Number(line.quantity) || 1,
+            unitPrice: Number(line.unitPrice) || 0,
+            sku: line.sku || ''
+          })),
+          subtotal: Number(order.subtotal) || 0,
+          shippingFee: Number(order.shippingFee) || 0,
+          total: Number(order.total) || 0,
+          paymentMethod: order.paymentMethod || 'online',
+          paymentStatus: order.paymentStatus || 'pending',
+          orderStatus: order.orderStatus || 'placed',
+          courierName: order.courierName,
+          trackingNumber: order.trackingNumber
+        }));
+        setOrders(mappedOrders);
+        setProducts(productResult);
+        setRegisteredUsersCount(Number(customersData.total) || 0);
+        setCampaigns([]);
+        setDataLoadError(null);
+      } catch (error) {
+        console.error('[AdminDashboard] Hostinger data load failed:', error);
+        if (active) setDataLoadError(error instanceof Error ? error.message : 'Unable to load Hostinger dashboard data.');
+      } finally {
+        if (active) {
+          setOrdersLoading(false);
+          setProductsLoading(false);
+          setCampaignsLoading(false);
+        }
+      }
+    }
+    loadDashboard();
+    return () => { active = false; };
+  }, []);
 
   // -------------------------------------------------------------
   // CALCULATED REAL METRICS
@@ -613,7 +444,7 @@ export const AdminDashboardPage: React.FC = () => {
 
       if (ordersCount === 0) {
         setCopilotResponse(
-          `Store Operations Analysis: Your catalog currently features ${catalogCount} active products. No customer orders have been recorded in Firestore yet. Once customers begin checking out, your top selling items, revenue trends, and replenishment predictions will populate here automatically.`
+          `Store Operations Analysis: Your catalog currently features ${catalogCount} active products. No customer orders have been recorded in the Hostinger database yet. Once customers begin checking out, your top selling items, revenue trends, and replenishment predictions will populate here automatically.`
         );
       } else if (question.includes('profitable') || question.includes('margin') || question.includes('sell')) {
         const topItem = topSellingProducts[0];
@@ -644,21 +475,21 @@ export const AdminDashboardPage: React.FC = () => {
     <AdminLayout>
       <div className="space-y-6">
         {/* Permission Error Banner (if security rules deny access) */}
-        {firestorePermissionError && (
+        {dataLoadError && (
           <div className="p-4 bg-[#FEF2F2] border border-[#FCA5A5] rounded-xl flex items-start justify-between gap-3 text-xs text-[#991B1B]">
             <div className="flex items-start gap-2.5">
               <AlertCircle size={18} className="shrink-0 mt-0.5 text-[#DC2626]" />
               <div>
-                <p className="font-semibold text-[#7F1D1D]">Firestore Authorization Notice</p>
+                <p className="font-semibold text-[#7F1D1D]">Hostinger Database Notice</p>
                 <p className="text-[11px] mt-0.5 leading-relaxed text-[#991B1B]">
-                  {firestorePermissionError}
+                  {dataLoadError}
                 </p>
               </div>
             </div>
             <button
               onClick={() => {
                 setOrdersLoading(true);
-                fetchOrdersViaApi();
+                window.location.reload();
               }}
               className="px-3 py-1 bg-white border border-[#FCA5A5] text-[#991B1B] font-semibold rounded-lg hover:bg-[#FEE2E2] transition-colors shrink-0 cursor-pointer"
             >
@@ -756,7 +587,7 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
             <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#16A34A] font-medium">
               <span>● Live</span>
-              <span className="text-[#8E769E] font-normal">Firestore orders</span>
+              <span className="text-[#8E769E] font-normal">Hostinger orders</span>
             </div>
           </div>
 
@@ -1348,7 +1179,7 @@ export const AdminDashboardPage: React.FC = () => {
 
         {/* 5. ROW 4: CAMPAIGNS + LOW STOCK PRODUCTS + FORECAST + AI COPILOT */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Card 1: Upcoming Campaigns & Festivals (Loaded from Firestore) */}
+          {/* Card 1: Upcoming Campaigns & Festivals (Loaded from Hostinger) */}
           <div className="bg-white rounded-2xl p-5 border border-[#EADFF0] shadow-2xs flex flex-col justify-between">
             <div className="flex items-center justify-between pb-3 border-b border-[#F5EDF8]">
               <h2 className="text-xs sm:text-sm font-semibold text-[#2C1838]">

@@ -5,19 +5,19 @@
  */
 
 import React, { useState } from 'react';
-import { User } from 'firebase/auth';
-import { updateProfile } from 'firebase/auth';
+import { CustomerIdentity } from '../../types/customer';
+import { customerAuthService } from '../../services/customerAuthService';
 import { User as UserIcon, Mail, Phone, CheckCircle2, Shield, Bell, Lock } from 'lucide-react';
 
 interface ProfileSectionProps {
-  currentUser: User;
+  currentUser: CustomerIdentity;
 }
 
 export const ProfileSection: React.FC<ProfileSectionProps> = ({ currentUser }) => {
   const [profileName, setProfileName] = useState(
     currentUser.displayName || currentUser.email?.split('@')[0] || ''
   );
-  const [profilePhone, setProfilePhone] = useState('9876543210');
+  const [profilePhone, setProfilePhone] = useState(currentUser.phone || '');
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -37,7 +37,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({ currentUser }) =
     setProfileSuccess(null);
 
     try {
-      await updateProfile(currentUser, { displayName: profileName.trim() });
+      await customerAuthService.updateProfile(profileName.trim(), profilePhone);
       setProfileSuccess('Profile details updated successfully.');
       setTimeout(() => setProfileSuccess(null), 3500);
     } catch (err) {
@@ -179,9 +179,9 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({ currentUser }) =
           <span>Security & Authentication Guard</span>
         </h4>
         <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-xs text-[#6F6475] space-y-1.5">
-          <span className="font-semibold text-[#563568] block">Google Firebase Security Shield Active</span>
+          <span className="font-semibold text-[#563568] block">Hostinger MariaDB Session Security Active</span>
           <p>
-            Your session is secured via Firebase Authentication with cryptographic token verification. No unauthorized device access has been reported.
+            Your account is secured by a Hostinger backend session. Session tokens are stored as hashes in the SARINE database.
           </p>
         </div>
 

@@ -9,7 +9,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { orderService } from '../services';
-import { customerOrderService } from '../services/customerOrderService';
+import { customerAuthService } from '../services/customerAuthService';
 import { formatInr } from '../utils/currency';
 import { COD_ENABLED, calculateShippingFee } from '../config/store';
 import { PaymentMethod } from '../types/order';
@@ -125,6 +125,18 @@ export const CheckoutPage: React.FC = () => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Prefill checkout contact details from the Hostinger customer session when signed in.
+  useEffect(() => {
+    let active = true;
+    customerAuthService.getSession().then((customer) => {
+      if (!active || !customer) return;
+      setFullName((current) => current || customer.name);
+      setEmail((current) => current || customer.email);
+      setPhone((current) => current || customer.phone || '');
+    });
+    return () => { active = false; };
+  }, []);
+
   // Computed shipping and total
   const shippingFee = calculateShippingFee(subtotal);
   const total = subtotal + shippingFee;
@@ -234,9 +246,9 @@ export const CheckoutPage: React.FC = () => {
           description: `Order ${order.orderNumber}`,
           order_id: order.razorpayOrderId,
           prefill: {
-            name: fullName.trim(),
-            email: email.trim(),
-            contact: phone.replace(/\D/g, '')
+            name: order.customer.name,
+            email: order.customer.email,
+            contact: order.customer.phone
           },
           theme: {
             color: '#1C1917'
@@ -266,43 +278,6 @@ export const CheckoutPage: React.FC = () => {
                 console.log('[Checkout] Payment verification handled (success or pending):', order.orderNumber);
                 setOrderPlaced(true);
                 orderPlacedRef.current = true;
-
-                // Save full order snapshot for Customer Account My Orders
-                customerOrderService.saveNewOrder(
-                  {
-                    ...order,
-                    lines: items.map((it) => ({
-                      productId: it.productId,
-                      name: it.product.name,
-                      unitPrice: it.product.price,
-                      quantity: it.quantity,
-                      image: it.product.images[0] || '',
-                      sku: `SAR-${it.productId.slice(0, 6).toUpperCase()}`
-                    })),
-                    customer: {
-                      name: fullName.trim(),
-                      email: email.trim().toLowerCase(),
-                      phone: phone.replace(/\D/g, '')
-                    },
-                    shippingAddress: {
-                      fullName: fullName.trim(),
-                      phone: phone.replace(/\D/g, ''),
-                      line1: line1.trim(),
-                      line2: line2.trim() || undefined,
-                      city: city.trim(),
-                      state: state.trim(),
-                      pincode: pincode.trim()
-                    },
-                    subtotal,
-                    shippingFee,
-                    total,
-                    paymentMethod: 'online',
-                    paymentStatus: 'paid',
-                    orderStatus: 'confirmed',
-                    createdAt: new Date().toISOString()
-                  },
-                  email.trim().toLowerCase()
-                );
 
                 const targetUrl = order.publicToken
                   ? `/order/${order.orderNumber}?t=${order.publicToken}`
@@ -344,43 +319,6 @@ export const CheckoutPage: React.FC = () => {
       if (paymentMethod === 'cod') {
         setOrderPlaced(true);
         orderPlacedRef.current = true;
-
-        // Save full order snapshot for Customer Account My Orders
-        customerOrderService.saveNewOrder(
-          {
-            ...order,
-            lines: items.map((it) => ({
-              productId: it.productId,
-              name: it.product.name,
-              unitPrice: it.product.price,
-              quantity: it.quantity,
-              image: it.product.images[0] || '',
-              sku: `SAR-${it.productId.slice(0, 6).toUpperCase()}`
-            })),
-            customer: {
-              name: fullName.trim(),
-              email: email.trim().toLowerCase(),
-              phone: phone.replace(/\D/g, '')
-            },
-            shippingAddress: {
-              fullName: fullName.trim(),
-              phone: phone.replace(/\D/g, ''),
-              line1: line1.trim(),
-              line2: line2.trim() || undefined,
-              city: city.trim(),
-              state: state.trim(),
-              pincode: pincode.trim()
-            },
-            subtotal,
-            shippingFee,
-            total,
-            paymentMethod: 'cod',
-            paymentStatus: 'pending',
-            orderStatus: 'placed',
-            createdAt: new Date().toISOString()
-          },
-          email.trim().toLowerCase()
-        );
 
         const targetUrl = order.publicToken
           ? `/order/${order.orderNumber}?t=${order.publicToken}`

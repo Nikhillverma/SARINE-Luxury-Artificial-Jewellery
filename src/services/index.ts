@@ -2,7 +2,7 @@
  * Central Service Switch for SARINE.
  *
  * Products and categories: Hostinger MariaDB API.
- * Orders: existing Netlify service temporarily, until Hostinger checkout is ready.
+ * Orders: Hostinger MariaDB API.
  * Admin products: existing mock service temporarily, until Hostinger admin is ready.
  */
 
@@ -15,18 +15,18 @@ import type {
 import { MockProductService } from './mock/mockProductService';
 import { MockCategoryService } from './mock/mockCategoryService';
 import { MockAdminProductService } from './mock/mockAdminProductService';
-import { NetlifyOrderService } from './netlify/netlifyOrderService';
+import { HostingerOrderService } from './hostinger/hostingerOrderService';
 import { HostingerProductService } from './hostinger/hostingerProductService';
 import { HostingerCategoryService } from './hostinger/hostingerCategoryService';
 
-export type DataSource = 'mock' | 'firebase' | 'hostinger';
+export type DataSource = 'mock' | 'hostinger';
 
 export const DATA_SOURCE: DataSource = 'hostinger';
 
 const mockProductService = new MockProductService();
 const mockCategoryService = new MockCategoryService();
 const mockAdminProductService = new MockAdminProductService(mockProductService);
-const netlifyOrderService = new NetlifyOrderService();
+const hostingerOrderService = new HostingerOrderService();
 const hostingerProductService = new HostingerProductService();
 const hostingerCategoryService = new HostingerCategoryService();
 
@@ -40,8 +40,8 @@ export const categoryService: ICategoryService =
     ? hostingerCategoryService
     : mockCategoryService;
 
-export const orderService: IOrderService = netlifyOrderService;
+export const orderService: IOrderService = hostingerOrderService;
 export const adminProductService: IAdminProductService = mockAdminProductService;
 
-export { netlifyOrderService };
+export { hostingerOrderService };
 export * from './interfaces';
