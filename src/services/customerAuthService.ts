@@ -33,13 +33,13 @@ export const customerAuthService = {
     }
   },
   async login(email: string, password: string): Promise<CustomerIdentity> {
-    const result = await request<{ success: boolean; customer: Omit<CustomerIdentity, "displayName"> }>("login", {
+    const result = await request<{ success: boolean; customer: CustomerRecord }>("login", {
       method: "POST", body: JSON.stringify({ email, password })
     });
     return mapCustomer(result.customer);
   },
   async register(name: string, email: string, password: string): Promise<CustomerIdentity> {
-    const result = await request<{ success: boolean; customer: Omit<CustomerIdentity, "displayName"> }>("register", {
+    const result = await request<{ success: boolean; customer: CustomerRecord }>("register", {
       method: "POST", body: JSON.stringify({ name, email, password })
     });
     return { ...result.customer, displayName: result.customer.name };
@@ -48,7 +48,7 @@ export const customerAuthService = {
     await request<{ success: boolean }>("logout", { method: "POST" });
   },
   async updateProfile(name: string, phone: string): Promise<CustomerIdentity> {
-    const result = await request<{ success: boolean; customer: Omit<CustomerIdentity, "displayName"> }>("profile", {
+    const result = await request<{ success: boolean; customer: CustomerRecord }>("profile", {
       method: "PATCH", body: JSON.stringify({ name, phone })
     });
     return { ...result.customer, displayName: result.customer.name };
