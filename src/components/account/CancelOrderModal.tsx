@@ -130,7 +130,7 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
             <span className="font-semibold text-[#563568] block">SARINE Refund Policy</span>
             <p>
               {order.paymentMethod === 'online' && order.paymentStatus === 'paid'
-                ? `The full payment of ${formatInr(order.total)} will be refunded back to your original payment method within 5-7 business days.`
+                ? `Your payment of ${formatInr(order.total)} will be flagged for SARINE support to review. A refund is not automatic; our team will contact you about the next steps.`
                 : 'Since this is a Cash on Delivery order, no amount was charged.'}
             </p>
           </div>
