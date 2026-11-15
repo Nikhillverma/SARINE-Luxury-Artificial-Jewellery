@@ -3,7 +3,7 @@
  * Luxury administrative dashboard connected to Hostinger MariaDB and Hostinger admin sessions.
  *
  * Real-Time Architecture:
- * - Dynamic admin greeting with real authenticated user's displayName / email prefix (never "Priya" or hardcoded names)
+ * - Dynamic admin greeting with real authenticated admin's name / email prefix (never "Priya" or hardcoded names)
  * - Dynamic live Indian date selector without hardcoded dates
  * - Auth-aware Hostinger API requests for orders, products and customers
  * - 4 Real KPI cards: Total Sales (paid orders only), Total Orders, Total Customers, Low Stock Alerts
@@ -21,7 +21,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { getAdminSession, AdminIdentity } from '../../lib/adminAuth';
+import { getAdminSession, type AdminIdentity } from '../../lib/adminAuth';
 import { Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { productService } from '../../services';
