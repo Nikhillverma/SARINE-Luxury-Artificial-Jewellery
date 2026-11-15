@@ -246,9 +246,9 @@ export const CheckoutPage: React.FC = () => {
           description: `Order ${order.orderNumber}`,
           order_id: order.razorpayOrderId,
           prefill: {
-            name: fullName.trim(),
-            email: email.trim(),
-            contact: phone.replace(/\D/g, '')
+            name: order.customer.name,
+            email: order.customer.email,
+            contact: order.customer.phone
           },
           theme: {
             color: '#1C1917'
