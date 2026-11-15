@@ -1,6 +1,9 @@
 name: SARINE customer account frontend validation
 
 on:
+  push:
+    branches:
+      - feature/hostinger-customer-auth
   pull_request:
     branches:
       - fix/order-timestamps
