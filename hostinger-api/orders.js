@@ -7,6 +7,7 @@ import { pool } from "./db.js";
 const router = Router();
 
 import { calculateShippingFee, COD_ENABLED } from "./checkoutPolicy.js";
+import { matchesOrderRazorpayId } from "./paymentValidation.js";
 
 function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -479,6 +480,13 @@ router.post("/verify", async (req, res, next) => {
       connection.release();
       connection = null;
       return res.status(403).json({ error: "Unauthorized access to order verification." });
+    }
+
+    if (!matchesOrderRazorpayId(order, razorpay_order_id)) {
+      await connection.rollback();
+      connection.release();
+      connection = null;
+      return res.status(400).json({ error: "Razorpay order does not match this SARINE order." });
     }
 
     if (order.payment_method !== "online") {
