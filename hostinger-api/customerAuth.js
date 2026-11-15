@@ -4,6 +4,8 @@ import crypto from "node:crypto";
 import rateLimit from "express-rate-limit";
 import { pool } from "./db.js";
 import { normalizeCustomerEmail } from "./customerValidation.js";
+import { shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
+import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 
 const router = Router();
 const COOKIE_NAME = "sarine_customer_session";
@@ -169,6 +171,121 @@ router.get("/orders", async (req, res, next) => {
       };
     }) });
   } catch (error) { return next(error); }
+});
+
+// POST /api/customer/auth/cancel — cancel an eligible order owned by this account.
+router.post("/cancel", async (req, res, next) => {
+  let connection;
+  try {
+    res.set("Cache-Control", "no-store");
+    const customer = await getAuthenticatedCustomer(req);
+    if (!customer) return res.status(401).json({ error: "Please sign in to cancel an order." });
+    const orderNumber = String(req.body?.orderNumber || "").trim().toUpperCase();
+    const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "Cancelled by customer";
+    if (!/^SAR-\d{6}$/.test(orderNumber)) return res.status(400).json({ error: "Enter a valid order number." });
+    if (reason.length > 500) return res.status(400).json({ error: "Cancellation reason must be 500 characters or fewer." });
+
+    await ensureInventoryTable();
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const [rows] = await connection.execute(
+      "SELECT * FROM orders WHERE order_number = ? AND customer_id = ? FOR UPDATE",
+      [orderNumber, customer.id]
+    );
+    if (!rows.length) {
+      await connection.rollback();
+      return res.status(404).json({ error: "We couldn't find this order in your account." });
+    }
+    const order = rows[0];
+    if (["shipped", "delivered"].includes(order.order_status)) {
+      await connection.rollback();
+      return res.status(400).json({ error: "Orders that have shipped or been delivered cannot be cancelled online. Please contact SARINE support." });
+    }
+    if (order.order_status === "cancelled") {
+      await connection.rollback();
+      return res.status(400).json({ error: "This order is already cancelled." });
+    }
+    if (!["pending", "placed", "confirmed", "awaiting_payment", "processing"].includes(order.order_status)) {
+      await connection.rollback();
+      return res.status(400).json({ error: "This order cannot be cancelled in its current status." });
+    }
+
+    const isPaid = order.payment_status === "paid";
+    const stockWasDecremented = shouldRestoreStockOnCancellation(order);
+    if (stockWasDecremented) {
+      const [lines] = await connection.execute(
+        "SELECT product_id, SUM(quantity) AS quantity FROM order_items WHERE order_id = ? AND product_id IS NOT NULL GROUP BY product_id",
+        [order.id]
+      );
+      for (const line of lines) {
+        const quantity = Number(line.quantity);
+        if (!line.product_id || !Number.isSafeInteger(quantity) || quantity <= 0) continue;
+        const [products] = await connection.execute(
+          "SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE",
+          [line.product_id]
+        );
+        if (!products.length) continue;
+        const product = products[0];
+        const previousStock = Number(product.stock || 0);
+        const newStock = previousStock + quantity;
+        if (!Number.isSafeInteger(newStock) || newStock > 2147483647) {
+          throw new Error("Stock restoration would exceed the supported inventory balance.");
+        }
+        await connection.execute(
+          "UPDATE products SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?",
+          [newStock, line.product_id]
+        );
+        await recordInventoryMovement(connection, {
+          productId: product.id,
+          productName: product.name,
+          previousStock,
+          quantityDelta: quantity,
+          newStock,
+          reason: `Customer cancellation restock ${orderNumber}`,
+          actorId: customer.id,
+          actorName: customer.name,
+          actorEmail: customer.email
+        });
+      }
+    }
+
+    const updateFields = [
+      "order_status = 'cancelled'",
+      "cancelled_at = UTC_TIMESTAMP(3)",
+      "cancellation_reason = ?",
+      "updated_at = UTC_TIMESTAMP(3)"
+    ];
+    const updateValues = [reason || "Cancelled by customer"];
+    if (isPaid) {
+      updateFields.push("refund_needed = 1", "refund_amount = ?");
+      updateValues.push(Number(order.total) || 0);
+    }
+    updateValues.push(order.id);
+    await connection.execute(
+      `UPDATE orders SET ${updateFields.join(", ")} WHERE id = ?`,
+      updateValues
+    );
+    await connection.execute(
+      "INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at) VALUES (?, ?, 'cancelled', ?, ?, UTC_TIMESTAMP(3))",
+      [order.id, order.order_status, reason || "Cancelled by customer", customer.email]
+    );
+    await connection.commit();
+    return res.json({
+      success: true,
+      orderNumber,
+      orderStatus: "cancelled",
+      refundNeeded: isPaid,
+      stockRestored: stockWasDecremented,
+      message: isPaid
+        ? "Your order has been cancelled. The payment has not been refunded automatically; SARINE support will review the refund."
+        : "Your order has been cancelled successfully."
+    });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    return next(error);
+  } finally {
+    connection?.release();
+  }
 });
 
 // POST /api/customer/auth/returns — return/exchange requests for orders owned by this account.
