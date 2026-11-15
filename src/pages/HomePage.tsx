@@ -379,7 +379,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 to={currentHero.shopLink}
                 className="px-6 sm:px-7 py-3 bg-[#563568] text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[#A184BD] transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"
               >
-                <span>Shop the Collection</span>
+                <span>{currentHero.ctaText || 'Shop the Collection'}</span>
                 <ArrowRight size={13} />
               </Link>
               <a
