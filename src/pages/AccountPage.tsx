@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { customerAuthService } from "../services/customerAuthService";
 import type { CustomerIdentity } from "../types/customer";
 
 type AuthMode = "signin" | "signup";
 
 export const AccountPage: React.FC = () => {
+  const navigate = useNavigate();
   const [customer, setCustomer] = useState<CustomerIdentity | null>(null);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<AuthMode>("signin");
@@ -35,6 +36,7 @@ export const AccountPage: React.FC = () => {
         : await customerAuthService.register(name.trim(), email.trim(), password);
       setCustomer(result);
       setPassword("");
+      navigate("/", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to access your account. Please try again.");
     } finally {
