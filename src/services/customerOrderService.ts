@@ -27,12 +27,15 @@ class CustomerOrderService {
   }
 
   async requestReturnOrExchange(
-    _orderNumber: string,
-    _reason: string,
-    _actionType: "return" | "exchange",
-    _notes: string
+    orderNumber: string,
+    reason: string,
+    actionType: "return" | "exchange",
+    notes: string
   ): Promise<{ success: boolean; message: string }> {
-    throw new Error("Online return and exchange requests are being connected to SARINE support. Please contact our concierge for assistance.");
+    return customerRequest<{ success: boolean; message: string }>("returns", {
+      method: "POST",
+      body: JSON.stringify({ orderNumber, reason, requestType: actionType, notes })
+    });
   }
 }
 
