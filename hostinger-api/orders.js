@@ -6,7 +6,7 @@ import { pool } from "./db.js";
 
 const router = Router();
 
-import { calculateShippingFee, COD_ENABLED } from "./checkoutPolicy.js";
+import { calculateShippingFee, getCheckoutConfig } from "./checkoutPolicy.js";
 import { matchesOrderRazorpayId } from "./paymentValidation.js";
 import { aggregateOrderItems } from "./orderItems.js";
 
@@ -46,6 +46,7 @@ const trackingLimiter = rateLimit({
 router.post("/create", async (req, res, next) => {
   let connection;
   try {
+    const checkoutConfig = await getCheckoutConfig();
     const { items, customer, shippingAddress, paymentMethod } = req.body || {};
 
     // 1. Validate customer details
@@ -89,7 +90,7 @@ router.post("/create", async (req, res, next) => {
     if (paymentMethod !== "online" && paymentMethod !== "cod") {
       return res.status(400).json({ error: "Invalid payment method." });
     }
-    if (paymentMethod === "cod" && !COD_ENABLED) {
+    if (paymentMethod === "cod" && !checkoutConfig.codEnabled) {
       return res.status(400).json({
         error: "Cash on Delivery is currently unavailable. Please choose online payment."
       });
@@ -174,7 +175,7 @@ router.post("/create", async (req, res, next) => {
       });
     }
 
-    const shippingFee = calculateShippingFee(calculatedSubtotal);
+    const shippingFee = calculateShippingFee(calculatedSubtotal, checkoutConfig);
     const total = calculatedSubtotal + shippingFee;
 
     // 6. Concurrency-safe counter allocation
