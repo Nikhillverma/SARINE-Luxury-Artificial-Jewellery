@@ -5,10 +5,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getFirebaseAuth, isFirebaseConfigured } from '../../lib/firebase';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { formatInr } from '../../utils/currency';
-import { getApiEndpoint } from '../../config/api';
 import {
   TrendingUp,
   DollarSign,
@@ -58,43 +56,23 @@ export const AdminAnalyticsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
     async function fetchOrders() {
-      if (!isFirebaseConfigured()) {
-        setLoading(false);
-        return;
-      }
-
       try {
-        const auth = getFirebaseAuth();
-        const user = auth.currentUser;
-        if (!user) {
-          setLoading(false);
-          return;
-        }
-
-        const token = await user.getIdToken();
-        const res = await fetch(getApiEndpoint('admin-list-orders?limit=100'), {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        if (!res.ok) {
-          throw new Error('Failed to fetch analytics orders');
-        }
-
-        const data = await res.json();
-        setOrders(data.orders || []);
-      } catch (err: any) {
-        console.error('[AdminAnalyticsPage] Fetch error:', err);
-        setOrders([]);
-        setError('Failed to fetch analytics orders.');
+        const apiBase = (import.meta.env.VITE_HOSTINGER_API_BASE_URL || (import.meta.env.DEV ? '/api' : 'https://lavender-goldfish-844589.hostingersite.com/api')).replace(/\/+$/, '');
+        const response = await fetch(`${apiBase}/admin/orders?limit=100`, { credentials: 'include' });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Failed to fetch analytics orders.');
+        if (active) setOrders(Array.isArray(data.orders) ? data.orders : []);
+      } catch (err) {
+        console.error('[AdminAnalyticsPage] Hostinger API fetch error:', err);
+        if (active) setError('Unable to load analytics from the Hostinger database.');
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }
-
     fetchOrders();
+    return () => { active = false; };
   }, []);
 
   // Compute real metrics
