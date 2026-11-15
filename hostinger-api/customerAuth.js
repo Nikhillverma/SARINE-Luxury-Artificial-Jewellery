@@ -96,7 +96,8 @@ router.get("/orders", async (req, res, next) => {
               shipping_address, subtotal, shipping_fee, total, payment_method,
               payment_status, order_status, courier_name, tracking_number,
               tracking_url, shipped_at, delivered_at, cancelled_at,
-              cancellation_reason, refund_needed, refund_amount, created_at
+              cancellation_reason, refund_needed, refund_amount, return_status,
+              return_reason, return_notes, created_at
        FROM orders WHERE customer_id = ?
        ORDER BY created_at DESC, id DESC LIMIT 100`,
       [customer.id]
@@ -161,10 +162,81 @@ router.get("/orders", async (req, res, next) => {
         cancelledAt: iso(row.cancelled_at),
         cancellationReason: row.cancellation_reason || undefined,
         refundNeeded: Boolean(row.refund_needed),
-        refundAmount: Number(row.refund_amount) || 0
+        refundAmount: Number(row.refund_amount) || 0,
+        returnStatus: row.return_status || 'none',
+        returnReason: row.return_reason || undefined,
+        returnNotes: row.return_notes || undefined
       };
     }) });
   } catch (error) { return next(error); }
+});
+
+// POST /api/customer/auth/returns — return/exchange requests for orders owned by this account.
+router.post("/returns", async (req, res, next) => {
+  let connection;
+  try {
+    res.set("Cache-Control", "no-store");
+    const customer = await getAuthenticatedCustomer(req);
+    if (!customer) return res.status(401).json({ error: "Please sign in to request a return or exchange." });
+
+    const orderNumber = String(req.body?.orderNumber || "").trim().toUpperCase();
+    const requestType = String(req.body?.requestType || "").trim().toLowerCase();
+    const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
+    const notes = typeof req.body?.notes === "string" ? req.body.notes.trim() : "";
+    if (!/^SAR-\d{6}$/.test(orderNumber)) return res.status(400).json({ error: "Enter a valid order number." });
+    if (!["return", "exchange"].includes(requestType)) return res.status(400).json({ error: "Choose return or exchange." });
+    if (reason.length < 3 || reason.length > 500) return res.status(400).json({ error: "Please provide a reason between 3 and 500 characters." });
+    if (notes.length > 2000) return res.status(400).json({ error: "Additional notes must be 2,000 characters or fewer." });
+
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const [orders] = await connection.execute(
+      "SELECT id, order_status, delivered_at FROM orders WHERE order_number = ? AND customer_id = ? FOR UPDATE",
+      [orderNumber, customer.id]
+    );
+    if (!orders.length) {
+      await connection.rollback();
+      return res.status(404).json({ error: "We couldn't find this order in your account." });
+    }
+    const order = orders[0];
+    if (order.order_status !== "delivered" || !order.delivered_at) {
+      await connection.rollback();
+      return res.status(400).json({ error: "Return or exchange requests can only be submitted after delivery." });
+    }
+    const [windowRows] = await connection.execute(
+      "SELECT (UTC_TIMESTAMP(3) <= DATE_ADD(?, INTERVAL 7 DAY)) AS within_window",
+      [order.delivered_at]
+    );
+    if (!Number(windowRows[0]?.within_window)) {
+      await connection.rollback();
+      return res.status(400).json({ error: "The 7-day return request window has ended for this order." });
+    }
+    const [existing] = await connection.execute(
+      "SELECT id FROM returns WHERE order_id = ? AND status NOT IN ('rejected', 'closed') LIMIT 1 FOR UPDATE",
+      [order.id]
+    );
+    if (existing.length) {
+      await connection.rollback();
+      return res.status(409).json({ error: "A return or exchange request is already open for this order." });
+    }
+    const [insertResult] = await connection.execute(
+      "INSERT INTO returns (order_id, request_type, reason, notes, status, created_at) VALUES (?, ?, ?, ?, 'pending', UTC_TIMESTAMP(3))",
+      [order.id, requestType, reason, notes || null]
+    );
+    await connection.commit();
+    return res.status(201).json({
+      success: true,
+      requestId: Number(insertResult.insertId),
+      orderNumber,
+      status: "pending",
+      message: `Your ${requestType} request has been submitted. Our team will review it.`
+    });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    return next(error);
+  } finally {
+    connection?.release();
+  }
 });
 
 // POST /api/customer/auth/register
