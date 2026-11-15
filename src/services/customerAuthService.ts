@@ -1,4 +1,4 @@
-import { CustomerIdentity } from "../types/customer";
+import type { CustomerIdentity } from "../types/customer";
 
 type CustomerRecord = Omit<CustomerIdentity, "displayName" | "uid">;
 const mapCustomer = (customer: CustomerRecord): CustomerIdentity => ({ ...customer, uid: customer.id, displayName: customer.name });
@@ -51,6 +51,6 @@ export const customerAuthService = {
     const result = await request<{ success: boolean; customer: CustomerRecord }>("profile", {
       method: "PATCH", body: JSON.stringify({ name, phone })
     });
-    return { ...result.customer, displayName: result.customer.name };
+    return mapCustomer(result.customer);
   }
 };
