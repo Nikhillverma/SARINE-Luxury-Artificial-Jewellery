@@ -85,6 +85,88 @@ async function createSession(customerId, res) {
   setCookie(res, token);
 }
 
+// GET /api/customer/auth/orders — only orders explicitly linked to this customer account.
+router.get("/orders", async (req, res, next) => {
+  try {
+    res.set("Cache-Control", "no-store");
+    const customer = await findSession(req);
+    if (!customer) return res.status(401).json({ error: "Please sign in again." });
+    const [rows] = await pool.execute(
+      `SELECT id, order_number, customer_name, customer_email, customer_phone,
+              shipping_address, subtotal, shipping_fee, total, payment_method,
+              payment_status, order_status, courier_name, tracking_number,
+              tracking_url, shipped_at, delivered_at, cancelled_at,
+              cancellation_reason, refund_needed, refund_amount, created_at
+       FROM orders WHERE customer_id = ?
+       ORDER BY created_at DESC, id DESC LIMIT 100`,
+      [customer.id]
+    );
+    const ids = rows.map((row) => row.id);
+    const itemsByOrder = {};
+    if (ids.length) {
+      const placeholders = ids.map(() => "?").join(",");
+      const [items] = await pool.query(
+        `SELECT order_id, product_id, product_name, sku, unit_price, quantity, image
+         FROM order_items WHERE order_id IN (${placeholders}) ORDER BY source_line ASC, id ASC`,
+        ids
+      );
+      for (const item of items) {
+        (itemsByOrder[item.order_id] ||= []).push({
+          productId: item.product_id || "",
+          name: item.product_name || "Product",
+          image: item.image || "",
+          sku: item.sku || undefined,
+          unitPrice: Number(item.unit_price) || 0,
+          quantity: Number(item.quantity) || 1
+        });
+      }
+    }
+    const iso = (value) => value ? new Date(value).toISOString() : undefined;
+    const parseAddress = (value) => {
+      if (value && typeof value === "object") return value;
+      try { return JSON.parse(value || "{}"); } catch { return {}; }
+    };
+    return res.json({ orders: rows.map((row) => {
+      const address = parseAddress(row.shipping_address);
+      return {
+        id: row.id,
+        orderNumber: row.order_number,
+        createdAt: iso(row.created_at),
+        customer: {
+          name: row.customer_name || customer.name,
+          email: row.customer_email || customer.email,
+          phone: row.customer_phone || customer.phone || ""
+        },
+        shippingAddress: {
+          fullName: address.fullName || row.customer_name || customer.name,
+          phone: address.phone || row.customer_phone || "",
+          line1: address.line1 || "",
+          line2: address.line2 || undefined,
+          city: address.city || "",
+          state: address.state || "",
+          pincode: address.pincode || ""
+        },
+        lines: itemsByOrder[row.id] || [],
+        subtotal: Number(row.subtotal) || 0,
+        shippingFee: Number(row.shipping_fee) || 0,
+        total: Number(row.total) || 0,
+        paymentMethod: row.payment_method || "online",
+        paymentStatus: row.payment_status || "pending",
+        orderStatus: row.order_status || "pending",
+        courierName: row.courier_name || undefined,
+        trackingNumber: row.tracking_number || undefined,
+        trackingUrl: row.tracking_url || undefined,
+        shippedAt: iso(row.shipped_at),
+        deliveredAt: iso(row.delivered_at),
+        cancelledAt: iso(row.cancelled_at),
+        cancellationReason: row.cancellation_reason || undefined,
+        refundNeeded: Boolean(row.refund_needed),
+        refundAmount: Number(row.refund_amount) || 0
+      };
+    }) });
+  } catch (error) { return next(error); }
+});
+
 // POST /api/customer/auth/register
 router.post("/register", registrationLimiter, async (req, res, next) => {
   try {
