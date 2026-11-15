@@ -29,6 +29,7 @@ export const BagPage: React.FC = () => {
   } = useCart();
 
   const { toggleWishlist } = useWishlist();
+  const { config: checkoutConfig } = useCheckoutConfig();
 
   const handleSaveToWishlist = (item: CartItem) => {
     toggleWishlist(item.product);
