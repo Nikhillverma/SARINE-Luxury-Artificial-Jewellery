@@ -10,7 +10,7 @@
  */
 
 import React from 'react';
-import { User } from 'firebase/auth';
+import { CustomerIdentity } from '../../types/customer';
 import {
   Package,
   Sparkles,
@@ -42,7 +42,7 @@ export type AccountSection =
   | 'profile';
 
 interface AccountSidebarProps {
-  currentUser: User;
+  currentUser: CustomerIdentity;
   activeSection: AccountSection;
   onSelectSection: (section: AccountSection) => void;
   onTriggerLogout: () => void;
