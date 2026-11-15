@@ -21,10 +21,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
-      - name: Install frontend dependencies
-        run: npm ci
+          node-version: 24
+                - name: Install frontend dependencies
+        run: npm install --legacy-peer-deps --no-audit --no-fund
       - name: TypeScript validation
         run: npm run lint
       - name: Production build
