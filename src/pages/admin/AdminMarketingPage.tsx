@@ -1,12 +1,10 @@
 /**
  * AdminMarketingPage for SARINE.
  * Promotion, coupon rules, festival campaign scheduler, and discount margin simulator.
- * Connected to Firestore database for real-time coupon management.
+ * Connected to Hostinger MariaDB for coupon management.
  */
 
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { getDb, isFirebaseConfigured } from '../../lib/firebase';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { formatInr } from '../../utils/currency';
 import {
@@ -24,7 +22,8 @@ interface Coupon {
   maxDiscount: number;
   usedCount: number;
   expiryDate: string;
-  status: 'active' | 'scheduled' | 'expired';
+  status: 'active' | 'scheduled' | 'expired' | 'paused';
+  discountType?: 'percentage' | 'fixed';
 }
 
 export const AdminMarketingPage: React.FC = () => {
@@ -37,7 +36,7 @@ export const AdminMarketingPage: React.FC = () => {
   const defaultExpiryStr = (() => {
     const d = new Date();
     d.setDate(d.getDate() + 30);
-    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    return d.toISOString().slice(0, 10);
   })();
 
   // New coupon form
@@ -53,39 +52,40 @@ export const AdminMarketingPage: React.FC = () => {
   const [simSelectedCoupon, setSimSelectedCoupon] = useState<string>('custom');
 
   useEffect(() => {
+    let active = true;
     async function loadCoupons() {
-      if (!isFirebaseConfigured()) {
-        setLoading(false);
-        return;
-      }
       try {
-        const db = getDb();
-        const snap = await getDocs(collection(db, 'coupons'));
-        const list: Coupon[] = [];
-        snap.forEach((docSnap) => {
-          const d = docSnap.data();
-          list.push({
-            code: d.code || docSnap.id,
-            discountPercent: Number(d.discountPercent) || 10,
-            minOrder: Number(d.minOrder) || 999,
-            maxDiscount: Number(d.maxDiscount) || 500,
-            usedCount: Number(d.usedCount) || 0,
-            expiryDate: d.expiryDate || 'Active',
-            status: d.status || 'active'
-          });
-        });
-        setCoupons(list);
-        if (list.length > 0) {
-          setSimSelectedCoupon(list[0].code);
+        const apiBase = (import.meta.env.VITE_HOSTINGER_API_BASE_URL || (import.meta.env.DEV ? '/api' : 'https://lavender-goldfish-844589.hostingersite.com/api')).replace(/\/+$/, '');
+        const response = await fetch(`${apiBase}/admin/marketing/coupons`, { credentials: 'include' });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Failed to load coupons.');
+        const list: Coupon[] = (Array.isArray(data.coupons) ? data.coupons : []).map((coupon: {
+          code: string; discountType: 'percentage' | 'fixed'; discountValue: number;
+          minOrder: number; maxDiscount: number | null; usedCount: number;
+          expiresAt: string; status: Coupon['status'];
+        }) => ({
+          code: coupon.code,
+          discountType: coupon.discountType,
+          discountPercent: coupon.discountType === 'percentage' ? Number(coupon.discountValue) : 0,
+          minOrder: Number(coupon.minOrder) || 0,
+          maxDiscount: Number(coupon.maxDiscount) || 0,
+          usedCount: Number(coupon.usedCount) || 0,
+          expiryDate: coupon.expiresAt ? new Date(coupon.expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—',
+          status: coupon.status
+        }));
+        if (active) {
+          setCoupons(list);
+          if (list.length > 0) setSimSelectedCoupon(list[0].code);
         }
       } catch (err) {
-        console.warn('[AdminMarketingPage] Could not load coupons:', err);
-        setCoupons([]);
+        console.warn('[AdminMarketingPage] Hostinger coupon load failed:', err);
+        if (active) setCoupons([]);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }
     loadCoupons();
+    return () => { active = false; };
   }, []);
 
   const selectedCouponObj = coupons.find((c) => c.code === simSelectedCoupon);
@@ -97,25 +97,50 @@ export const AdminMarketingPage: React.FC = () => {
   const estimatedCost = Math.round(simCartTotal * 0.35);
   const estimatedContributionProfit = postDiscountTotal - estimatedCost;
 
-  const handleCreateCoupon = (e: React.FormEvent) => {
+  const handleCreateCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCode.trim()) return;
-
-    const coupon: Coupon = {
-      code: newCode.trim().toUpperCase(),
-      discountPercent: parseFloat(newDiscount) || 10,
-      minOrder: parseFloat(newMinOrder) || 999,
-      maxDiscount: parseFloat(newMaxDiscount) || 500,
-      usedCount: 0,
-      expiryDate: newExpiry,
-      status: 'active'
-    };
-
-    setCoupons([coupon, ...coupons]);
-    setSimSelectedCoupon(coupon.code);
-    setShowAddModal(false);
-    setSuccess(`Coupon "${coupon.code}" created and activated.`);
-    setNewCode('');
+    setSuccess(null);
+    try {
+      const apiBase = (import.meta.env.VITE_HOSTINGER_API_BASE_URL || (import.meta.env.DEV ? '/api' : 'https://lavender-goldfish-844589.hostingersite.com/api')).replace(/\/+$/, '');
+      const response = await fetch(`${apiBase}/admin/marketing/coupons`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: newCode.trim().toUpperCase(),
+          discountType: 'percentage',
+          discountValue: Math.round(Number(newDiscount)),
+          minOrder: Math.round(Number(newMinOrder)),
+          maxDiscount: Math.round(Number(newMaxDiscount)),
+          usageLimit: null,
+          perCustomerLimit: 1,
+          startsAt: null,
+          expiresAt: new Date(`${newExpiry}T23:59:59`).toISOString(),
+          status: 'active'
+        })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Unable to create coupon.');
+      const created = data.coupon;
+      const coupon: Coupon = {
+        code: created.code,
+        discountType: created.discountType,
+        discountPercent: Number(created.discountValue) || 0,
+        minOrder: Number(created.minOrder) || 0,
+        maxDiscount: Number(created.maxDiscount) || 0,
+        usedCount: Number(created.usedCount) || 0,
+        expiryDate: new Date(created.expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+        status: created.status
+      };
+      setCoupons((current) => [coupon, ...current]);
+      setSimSelectedCoupon(coupon.code);
+      setShowAddModal(false);
+      setSuccess(`Coupon "${coupon.code}" created and activated.`);
+      setNewCode('');
+    } catch (err) {
+      setSuccess(err instanceof Error ? err.message : 'Unable to create coupon.');
+    }
   };
 
   return (
@@ -194,7 +219,7 @@ export const AdminMarketingPage: React.FC = () => {
                     {coupons.map((c) => (
                       <tr key={c.code} className="hover:bg-[#FAF5FC]">
                         <td className="py-2.5 font-bold font-mono text-[#563568]">{c.code}</td>
-                        <td className="py-2.5 font-semibold text-[#2C1838]">{c.discountPercent}% OFF</td>
+                        <td className="py-2.5 font-semibold text-[#2C1838]">{c.discountType === 'fixed' ? `₹${c.discountPercent} OFF` : `${c.discountPercent}% OFF`}</td>
                         <td className="py-2.5 text-[#5D5068]">{formatInr(c.minOrder)}</td>
                         <td className="py-2.5 text-center font-medium text-[#2C1838]">{c.usedCount}</td>
                         <td className="py-2.5 text-[11px] text-[#8E769E]">{c.expiryDate}</td>
@@ -370,7 +395,7 @@ export const AdminMarketingPage: React.FC = () => {
                 <div>
                   <label className="block text-[#5D5068] font-medium mb-1">Valid Till</label>
                   <input
-                    type="text"
+                    type="date"
                     required
                     value={newExpiry}
                     onChange={(e) => setNewExpiry(e.target.value)}
