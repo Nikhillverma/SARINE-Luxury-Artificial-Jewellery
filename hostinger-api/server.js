@@ -352,7 +352,7 @@ app.use("/api/admin/returns", adminReturnsRouter);
 // Hostinger orders router
 app.use("/api/orders", ordersRouter);
 
-// Backward-compatible direct aliases for existing Netlify callers
+// Legacy direct API aliases for existing storefront callers
 app.post("/api/create-order", (req, res, next) => {
   req.url = "/create";
   ordersRouter(req, res, next);
