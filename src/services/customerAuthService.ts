@@ -1,5 +1,8 @@
 import { CustomerIdentity } from "../types/customer";
 
+type CustomerRecord = Omit<CustomerIdentity, "displayName" | "uid">;
+const mapCustomer = (customer: CustomerRecord): CustomerIdentity => ({ ...customer, uid: customer.id, displayName: customer.name });
+
 const API_BASE = (
   import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
   (import.meta.env.DEV ? "/api" : "https://lavender-goldfish-844589.hostingersite.com/api")
@@ -21,9 +24,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 export const customerAuthService = {
   async getSession(): Promise<CustomerIdentity | null> {
     try {
-      const result = await request<{ authenticated: boolean; customer?: Omit<CustomerIdentity, "displayName"> }>("session");
+      const result = await request<{ authenticated: boolean; customer?: CustomerRecord }>("session");
       return result.authenticated && result.customer
-        ? { ...result.customer, uid: result.customer.id, displayName: result.customer.name }
+        ? mapCustomer(result.customer)
         : null;
     } catch {
       return null;
@@ -33,7 +36,7 @@ export const customerAuthService = {
     const result = await request<{ success: boolean; customer: Omit<CustomerIdentity, "displayName"> }>("login", {
       method: "POST", body: JSON.stringify({ email, password })
     });
-    return { ...result.customer, displayName: result.customer.name };
+    return mapCustomer(result.customer);
   },
   async register(name: string, email: string, password: string): Promise<CustomerIdentity> {
     const result = await request<{ success: boolean; customer: Omit<CustomerIdentity, "displayName"> }>("register", {
