@@ -317,6 +317,7 @@ router.post("/create", async (req, res, next) => {
       return res.json({
         orderNumber,
         publicToken,
+        customer: { name: customerName, email: customerEmail, phone: cleanCustomerPhone },
         orderStatus: "placed",
         subtotal: calculatedSubtotal,
         shippingFee,
@@ -407,6 +408,7 @@ router.post("/create", async (req, res, next) => {
       return res.json({
         orderNumber,
         publicToken,
+        customer: { name: customerName, email: customerEmail, phone: cleanCustomerPhone },
         razorpayOrderId: rpOrder.id,
         amount: amountInPaise,
         keyId: process.env.RAZORPAY_KEY_ID,
