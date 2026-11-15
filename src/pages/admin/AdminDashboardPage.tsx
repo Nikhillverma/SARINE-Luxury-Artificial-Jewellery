@@ -133,8 +133,8 @@ export const AdminDashboardPage: React.FC = () => {
   // Derive Admin Display Name & First Name for greeting
   const adminDisplayName = useMemo(() => {
     if (authLoading) return '...';
-    if (user?.name && user.displayName.trim()) {
-      return user.displayName.trim();
+    if (user?.name && user.name.trim()) {
+      return user.name.trim();
     }
     if (user?.email && user.email.trim()) {
       const prefix = user.email.split('@')[0];
@@ -145,8 +145,8 @@ export const AdminDashboardPage: React.FC = () => {
 
   const adminFirstName = useMemo(() => {
     if (authLoading) return '...';
-    if (user?.displayName && user.displayName.trim()) {
-      return user.displayName.trim().split(/\s+/)[0];
+    if (user?.name && user.name.trim()) {
+      return user.name.trim().split(/\s+/)[0];
     }
     if (user?.email && user.email.trim()) {
       const prefix = user.email.split('@')[0];
@@ -489,7 +489,7 @@ export const AdminDashboardPage: React.FC = () => {
             <button
               onClick={() => {
                 setOrdersLoading(true);
-                fetchOrdersViaApi();
+                window.location.reload();
               }}
               className="px-3 py-1 bg-white border border-[#FCA5A5] text-[#991B1B] font-semibold rounded-lg hover:bg-[#FEE2E2] transition-colors shrink-0 cursor-pointer"
             >
