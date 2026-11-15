@@ -56,7 +56,7 @@ function clearCookie(res) {
 function safeCustomer(row) {
   return { id: row.id, name: row.name, email: row.email, phone: row.phone || "" };
 }
-async function findSession(req) {
+export async function getAuthenticatedCustomer(req) {
   const token = readCookie(req);
   if (!token || !/^[a-f0-9]{64}$/i.test(token)) return null;
   const sessionId = hashToken(token);
@@ -89,7 +89,7 @@ async function createSession(customerId, res) {
 router.get("/orders", async (req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
-    const customer = await findSession(req);
+    const customer = await getAuthenticatedCustomer(req);
     if (!customer) return res.status(401).json({ error: "Please sign in again." });
     const [rows] = await pool.execute(
       `SELECT id, order_number, customer_name, customer_email, customer_phone,
