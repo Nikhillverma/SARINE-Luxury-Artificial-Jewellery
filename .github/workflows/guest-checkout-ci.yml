@@ -58,5 +58,6 @@ jobs:
           node --check adminDashboard.js
           node --check adminProducts.js
           node --check checkoutPolicy.js
+          node --check paymentValidation.js
       - name: Run backend tests
         run: npm test
