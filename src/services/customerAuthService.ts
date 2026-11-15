@@ -23,7 +23,7 @@ export const customerAuthService = {
     try {
       const result = await request<{ authenticated: boolean; customer?: Omit<CustomerIdentity, "displayName"> }>("session");
       return result.authenticated && result.customer
-        ? { ...result.customer, displayName: result.customer.name }
+        ? { ...result.customer, uid: result.customer.id, displayName: result.customer.name }
         : null;
     } catch {
       return null;
