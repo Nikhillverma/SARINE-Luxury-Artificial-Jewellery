@@ -21,6 +21,7 @@ import {
   Package,
   Boxes,
   ShoppingBag,
+  BarChart3,
   LayoutTemplate,
   Settings,
   Search,
@@ -38,7 +39,9 @@ import {
   X,
   CheckCircle2,
   AlertTriangle,
-  UserCheck
+  UserCheck,
+  RotateCcw,
+  Star
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -141,6 +144,12 @@ interface NavItem {
       match: (p: string) => p.startsWith('/admin/products')
     },
     {
+      name: 'Categories',
+      path: '/admin/categories',
+      icon: Tag,
+      match: (p: string) => p.startsWith('/admin/categories')
+    },
+    {
       name: 'Inventory & Suppliers',
       path: '/admin/inventory',
       icon: Boxes,
@@ -153,10 +162,40 @@ interface NavItem {
       match: (p: string) => p.startsWith('/admin/orders')
     },
     {
+      name: 'Customers',
+      path: '/admin/customers',
+      icon: UserCheck,
+      match: (p: string) => p.startsWith('/admin/customers')
+    },
+    {
+      name: 'Returns & Refunds',
+      path: '/admin/returns',
+      icon: RotateCcw,
+      match: (p: string) => p.startsWith('/admin/returns')
+    },
+    {
+      name: 'Reviews & Ratings',
+      path: '/admin/reviews',
+      icon: Star,
+      match: (p: string) => p.startsWith('/admin/reviews')
+    },
+    {
+      name: 'Marketing & Coupons',
+      path: '/admin/marketing',
+      icon: Tag,
+      match: (p: string) => p.startsWith('/admin/marketing')
+    },
+    {
       name: 'Storefront Studio',
       path: '/admin/storefront',
       icon: LayoutTemplate,
       match: (p: string) => p.startsWith('/admin/storefront')
+    },
+    {
+      name: 'Analytics & Reports',
+      path: '/admin/analytics',
+      icon: BarChart3,
+      match: (p: string) => p.startsWith('/admin/analytics')
     },
     {
       name: 'Settings & Security',
