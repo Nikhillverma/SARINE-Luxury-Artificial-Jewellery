@@ -7,9 +7,22 @@ import adminAuthRouter from "./adminAuth.js";
 import adminOrdersRouter from "./adminOrders.js";
 import adminDashboardRouter from "./adminDashboard.js";
 import adminProductsRouter from "./adminProducts.js";
+import adminDatabaseAuditRouter from "./adminDatabaseAudit.js";
+import adminReturnsRouter from "./adminReturns.js";
+import adminAnalyticsRouter from "./adminAnalytics.js";
+import adminInventoryRouter from "./adminInventory.js";
+import adminCategoriesRouter from "./adminCategories.js";
+import adminCustomersRouter from "./adminCustomers.js";
+import adminMarketingRouter from "./adminMarketing.js";
+import publicCouponsRouter from "./publicCoupons.js";
+import adminStorefrontRouter, { publicStorefrontRouter } from "./adminStorefront.js";
+import { publicMediaRouter, adminMediaRouter } from "./media.js";
 import ordersRouter from "./orders.js";
 
 const app = express();
+
+// Hostinger runs this API behind one trusted reverse proxy.
+app.set("trust proxy", 1);
 const PORT = Number(process.env.PORT || 3000);
 
 const allowedOrigins = new Set([
@@ -35,7 +48,7 @@ app.use(cors({
 }));
 
 app.use(express.json({
-  limit: "1mb",
+  limit: "4mb",
   verify: (req, _res, buf) => {
     req.rawBody = buf;
   }
@@ -307,12 +320,26 @@ app.get("/api/categories/:slug", async (req, res, next) => {
   }
 });
 
-// Hostinger admin authentication
-app.use("/api/admin/auth", adminAuthRouter);
+// Public coupons, storefront content, and immutable media URLs.
+app.use("/api/marketing/coupons", publicCouponsRouter);
+app.use("/api/storefront", publicStorefrontRouter);
+app.use("/api/media", publicMediaRouter);
+app.use("/api/admin/media", adminMediaRouter);
+app.use("/api/admin/marketing", adminMarketingRouter);
+app.use("/api/admin/storefront", adminStorefrontRouter);
 
-// Hostinger admin dashboard and product management
+// Hostinger admin authentication and read-only database diagnostics.
+app.use("/api/admin/auth", adminAuthRouter);
+app.use("/api/admin/database-audit", adminDatabaseAuditRouter);
+
+// Hostinger admin dashboard, analytics, categories, customers, inventory and products.
 app.use("/api/admin/dashboard", adminDashboardRouter);
+app.use("/api/admin/analytics", adminAnalyticsRouter);
+app.use("/api/admin/categories", adminCategoriesRouter);
+app.use("/api/admin/customers", adminCustomersRouter);
+app.use("/api/admin/inventory", adminInventoryRouter);
 app.use("/api/admin/products", adminProductsRouter);
+app.use("/api/admin/returns", adminReturnsRouter);
 
 // Hostinger admin orders
 app.use("/api/admin/orders", adminOrdersRouter);
