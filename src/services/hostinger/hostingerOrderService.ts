@@ -23,6 +23,7 @@ interface CreateOrderResponse {
   orderNumber: string;
   publicToken: string;
   orderStatus: Order["orderStatus"];
+  customer?: Order["customer"];
   subtotal: number;
   shippingFee: number;
   discountAmount?: number;
@@ -56,7 +57,7 @@ export class HostingerOrderService implements IOrderService {
       id: result.orderNumber,
       orderNumber: result.orderNumber,
       lines: [],
-      customer: input.customer,
+      customer: result.customer || input.customer,
       shippingAddress: input.shippingAddress,
       subtotal: Number(result.subtotal) || 0,
       shippingFee: Number(result.shippingFee) || 0,
