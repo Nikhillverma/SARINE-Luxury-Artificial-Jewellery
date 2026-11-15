@@ -1,94 +1,107 @@
-# SARINE Store: Project Notes (keep this in the project)
+# SARINE Store: Current Project Notes
 
-Premium Indian artificial/fashion jewellery D2C store. React + TypeScript, built in Google AI Studio. Market: India. Currency: INR (whole-rupee integers).
+This file describes the current Hostinger-based application. It supersedes older Firebase/Netlify setup notes. Keep it current when architecture or deployment state changes.
 
-## Brand and content rules (always follow)
-- Look: warm ivory, champagne gold, charcoal text, serif headings, minimalist, mobile-first.
-- No fake reviews, no urgency text ("only 2 left"), no fake discounts.
-- No unverified material claims (waterproof, hypoallergenic, anti-tarnish, pure gold, etc.).
-- Never put secret keys in React code or in chat. Secrets live only in server environment variables.
+## Project and brand
 
-## What is DONE (do not redo)
-- Types: src/types/product.ts, category.ts, cart.ts, order.ts
-- Service layer with interfaces in src/services/interfaces.ts (IProductService, ICategoryService, IAdminProductService, IOrderService). Switch in src/services/index.ts via DATA_SOURCE.
-- DATA_SOURCE = 'firebase' (products and categories load from Firestore).
-- Secure Serverless Order & Payment System (Netlify Functions):
-  - Server helpers in netlify/functions/utils/ (firebaseAdmin.ts, razorpay.ts, storeConfig.ts, security.ts).
-  - netlify/functions/create-order.ts: Re-validates customer and address formats, validates positive quantities, checks active status, takes prices strictly from Firestore, computes server shipping & totals, generates sequential orderNumber (SAR-000001+) from a transaction counter doc, creates Razorpay order (amount in paise), generates 32-byte cryptographic publicToken, and saves snapshot in 'orders'.
-  - netlify/functions/verify-payment.ts: Timing-safe publicToken and HMAC-SHA256 signature verification. In a single Firestore transaction: idempotent if already paid, decrements stock atomically, sets paymentStatus 'paid' & orderStatus 'confirmed'. If stock ran out before payment finalized, sets orderStatus 'needs_refund'.
-  - netlify/functions/razorpay-webhook.ts: Validates raw body signature against RAZORPAY_WEBHOOK_SECRET, handles payment.captured/order.paid with idempotent confirmation and stock decrement.
-  - netlify/functions/get-order.ts: Token-authorized order retrieval; returns only safe fields.
-  - Firestore undefined value bug fixed: db.settings({ ignoreUndefinedProperties: true }) enabled once upon initialization, and optional fields (line2, notes) normalised to empty string before saving.
-- Frontend Order Service:
-  - src/services/netlify/netlifyOrderService.ts implementing IOrderService via /.netlify/functions/*.
-  - src/services/index.ts switches orderService to netlifyOrderService when DATA_SOURCE = 'firebase', and keeps mockOrderService when DATA_SOURCE = 'mock'.
-  - CheckoutPage: Dynamically loads Razorpay Checkout (https://checkout.razorpay.com/v1/checkout.js), opens modal with server order ID & key ID, verifies payment via verify-payment server endpoint, navigates to /order/<orderNumber>?t=<publicToken>, and preserves cart if modal dismissed.
-  - OrderConfirmationPage: Reads orderNumber and t token from URL, securely fetching order details.
-- CartContext with localStorage persistence (stores only productId + quantity, re-checks against live data on load).
-- Store config in src/config/store.ts and netlify/functions/utils/storeConfig.ts.
-- Netlify configuration in netlify.toml (build, functions folder, and SPA fallback /* -> /index.html 200).
-- Server env template in .env.example (no VITE_ secrets).
+- SARINE is a premium-affordable Indian fashion/artificial jewellery storefront.
+- Frontend: React 19, TypeScript, Vite 8, Tailwind CSS v4.
+- Backend: Node.js + Express in `hostinger-api/`.
+- Database: Hostinger MariaDB, accessed through `mysql2/promise`.
+- Payments: Razorpay; the server owns order totals, payment verification, and stock updates.
+- Currency: INR; product and checkout amounts are whole rupees.
+- Brand palette: lavender/plum `#563568`, `#B69ACF`, pale lavender `#F7F0FA`, rose-gold `#D9B8A0`.
+- Storefront: https://lavender-emu-732118.hostingersite.com/
+- API app: https://greenyellow-cat-956048.hostingersite.com/
+- GitHub source: `Nikhillverma/SARINE-Luxury-Artificial-Jewellery`, default branch `main`.
 
-## Firebase (ONE-TIME setup already finished)
-- Firebase project id: sarine-cbcce, Firestore in production mode.
-- Client web config configured with fallback in src/lib/firebase.ts for public read operations.
-- Database already seeded: 5 categories and 16 products (13 active, 2 draft, 1 archived). DO NOT run the seed again.
-- Rules are LOCKED. Current published rules:
+## Non-negotiable safety and content rules
 
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
-    }
-    match /categories/{categoryId} {
-      allow read: if true;
-      allow write: if false;
-    }
-    match /products/{productId} {
-      allow read: if resource.data.status == 'active';
-      allow write: if false;
-    }
-    match /orders/{orderId} {
-      allow read, write: if false;
-    }
-    match /users/{userId} {
-      allow read, write: if false;
-    }
-  }
-}
-```
+- Never put server secrets or private keys in frontend code, GitHub, screenshots, or chat.
+- Do not change production database data, delete orders, reset counters, or rerun seed/import scripts without a separately reviewed migration plan and verified backup.
+- Do not place real Razorpay payments for testing. Use automated tests and non-payment health checks; use Razorpay test mode only when an actual checkout test is specifically planned.
+- Do not change Razorpay keys, webhook settings, Hostinger environment variables, database credentials, or deployment settings as part of routine code fixes.
+- Do not claim that a GitHub merge means Hostinger has deployed the change. Verify Hostinger deployment/activity separately.
+- No fake reviews, fake popularity/sales ranking, fake urgency, fabricated contact details, or unverified claims about materials, plating, waterproofing, anti-tarnish performance, hypoallergenic properties, packaging, shipping, or delivery dates.
+- Preserve existing routes and API contracts unless a reviewed change requires otherwise. Avoid unnecessary dependencies and unsafe `any` types.
 
-- Composite indexes needed (create when the console asks or via the error link): products (status, categoryId), (status, createdAt desc), (status, categoryId, createdAt desc).
+## Current architecture
 
-## Known quirks
-- AI Studio's preview always reloads to the home page on refresh. This is the preview, not a bug.
-- includeAll is ignored under Firebase (rules only allow active products). Admin access comes later with login.
-- Netlify Functions execute on deployed Netlify environments or with "netlify dev". In AI Studio's standalone preview, DATA_SOURCE = 'mock' can be used for end-to-end simulated ordering without a server.
+### Frontend
 
-- Private Admin Orders Management Section (DONE):
-  - Shared helper `netlify/functions/utils/adminAuth.ts`: verifies Firebase ID token via Admin SDK and enforces `ADMIN_EMAILS` allowlist.
-  - `netlify/functions/admin-list-orders.ts`: GET endpoint returning orders sorted by createdAt desc, with status/payment filters, pagination (limit, startAfter), and safe fields only (never publicToken or razorpaySignature).
-  - `netlify/functions/admin-update-order.ts`: POST endpoint strictly supporting "mark_shipped", "mark_delivered" (updates COD to paid with cod_collected), "cancel" (with atomic stock restoration for paid/COD orders and refundNeeded flag), and "add_note" (max 500 chars).
-  - Frontend admin routes: `/admin/login` (Firebase Auth sign-in) and `/admin/orders` (guarded orders ledger with filters, search, load more, order drawer, tracking update form, cancel dialog, and Razorpay dashboard refund instructions).
+- `src/services/index.ts` selects `DATA_SOURCE = 'hostinger'`.
+- Public product and category data are loaded from the Hostinger API.
+- Orders are created and retrieved through `HostingerOrderService`.
+- Admin product management uses the Hostinger admin API and database-backed session authentication.
+- Production API fallback is the Hostinger backend app above. The `VITE_HOSTINGER_API_BASE_URL` environment variable can override it; local development uses `/api`.
+- Cart contents are client-side, but prices, stock, shipping, and order totals are recalculated by the backend at checkout.
 
-## Still TODO (in order)
-1. Add server environment variables in backend provider (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, ADMIN_EMAILS, RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET).
-2. Configure Razorpay Webhook in Razorpay Dashboard pointing to https://<your-functions-host>/.netlify/functions/razorpay-webhook with secret RAZORPAY_WEBHOOK_SECRET for payment.captured.
-3. Order confirmation email (via serverless email service).
-4. Remove "Seed Firestore (Dev)" button and seedFirestore.ts before launch.
-5. Customer accounts / order history (DONE - Customer Account portal with 8 sections, purchase statistics, orders list, details modal, invoices, cancellation, and return requests).
-6. Firebase Hosting setup (DONE - firebase.json, .firebaserc, SPA rewrites, Cache-Control headers, GitHub Actions workflow, dynamic API resolver).
-7. Connect custom domain via Firebase Console > Hosting.
-8. Razorpay live mode needs business KYC.
+### Backend
 
-## Accounts and decisions
-- Razorpay account: created. Use TEST mode keys until KYC is done.
-- Node.js 22 installed on the user's Windows PC.
-- Hosting: Migrated to Firebase Hosting for the frontend SPA (free SSL, global CDN, custom domains).
-- Functions: Serverless functions run on Netlify Free Tier or Firebase Cloud Functions (requires Blaze for Razorpay outbound network calls). Frontend uses dynamic `src/config/api.ts` resolver with `VITE_API_BASE_URL`.
-- Undecided: shipping fee/free-shipping threshold, Cash on Delivery yes/no (both are set in src/config/store.ts and netlify/functions/utils/storeConfig.ts).
+- Source: `hostinger-api/`.
+- Entry point: `hostinger-api/server.js`.
+- Runtime dependencies are isolated in `hostinger-api/package.json`.
+- Start command: `node server.js`.
+- Test command: `npm test` from `hostinger-api/`.
+- Database connection is configured through server-only environment variables in `hostinger-api/.env.example`.
+- The API includes health checks, public product/category reads, admin login/session/logout, admin dashboard/products/orders, order creation, payment verification, token-authorized order retrieval, and phone-verified order tracking.
+- Admin sessions use an HTTP-only cookie and hashed session tokens stored in MariaDB.
+- The backend validates checkout data, obtains prices and stock from MariaDB, calculates shipping on the server, creates sequential SAR order numbers, and stores token-authorized order records.
+- Razorpay signatures are checked server-side; captured payment records are fetched from Razorpay before order finalization.
+- Payment verification must match the Razorpay order ID persisted on the exact SARINE order. Do not remove this binding check.
+- Duplicate product IDs are aggregated before stock checks and inventory deductions. Preserve this protection.
 
-## How to resume
-Open the project in AI Studio, check src/services/index.ts says DATA_SOURCE = 'firebase', and continue from the TODO list above.
+### Main backend routes
+
+- `GET /health` and `GET /health/db`
+- `GET /api/products` and `GET /api/products/:slug`
+- `GET /api/categories` and `GET /api/categories/:slug`
+- `POST /api/admin/auth/login`, `GET /api/admin/auth/session`, `POST /api/admin/auth/logout`
+- `GET /api/admin/dashboard`
+- `/api/admin/products`
+- `/api/admin/orders`
+- `POST /api/orders/create`
+- `POST /api/orders/verify`
+- `GET /api/orders/:orderNumber?t=<public-token>`
+- `POST /api/orders/track`
+
+## Current deployment facts and limitations
+
+- Frontend Hostinger site: `lavender-emu-732118.hostingersite.com`.
+- Backend Hostinger app: `greenyellow-cat-956048.hostingersite.com`.
+- The frontend-to-GitHub auto-deploy integration has previously been unavailable in hPanel; do not assume it is fixed.
+- The backend Hostinger app was previously deployed by ZIP/manual upload. GitHub contains the maintained backend source, but a GitHub merge does not itself update the running Hostinger app.
+- Confirm both deployed revisions in Hostinger before saying a change is live.
+- Direct navigation to some React routes (notably `/admin/login`) previously returned 404 on Hostinger. Verify SPA fallback/deep-link behavior on the actual frontend hosting method before changing routing configuration.
+- Never use the old Firebase or Netlify deployment paths as the active production architecture.
+
+## Current main-branch state
+
+- Latest project changes are maintained on `main`.
+- Frontend improvements through PR #93 are merged.
+- PR #94 corrected all production API fallbacks to the active Hostinger backend app.
+- PR #95 bound payment verification to the Razorpay order ID stored on the matching SARINE order.
+- PR #96 aggregated duplicate order lines to prevent incorrect stock checks and over-decrementing.
+- CI workflow: `.github/workflows/guest-checkout-ci.yml`. It runs frontend dependency install, TypeScript checks, production build, backend syntax checks, and backend tests on matching pull requests.
+- Backend tests live in `hostinger-api/tests/`.
+
+## Known launch and follow-up work
+
+1. Verify the live frontend is serving the latest `main` build and that direct navigation to React routes works.
+2. Verify the live backend health and database health endpoints, then confirm the Hostinger backend deployment contains the current `hostinger-api/` source.
+3. Perform a safe end-to-end checkout review without placing a real payment or creating duplicate live orders.
+4. Continue the admin control plane selectively: category management, richer inventory, analytics, customer directory, returns/refunds, and persistent storefront settings must be ported and reviewed against current `main`. Do not merge the old `hostinger-migration` branch wholesale; it has diverged substantially from `main`.
+5. A full customer sign-in/account and order-history experience is not yet confirmed on current `main`; do not display placeholder account features as functional.
+6. Publish verified customer-support and privacy-request contact details before launch. Do not invent these details.
+7. Review refund handling and any required Razorpay webhook configuration before live payments. Never promise automatic refunds unless the integration actually performs them.
+8. Add transactional order emails only after selecting and configuring a real server-side email provider.
+
+## Safe working process
+
+1. Inspect current `main` and the relevant live behavior before editing.
+2. Make one focused change on a new branch.
+3. Add or update tests for backend business/security logic.
+4. Open a pull request; wait for frontend and backend CI to pass.
+5. Merge only the reviewed PR with the expected head SHA.
+6. Treat Hostinger deployment and live verification as a separate step.
+7. Never ask the user to expose secrets. If a Hostinger setting must be checked, ask only for a screenshot with credentials and sensitive values hidden.
