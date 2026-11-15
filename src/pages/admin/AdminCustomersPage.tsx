@@ -7,8 +7,6 @@
 import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { formatInr } from '../../utils/currency';
-import { getDb, isFirebaseConfigured } from '../../lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
 import {
   Users,
   Search,
@@ -46,64 +44,44 @@ export const AdminCustomersPage: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerProfile | null>(null);
 
   useEffect(() => {
+    let active = true;
     async function loadCustomers() {
-      if (!isFirebaseConfigured()) {
-        setLoading(false);
-        return;
-      }
       try {
-        const db = getDb();
-        const snap = await getDocs(collection(db, 'orders'));
-        const custMap = new Map<string, CustomerProfile>();
-
-        snap.forEach((docSnap) => {
-          const d = docSnap.data();
-          const email = d.customer?.email?.toLowerCase().trim();
-          if (!email) return;
-
-          const existing = custMap.get(email) || {
-            id: `CUST-${custMap.size + 1}`,
-            name: d.customer?.name || (email ? email.split('@')[0] : 'Customer'),
-            email,
-            phone: d.customer?.phone || d.shippingAddress?.phone || '—',
-            segment: 'New Customer' as const,
-            totalOrders: 0,
-            lifetimeSpend: 0,
-            loyaltyPoints: 0,
-            lastOrderDate: d.createdAt
-              ? new Date(d.createdAt).toLocaleDateString('en-IN', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric'
-                })
+        const apiBase = (import.meta.env.VITE_HOSTINGER_API_BASE_URL || (import.meta.env.DEV ? '/api' : 'https://lavender-goldfish-844589.hostingersite.com/api')).replace(/\/+$/, '');
+        const response = await fetch(`${apiBase}/admin/customers?limit=100`, { credentials: 'include' });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Failed to load customers.');
+        const list: CustomerProfile[] = (Array.isArray(data.customers) ? data.customers : []).map((customer: any) => {
+          const totalOrders = Number(customer.totalOrders) || 0;
+          const lifetimeSpend = Number(customer.lifetimeSpend) || 0;
+          const segment: CustomerProfile['segment'] = totalOrders >= 5 || lifetimeSpend >= 10000
+            ? 'VIP Gold'
+            : totalOrders >= 2 ? 'Repeat Patron' : 'New Customer';
+          return {
+            id: customer.email,
+            name: customer.name || customer.email.split('@')[0],
+            email: customer.email,
+            phone: customer.phone || '—',
+            segment,
+            totalOrders,
+            lifetimeSpend,
+            loyaltyPoints: Math.round(lifetimeSpend * 0.1),
+            lastOrderDate: customer.lastOrderAt
+              ? new Date(customer.lastOrderAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
               : 'Recent',
-            city: d.shippingAddress?.city || 'India'
+            city: customer.city || 'India'
           };
-
-          existing.totalOrders += 1;
-          const orderTotal = Number(d.total) || 0;
-          existing.lifetimeSpend += orderTotal;
-          existing.loyaltyPoints += Math.round(orderTotal * 0.1);
-
-          if (existing.totalOrders >= 5 || existing.lifetimeSpend >= 10000) {
-            existing.segment = 'VIP Gold';
-          } else if (existing.totalOrders >= 2) {
-            existing.segment = 'Repeat Patron';
-          }
-
-          custMap.set(email, existing);
         });
-
-        setCustomers(Array.from(custMap.values()));
+        if (active) setCustomers(list);
       } catch (err) {
-        console.warn('[AdminCustomersPage] Failed to load customers from Firestore:', err);
-        setCustomers([]);
+        console.warn('[AdminCustomersPage] Hostinger customer load failed:', err);
+        if (active) setCustomers([]);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }
-
     loadCustomers();
+    return () => { active = false; };
   }, []);
 
   const filteredCustomers = customers.filter((c) => {
