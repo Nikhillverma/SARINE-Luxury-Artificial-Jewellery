@@ -76,7 +76,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeAnnouncement, setActiveAnnouncement] = useState(0);
   const [managedAnnouncement, setManagedAnnouncement] = useState('');
-  const [managedTrustMessages, setManagedTrustMessages] = useState<string[]>([]);
+  const [managedTrustMessages, setManagedTrustMessages] = useState<string[]>(['Christmas Sale Live ✦']);
 
   // Mobile Accordion state
   const [mobileExpanded, setMobileExpanded] = useState<Record<string, boolean>>({
@@ -94,10 +94,10 @@ export const Navbar: React.FC<NavbarProps> = ({
       .then(({ announcement }) => {
         if (!cancelled && announcement?.active && announcement.message?.trim()) {
           setManagedAnnouncement(announcement.message.trim());
-          setManagedTrustMessages((announcement.trustMessages || []).filter(Boolean));
+          setManagedTrustMessages(['Christmas Sale Live ✦', ...(announcement.trustMessages || []).filter(Boolean)]);
         } else if (!cancelled) {
           setManagedAnnouncement('');
-          setManagedTrustMessages((announcement.trustMessages || []).filter(Boolean));
+          setManagedTrustMessages(['Christmas Sale Live ✦', ...(announcement.trustMessages || []).filter(Boolean)]);
         }
       })
       .catch((error) => console.warn('[Navbar] Published announcement unavailable; using default messages.', error));
