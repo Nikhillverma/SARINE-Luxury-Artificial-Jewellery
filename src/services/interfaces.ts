@@ -1,7 +1,7 @@
 /**
  * Core service interfaces defining contracts for all data access in SARINE.
  * The storefront components only talk to these interfaces, making it easy to swap
- * from mock in-memory data to Firebase Firestore later without touching UI code.
+ * from mock data to Hostinger MariaDB without touching UI code.
  */
 
 import { Product, JewelleryType } from '../types/product';
