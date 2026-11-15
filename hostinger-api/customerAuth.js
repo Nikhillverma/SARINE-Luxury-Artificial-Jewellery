@@ -233,7 +233,7 @@ router.post("/login", loginLimiter, async (req, res, next) => {
 router.get("/session", async (req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
-    const customer = await findSession(req);
+    const customer = await getAuthenticatedCustomer(req);
     if (!customer) {
       clearCookie(res);
       return res.status(401).json({ authenticated: false });
@@ -259,7 +259,7 @@ router.post("/logout", async (req, res, next) => {
 router.patch("/profile", async (req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
-    const customer = await findSession(req);
+    const customer = await getAuthenticatedCustomer(req);
     if (!customer) return res.status(401).json({ error: "Please sign in again." });
     const name = String(req.body?.name || "").trim();
     const phone = String(req.body?.phone || "").replace(/\D/g, "");
