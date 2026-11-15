@@ -12,7 +12,7 @@ This file describes the current Hostinger-based application. It supersedes older
 - Currency: INR; product and checkout amounts are whole rupees.
 - Brand palette: lavender/plum `#563568`, `#B69ACF`, pale lavender `#F7F0FA`, rose-gold `#D9B8A0`.
 - Storefront: https://lavender-emu-732118.hostingersite.com/
-- API app: https://greenyellow-cat-956048.hostingersite.com/
+- API app: https://lavender-goldfish-844589.hostingersite.com/
 - GitHub source: `Nikhillverma/SARINE-Luxury-Artificial-Jewellery`, default branch `main`.
 
 ## Non-negotiable safety and content rules
@@ -68,7 +68,7 @@ This file describes the current Hostinger-based application. It supersedes older
 ## Current deployment facts and limitations
 
 - Frontend Hostinger site: `lavender-emu-732118.hostingersite.com`.
-- Backend Hostinger app: `greenyellow-cat-956048.hostingersite.com`.
+- Backend Hostinger app: `lavender-goldfish-844589.hostingersite.com`.
 - The frontend-to-GitHub auto-deploy integration has previously been unavailable in hPanel; do not assume it is fixed.
 - The backend Hostinger app was previously deployed by ZIP/manual upload. GitHub contains the maintained backend source, but a GitHub merge does not itself update the running Hostinger app.
 - Confirm both deployed revisions in Hostinger before saying a change is live.

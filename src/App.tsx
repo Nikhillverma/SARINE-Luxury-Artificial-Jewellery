@@ -26,6 +26,13 @@ import { ShippingPolicyPage } from './pages/ShippingPolicyPage';
 import { RefundPolicyPage } from './pages/RefundPolicyPage';
 import { AboutPage } from './pages/AboutPage';
 import { TrackOrderPage } from './pages/TrackOrderPage';
+import { AccountPage } from './pages/AccountPage';
+import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
+import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
+import { AdminCustomersPage } from './pages/admin/AdminCustomersPage';
+import { AdminMarketingPage } from './pages/admin/AdminMarketingPage';
+import { AdminReturnsPage } from './pages/admin/AdminReturnsPage';
+import { AdminReviewsPage } from './pages/admin/AdminReviewsPage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminProductsPage } from './pages/admin/AdminProductsPage';
@@ -83,19 +90,22 @@ function MainAppShell() {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order/:orderNumber" element={<OrderConfirmationPage />} />
           <Route path="/track-order" element={<TrackOrderPage />} />
-          <Route path="/account" element={<Navigate to="/track-order" replace />} />
+          <Route path="/account" element={<AccountPage />} />
 
           {/* Private Admin Management Routes */}
           <Route path="/admin" element={<AdminDashboardPage />} />
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/admin/products" element={<AdminProductsPage />} />
+          <Route path="/admin/categories" element={<AdminCategoriesPage />} />
           <Route path="/admin/orders" element={<AdminOrdersPage />} />
+          <Route path="/admin/returns" element={<AdminReturnsPage />} />
+          <Route path="/admin/reviews" element={<AdminReviewsPage />} />
           <Route path="/admin/inventory" element={<AdminInventoryPage />} />
-          <Route path="/admin/customers" element={<Navigate to="/admin/orders" replace />} />
-          <Route path="/admin/marketing" element={<Navigate to="/admin" replace />} />
+          <Route path="/admin/customers" element={<AdminCustomersPage />} />
+          <Route path="/admin/marketing" element={<AdminMarketingPage />} />
           <Route path="/admin/storefront" element={<AdminStorefrontPage />} />
-          <Route path="/admin/analytics" element={<Navigate to="/admin" replace />} />
+          <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           <Route path="/admin/copilot" element={<Navigate to="/admin" replace />} />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />
 

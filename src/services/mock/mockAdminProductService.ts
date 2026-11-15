@@ -4,7 +4,7 @@
  * from customer storefront views.
  */
 
-import { IAdminProductService } from '../interfaces';
+import { IAdminProductService, InventoryMovement } from '../interfaces';
 import { Product } from '../../types/product';
 import { MockProductService } from './mockProductService';
 
@@ -55,6 +55,37 @@ export class MockAdminProductService implements IAdminProductService {
 
     products[index] = updated;
     return updated;
+  }
+
+  async adjustStock(id: string, quantityDelta: number, reason: string): Promise<InventoryMovement> {
+    await sleep(NETWORK_DELAY_MS);
+    const products = this.productService._getAllInternal();
+    const product = products.find((item) => item.id === id);
+    if (!product) throw new Error(`Product with ID "${id}" not found.`);
+    const previousStock = product.stock;
+    const newStock = previousStock + quantityDelta;
+    if (!Number.isInteger(quantityDelta) || quantityDelta === 0 || newStock < 0) {
+      throw new Error('Invalid stock adjustment.');
+    }
+    product.stock = newStock;
+    return {
+      id: `mock-${Date.now()}`,
+      productId: product.id,
+      productName: product.name,
+      sku: product.id,
+      adminName: 'Mock Admin',
+      adminEmail: '',
+      previousStock,
+      quantityDelta,
+      newStock,
+      reason,
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  async getInventoryMovements(): Promise<InventoryMovement[]> {
+    await sleep(NETWORK_DELAY_MS);
+    return [];
   }
 
   async deleteProduct(id: string): Promise<boolean> {

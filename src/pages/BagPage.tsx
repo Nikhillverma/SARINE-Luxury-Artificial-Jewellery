@@ -10,7 +10,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { formatInr } from '../utils/currency';
-import { calculateShippingFee, FREE_SHIPPING_THRESHOLD } from '../config/store';
+import { calculateShippingFee } from '../config/store';
+import { useCheckoutConfig } from '../hooks/useCheckoutConfig';
 import type { CartItem } from '../types/cart';
 import { ShoppingBag, Trash2, ArrowLeft, ArrowRight, AlertCircle, Heart } from 'lucide-react';
 
@@ -28,19 +29,16 @@ export const BagPage: React.FC = () => {
   } = useCart();
 
   const { toggleWishlist } = useWishlist();
+  const { config: checkoutConfig } = useCheckoutConfig();
 
   const handleSaveToWishlist = (item: CartItem) => {
     toggleWishlist(item.product);
     removeItem(item.productId);
   };
 
-  const shippingFee = calculateShippingFee(subtotal);
-  const amountToFreeShipping = FREE_SHIPPING_THRESHOLD === null
-    ? 0
-    : Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
-  const shippingProgressPercent = FREE_SHIPPING_THRESHOLD === null
-    ? 100
-    : Math.min(100, Math.round((subtotal / FREE_SHIPPING_THRESHOLD) * 100));
+  const shippingFee = calculateShippingFee(subtotal, checkoutConfig);
+  const amountToFreeShipping = Math.max(0, checkoutConfig.freeShippingThreshold - subtotal);
+  const shippingProgressPercent = Math.min(100, Math.round((subtotal / checkoutConfig.freeShippingThreshold) * 100));
   const finalTotal = subtotal + shippingFee;
 
   return (
@@ -105,7 +103,7 @@ export const BagPage: React.FC = () => {
           ) : (
             <div className="space-y-6">
               {/* Free shipping progress */}
-              {FREE_SHIPPING_THRESHOLD !== null && (
+              {checkoutConfig.freeShippingThreshold > 0 && (
                 <div className="bg-white p-4 border border-[#E7DCEB] rounded-xs shadow-2xs">
                   <div className="flex items-center justify-between text-xs mb-1.5 gap-3">
                     <span className="text-[#563568] font-medium">

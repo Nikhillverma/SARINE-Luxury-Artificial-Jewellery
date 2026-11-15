@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom';
 import { productService, categoryService } from '../services';
 import { Product } from '../types/product';
 import { Category } from '../types/category';
+import { hostingerStorefrontService, type EditorialContent } from '../services/hostinger/hostingerStorefrontService';
 import { ProductCard } from '../components/ProductCard';
 import { formatInr } from '../utils/currency';
 import {
@@ -100,7 +101,16 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   // Hero Slider State
   const [activeSlide, setActiveSlide] = useState<number>(0);
   const [isHeroPaused, setIsHeroPaused] = useState(false);
-  const slideCount = 3;
+  const [managedHeroSlides, setManagedHeroSlides] = useState<Array<{id:string; tagline:string; title:string; subtitle:string; ctaText:string; ctaLink:string; imageUrl:string}>>([]);
+  const [editorial, setEditorial] = useState<EditorialContent>({
+    eyebrow: 'EDITORIAL COLLECTION',
+    title: 'The Art of Everyday Elegance',
+    description: 'A curated collection that blends classic beauty with modern sensibilities.',
+    ctaText: 'Explore the Collection',
+    ctaLink: '/shop',
+    imageUrl: HOMEPAGE_IMAGES.editorialBanner,
+    active: true
+  });
 
   // Best Sellers Carousel Scroll Reference
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -108,8 +118,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   // Wishlist State (Local interactive set)
   const [wishlist, setWishlist] = useState<Set<string>>(new Set());
 
-  // Hero Slides Definition
-  const heroSlides = [
+  // Published Hostinger banners take precedence over the built-in safe defaults.
+  const defaultHeroSlides = [
     {
       id: 0,
       eyebrow: 'ELEGANCE IN EVERY DETAIL',
@@ -117,7 +127,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       paragraph: 'Thoughtfully designed artificial jewellery that brings timeless elegance to your everyday moments.',
       image: HOMEPAGE_IMAGES.heroSlide1,
       shopLink: '/shop',
-      categoriesLink: '#categories'
+      categoriesLink: '#categories',
+      ctaText: 'Shop the Collection'
     },
     {
       id: 1,
@@ -126,7 +137,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       paragraph: 'Opulent festive adornments crafted with lightweight modern comfort for wedding celebrations and milestones.',
       image: HOMEPAGE_IMAGES.heroSlide2,
       shopLink: '/shop?category=necklaces',
-      categoriesLink: '#categories'
+      categoriesLink: '#categories',
+      ctaText: 'Explore Collection'
     },
     {
       id: 2,
@@ -135,9 +147,47 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       paragraph: 'Layered gold chains, floral studs, and delicate cuffs tailored for seamless daily refinement.',
       image: HOMEPAGE_IMAGES.heroSlide3,
       shopLink: '/shop?category=earrings',
-      categoriesLink: '#categories'
+      categoriesLink: '#categories',
+      ctaText: 'Discover Jewellery'
     }
   ];
+
+  const heroSlides = managedHeroSlides.length > 0 ? managedHeroSlides.map((banner, index) => ({
+    id: banner.id || index,
+    eyebrow: banner.tagline,
+    heading: banner.title,
+    paragraph: banner.subtitle,
+    image: banner.imageUrl,
+    shopLink: banner.ctaLink,
+    categoriesLink: '#categories',
+    ctaText: banner.ctaText
+  })) : defaultHeroSlides;
+  const slideCount = heroSlides.length;
+
+  useEffect(() => {
+    let cancelled = false;
+    hostingerStorefrontService.getPublicEditorial()
+      .then(result => {
+        if (cancelled) return;
+        if (result.editorial) setEditorial(result.editorial);
+        else setEditorial(current => ({ ...current, active: false }));
+      })
+      .catch(error => console.warn('[HomePage] Editorial content unavailable; using default content.', error));
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    hostingerStorefrontService.getPublicBanners()
+      .then(result => {
+        if (!cancelled && result.banners.length) {
+          setManagedHeroSlides(result.banners);
+          setActiveSlide(0);
+        }
+      })
+      .catch(error => console.warn('[HomePage] Published hero banners unavailable; using defaults.', error));
+    return () => { cancelled = true; };
+  }, []);
 
   // 1. Fetch Firestore / Service Data
   useEffect(() => {
@@ -329,7 +379,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 to={currentHero.shopLink}
                 className="px-6 sm:px-7 py-3 bg-[#563568] text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[#A184BD] transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"
               >
-                <span>Shop the Collection</span>
+                <span>{currentHero.ctaText || 'Shop the Collection'}</span>
                 <ArrowRight size={13} />
               </Link>
               <a
@@ -780,11 +830,11 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           7. EDITORIAL BANNER
           ========================================================================= */}
-      <section className="relative overflow-hidden bg-[#EBDFF2] border-b border-[#E7DCEB]">
+      {editorial.active && <section className="relative overflow-hidden bg-[#EBDFF2] border-b border-[#E7DCEB]">
         {/* Full-bleed background image */}
         <img
-          src={HOMEPAGE_IMAGES.editorialBanner}
-          alt="The Art of Everyday Elegance"
+          src={editorial.imageUrl || HOMEPAGE_IMAGES.editorialBanner}
+          alt={editorial.title}
           loading="lazy"
           decoding="async"
           className="absolute inset-0 w-full h-full object-cover object-center"
@@ -797,29 +847,29 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         <div className="site-container min-h-[320px] sm:min-h-[380px] lg:min-h-[420px] flex items-center justify-end relative z-10">
           <div className="w-full sm:w-2/3 lg:w-1/2 py-10 sm:py-14 text-left">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
-              EDITORIAL COLLECTION
+              {editorial.eyebrow}
             </span>
 
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal leading-tight">
-              The Art of Everyday Elegance
+              {editorial.title}
             </h2>
 
             <p className="mt-3 text-xs sm:text-sm text-[#6F6475] leading-relaxed max-w-md font-sans">
-              A curated collection that blends classic beauty with modern sensibilities.
+              {editorial.description}
             </p>
 
             <div className="mt-6">
               <Link
-                to="/shop"
+                to={editorial.ctaLink || '/shop'}
                 className="px-6 py-3 bg-[#563568] text-white text-xs font-sans font-medium hover:bg-[#A184BD] transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"
               >
-                <span>Explore the Collection</span>
+                <span>{editorial.ctaText}</span>
                 <ArrowRight size={13} />
               </Link>
             </div>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* =========================================================================
           8. JEWELLERY CARE & PRESERVATION GUIDE

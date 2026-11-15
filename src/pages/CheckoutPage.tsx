@@ -10,7 +10,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { orderService } from '../services';
 import { formatInr } from '../utils/currency';
-import { COD_ENABLED, calculateShippingFee } from '../config/store';
+import { calculateShippingFee } from '../config/store';
+import { useCheckoutConfig } from '../hooks/useCheckoutConfig';
 import { PaymentMethod } from '../types/order';
 import {
   Lock,
@@ -90,6 +91,7 @@ function loadRazorpayCheckoutScript(): Promise<boolean> {
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const { items, subtotal, clearCart, isHydrating } = useCart();
+  const { config: checkoutConfig } = useCheckoutConfig();
 
   // State and ref to track if an order is being placed or was placed successfully
   const [orderPlaced, setOrderPlaced] = useState(false);
@@ -125,7 +127,7 @@ export const CheckoutPage: React.FC = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Computed shipping and total
-  const shippingFee = calculateShippingFee(subtotal);
+  const shippingFee = calculateShippingFee(subtotal, checkoutConfig);
   const total = subtotal + shippingFee;
 
   // Validation function
@@ -633,7 +635,7 @@ export const CheckoutPage: React.FC = () => {
                   </label>
 
                   {/* Cash on Delivery option (only if COD_ENABLED is true) */}
-                  {COD_ENABLED && (
+                  {checkoutConfig.codEnabled && (
                     <label
                       className={`block p-4 border rounded-sm cursor-pointer transition-colors ${
                         paymentMethod === 'cod'

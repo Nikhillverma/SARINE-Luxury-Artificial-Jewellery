@@ -1,15 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
-import { adminProductService, categoryService } from '../../services';
+import { adminProductService, categoryService, hostingerMediaService } from '../../services';
 import type { Product, JewelleryType, ProductStatus } from '../../types/product';
 import type { Category } from '../../types/category';
 import { JEWELLERY_TYPE_LABELS } from '../../types/product';
 import { formatInr } from '../../utils/currency';
-import { Plus, Search, Edit2, Copy, Archive, X, RefreshCw } from 'lucide-react';
+import { Plus, Search, Edit2, Copy, Archive, X, RefreshCw, Upload, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 
 const EMPTY_FORM = {
   name: '', price: '', costPrice: '', stock: '0', categoryId: '',
-  jewelleryType: 'necklace' as JewelleryType, description: '', imageUrl: '',
+  jewelleryType: 'necklace' as JewelleryType, description: '', imageUrls: [] as string[],
   status: 'draft' as ProductStatus
 };
 
@@ -23,6 +23,7 @@ export const AdminProductsPage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
@@ -76,15 +77,59 @@ export const AdminProductsPage: React.FC = () => {
       categoryId: product.categoryId,
       jewelleryType: product.jewelleryType,
       description: product.description || '',
-      imageUrl: product.images?.[0] || '',
+      imageUrls: product.images || [],
       status: product.status
     });
     setError('');
     setModalOpen(true);
   };
 
+  const handleImageFiles = async (files: FileList | null) => {
+    if (!files?.length || uploadingImages) return;
+    const selected = Array.from(files);
+    if (form.imageUrls.length + selected.length > 8) {
+      setError('A product can have up to 8 images. Remove an image before adding more.');
+      return;
+    }
+
+    setUploadingImages(true);
+    setError('');
+    setNotice('');
+    try {
+      const uploaded: string[] = [];
+      for (const file of selected) {
+        const url = await hostingerMediaService.uploadImage(file);
+        uploaded.push(url);
+        setForm(current => ({ ...current, imageUrls: [...current.imageUrls, url] }));
+      }
+      setNotice(`${uploaded.length} image${uploaded.length === 1 ? '' : 's'} uploaded to Hostinger storage. Save the product to publish them.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Image upload failed.');
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  const moveImage = (index: number, direction: -1 | 1) => {
+    setForm(current => {
+      const next = [...current.imageUrls];
+      const target = index + direction;
+      if (target < 0 || target >= next.length) return current;
+      [next[index], next[target]] = [next[target], next[index]];
+      return { ...current, imageUrls: next };
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setForm(current => ({
+      ...current,
+      imageUrls: current.imageUrls.filter((_, imageIndex) => imageIndex !== index)
+    }));
+  };
+
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (uploadingImages) return;
     setSaving(true);
     setError('');
     try {
@@ -103,7 +148,7 @@ export const AdminProductsPage: React.FC = () => {
         shortDescription: editing?.shortDescription || '',
         price,
         ...(form.costPrice.trim() ? { costPrice: Number(form.costPrice) } : {}),
-        images: form.imageUrl.trim() ? [form.imageUrl.trim()] : [],
+        images: form.imageUrls,
         categoryId: form.categoryId,
         collectionSlugs: editing?.collectionSlugs || [],
         jewelleryType: form.jewelleryType,
@@ -266,11 +311,54 @@ export const AdminProductsPage: React.FC = () => {
                 <label>Jewellery type *<select value={form.jewelleryType} onChange={e => setForm({ ...form, jewelleryType: e.target.value as JewelleryType })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl">{Object.entries(JEWELLERY_TYPE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
                 <label>Status<select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as ProductStatus })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"><option value="draft">Draft</option><option value="active">Active</option></select></label>
               </div>
-              <label className="block">Image URL (HTTPS)<input type="url" value={form.imageUrl} onChange={e => setForm({ ...form, imageUrl: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
+              <section className="space-y-3 rounded-xl border border-[#E7DCEB] bg-[#FCF9FD] p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h3 className="font-semibold text-[#2C1838]">Product images</h3>
+                    <p className="text-[11px] text-[#8E769E]">Upload up to 8 JPEG, PNG or WebP images. Images are optimised and stored on Hostinger.</p>
+                  </div>
+                  <label className={`inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold ${uploadingImages ? 'bg-gray-200 text-gray-500' : 'bg-[#563568] text-white'}`}>
+                    <Upload size={14}/>
+                    {uploadingImages ? 'Uploading…' : 'Upload images'}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      disabled={uploadingImages || form.imageUrls.length >= 8}
+                      onChange={event => {
+                        void handleImageFiles(event.target.files);
+                        event.currentTarget.value = '';
+                      }}
+                      className="sr-only"
+                    />
+                  </label>
+                </div>
+                {form.imageUrls.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {form.imageUrls.map((url, index) => (
+                      <div key={`${url}-${index}`} className="relative overflow-hidden rounded-lg border border-[#E7DCEB] bg-white">
+                        <img src={url} alt={`Product image ${index + 1}`} className="aspect-square w-full object-cover" />
+                        <div className="flex items-center justify-between gap-1 p-1">
+                          <span className="text-[10px] text-[#705E7B]">{index === 0 ? 'Main image' : `Image ${index + 1}`}</span>
+                          <div className="flex items-center">
+                            <button type="button" aria-label="Move image up" disabled={index === 0} onClick={() => moveImage(index, -1)} className="p-1 disabled:opacity-30"><ChevronUp size={13}/></button>
+                            <button type="button" aria-label="Move image down" disabled={index === form.imageUrls.length - 1} onClick={() => moveImage(index, 1)} className="p-1 disabled:opacity-30"><ChevronDown size={13}/></button>
+                            <button type="button" aria-label="Remove image" onClick={() => removeImage(index)} className="p-1 text-red-600"><Trash2 size={13}/></button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-[#D9C8E2] p-6 text-center text-xs text-[#8E769E]">
+                    No product images added yet.
+                  </div>
+                )}
+              </section>
               <label className="block">Description<textarea rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
               <div className="flex justify-end gap-2 pt-3 border-t border-[#E7DCEB]">
                 <button type="button" onClick={() => setModalOpen(false)} className="px-4 py-2 border rounded-xl">Cancel</button>
-                <button disabled={saving} type="submit" className="px-5 py-2 bg-[#563568] text-white rounded-xl disabled:opacity-50">{saving ? 'Saving…' : editing ? 'Save Changes' : 'Create Draft/Product'}</button>
+                <button disabled={saving || uploadingImages} type="submit" className="px-5 py-2 bg-[#563568] text-white rounded-xl disabled:opacity-50">{uploadingImages ? 'Uploading images…' : saving ? 'Saving…' : editing ? 'Save Changes' : 'Create Draft/Product'}</button>
               </div>
             </form>
           </div>
