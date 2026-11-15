@@ -9,6 +9,7 @@ on:
       - fix/order-timestamps
     paths:
       - "src/**"
+      - "vite.config.ts"
       - "hostinger-api/**"
       - "package.json"
       - "package-lock.json"
