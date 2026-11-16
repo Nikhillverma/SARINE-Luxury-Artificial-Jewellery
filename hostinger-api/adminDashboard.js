@@ -66,7 +66,8 @@ router.get("/", async (_req, res, next) => {
            END) AS today_orders
          FROM orders o
          LEFT JOIN (${INITIAL_ORDER_HISTORY}) AS initial_history
-           ON initial_history.order_id = o.id`
+           ON initial_history.order_id = o.id
+         WHERE o.is_test = 0`
       ),
       pool.execute(
         `SELECT
