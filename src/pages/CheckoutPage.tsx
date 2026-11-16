@@ -204,6 +204,7 @@ export const CheckoutPage: React.FC = () => {
       const order = await orderService.createOrder({
         lines: items.map((item) => ({
           productId: item.productId,
+          ...(item.variantId ? { variantId: item.variantId } : {}),
           quantity: item.quantity
         })),
         customer: {
