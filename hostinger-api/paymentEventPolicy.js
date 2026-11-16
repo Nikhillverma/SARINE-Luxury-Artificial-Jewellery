@@ -40,7 +40,7 @@ export function buildPaymentEventRecord(event) {
     eventStatus: String(event?.eventStatus || "").trim()
   };
 
-  if (!record.orderId || !/^SAR-\\d{6}$/.test(record.orderNumber)) {
+  if (!record.orderId || !/^SAR-\d{6}$/.test(record.orderNumber)) {
     throw new Error("A valid SARINE order reference is required for a payment event.");
   }
   if (!record.gatewayOrderId || !/^order_[A-Za-z0-9]+$/.test(record.gatewayOrderId)) {
