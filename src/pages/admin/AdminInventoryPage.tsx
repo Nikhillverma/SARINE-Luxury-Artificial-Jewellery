@@ -280,7 +280,7 @@ export const AdminInventoryPage: React.FC = () => {
                   </tr>
                 ) : filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-[#6F6475]">
+                    <td colSpan={7} className="p-8 text-center text-[#6F6475]">
                       No jewellery pieces match your search or filter criteria.
                     </td>
                   </tr>
