@@ -1,5 +1,5 @@
 import { pool } from "./db.js";
-import { normalizeGatewayRefundStatus } from "./refundPolicy.js";
+import { mapRefundWebhookStatus } from "./refundPolicy.js";
 
 let schemaPromise;
 export async function ensureRefundLedgerSchema() {
@@ -57,11 +57,7 @@ export async function applyGatewayRefundEvent(record) {
       await connection.rollback();
       return { matched: false, mismatch: true };
     }
-    const nextStatus = record.eventType === "refund.failed" ? "failed"
-      : record.eventType === "refund.reversed" ? "reversed"
-      : record.eventType === "refund.created" ? "pending"
-      : record.eventType === "refund.processed" ? normalizeGatewayRefundStatus(record.gatewayStatus)
-      : "unknown";
+    const nextStatus = mapRefundWebhookStatus(record.eventType, record.gatewayStatus);
     if (nextStatus === "unknown") {
       await connection.commit();
       return { matched: true, refundId: Number(refund.id), status: "awaiting_verified_status" };
