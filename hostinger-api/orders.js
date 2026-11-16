@@ -13,7 +13,7 @@ const router = Router();
 
 import { calculateShippingFee, getCheckoutConfig } from "./checkoutPolicy.js";
 import { buildOrderInsert } from "./orderInsertPolicy.js";
-import { matchesOrderRazorpayId } from "./paymentValidation.js";
+import { matchesOrderRazorpayId, classifyCapturedPayment } from "./paymentValidation.js";
 import { ensurePaymentEventLogTable, recordVerifiedPaymentEvent } from "./paymentEventPolicy.js";
 import { ensureMarketingSchema, lockAndValidateCoupon, reserveCouponRedemption, releaseCouponReservation, confirmCouponRedemption } from "./marketingPolicy.js";
 
@@ -623,7 +623,7 @@ router.post("/verify", async (req, res, next) => {
     // captured payment against an already-paid order is a second charge and
     // must be surfaced for refund review rather than silently accepted.
     if (order.payment_status === "paid") {
-      const samePayment = order.razorpay_payment_id === razorpay_payment_id;
+      const captureDisposition = classifyCapturedPayment(order, razorpay_payment_id);\n      const samePayment = captureDisposition === "same_payment_replay";
       await recordVerifiedPaymentEvent(connection, {
         orderId: order.id,
         orderNumber: cleanOrderNumber,
