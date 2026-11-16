@@ -30,7 +30,7 @@ test("creates a stable idempotent gateway payload", () => {
     orderNumber: "SAR-000123", reason: "Customer request"
   });
   assert.equal(payload.amount, 12500);
-  assert.equal(payload.receipt, "SARINE-550e8400-e29b-41d4-a716-446655440000");
+  assert.equal(payload.receipt, "SR-550e8400-e29b-41d4-a716-446655440000");
   assert.equal(payload.notes.sarine_order, "SAR-000123");
   assert.throws(() => buildRefundGatewayRequest({ amountPaise: 100, idempotencyKey: "short", orderNumber: "SAR-000123" }));
 });
@@ -39,6 +39,7 @@ test("normalizes only known terminal and pending gateway states", () => {
   assert.equal(normalizeGatewayRefundStatus("processed"), "processed");
   assert.equal(normalizeGatewayRefundStatus("failed"), "failed");
   assert.equal(normalizeGatewayRefundStatus("pending"), "pending");
+  assert.equal(normalizeGatewayRefundStatus("reversed"), "reversed");
   assert.equal(normalizeGatewayRefundStatus("created"), "unknown");
 });
 
