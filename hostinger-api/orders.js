@@ -806,8 +806,10 @@ router.get("/:orderNumber", async (req, res, next) => {
       return res.status(403).json({ error: "Unauthorized access to order." });
     }
 
+    await ensureProductVariantSchema();
     const [itemRows] = await pool.execute(
-      `SELECT id, product_id, product_name, sku, unit_price, quantity, image, source_line
+      `SELECT id, product_id, product_name, sku, unit_price, quantity, image, source_line,
+              variant_id, variant_sku, variant_label, variant_options
        FROM order_items
        WHERE order_id = ?
        ORDER BY source_line ASC, id ASC`,
