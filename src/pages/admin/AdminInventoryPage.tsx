@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { categoryService, adminProductService } from '../../services';
 import { Product, JEWELLERY_TYPE_LABELS } from '../../types/product';
 import type { InventoryMovement } from '../../services/interfaces';
