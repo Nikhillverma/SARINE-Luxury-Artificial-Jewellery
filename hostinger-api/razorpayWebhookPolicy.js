@@ -87,11 +87,11 @@ export async function storeRazorpayWebhookEvent(record) {
   await ensureRazorpayWebhookSchema();
   const [result] = await pool.execute(
     `INSERT IGNORE INTO razorpay_webhook_events
-     (event_id, event_type, gateway_order_id, gateway_payment_id, gateway_refund_id,
+     (event_id, event_type, gateway_order_id, gateway_payment_id, gateway_refund_id, gateway_receipt,
       amount_paise, currency, gateway_status, event_status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'received')`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'received')`,
     [record.eventId, record.eventType, record.gatewayOrderId, record.gatewayPaymentId,
-      record.gatewayRefundId, record.amountPaise, record.currency, record.gatewayStatus]
+      record.gatewayRefundId, record.gatewayReceipt, record.amountPaise, record.currency, record.gatewayStatus]
   );
   return { inserted: Number(result.affectedRows) === 1 };
 }
