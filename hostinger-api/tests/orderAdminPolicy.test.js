@@ -56,3 +56,27 @@ test("does not restore stock for needs-refund orders because stock was never ded
     refund_needed: 1
   }), false);
 });
+
+test("restores stock for a placed COD order whose stock was deducted at placement", () => {
+  assert.equal(shouldRestoreStockOnCancellation({
+    order_status: "placed",
+    payment_method: "cod",
+    payment_status: "pending"
+  }), true);
+});
+
+test("does not restore stock for an unpaid online order awaiting payment", () => {
+  assert.equal(shouldRestoreStockOnCancellation({
+    order_status: "awaiting_payment",
+    payment_method: "online",
+    payment_status: "pending"
+  }), false);
+});
+
+test("does not restore stock for an unpaid online pending order", () => {
+  assert.equal(shouldRestoreStockOnCancellation({
+    order_status: "pending",
+    payment_method: "online",
+    payment_status: "pending"
+  }), false);
+});
