@@ -52,6 +52,7 @@ router.get("/", async (req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
     await ensurePaymentEventLogTable();
+    await ensureRazorpayWebhookSchema();
     await ensureRefundLedgerSchema();
     const search = typeof req.query.search === "string" ? req.query.search.trim().slice(0, 120) : "";
     const status = typeof req.query.status === "string" ? req.query.status.trim() : "all";
@@ -92,7 +93,7 @@ router.get("/", async (req, res, next) => {
     const [refundRows] = await pool.execute(
       `SELECT o.id, o.order_number, o.customer_name, o.customer_email, o.customer_phone,
               o.total, o.refund_amount, o.refund_needed, o.order_status,
-              o.payment_method, o.payment_status, o.razorpay_payment_id,
+              o.payment_method, o.payment_status, o.razorpay_payment_id, o.razorpay_order_id,
               o.created_at, o.cancelled_at, o.cancellation_reason,
               (SELECT COUNT(*) FROM payment_event_log pe WHERE pe.order_id = o.id) AS payment_event_count,
               (SELECT pe.event_type FROM payment_event_log pe WHERE pe.order_id = o.id
@@ -148,6 +149,27 @@ router.get("/", async (req, res, next) => {
           amountPaise: Number(entry.amount_paise),
           eventStatus: entry.event_status
         });
+      }
+      const [webhookPaymentRows] = await pool.query(
+        `SELECT o.id AS order_id, e.gateway_payment_id, e.amount_paise, e.gateway_status
+         FROM razorpay_webhook_events e
+         INNER JOIN orders o
+           ON o.razorpay_order_id COLLATE utf8mb4_unicode_ci = e.gateway_order_id COLLATE utf8mb4_unicode_ci
+         WHERE o.id IN (${placeholders}) AND e.event_type = 'payment.captured'
+         ORDER BY e.received_at ASC, e.id ASC`,
+        refundOrderIds.map(String)
+      );
+      for (const entry of webhookPaymentRows) {
+        const key = String(entry.order_id);
+        if (!capturedPaymentsByOrder.has(key)) capturedPaymentsByOrder.set(key, []);
+        const items = capturedPaymentsByOrder.get(key);
+        if (!items.some(item => item.paymentId === entry.gateway_payment_id)) {
+          items.push({
+            paymentId: entry.gateway_payment_id,
+            amountPaise: Number(entry.amount_paise),
+            eventStatus: `webhook_${entry.gateway_status || "captured"}`
+          });
+        }
       }
     }
 
