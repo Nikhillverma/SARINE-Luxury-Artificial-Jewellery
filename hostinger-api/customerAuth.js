@@ -6,6 +6,8 @@ import { pool } from "./db.js";
 import { normalizeCustomerEmail } from "./customerValidation.js";
 import { shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
+import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
+import { formatVariantLabel } from "./productVariantPolicy.js";
 
 const router = Router();
 const COOKIE_NAME = "sarine_customer_session";
@@ -104,12 +106,14 @@ router.get("/orders", async (req, res, next) => {
        ORDER BY created_at DESC, id DESC LIMIT 100`,
       [customer.id]
     );
+    await ensureProductVariantSchema();
     const ids = rows.map((row) => row.id);
     const itemsByOrder = {};
     if (ids.length) {
       const placeholders = ids.map(() => "?").join(",");
       const [items] = await pool.query(
-        `SELECT order_id, product_id, product_name, sku, unit_price, quantity, image
+        `SELECT order_id, product_id, product_name, sku, unit_price, quantity, image,
+                variant_id, variant_sku, variant_label, variant_options
          FROM order_items WHERE order_id IN (${placeholders}) ORDER BY source_line ASC, id ASC`,
         ids
       );
@@ -118,7 +122,10 @@ router.get("/orders", async (req, res, next) => {
           productId: item.product_id || "",
           name: item.product_name || "Product",
           image: item.image || "",
-          sku: item.sku || undefined,
+          sku: item.variant_sku || item.sku || undefined,
+          variantId: item.variant_id || undefined,
+          variantLabel: item.variant_label || undefined,
+          variantOptions: typeof item.variant_options === "string" ? JSON.parse(item.variant_options) : (item.variant_options || undefined),
           unitPrice: Number(item.unit_price) || 0,
           quantity: Number(item.quantity) || 1
         });
@@ -186,6 +193,7 @@ router.post("/cancel", async (req, res, next) => {
     if (reason.length > 500) return res.status(400).json({ error: "Cancellation reason must be 500 characters or fewer." });
 
     await ensureInventoryTable();
+    await ensureProductVariantSchema();
     connection = await pool.getConnection();
     await connection.beginTransaction();
     const [rows] = await connection.execute(
@@ -214,12 +222,41 @@ router.post("/cancel", async (req, res, next) => {
     const stockWasDecremented = shouldRestoreStockOnCancellation(order);
     if (stockWasDecremented) {
       const [lines] = await connection.execute(
-        "SELECT product_id, SUM(quantity) AS quantity FROM order_items WHERE order_id = ? AND product_id IS NOT NULL GROUP BY product_id",
+        "SELECT product_id, variant_id, SUM(quantity) AS quantity FROM order_items WHERE order_id = ? AND product_id IS NOT NULL GROUP BY product_id, variant_id",
         [order.id]
       );
       for (const line of lines) {
         const quantity = Number(line.quantity);
         if (!line.product_id || !Number.isSafeInteger(quantity) || quantity <= 0) continue;
+        if (line.variant_id) {
+          const [variants] = await connection.execute(
+            `SELECT v.*, p.name AS product_name FROM product_variants v
+             INNER JOIN products p ON p.id = v.product_id
+             WHERE v.id = ? AND v.product_id = ? FOR UPDATE`,
+            [line.variant_id, line.product_id]
+          );
+          if (!variants.length) continue;
+          const variant = variants[0];
+          const previousStock = Number(variant.stock || 0);
+          const newStock = previousStock + quantity;
+          if (!Number.isSafeInteger(newStock) || newStock > 2147483647) {
+            throw new Error("Variant stock restoration would exceed the supported inventory balance.");
+          }
+          await connection.execute(
+            "UPDATE product_variants SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?",
+            [newStock, line.variant_id]
+          );
+          await syncProductVariantStock(connection, line.product_id);
+          await recordVariantInventoryMovement(connection, {
+            variantId: line.variant_id, productId: line.product_id,
+            productName: variant.product_name, variantSku: variant.sku,
+            variantLabel: formatVariantLabel(variant.option1_name, variant.option1_value, variant.option2_name, variant.option2_value),
+            previousStock, quantityDelta: quantity, newStock,
+            reason: `Customer cancellation restock ${orderNumber}`,
+            adminId: customer.id, adminName: customer.name, adminEmail: customer.email
+          });
+          continue;
+        }
         const [products] = await connection.execute(
           "SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE",
           [line.product_id]
@@ -236,15 +273,10 @@ router.post("/cancel", async (req, res, next) => {
           [newStock, line.product_id]
         );
         await recordInventoryMovement(connection, {
-          productId: product.id,
-          productName: product.name,
-          previousStock,
-          quantityDelta: quantity,
-          newStock,
+          productId: product.id, productName: product.name, previousStock,
+          quantityDelta: quantity, newStock,
           reason: `Customer cancellation restock ${orderNumber}`,
-          actorId: customer.id,
-          actorName: customer.name,
-          actorEmail: customer.email
+          actorId: customer.id, actorName: customer.name, actorEmail: customer.email
         });
       }
     }

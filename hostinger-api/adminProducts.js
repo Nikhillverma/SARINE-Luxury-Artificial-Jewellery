@@ -5,6 +5,8 @@ import { requireAdminAuth } from "./adminAuth.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 import { validateBulkProductRequest } from "./bulkProductPolicy.js";
 import { normalizeStringList, validateProductFields } from "./productPolicy.js";
+import { ensureProductVariantSchema, mapVariant, syncProductVariantStock } from "./productVariantSchema.js";
+import { isValidVariantSku } from "./productVariantPolicy.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -111,7 +113,25 @@ router.get("/", async (req, res, next) => {
       pool.execute("SELECT COUNT(*) AS total FROM products " + where, params),
       pool.execute("SELECT * FROM products " + where + " ORDER BY updated_at DESC, name ASC LIMIT ? OFFSET ?", [...params, limit, (page - 1) * limit])
     ]);
-    res.json({ products: rows.map(mapProduct), total: Number(countRows[0].total), page, limit });
+    await ensureProductVariantSchema();
+    const ids = rows.map(row => row.id);
+    const variantsByProduct = new Map();
+    if (ids.length) {
+      const placeholders = ids.map(() => "?").join(",");
+      const [variantRows] = await pool.execute(
+        `SELECT * FROM product_variants WHERE product_id IN (${placeholders}) ORDER BY sort_order ASC, option1_value ASC`,
+        ids
+      );
+      for (const row of variantRows) {
+        const list = variantsByProduct.get(row.product_id) || [];
+        list.push(mapVariant(row));
+        variantsByProduct.set(row.product_id, list);
+      }
+    }
+    res.json({
+      products: rows.map(row => ({ ...mapProduct(row), variants: (variantsByProduct.get(row.id) || []).filter(item => item.status === "active") })),
+      total: Number(countRows[0].total), page, limit
+    });
   } catch (error) { next(error); }
 });
 
@@ -160,6 +180,165 @@ router.post("/", async (req, res, next) => {
   } catch (error) {
     if (connection) await connection.rollback().catch(() => {});
     if (error.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "A product with this slug already exists." });
+    next(error);
+  } finally {
+    connection?.release();
+  }
+});
+
+
+router.get("/:id/variants", async (req, res, next) => {
+  try {
+    await ensureProductVariantSchema();
+    const [products] = await pool.execute("SELECT id FROM products WHERE id = ? LIMIT 1", [req.params.id]);
+    if (!products.length) return res.status(404).json({ error: "Product not found." });
+    const [rows] = await pool.execute(
+      "SELECT * FROM product_variants WHERE product_id = ? ORDER BY sort_order ASC, option1_value ASC, option2_value ASC",
+      [req.params.id]
+    );
+    res.set("Cache-Control", "no-store");
+    res.json({ variants: rows.map(mapVariant) });
+  } catch (error) { next(error); }
+});
+
+router.put("/:id/variants", async (req, res, next) => {
+  let connection;
+  try {
+    const variants = req.body?.variants;
+    if (!Array.isArray(variants) || variants.length < 1 || variants.length > 100) {
+      return res.status(400).json({ error: "Provide between 1 and 100 product variants. Set unwanted options to inactive instead of removing the entire variant set." });
+    }
+    await ensureProductVariantSchema();
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    const [products] = await connection.execute(
+      "SELECT id, name, price FROM products WHERE id = ? LIMIT 1 FOR UPDATE",
+      [req.params.id]
+    );
+    if (!products.length) {
+      await connection.rollback();
+      return res.status(404).json({ error: "Product not found." });
+    }
+    const product = products[0];
+    const [existingRows] = await connection.execute(
+      "SELECT * FROM product_variants WHERE product_id = ? FOR UPDATE",
+      [req.params.id]
+    );
+    if (existingRows.length && variants.length === 0) {
+      await connection.rollback();
+      return res.status(400).json({ error: "Keep at least one variant. Set unwanted options to inactive instead of deleting them." });
+    }
+
+    const normalized = [];
+    const ids = new Set();
+    const skus = new Set();
+    const combinations = new Set();
+    for (let index = 0; index < variants.length; index += 1) {
+      const item = variants[index] || {};
+      const option1Name = String(item.option1Name || "").trim().slice(0, 60);
+      const option1Value = String(item.option1Value || "").trim().slice(0, 100);
+      const option2Name = String(item.option2Name || "").trim().slice(0, 60);
+      const option2Value = String(item.option2Value || "").trim().slice(0, 100);
+      const sku = String(item.sku || "").trim().toUpperCase();
+      if (item.status !== undefined && !["active", "inactive"].includes(item.status)) {
+        await connection.rollback();
+        return res.status(400).json({ error: "Variant status must be active or inactive." });
+      }
+      const status = item.status === "inactive" ? "inactive" : "active";
+      if (!option1Name || !option1Value || !isValidVariantSku(sku)) {
+        await connection.rollback();
+        return res.status(400).json({ error: "Every variant needs an option name, option value and unique SKU (2–100 letters, numbers, dots, underscores or hyphens)." });
+      }
+      if (Boolean(option2Name) !== Boolean(option2Value) || (option2Name && option2Name.toLowerCase() === option1Name.toLowerCase())) {
+        await connection.rollback();
+        return res.status(400).json({ error: "Second option name and value must both be filled, and option names must differ." });
+      }
+      if (skus.has(sku)) {
+        await connection.rollback();
+        return res.status(400).json({ error: "Variant SKUs must be unique." });
+      }
+      skus.add(sku);
+      const combination = [option1Name, option1Value, option2Name, option2Value].join("|").toLowerCase();
+      if (combinations.has(combination)) {
+        await connection.rollback();
+        return res.status(400).json({ error: "Duplicate variant option combinations are not allowed." });
+      }
+      combinations.add(combination);
+      const id = item.id ? String(item.id) : crypto.randomUUID();
+      if (ids.has(id)) {
+        await connection.rollback();
+        return res.status(400).json({ error: "Variant IDs must be unique." });
+      }
+      ids.add(id);
+      const price = item.price === "" || item.price === undefined || item.price === null ? null : Number(item.price);
+      const compareAtPrice = item.compareAtPrice === "" || item.compareAtPrice === undefined || item.compareAtPrice === null ? null : Number(item.compareAtPrice);
+      const effectivePrice = price === null ? Number(product.price) : price;
+      if ((price !== null && (!Number.isFinite(price) || price < 0 || price > 99999999)) ||
+          (compareAtPrice !== null && (!Number.isFinite(compareAtPrice) || compareAtPrice <= effectivePrice))) {
+        await connection.rollback();
+        return res.status(400).json({ error: "Variant price must be valid, and comparison price must exceed its effective selling price." });
+      }
+      const stock = Number(item.stock);
+      if (!Number.isSafeInteger(stock) || stock < 0 || stock > 2147483647) {
+        await connection.rollback();
+        return res.status(400).json({ error: "Variant stock must be a non-negative whole number." });
+      }
+      const existing = existingRows.find(row => row.id === id);
+      if (item.id && !existing) {
+        await connection.rollback();
+        return res.status(400).json({ error: "A submitted variant does not belong to this product." });
+      }
+      if (existing && Number(existing.stock) !== stock) {
+        await connection.rollback();
+        return res.status(400).json({ error: "Existing variant stock must be changed through Inventory so every movement is audited." });
+      }
+      normalized.push({ id, option1Name, option1Value, option2Name: option2Name || null, option2Value: option2Value || null, sku, price, compareAtPrice, stock, status, sortOrder: Number.isInteger(Number(item.sortOrder)) ? Number(item.sortOrder) : index, isNew: !existing });
+    }
+    if (normalized.length && !normalized.some(item => item.status === "active")) {
+      await connection.rollback();
+      return res.status(400).json({ error: "At least one variant must remain active." });
+    }
+
+    for (const item of normalized) {
+      if (item.isNew) {
+        await connection.execute(
+          `INSERT INTO product_variants
+           (id, product_id, option1_name, option1_value, option2_name, option2_value, sku, price, compare_at_price, stock, status, sort_order, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
+          [item.id, req.params.id, item.option1Name, item.option1Value, item.option2Name, item.option2Value, item.sku, item.price, item.compareAtPrice, item.stock, item.status, item.sortOrder]
+        );
+      } else {
+        await connection.execute(
+          `UPDATE product_variants SET option1_name=?, option1_value=?, option2_name=?, option2_value=?,
+           sku=?, price=?, compare_at_price=?, status=?, sort_order=?, updated_at=UTC_TIMESTAMP(3)
+           WHERE id=? AND product_id=?`,
+          [item.option1Name, item.option1Value, item.option2Name, item.option2Value, item.sku, item.price, item.compareAtPrice, item.status, item.sortOrder, item.id, req.params.id]
+        );
+      }
+    }
+    if (existingRows.length) {
+      const submittedIds = normalized.map(item => item.id);
+      const omitted = existingRows.filter(row => !submittedIds.includes(row.id)).map(row => row.id);
+      if (omitted.length) {
+        const placeholders = omitted.map(() => "?").join(",");
+        await connection.execute(
+          `UPDATE product_variants SET status='inactive', updated_at=UTC_TIMESTAMP(3) WHERE product_id=? AND id IN (${placeholders})`,
+          [req.params.id, ...omitted]
+        );
+      }
+    }
+    await syncProductVariantStock(connection, req.params.id);
+    const [savedRows] = await connection.execute(
+      "SELECT * FROM product_variants WHERE product_id = ? ORDER BY sort_order ASC, option1_value ASC",
+      [req.params.id]
+    );
+    await connection.commit();
+    res.set("Cache-Control", "no-store");
+    res.json({ success: true, variants: savedRows.map(mapVariant), stock: savedRows.filter(row => row.status === "active").reduce((sum, row) => sum + Number(row.stock), 0) });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    if (error.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "That variant SKU is already used. Each variant needs a unique SKU." });
     next(error);
   } finally {
     connection?.release();

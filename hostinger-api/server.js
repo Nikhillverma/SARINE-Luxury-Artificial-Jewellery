@@ -23,6 +23,7 @@ import adminHomepageLayoutRouter, { publicHomepageLayoutRouter } from "./homepag
 import adminCuratedFavouritesRouter, { publicCuratedFavouritesRouter } from "./curatedFavourites.js";
 import ordersRouter from "./orders.js";
 import { publicMediaRouter, adminMediaRouter } from "./media.js";
+import { getProductVariants } from "./productVariantSchema.js";
 
 const app = express();
 
@@ -103,8 +104,17 @@ function mapProduct(row) {
     stoneType: row.stone_type || undefined,
     closureType: row.closure_type || undefined,
     careInstructions: parseJson(row.care_instructions),
+    variants: [],
     createdAt: row.created_at
   };
+}
+
+async function mapProductsWithVariants(rows) {
+  const grouped = await getProductVariants(rows.map(row => row.id), { activeOnly: true });
+  return rows.map(row => ({
+    ...mapProduct(row),
+    variants: grouped.get(row.id) || []
+  }));
 }
 
 function mapCategory(row) {
@@ -249,7 +259,7 @@ app.get("/api/products", async (req, res, next) => {
     );
 
     res.json({
-      products: rows.map(mapProduct),
+      products: await mapProductsWithVariants(rows),
       total: Number(countRows[0].total),
       page: currentPage,
       pageSize: limit
@@ -285,7 +295,7 @@ app.get("/api/bestsellers", async (req, res, next) => {
       [limit]
     );
     res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
-    res.json({ products: rows.map(mapProduct) });
+    res.json({ products: await mapProductsWithVariants(rows) });
   } catch (error) {
     next(error);
   }
@@ -308,7 +318,7 @@ app.get("/api/products/:slug", async (req, res, next) => {
     }
 
     res.json({
-      product: mapProduct(rows[0])
+      product: (await mapProductsWithVariants(rows))[0]
     });
   } catch (error) {
     next(error);

@@ -5,6 +5,8 @@ import Razorpay from "razorpay";
 import { pool } from "./db.js";
 import { getAuthenticatedCustomer } from "./customerAuth.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
+import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
+import { validateVariantSelection, getVariantStockKey, formatVariantLabel } from "./productVariantPolicy.js";
 
 const router = Router();
 
@@ -118,6 +120,7 @@ router.post("/create", async (req, res, next) => {
 
     await ensureMarketingSchema();
     await ensureInventoryTable();
+    await ensureProductVariantSchema();
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
@@ -145,12 +148,53 @@ router.post("/create", async (req, res, next) => {
         await connection.rollback();
         connection.release();
         connection = null;
-        return res.status(400).json({
-          error: `"${p.name || 'Selected item'}" is no longer active in our collection.`
-        });
+        return res.status(400).json({ error: `"${p.name || 'Selected item'}" is no longer active in our collection.` });
       }
-      const availableStock = Number(p.stock || 0);
-      const reservation = reservedStockByProduct.get(p.id) || {
+
+      const [activeVariants] = await connection.execute(
+        "SELECT id FROM product_variants WHERE product_id = ? AND status = 'active' LIMIT 1",
+        [p.id]
+      );
+      let variant = null;
+      const selectionError = validateVariantSelection(activeVariants.length > 0, itm.variantId);
+      if (selectionError) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        return res.status(400).json({ error: `${selectionError.replace("product option", `option for "${p.name}"`)}` });
+      }
+      if (activeVariants.length) {
+        if (!itm.variantId || typeof itm.variantId !== "string") {
+          await connection.rollback();
+          connection.release();
+          connection = null;
+          return res.status(400).json({ error: `Please choose an available option for "${p.name}".` });
+        }
+        const [variantRows] = await connection.execute(
+          "SELECT * FROM product_variants WHERE id = ? AND product_id = ? AND status = 'active' LIMIT 1 FOR UPDATE",
+          [itm.variantId, p.id]
+        );
+        if (!variantRows.length) {
+          await connection.rollback();
+          connection.release();
+          connection = null;
+          return res.status(400).json({ error: `The selected option for "${p.name}" is no longer available. Please refresh your bag.` });
+        }
+        variant = variantRows[0];
+      } else if (itm.variantId) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        return res.status(400).json({ error: `The selected option for "${p.name}" is no longer available. Please refresh your bag.` });
+      }
+
+      const stockKey = getVariantStockKey(p.id, variant?.id);
+      const availableStock = Number(variant ? variant.stock : p.stock) || 0;
+      const reservation = reservedStockByProduct.get(stockKey) || {
+        productId: p.id,
+        variantId: variant?.id || null,
+        variantSku: variant?.sku || null,
+        variantLabel: variant ? formatVariantLabel(variant.option1_name, variant.option1_value, variant.option2_name, variant.option2_value) : "",
         previousStock: availableStock,
         quantity: 0
       };
@@ -160,25 +204,31 @@ router.post("/create", async (req, res, next) => {
         connection.release();
         connection = null;
         return res.status(400).json({
-          error: `Only ${Math.max(0, remainingStock)} ${remainingStock === 1 ? 'piece is' : 'pieces are'} available for "${p.name}".`
+          error: `Only ${Math.max(0, remainingStock)} ${remainingStock === 1 ? 'piece is' : 'pieces are'} available for "${p.name}"${variant ? ` (${reservation.variantLabel})` : ""}.`
         });
       }
       reservation.quantity += Number(itm.quantity);
-      reservedStockByProduct.set(p.id, reservation);
-      const unitPrice = Math.round(Number(p.price) || 0);
+      reservedStockByProduct.set(stockKey, reservation);
+      const unitPrice = Math.round(Number(variant?.price ?? p.price) || 0);
       calculatedSubtotal += unitPrice * Number(itm.quantity);
       let images = [];
-      try {
-        images = typeof p.images === "string" ? JSON.parse(p.images) : (p.images || []);
-      } catch {}
+      try { images = typeof p.images === "string" ? JSON.parse(p.images) : (p.images || []); } catch {}
+      const variantOptions = variant ? {
+        [variant.option1_name]: variant.option1_value,
+        ...(variant.option2_name && variant.option2_value ? { [variant.option2_name]: variant.option2_value } : {})
+      } : null;
       verifiedLines.push({
         productId: p.id,
+        variantId: variant?.id || null,
+        variantSku: variant?.sku || null,
+        variantLabel: reservation.variantLabel || null,
+        variantOptions,
         name: p.name,
         unitPrice,
         quantity: Number(itm.quantity),
         previousStock: availableStock,
         image: Array.isArray(images) && images[0] ? String(images[0]) : "",
-        sku: null, // The live products table has no SKU column.
+        sku: variant?.sku || null,
         sourceLine: i
       });
     }
@@ -253,23 +303,34 @@ router.post("/create", async (req, res, next) => {
     // 7. Insert Order record and items based on paymentMethod
     if (paymentMethod === "cod") {
       // Deduct each distinct product once and record the movement in this transaction.
-      for (const [productId, reservation] of reservedStockByProduct) {
+      for (const [stockKey, reservation] of reservedStockByProduct) {
         const newStock = reservation.previousStock - reservation.quantity;
-        const productLine = verifiedLines.find((line) => line.productId === productId);
-        await connection.execute(
-          `UPDATE products SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
-          [newStock, productId]
-        );
-        await recordInventoryMovement(connection, {
-          productId,
-          productName: productLine?.name || "Product",
-          previousStock: reservation.previousStock,
-          quantityDelta: -reservation.quantity,
-          newStock,
-          reason: `COD order placed ${orderNumber}`,
-          actorName: "Customer checkout",
-          actorEmail: "system@sarine.local"
-        });
+        const productLine = verifiedLines.find(line => line.productId === reservation.productId && line.variantId === reservation.variantId);
+        if (reservation.variantId) {
+          await connection.execute(
+            "UPDATE product_variants SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?",
+            [newStock, reservation.variantId]
+          );
+          await syncProductVariantStock(connection, reservation.productId);
+          await recordVariantInventoryMovement(connection, {
+            variantId: reservation.variantId, productId: reservation.productId,
+            productName: productLine?.name || "Product", variantSku: reservation.variantSku,
+            variantLabel: reservation.variantLabel, previousStock: reservation.previousStock,
+            quantityDelta: -reservation.quantity, newStock, reason: `COD order placed ${orderNumber}`,
+            adminName: "Customer checkout", adminEmail: "system@sarine.local"
+          });
+        } else {
+          await connection.execute(
+            "UPDATE products SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?",
+            [newStock, reservation.productId]
+          );
+          await recordInventoryMovement(connection, {
+            productId: reservation.productId, productName: productLine?.name || "Product",
+            previousStock: reservation.previousStock, quantityDelta: -reservation.quantity,
+            newStock, reason: `COD order placed ${orderNumber}`,
+            actorName: "Customer checkout", actorEmail: "system@sarine.local"
+          });
+        }
       }
 
       await connection.execute(
@@ -297,9 +358,9 @@ router.post("/create", async (req, res, next) => {
 
       for (const line of verifiedLines) {
         await connection.execute(
-          `INSERT INTO order_items (order_id, product_id, product_name, sku, unit_price, quantity, image, source_line)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [orderNumber, line.productId, line.name, line.sku, line.unitPrice, line.quantity, line.image, line.sourceLine]
+          `INSERT INTO order_items (order_id, product_id, product_name, sku, unit_price, quantity, image, source_line, variant_id, variant_sku, variant_label, variant_options)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [orderNumber, line.productId, line.name, line.sku, line.unitPrice, line.quantity, line.image, line.sourceLine, line.variantId, line.variantSku, line.variantLabel, line.variantOptions ? JSON.stringify(line.variantOptions) : null]
         );
       }
 
@@ -350,9 +411,9 @@ router.post("/create", async (req, res, next) => {
 
       for (const line of verifiedLines) {
         await connection.execute(
-          `INSERT INTO order_items (order_id, product_id, product_name, sku, unit_price, quantity, image, source_line)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [orderNumber, line.productId, line.name, line.sku, line.unitPrice, line.quantity, line.image, line.sourceLine]
+          `INSERT INTO order_items (order_id, product_id, product_name, sku, unit_price, quantity, image, source_line, variant_id, variant_sku, variant_label, variant_options)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [orderNumber, line.productId, line.name, line.sku, line.unitPrice, line.quantity, line.image, line.sourceLine, line.variantId, line.variantSku, line.variantLabel, line.variantOptions ? JSON.stringify(line.variantOptions) : null]
         );
       }
 
@@ -513,6 +574,7 @@ router.post("/verify", async (req, res, next) => {
 
     // 3. Atomic database transaction for stock decrement and payment confirmation
     await ensureInventoryTable();
+    await ensureProductVariantSchema();
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
@@ -570,7 +632,8 @@ router.post("/verify", async (req, res, next) => {
 
     // Lock product items
     const [orderItems] = await connection.execute(
-      `SELECT product_id, quantity, product_name FROM order_items WHERE order_id = ?`,
+      `SELECT product_id, variant_id, variant_sku, variant_label, quantity, product_name
+       FROM order_items WHERE order_id = ?`,
       [order.id]
     );
 
@@ -581,12 +644,16 @@ router.post("/verify", async (req, res, next) => {
         hasSufficientStock = false;
         break;
       }
-      const existing = aggregatedItems.get(item.product_id);
+      const stockKey = item.variant_id ? `variant:${item.variant_id}` : `product:${item.product_id}`;
+      const existing = aggregatedItems.get(stockKey);
       if (existing) {
         existing.quantity += Number(item.quantity);
       } else {
-        aggregatedItems.set(item.product_id, {
+        aggregatedItems.set(stockKey, {
           productId: item.product_id,
+          variantId: item.variant_id || null,
+          variantSku: item.variant_sku || null,
+          variantLabel: item.variant_label || "",
           productName: item.product_name || "Product",
           quantity: Number(item.quantity),
           previousStock: null
@@ -595,36 +662,65 @@ router.post("/verify", async (req, res, next) => {
     }
 
     for (const item of aggregatedItems.values()) {
-      const [prod] = await connection.execute(
-        `SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE`,
-        [item.productId]
-      );
-      if (!prod.length || Number(prod[0].stock || 0) < item.quantity) {
-        hasSufficientStock = false;
-        break;
+      if (item.variantId) {
+        const [variantRows] = await connection.execute(
+          `SELECT v.id, v.product_id, v.sku, v.option1_value, v.option2_value, v.stock, p.name
+           FROM product_variants v INNER JOIN products p ON p.id = v.product_id
+           WHERE v.id = ? AND v.product_id = ? FOR UPDATE`,
+          [item.variantId, item.productId]
+        );
+        if (!variantRows.length || Number(variantRows[0].stock || 0) < item.quantity) {
+          hasSufficientStock = false;
+          break;
+        }
+        item.productName = variantRows[0].name || item.productName;
+        item.variantSku = variantRows[0].sku || item.variantSku;
+        item.variantLabel = formatVariantLabel(variantRows[0].option1_name, variantRows[0].option1_value, variantRows[0].option2_name, variantRows[0].option2_value) || item.variantLabel;
+        item.previousStock = Number(variantRows[0].stock || 0);
+      } else {
+        const [prod] = await connection.execute(
+          `SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE`,
+          [item.productId]
+        );
+        if (!prod.length || Number(prod[0].stock || 0) < item.quantity) {
+          hasSufficientStock = false;
+          break;
+        }
+        item.productName = prod[0].name || item.productName;
+        item.previousStock = Number(prod[0].stock || 0);
       }
-      item.productName = prod[0].name || item.productName;
-      item.previousStock = Number(prod[0].stock || 0);
     }
 
     if (hasSufficientStock) {
-      // Deduct each distinct product once and record the movement atomically.
+      // Deduct each distinct product or variant once and record the movement atomically.
       for (const item of aggregatedItems.values()) {
         const newStock = item.previousStock - item.quantity;
-        await connection.execute(
-          `UPDATE products SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
-          [newStock, item.productId]
-        );
-        await recordInventoryMovement(connection, {
-          productId: item.productId,
-          productName: item.productName,
-          previousStock: item.previousStock,
-          quantityDelta: -item.quantity,
-          newStock,
-          reason: `Online payment captured ${cleanOrderNumber}`,
-          actorName: "Razorpay payment",
-          actorEmail: "system@sarine.local"
-        });
+        if (item.variantId) {
+          await connection.execute(
+            "UPDATE product_variants SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?",
+            [newStock, item.variantId]
+          );
+          await syncProductVariantStock(connection, item.productId);
+          await recordVariantInventoryMovement(connection, {
+            variantId: item.variantId, productId: item.productId,
+            productName: item.productName, variantSku: item.variantSku,
+            variantLabel: item.variantLabel, previousStock: item.previousStock,
+            quantityDelta: -item.quantity, newStock,
+            reason: `Online payment captured ${cleanOrderNumber}`,
+            adminName: "Razorpay payment", adminEmail: "system@sarine.local"
+          });
+        } else {
+          await connection.execute(
+            `UPDATE products SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
+            [newStock, item.productId]
+          );
+          await recordInventoryMovement(connection, {
+            productId: item.productId, productName: item.productName,
+            previousStock: item.previousStock, quantityDelta: -item.quantity,
+            newStock, reason: `Online payment captured ${cleanOrderNumber}`,
+            actorName: "Razorpay payment", actorEmail: "system@sarine.local"
+          });
+        }
       }
       await connection.execute(
         `UPDATE orders
@@ -718,8 +814,10 @@ router.get("/:orderNumber", async (req, res, next) => {
       return res.status(403).json({ error: "Unauthorized access to order." });
     }
 
+    await ensureProductVariantSchema();
     const [itemRows] = await pool.execute(
-      `SELECT id, product_id, product_name, sku, unit_price, quantity, image, source_line
+      `SELECT id, product_id, product_name, sku, unit_price, quantity, image, source_line,
+              variant_id, variant_sku, variant_label, variant_options
        FROM order_items
        WHERE order_id = ?
        ORDER BY source_line ASC, id ASC`,
@@ -749,7 +847,10 @@ router.get("/:orderNumber", async (req, res, next) => {
         unitPrice: Number(row.unit_price),
         quantity: Number(row.quantity),
         image: row.image || "",
-        sku: row.sku || undefined
+        sku: row.variant_sku || row.sku || undefined,
+        variantId: row.variant_id || undefined,
+        variantLabel: row.variant_label || undefined,
+        variantOptions: typeof row.variant_options === "string" ? JSON.parse(row.variant_options) : (row.variant_options || undefined)
       })),
       subtotal: Number(order.subtotal),
       shippingFee: Number(order.shipping_fee),
@@ -824,8 +925,9 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
       return res.status(404).json({ error: GENERIC_NOT_FOUND });
     }
 
+    await ensureProductVariantSchema();
     const [items] = await pool.execute(
-      `SELECT product_name, quantity, image, unit_price
+      `SELECT product_name, quantity, image, unit_price, variant_sku, variant_label, variant_options
        FROM order_items
        WHERE order_id = ?`,
       [order.id]
@@ -836,7 +938,10 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
       name: itm.product_name,
       quantity: Number(itm.quantity),
       image: itm.image || "",
-      unitPrice: Number(itm.unit_price || 0)
+      unitPrice: Number(itm.unit_price || 0),
+      sku: itm.variant_sku || undefined,
+      variantLabel: itm.variant_label || undefined,
+      variantOptions: typeof itm.variant_options === "string" ? JSON.parse(itm.variant_options) : (itm.variant_options || undefined)
     }));
 
     return res.json({
