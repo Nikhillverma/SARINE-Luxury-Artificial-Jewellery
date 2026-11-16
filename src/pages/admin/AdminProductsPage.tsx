@@ -212,7 +212,7 @@ export const AdminProductsPage: React.FC = () => {
         throw new Error('Comparison price must be greater than the selling price.');
       }
       if (form.shortDescription.length > 240 || form.description.length > 5000) throw new Error('Short description is limited to 240 characters and full description to 5,000 characters.');
-      if (splitList(form.tags).length > 20 || splitList(form.collectionSlugs).length > 20 || splitList(form.careInstructions).length > 20) throw new Error('Use no more than 20 tags, collections or care instructions.');
+      if (splitList(form.tags).length > 20 || splitList(form.collectionSlugs).length > 20 || splitLines(form.careInstructions).length > 20 || splitLines(form.careInstructions).some(instruction => instruction.length > 300)) throw new Error('Use no more than 20 tags, collections or care instructions.');
       if (editing) {
         await adminProductService.updateProduct(editing.id, payload);
         setNotice('Product changes saved to Hostinger database.');
