@@ -4,6 +4,7 @@ import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 import { validateBulkProductRequest } from "./bulkProductPolicy.js";
+import { normalizeStringList, validateProductFields } from "./productPolicy.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -46,12 +47,12 @@ function mapProduct(row) {
 }
 
 function validateProduct(body, partial = false) {
-  const errors = [];
+  const errors = validateProductFields(body);
   if (!partial || body.name !== undefined) {
     if (typeof body.name !== "string" || !body.name.trim() || body.name.trim().length > 255) errors.push("Name is required and must be at most 255 characters.");
   }
   if (!partial || body.price !== undefined) {
-    if (!Number.isFinite(Number(body.price)) || Number(body.price) < 0) errors.push("Price must be a non-negative number.");
+    if (!Number.isFinite(Number(body.price)) || Number(body.price) < 0 || Number(body.price) > 99999999) errors.push("Price must be a valid non-negative amount.");
   }
   if (body.stock !== undefined && (!Number.isInteger(Number(body.stock)) || Number(body.stock) < 0)) errors.push("Stock must be a non-negative integer.");
   if (body.status !== undefined && !STATUSES.has(body.status)) errors.push("Status must be active, draft or archived.");
@@ -74,16 +75,16 @@ function valuesFromBody(body, existing = {}) {
     cost_price: get("costPrice"),
     images: JSON.stringify(get("images", [])),
     category_id: get("categoryId"),
-    collection_slugs: JSON.stringify(get("collectionSlugs", [])),
+    collection_slugs: JSON.stringify(normalizeStringList(get("collectionSlugs", []))),
     jewellery_type: get("jewelleryType"),
     stock: Number(get("stock", 0)),
     status: get("status", "draft"),
-    tags: JSON.stringify(get("tags", [])),
+    tags: JSON.stringify(normalizeStringList(get("tags", []))),
     base_metal: get("baseMetal"),
     plating_finish: get("platingFinish"),
     stone_type: get("stoneType"),
     closure_type: get("closureType"),
-    care_instructions: JSON.stringify(get("careInstructions", []))
+    care_instructions: JSON.stringify(normalizeStringList(get("careInstructions", [])))
   };
 }
 
@@ -173,6 +174,11 @@ router.put("/:id", async (req, res, next) => {
     const [existingRows] = await pool.execute("SELECT * FROM products WHERE id = ? LIMIT 1", [req.params.id]);
     if (!existingRows.length) return res.status(404).json({ error: "Product not found." });
     const existing = mapProduct(existingRows[0]);
+    const finalPrice = body.price === undefined ? existing.price : Number(body.price);
+    const finalCompareAtPrice = body.compareAtPrice === undefined ? existing.compareAtPrice : body.compareAtPrice;
+    if (finalCompareAtPrice != null && Number(finalCompareAtPrice) <= finalPrice) {
+      return res.status(400).json({ error: "Comparison price must be higher than the selling price." });
+    }
     if (body.stock !== undefined && Number(body.stock) !== existing.stock) {
       return res.status(400).json({ error: "Use Inventory & Physical Stock Control to adjust stock so the change is recorded in inventory history." });
     }
