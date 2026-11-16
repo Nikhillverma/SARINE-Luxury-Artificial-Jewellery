@@ -55,18 +55,21 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json({
-  limit: "4mb",
-  verify: (req, _res, buf) => {
-    req.rawBody = buf;
-  }
-}));
-
 app.use("/api", rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 300,
   standardHeaders: "draft-8",
   legacyHeaders: false
+}));
+
+// Verify webhook signatures against raw bytes before JSON parsing.
+app.use("/api/webhooks", razorpayWebhooksRouter);
+
+app.use(express.json({
+  limit: "4mb",
+  verify: (req, _res, buf) => {
+    req.rawBody = buf;
+  }
 }));
 
 function parseJson(value, fallback = []) {
@@ -404,8 +407,6 @@ app.use("/api/admin/returns", adminReturnsRouter);
 app.use("/api/admin/refunds", adminRefundsRouter);
 
 // Signed Razorpay webhook intake (raw request bytes are retained by express.json verify).
-app.use("/api/webhooks", razorpayWebhooksRouter);
-
 // Hostinger orders router
 app.use("/api/orders", ordersRouter);
 
