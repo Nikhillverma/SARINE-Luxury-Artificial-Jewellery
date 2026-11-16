@@ -146,7 +146,13 @@ router.post("/", async (req, res, next) => {
       "SELECT gateway_payment_id FROM payment_event_log WHERE gateway_payment_id = ? AND order_id = ? LIMIT 1",
       [request.paymentId, String(order.id)]
     );
-    if (!isPrimaryPayment && !eventRows.length) {
+    const [webhookPaymentRows] = await connection.execute(
+      `SELECT gateway_payment_id FROM razorpay_webhook_events
+       WHERE gateway_payment_id = ? AND gateway_order_id = ? AND event_type = 'payment.captured'
+       LIMIT 1`,
+      [request.paymentId, order.razorpay_order_id]
+    );
+    if (!isPrimaryPayment && !eventRows.length && !webhookPaymentRows.length) {
       throw new Error("Selected payment is not recorded against this SARINE order.");
     }
 
