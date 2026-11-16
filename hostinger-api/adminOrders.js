@@ -4,6 +4,7 @@ import { requireAdminAuth } from "./adminAuth.js";
 import { canShipOrder, shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
+import { formatVariantLabel } from "./productVariantPolicy.js";
 
 const router = Router();
 
