@@ -12,6 +12,7 @@ export async function ensureRazorpayWebhookSchema() {
         gateway_order_id VARCHAR(64) NULL,
         gateway_payment_id VARCHAR(64) NULL,
         gateway_refund_id VARCHAR(64) NULL,
+        gateway_receipt VARCHAR(100) NULL,
         amount_paise BIGINT UNSIGNED NULL,
         currency CHAR(3) NULL,
         gateway_status VARCHAR(40) NULL,
@@ -58,6 +59,7 @@ export function buildRazorpayWebhookRecord(eventId, payload) {
     gatewayOrderId: String(payment?.order_id || "").trim() || null,
     gatewayPaymentId: String(refund?.payment_id || payment?.id || "").trim() || null,
     gatewayRefundId: String(refund?.id || "").trim() || null,
+    gatewayReceipt: String(refund?.receipt || "").trim() || null,
     amountPaise: amount === null || amount === undefined ? null : Number(amount),
     currency: String(refund?.currency || payment?.currency || "").trim().toUpperCase() || null,
     gatewayStatus: String(refund?.status || payment?.status || "").trim() || null
