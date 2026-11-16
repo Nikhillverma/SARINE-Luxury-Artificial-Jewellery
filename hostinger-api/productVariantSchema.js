@@ -81,7 +81,7 @@ export function mapVariant(row) {
     option1Value: row.option1_value,
     option2Name: row.option2_name || undefined,
     option2Value: row.option2_value || undefined,
-    label: [row.option1_value, row.option2_value].filter(Boolean).join(" / "),
+    label: formatVariantLabel(row.option1_value, row.option2_value),
     sku: row.sku,
     price: row.price == null ? undefined : Number(row.price),
     compareAtPrice: row.compare_at_price == null ? undefined : Number(row.compare_at_price),
