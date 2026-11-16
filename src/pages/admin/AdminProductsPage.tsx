@@ -20,6 +20,10 @@ function splitList(value: string): string[] {
   return Array.from(new Set(value.split(/[\\n,]/).map(item => item.trim()).filter(Boolean)));
 }
 
+function splitLines(value: string): string[] {
+  return Array.from(new Set(value.split(/\\r?\\n/).map(item => item.trim()).filter(Boolean)));
+}
+
 function slugify(value: string): string {
   return value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -199,7 +203,7 @@ export const AdminProductsPage: React.FC = () => {
         platingFinish: form.platingFinish.trim(),
         stoneType: form.stoneType.trim(),
         closureType: form.closureType.trim(),
-        careInstructions: splitList(form.careInstructions)
+        careInstructions: splitLines(form.careInstructions)
       };
       if (form.costPrice.trim() && (!Number.isFinite(Number(form.costPrice)) || Number(form.costPrice) < 0)) {
         throw new Error('Enter a valid cost price.');
