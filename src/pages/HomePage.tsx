@@ -179,9 +179,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       setLoading(true);
       setLoadError(false);
       try {
-        const [cats, featured, newest] = await Promise.all([
+        const [cats, bestSelling, newest] = await Promise.all([
           categoryService.getCategories({ activeOnly: true }),
-          productService.getFeaturedProducts(10),
+          productService.getBestSellingProducts(10),
           productService.getProducts({ sortBy: 'newest', inStockOnly: true, includeAll })
         ]);
 
@@ -202,8 +202,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
           setCategories(sortedCats);
 
-          const bestList = featured.length >= 5 ? featured : (newest.length > 0 ? newest : featured);
-          setBestsellers(bestList);
+          setBestsellers(bestSelling);
 
           // 4 newest products sorted by createdAt descending
           const sortedNewest = [...newest].sort((a, b) => {
