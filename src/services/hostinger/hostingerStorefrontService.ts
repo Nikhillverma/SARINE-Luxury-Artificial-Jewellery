@@ -14,6 +14,12 @@ export interface HomepageLayout {
   sections: HomepageSectionConfig[];
 }
 
+export interface CuratedFavouritesConfig {
+  version: 1;
+  productIds: string[];
+  configured: boolean;
+}
+
 export interface StorefrontBanner {
   id: string;
   tagline: string;
@@ -40,6 +46,13 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export const hostingerStorefrontService = {
   getHomepageLayout: () => request<{ draft: HomepageLayout; published: HomepageLayout }>("/admin/homepage-layout"),
   getPublicHomepageLayout: () => request<{ layout: HomepageLayout }>("/homepage-layout"),
+  getCuratedFavourites: () => request<{ draft: CuratedFavouritesConfig; published: CuratedFavouritesConfig; maxProducts: number }>("/admin/curated-favourites"),
+  saveCuratedFavourites: (config: CuratedFavouritesConfig) =>
+    request<{ success: boolean; draft: CuratedFavouritesConfig }>("/admin/curated-favourites/draft", { method: "PUT", body: JSON.stringify(config) }),
+  publishCuratedFavourites: () =>
+    request<{ success: boolean; published: CuratedFavouritesConfig }>("/admin/curated-favourites/publish", { method: "POST" }),
+  getPublicCuratedFavourites: () =>
+    request<{ products: import("../../types/product").Product[]; configured: boolean }>("/curated-favourites"),
   saveHomepageLayout: (layout: HomepageLayout) =>
     request<{ success: boolean; draft: HomepageLayout }>("/admin/homepage-layout/draft", { method: "PUT", body: JSON.stringify(layout) }),
   publishHomepageLayout: () =>

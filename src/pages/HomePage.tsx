@@ -64,7 +64,7 @@ interface HomePageProps {
 
 const defaultHomepageLayout: HomepageLayout = {
   version: 1,
-  sections: ["categories", "new-arrivals", "best-sellers", "occasions", "price", "our-story", "editorial"]
+  sections: ["categories", "new-arrivals", "best-sellers", "curated-favourites", "occasions", "price", "our-story", "editorial"]
     .map((id, sortOrder) => ({ id, enabled: true, sortOrder }))
 };
 
@@ -81,10 +81,26 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       .catch(error => console.warn('[HomePage] Published section layout unavailable; using the default order.', error));
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    hostingerStorefrontService.getPublicCuratedFavourites()
+      .then(result => {
+        if (!cancelled) {
+          setManualCuratedFavourites(result.products);
+          setHasPublishedCuratedFavourites(result.configured);
+        }
+      })
+      .catch(error => console.warn("[HomePage] Curated Favourites unavailable; using the existing automatic fallback.", error));
+    return () => { cancelled = true; };
+  }, []);
+
   // Storefront Data
   const [categories, setCategories] = useState<Category[]>([]);
   const [bestsellers, setBestsellers] = useState<Product[]>([]);
   const [curatedFavourites, setCuratedFavourites] = useState<Product[]>([]);
+  const [manualCuratedFavourites, setManualCuratedFavourites] = useState<Product[]>([]);
+  const [hasPublishedCuratedFavourites, setHasPublishedCuratedFavourites] = useState(false);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<boolean>(false);
@@ -526,16 +542,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-8 sm:mb-10">
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
-              {bestsellers.length > 0 ? 'Best Sellers' : 'Curated Favourites'}
+              Best Sellers
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
-              {bestsellers.length > 0
-                ? 'Our most cherished pieces, loved for their enduring finish and timeless beauty.'
-                : 'A considered edit of beautiful pieces selected from the SARINE collection.'}
+              Our most cherished pieces, ranked by genuine customer purchases.
             </p>
             <div className="mt-3">
               <Link
-                to={bestsellers.length > 0 ? '/shop?sort=bestseller' : '/shop'}
+                to='/shop?sort=bestseller'
                 className="text-xs sm:text-[13px] text-[#302438] hover:text-[#563568] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
               >
                 <span>View All</span>
@@ -555,15 +569,50 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 </div>
               ))}
             </div>
-          ) : (bestsellers.length > 0 || curatedFavourites.length > 0) ? (
+          ) : bestsellers.length > 0 ? (
             <div className="product-grid">
-              {(bestsellers.length > 0 ? bestsellers : curatedFavourites).slice(0, 8).map((product) => (
+              {bestsellers.slice(0, 8).map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
           ) : (
             <p className="col-span-full py-8 text-center text-xs text-[#6F6475]">
-              {loadError ? 'We could not load collection pieces right now. Please try again shortly.' : 'New collection pieces will be available soon. Please explore the full collection.'}
+              {loadError ? 'We could not load Best Sellers right now. Please try again shortly.' : 'Our Best Sellers will appear here as qualifying customer orders are completed.'}
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* =========================================================================
+          CURATED FAVOURITES
+          Manually selected and ordered in Storefront Studio. Automatic newest-product
+          fallback remains in place until a manual collection has been published.
+          ========================================================================= */}
+      <section style={{ order: sectionOrder("curated-favourites"), display: sectionVisible("curated-favourites") ? undefined : "none" }} className="py-12 sm:py-16 lg:py-20 border-t border-[#E7DCEB] bg-white">
+        <div className="site-container">
+          <div className="w-full text-center mb-8 sm:mb-10">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">THE SARINE EDIT</span>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">Curated Favourites</h2>
+            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
+              A considered edit of beautiful pieces selected from the SARINE collection.
+            </p>
+            <div className="mt-3">
+              <Link to="/shop" className="text-xs sm:text-[13px] text-[#302438] hover:text-[#563568] font-sans font-medium inline-flex items-center gap-1.5 transition-colors">
+                <span>View All</span><ArrowRight size={13} />
+              </Link>
+            </div>
+          </div>
+          {loading ? (
+            <div className="product-grid">
+              {[...Array(4)].map((_, i) => <div key={i} className="animate-pulse w-full"><div className="bg-[#F0E6F4] aspect-[3/4] w-full border border-[#E7DCEB]" /><div className="h-4 bg-[#F0E6F4] w-2/3 mt-3" /><div className="h-3 bg-[#F0E6F4] w-1/3 mt-2" /></div>)}
+            </div>
+          ) : (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0 ? (
+            <div className="product-grid">
+              {(hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).slice(0, 8).map(product => <ProductCard key={product.id} product={product} />)}
+            </div>
+          ) : (
+            <p className="col-span-full py-8 text-center text-xs text-[#6F6475]">
+              {hasPublishedCuratedFavourites ? "Our selected favourites are temporarily unavailable. Please check back soon." : "New collection pieces will be available soon. Please explore the full collection."}
             </p>
           )}
         </div>

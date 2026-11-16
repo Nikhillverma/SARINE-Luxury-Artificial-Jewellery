@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
 import { HomepageSectionManager } from "../../components/admin/HomepageSectionManager";
+import { CuratedFavouritesManager } from "../../components/admin/CuratedFavouritesManager";
 import { hostingerMediaService } from "../../services";
 import { hostingerStorefrontService, type StorefrontBanner, type EditorialContent, type ProductReview } from "../../services/hostinger/hostingerStorefrontService";
 
@@ -159,6 +160,7 @@ export const AdminStorefrontPage: React.FC = () => {
         <a href="/" target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg border text-sm">Preview storefront</a>
       </header>
       <HomepageSectionManager />
+      <CuratedFavouritesManager />
       {error && <div role="alert" className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>}
       {message && <div role="status" className="p-3 rounded-lg bg-green-50 text-green-800 text-sm">{message}</div>}
 
