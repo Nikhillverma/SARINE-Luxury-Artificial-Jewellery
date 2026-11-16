@@ -33,7 +33,7 @@ export const AdminInventoryPage: React.FC = () => {
   const [movements, setMovements] = useState<InventoryMovement[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [lowStockThreshold, setLowStockThreshold] = useState(DEFAULT_lowStockThreshold);
+  const [lowStockThreshold, setLowStockThreshold] = useState(DEFAULT_LOW_STOCK_THRESHOLD);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
