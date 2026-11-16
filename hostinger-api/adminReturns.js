@@ -83,7 +83,7 @@ router.get("/", async (req, res, next) => {
       [...values, limit]
     );
 
-    const refundConditions = ["(o.refund_needed = 1 OR o.order_status = 'needs_refund')"];
+    const refundConditions = ["(o.refund_needed = 1 OR o.order_status = 'needs_refund' OR EXISTS (SELECT 1 FROM razorpay_refund_records rr WHERE rr.order_id = o.id))"];
     const refundValues = [];
     if (search) {
       const term = "%" + search.toLowerCase() + "%";
@@ -188,6 +188,7 @@ router.get("/", async (req, res, next) => {
         orderNumber: row.order_number,
         customer: { name: row.customer_name || "", email: row.customer_email || "", phone: row.customer_phone || "" },
         amountRequested: Number(row.refund_amount ?? row.total) || 0,
+        refundRequired: Boolean(row.refund_needed || row.order_status === "needs_refund"),
         paymentMethod: row.payment_method,
         paymentStatus: row.payment_status,
         orderStatus: row.order_status,
