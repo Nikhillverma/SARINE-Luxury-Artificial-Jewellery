@@ -77,7 +77,7 @@ async function saveGatewayOutcome(recordId, outcome) {
     const [rows] = await connection.execute("SELECT * FROM razorpay_refund_records WHERE id = ? FOR UPDATE", [recordId]);
     if (!rows.length) throw new Error("Saved refund request could not be found.");
     const record = rows[0];
-    if (record.status !== "processed" && record.status !== "failed") {
+    if (record.status !== "processed" && (outcome.status === "processed" || record.status !== "failed")) {
       await connection.execute(
         `UPDATE razorpay_refund_records
          SET gateway_refund_id = COALESCE(?, gateway_refund_id),
