@@ -222,9 +222,10 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
         const matchesName = product.name.toLowerCase().includes(q);
         const matchesType = product.jewelleryType.toLowerCase().includes(q);
         const matchesTag = product.tags && product.tags.some((t) => t.toLowerCase().includes(q));
-        const matchesDesc = product.description.toLowerCase().includes(q);
+        const matchesDesc = product.description.toLowerCase().includes(q) || (product.shortDescription || '').toLowerCase().includes(q);
+        const matchesCraft = [product.baseMetal, product.platingFinish, product.stoneType, product.closureType].some(value => (value || '').toLowerCase().includes(q));
         const matchesSku = product.id.toLowerCase().includes(q);
-        if (!matchesName && !matchesType && !matchesTag && !matchesDesc && !matchesSku) {
+        if (!matchesName && !matchesType && !matchesTag && !matchesDesc && !matchesCraft && !matchesSku) {
           return false;
         }
       }
