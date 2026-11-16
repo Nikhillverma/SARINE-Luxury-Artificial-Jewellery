@@ -255,6 +255,37 @@ app.get("/api/products", async (req, res, next) => {
   }
 });
 
+// Public best sellers: rank by units in completed, paid orders only.
+app.get("/api/bestsellers", async (req, res, next) => {
+  try {
+    const rawLimit = Number.parseInt(req.query.limit, 10);
+    const limit = Math.min(24, Math.max(1, Number.isFinite(rawLimit) ? rawLimit : 8));
+    const [rows] = await pool.execute(
+      `SELECT p.*
+       FROM products p
+       INNER JOIN (
+         SELECT oi.product_id,
+           SUM(oi.quantity) AS units_sold,
+           SUM(oi.quantity * oi.unit_price) AS item_sales
+         FROM order_items oi
+         INNER JOIN orders o ON o.id = oi.order_id
+         WHERE o.payment_status = 'paid'
+           AND o.order_status NOT IN ('cancelled', 'returned', 'failed', 'needs_refund')
+           AND (LOWER(COALESCE(o.payment_method, 'online')) <> 'cod' OR o.order_status = 'delivered')
+         GROUP BY oi.product_id
+       ) sales ON sales.product_id = p.id
+       WHERE p.status = 'active' AND p.stock > 0
+       ORDER BY sales.units_sold DESC, sales.item_sales DESC, p.created_at DESC
+       LIMIT ?`,
+      [limit]
+    );
+    res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
+    res.json({ products: rows.map(mapProduct) });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.get("/api/products/:slug", async (req, res, next) => {
   try {
     const [rows] = await pool.execute(
