@@ -46,6 +46,9 @@ jobs:
           node --check curatedFavouritesPolicy.js
           node --check adminAnalytics.js
           node --check adminDashboard.js
+          node --check adminInventory.js
+          node --check inventorySettings.js
+          node --check inventorySettingsPolicy.js
           node --check adminCustomers.js
           node --check customerValidation.js
           node --check marketingPolicy.js
