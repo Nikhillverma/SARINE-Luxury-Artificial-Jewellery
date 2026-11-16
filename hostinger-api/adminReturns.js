@@ -2,6 +2,7 @@ import { Router } from "express";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { ensurePaymentEventLogTable } from "./paymentEventPolicy.js";
+import { ensureRazorpayWebhookSchema } from "./razorpayWebhookPolicy.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -131,7 +132,6 @@ router.get("/webhook-events", async (req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
     await ensurePaymentEventLogTable();
-    const { ensureRazorpayWebhookSchema } = await import("./razorpayWebhookPolicy.js");
     await ensureRazorpayWebhookSchema();
     const limitValue = Number.parseInt(String(req.query.limit || "100"), 10);
     const limit = Math.min(Math.max(Number.isFinite(limitValue) ? limitValue : 100, 1), 200);
@@ -144,9 +144,9 @@ router.get("/webhook-events", async (req, res, next) => {
               pe.gateway_payment_id AS ledger_payment_id, pe.amount_paise AS ledger_amount_paise
        FROM razorpay_webhook_events e
        LEFT JOIN orders o
-         ON (e.gateway_order_id IS NOT NULL AND o.razorpay_order_id = e.gateway_order_id)
-         OR (e.gateway_payment_id IS NOT NULL AND o.razorpay_payment_id = e.gateway_payment_id)
-       LEFT JOIN payment_event_log pe ON pe.gateway_payment_id = e.gateway_payment_id
+         ON (e.gateway_order_id IS NOT NULL AND o.razorpay_order_id COLLATE utf8mb4_unicode_ci = e.gateway_order_id COLLATE utf8mb4_unicode_ci)
+         OR (e.gateway_payment_id IS NOT NULL AND o.razorpay_payment_id COLLATE utf8mb4_unicode_ci = e.gateway_payment_id COLLATE utf8mb4_unicode_ci)
+       LEFT JOIN payment_event_log pe ON pe.gateway_payment_id COLLATE utf8mb4_unicode_ci = e.gateway_payment_id COLLATE utf8mb4_unicode_ci
        ORDER BY e.received_at DESC, e.id DESC
        LIMIT ?`,
       [limit]
