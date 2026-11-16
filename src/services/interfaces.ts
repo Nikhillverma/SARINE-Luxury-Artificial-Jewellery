@@ -52,10 +52,18 @@ export interface InventoryMovement {
   createdAt: string;
 }
 
+export interface BulkProductUpdates { price?: number; compareAtPrice?: number | null; categoryId?: string; status?: "active" | "draft"; }
+
+export interface BulkProductUpdateResult {
+  summary: { requested: number; updated: number; skipped: number };
+  results: { productId: string; productName?: string; status: "updated" | "skipped" | "not_found"; message: string }[];
+}
+
 export interface IAdminProductService {
   getProducts(): Promise<Product[]>;
   createProduct(product: Omit<Product, 'id' | 'createdAt'>): Promise<Product>;
   updateProduct(id: string, updates: Partial<Product>): Promise<Product>;
+  bulkUpdateProducts(productIds: string[], updates: BulkProductUpdates): Promise<BulkProductUpdateResult>;
   adjustStock(id: string, quantityDelta: number, reason: string): Promise<InventoryMovement>;
   getInventoryMovements(): Promise<InventoryMovement[]>;
   deleteProduct(id: string): Promise<boolean>;
