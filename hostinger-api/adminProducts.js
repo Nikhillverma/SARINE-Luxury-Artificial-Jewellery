@@ -187,6 +187,31 @@ router.post("/", async (req, res, next) => {
 });
 
 
+router.get("/:id/preview", async (req, res, next) => {
+  try {
+    res.set("Cache-Control", "private, no-store, max-age=0");
+    res.set("Pragma", "no-cache");
+    const [products] = await pool.execute(
+      "SELECT * FROM products WHERE id = ? AND status IN ('active', 'draft') LIMIT 1",
+      [req.params.id]
+    );
+    if (!products.length) return res.status(404).json({ error: "Product not found or archived." });
+    await ensureProductVariantSchema();
+    const [variants] = await pool.execute(
+      "SELECT * FROM product_variants WHERE product_id = ? ORDER BY sort_order ASC, option1_value ASC, option2_value ASC",
+      [req.params.id]
+    );
+    res.json({
+      product: {
+        ...mapProduct(products[0]),
+        variants: variants.map(mapVariant)
+      },
+      previewOnly: true,
+      purchaseEnabled: false
+    });
+  } catch (error) { next(error); }
+});
+
 router.get("/:id/variants", async (req, res, next) => {
   try {
     await ensureProductVariantSchema();
