@@ -5,6 +5,7 @@ import type { Product, JewelleryType, ProductStatus } from '../../types/product'
 import type { Category } from '../../types/category';
 import { JEWELLERY_TYPE_LABELS } from '../../types/product';
 import { BulkProductEditor } from '../../components/admin/BulkProductEditor';
+import { ProductVariantsManager } from '../../components/admin/ProductVariantsManager';
 import type { BulkProductUpdates, BulkProductUpdateResult } from '../../services/interfaces';
 import { formatInr } from '../../utils/currency';
 import { Plus, Search, Edit2, Copy, Archive, X, RefreshCw, Upload, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
@@ -44,6 +45,7 @@ export const AdminProductsPage: React.FC = () => {
   const [error, setError] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [variantProduct, setVariantProduct] = useState<Product | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -319,6 +321,7 @@ export const AdminProductsPage: React.FC = () => {
           </div>
         </div>}
         {bulkOpen && <BulkProductEditor products={products.filter(product => selectedIds.includes(product.id))} categories={categories} onApply={applyBulkChanges} onClose={() => setBulkOpen(false)}/>}
+        {variantProduct && <ProductVariantsManager product={variantProduct} onClose={() => setVariantProduct(null)} onSaved={(stock) => { setProducts(current => current.map(item => item.id === variantProduct.id ? { ...item, stock } : item)); void load(); }} />}
         <div className="bg-white rounded-2xl border border-[#EADFF0] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
@@ -341,6 +344,7 @@ export const AdminProductsPage: React.FC = () => {
                     <td className="p-3"><span className="capitalize">{product.status}</span></td>
                     <td className="p-3 text-right whitespace-nowrap">
                       {product.status !== 'archived' && <button onClick={() => void toggleStatus(product)} title="Toggle active/draft" className="p-2 hover:bg-[#F3E8FF] rounded-lg text-[#563568]">{product.status === 'active' ? 'Unpublish' : 'Publish'}</button>}
+                      <button onClick={() => setVariantProduct(product)} title="Manage sizes, colours and variant stock" className="px-2 py-1.5 hover:bg-[#F3E8FF] rounded-lg text-[10px] font-semibold text-[#563568]">Variants{product.variants?.length ? ` (${product.variants.length})` : ''}</button>
                       <button onClick={() => openEdit(product)} title="Edit" className="p-2 hover:bg-[#F3E8FF] rounded-lg"><Edit2 size={14}/></button>
                       <button onClick={() => void duplicate(product)} title="Duplicate as draft" className="p-2 hover:bg-[#F3E8FF] rounded-lg"><Copy size={14}/></button>
                       {product.status !== 'archived' && <button onClick={() => void archive(product)} title="Archive" className="p-2 hover:bg-red-50 text-red-600 rounded-lg"><Archive size={14}/></button>}
@@ -363,9 +367,10 @@ export const AdminProductsPage: React.FC = () => {
                 <label>Cost price (₹)<input type="number" min="0" step="0.01" value={form.costPrice} onChange={e => setForm({ ...form, costPrice: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <label>Stock *<input required type="number" min="0" step="1" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
+                <label>Stock *<input required type="number" min="0" step="1" value={form.stock} disabled={Boolean(editing?.variants?.length)} onChange={e => setForm({ ...form, stock: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl disabled:bg-[#F0E8F3]"/></label>
                 <label>Category *<select required value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl">{categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
               </div>
+              {editing?.variants?.length ? <p className="-mt-2 text-[10px] text-[#705E7B]">This product uses variants. Its total stock is calculated from active variant stock; adjust individual options in Product Variants.</p> : null}
               <div className="grid grid-cols-2 gap-3">
                 <label>Jewellery type *<select value={form.jewelleryType} onChange={e => setForm({ ...form, jewelleryType: e.target.value as JewelleryType })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl">{Object.entries(JEWELLERY_TYPE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
                 <label>Status<select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as ProductStatus })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"><option value="draft">Draft</option><option value="active">Active</option></select></label>

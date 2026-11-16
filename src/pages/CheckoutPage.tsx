@@ -204,6 +204,7 @@ export const CheckoutPage: React.FC = () => {
       const order = await orderService.createOrder({
         lines: items.map((item) => ({
           productId: item.productId,
+          ...(item.variantId ? { variantId: item.variantId } : {}),
           quantity: item.quantity
         })),
         customer: {
@@ -717,7 +718,7 @@ export const CheckoutPage: React.FC = () => {
             {/* Item Miniatures List */}
             <div className="divide-y divide-[#E7DCEB] max-h-80 overflow-y-auto pr-1">
               {items.map((item) => (
-                <div key={item.productId} className="py-3 flex gap-3 items-center">
+                <div key={`${item.productId}-${item.variantId || 'default'}`} className="py-3 flex gap-3 items-center">
                   <div className="w-14 h-16 bg-[#F7F0FA] border border-[#E7DCEB] shrink-0 overflow-hidden rounded-xs">
                     <img
                       src={item.product.images[0]}
@@ -730,6 +731,7 @@ export const CheckoutPage: React.FC = () => {
                       {item.product.name}
                     </p>
                     <p className="text-[11px] text-[#6F6475] font-sans">
+                      {item.variant && <span className="block text-[#563568]">{item.variant.label} · SKU: {item.variant.sku}</span>}
                       Qty: {item.quantity} × {formatInr(item.unitPrice)}
                     </p>
                   </div>

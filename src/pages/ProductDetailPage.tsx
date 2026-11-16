@@ -8,7 +8,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { productService, categoryService } from '../services';
-import { Product, isInStock, JEWELLERY_TYPE_LABELS, getDiscountPercent } from '../types/product';
+import { Product, isInStock, JEWELLERY_TYPE_LABELS } from '../types/product';
 import { Category } from '../types/category';
 import { formatInr } from '../utils/currency';
 import { ProductCard } from '../components/ProductCard';
@@ -62,6 +62,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [activeImageIndex, setActiveImageIndex] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(1);
+  const [selectedVariantId, setSelectedVariantId] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [addedToast, setAddedToast] = useState<boolean>(false);
   const [shareToast, setShareToast] = useState<boolean>(false);
@@ -110,6 +111,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
       setLoading(true);
       setActiveImageIndex(0);
       setQuantity(1);
+      setSelectedVariantId('');
 
       try {
         const found = await productService.getProductBySlug(slug, { includeAll });
@@ -200,15 +202,15 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
   };
 
   const handleAddToCart = () => {
-    if (!product || !isInStock(product)) return;
-    addItem(product, quantity);
+    if (!product || !inStock || (hasVariants && !selectedVariant)) return;
+    addItem(product, quantity, selectedVariant);
     setAddedToast(true);
     setTimeout(() => setAddedToast(false), 3000);
   };
 
   const handleBuyNow = () => {
-    if (!product || !isInStock(product)) return;
-    addItem(product, quantity);
+    if (!product || !inStock || (hasVariants && !selectedVariant)) return;
+    addItem(product, quantity, selectedVariant);
     navigate('/checkout');
   };
 
@@ -313,8 +315,17 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
     );
   }
 
-  const inStock = isInStock(product);
-  const discountPercent = getDiscountPercent(product);
+  const hasVariants = Boolean(product.variants?.length);
+  const selectedVariant = product.variants?.find((variant) => variant.id === selectedVariantId);
+  const currentPrice = selectedVariant?.price ?? product.price;
+  const currentCompareAtPrice = selectedVariant
+    ? (selectedVariant.compareAtPrice ?? (selectedVariant.price == null ? product.compareAtPrice : undefined))
+    : product.compareAtPrice;
+  const maxStock = selectedVariant?.stock ?? product.stock;
+  const inStock = hasVariants ? Boolean(selectedVariant && selectedVariant.stock > 0) : isInStock(product);
+  const discountPercent = currentCompareAtPrice && currentCompareAtPrice > currentPrice
+    ? Math.floor(((currentCompareAtPrice - currentPrice) / currentCompareAtPrice) * 100)
+    : null;
   const wishlisted = isInWishlist(product.id);
 
   return (
@@ -327,11 +338,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
           name: product.name,
           image: resolvedImages,
           description: product.shortDescription || product.description,
-          sku: product.id,
+          sku: selectedVariant?.sku || product.id,
           offers: {
             '@type': 'Offer',
             priceCurrency: 'INR',
-            price: product.price,
+            price: currentPrice,
             availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
           }
         })}
@@ -427,7 +438,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                   {JEWELLERY_TYPE_LABELS[product.jewelleryType] || product.jewelleryType}
                 </span>
                 <span className="text-xs text-[#6F6475] font-mono">
-                  SKU: {product.id.toUpperCase()}
+                  SKU: {(selectedVariant?.sku || product.id).toUpperCase()}
                 </span>
               </div>
 
@@ -437,6 +448,34 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               </h1>
               {product.shortDescription && <p className="mt-2 text-sm leading-relaxed text-[#6F6475]">{product.shortDescription}</p>}
               {product.tags?.length > 0 && <div className="mt-3 flex flex-wrap gap-2" aria-label="Product tags">{product.tags.map(tag => <span key={tag} className="rounded-full border border-[#E7DCEB] bg-[#F7F0FA] px-2.5 py-1 text-[10px] text-[#563568]">{tag}</span>)}</div>}
+
+              {hasVariants && (
+                <div className="mt-4 rounded-xl border border-[#E7DCEB] bg-[#FAF5FC] p-3">
+                  <label htmlFor="product-variant" className="block text-xs font-semibold text-[#302438] mb-2">
+                    Choose {product.variants?.[0]?.option1Name || 'size / colour'}
+                    {product.variants?.some(variant => variant.option2Name) ? ' and other options' : ''}
+                  </label>
+                  <select
+                    id="product-variant"
+                    value={selectedVariantId}
+                    onChange={(event) => { setSelectedVariantId(event.target.value); setQuantity(1); }}
+                    className="w-full min-h-11 rounded-lg border border-[#D9C8E2] bg-white px-3 text-sm text-[#302438] focus:border-[#563568] focus:outline-none"
+                  >
+                    <option value="">Select an available option</option>
+                    {product.variants?.map((variant) => (
+                      <option key={variant.id} value={variant.id} disabled={variant.stock <= 0}>
+                        {variant.label} · {variant.stock > 0 ? `${variant.stock} available` : 'Sold out'}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedVariant && (
+                    <p className="mt-2 text-[11px] text-[#6F6475]">
+                      Variant SKU: <span className="font-mono">{selectedVariant.sku}</span>
+                      {selectedVariant.price != null ? ' · Variant-specific price' : ' · Standard product price'}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Customer Rating snippet */}
               <div className="flex items-center gap-2 mt-2.5 text-xs text-[#6F6475]">
@@ -455,16 +494,16 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               {/* Pricing Display */}
               <div className="mt-4 pt-4 border-t border-[#E7DCEB] flex items-baseline gap-3">
                 <span className="font-serif text-3xl font-medium text-[#302438]">
-                  {formatInr(product.price)}
+                  {formatInr(currentPrice)}
                 </span>
-                {product.compareAtPrice && (
+                {currentCompareAtPrice && (
                   <span className="text-sm text-[#6F6475] line-through font-sans">
-                    {formatInr(product.compareAtPrice)}
+                    {formatInr(currentCompareAtPrice)}
                   </span>
                 )}
                 {discountPercent && (
                   <span className="text-xs text-[#563568] font-medium bg-[#F7F0FA] px-2 py-0.5 rounded-xs border border-[#E7DCEB]">
-                    Save {formatInr(product.compareAtPrice! - product.price)}
+                    Save {formatInr(currentCompareAtPrice! - currentPrice)}
                   </span>
                 )}
               </div>
@@ -493,7 +532,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                   Quantity
                 </span>
                 <span className={`text-xs font-medium ${inStock ? 'text-emerald-700' : 'text-[#DC2626]'}`}>
-                  {inStock ? 'In Stock — Ready to dispatch' : 'Awaiting Atelier Crafting'}
+                  {hasVariants && !selectedVariant ? 'Choose your option' : inStock ? 'In Stock — Ready to dispatch' : 'Awaiting Atelier Crafting'}
                 </span>
               </div>
 
@@ -512,8 +551,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                   </span>
                   <button
                     type="button"
-                    onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
-                    disabled={quantity >= product.stock || !inStock}
+                    onClick={() => setQuantity((q) => Math.min(maxStock, q + 1))}
+                    disabled={quantity >= maxStock || !inStock}
                     className="w-9 h-9 flex items-center justify-center text-sm text-[#302438] hover:bg-white disabled:opacity-30 transition-colors"
                   >
                     +
@@ -528,7 +567,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                   className="flex-1 py-3 px-4 bg-[#563568] text-white hover:bg-[#A184BD] disabled:bg-[#6F6475]/40 text-xs uppercase tracking-[0.2em] font-medium rounded-xs transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
                 >
                   <ShoppingBag size={15} />
-                  <span>{inStock ? 'Add to Bag' : 'Sold Out'}</span>
+                  <span>{hasVariants && !selectedVariant ? 'Choose Option' : inStock ? 'Add to Bag' : 'Sold Out'}</span>
                 </button>
 
                 {/* Wishlist toggle */}

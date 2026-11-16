@@ -282,6 +282,7 @@ export const OrderConfirmationPage: React.FC = () => {
                     <p className="font-serif text-base text-[#302438] font-medium line-clamp-1">
                       {line.name}
                     </p>
+                    {line.variantLabel && <p className="text-[11px] text-[#563568]">{line.variantLabel}{line.sku ? ` · SKU: ${line.sku}` : ''}</p>}
                     <p className="text-xs text-[#6F6475] font-sans mt-0.5">
                       Qty: {line.quantity} × {formatInr(line.unitPrice)}
                     </p>

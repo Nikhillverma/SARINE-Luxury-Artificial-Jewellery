@@ -1,5 +1,5 @@
-import type { Product } from '../../types/product';
-import type { IAdminProductService, InventoryMovement, BulkProductUpdates, BulkProductUpdateResult } from '../interfaces';
+import type { Product, ProductVariant } from '../../types/product';
+import type { IAdminProductService, InventoryMovement, BulkProductUpdates, BulkProductUpdateResult, ProductVariantDraft, VariantInventoryMovement } from '../interfaces';
 
 const API_BASE = (
   import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
@@ -48,6 +48,30 @@ export class HostingerAdminProductService implements IAdminProductService {
     return result.product;
   }
 
+
+  async getProductVariants(productId: string): Promise<ProductVariant[]> {
+    const result = await request<{ variants: ProductVariant[] }>(`/admin/products/${encodeURIComponent(productId)}/variants`);
+    return result.variants;
+  }
+
+  async saveProductVariants(productId: string, variants: ProductVariantDraft[]): Promise<{ variants: ProductVariant[]; stock: number }> {
+    return request<{ variants: ProductVariant[]; stock: number }>(`/admin/products/${encodeURIComponent(productId)}/variants`, {
+      method: 'PUT',
+      body: JSON.stringify({ variants })
+    });
+  }
+
+  async adjustVariantStock(variantId: string, quantityDelta: number, reason: string): Promise<{ movement: VariantInventoryMovement; productStock: number }> {
+    return request<{ movement: VariantInventoryMovement; productStock: number }>('/admin/inventory/variants/adjustments', {
+      method: 'POST',
+      body: JSON.stringify({ variantId, quantityDelta, reason })
+    });
+  }
+
+  async getVariantInventoryMovements(productId: string): Promise<VariantInventoryMovement[]> {
+    const result = await request<{ movements: VariantInventoryMovement[] }>(`/admin/inventory/variants/movements?productId=${encodeURIComponent(productId)}`);
+    return result.movements;
+  }
 
   async bulkUpdateProducts(productIds: string[], updates: BulkProductUpdates): Promise<BulkProductUpdateResult> {
     return request<BulkProductUpdateResult>("/admin/products/bulk", {

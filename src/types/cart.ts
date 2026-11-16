@@ -1,25 +1,19 @@
 /**
  * Shopping bag domain types for SARINE.
- * Keeps storage minimal (productId and quantity only) while hydrating display lines
- * with live product entities for accurate pricing and stock bounds.
+ * Cart identity includes a selected variant when a product has size/colour options.
  */
+import { Product, ProductVariant } from './product';
 
-import { Product } from './product';
-
-/**
- * Minimal persisted shape stored in localStorage.
- */
 export interface CartLine {
   productId: string;
+  variantId?: string;
   quantity: number;
 }
 
-/**
- * Hydrated cart item containing the full live Product entity,
- * unit price, and calculated line total.
- */
 export interface CartItem {
   productId: string;
+  variantId?: string;
+  variant?: ProductVariant;
   product: Product;
   quantity: number;
   unitPrice: number;

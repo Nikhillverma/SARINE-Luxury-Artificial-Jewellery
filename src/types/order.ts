@@ -20,6 +20,9 @@ export interface OrderLine {
   quantity: number;
   image: string;
   sku?: string;
+  variantId?: string;
+  variantLabel?: string;
+  variantOptions?: Record<string, string>;
 }
 
 export interface OrderCustomer {
@@ -92,7 +95,7 @@ export interface Order {
  * product prices and snapshot data are re-fetched server-side/service-side.
  */
 export interface CreateOrderInput {
-  lines: { productId: string; quantity: number }[];
+  lines: { productId: string; variantId?: string; quantity: number }[];
   customer: OrderCustomer;
   shippingAddress: Address;
   paymentMethod: PaymentMethod;
