@@ -96,6 +96,12 @@ export class HostingerProductService implements IProductService {
     return result.products;
   }
 
+  async getBestSellingProducts(limit = 8): Promise<Product[]> {
+    const safeLimit = Math.min(24, Math.max(1, Math.floor(limit) || 8));
+    const result = await request<ProductResponse>(`/bestsellers?limit=${safeLimit}`);
+    return result.products;
+  }
+
   async getFeaturedProducts(limit = 8): Promise<Product[]> {
     const products = await this.getProducts({
       inStockOnly: true,
