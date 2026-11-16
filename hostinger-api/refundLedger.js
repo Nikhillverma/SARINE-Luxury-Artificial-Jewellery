@@ -63,20 +63,20 @@ export async function applyGatewayRefundEvent(record) {
       return { matched: true, refundId: Number(refund.id), status: "awaiting_verified_status" };
     }
     const terminalStatuses = ["processed", "failed", "reversed"];
-    const canApply = !terminalStatuses.includes(refund.status) ||
-      (refund.status === "processed" && nextStatus === "reversed");
+    const finalWebhookEvent = ["refund.processed", "refund.failed", "refund.reversed"].includes(record.eventType);
+    const canApply = !terminalStatuses.includes(refund.status) || finalWebhookEvent;
     if (canApply) {
       await connection.execute(
         `UPDATE razorpay_refund_records
          SET gateway_refund_id = COALESCE(gateway_refund_id, ?),
              status = ?, gateway_status = ?, error_message = NULL,
-             processed_at = CASE WHEN ? = 'processed' THEN UTC_TIMESTAMP(3) WHEN ? = 'reversed' THEN NULL ELSE processed_at END,
+             processed_at = CASE WHEN ? = 'processed' THEN UTC_TIMESTAMP(3) ELSE NULL END,
              updated_at = UTC_TIMESTAMP(3)
          WHERE id = ?`,
-        [record.gatewayRefundId, nextStatus, record.gatewayStatus, nextStatus, nextStatus, refund.id]
+        [record.gatewayRefundId, nextStatus, record.gatewayStatus, nextStatus, refund.id]
       );
     }
-    if (nextStatus === "processed" || nextStatus === "reversed") {
+    if (["processed", "failed", "reversed"].includes(nextStatus)) {
       await refreshOrderRefundFlag(connection, refund.order_id);
     }
     await connection.commit();
