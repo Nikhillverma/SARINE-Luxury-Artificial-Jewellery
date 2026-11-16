@@ -7,6 +7,7 @@ import { normalizeCustomerEmail } from "./customerValidation.js";
 import { shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
+import { formatVariantLabel } from "./productVariantPolicy.js";
 
 const router = Router();
 const COOKIE_NAME = "sarine_customer_session";
