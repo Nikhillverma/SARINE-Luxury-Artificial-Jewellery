@@ -624,7 +624,8 @@ router.post("/verify", async (req, res, next) => {
     // captured payment against an already-paid order is a second charge and
     // must be surfaced for refund review rather than silently accepted.
     if (order.payment_status === "paid") {
-      const captureDisposition = classifyCapturedPayment(order, razorpay_payment_id);\n      const samePayment = captureDisposition === "same_payment_replay";
+      const captureDisposition = classifyCapturedPayment(order, razorpay_payment_id);
+      const samePayment = captureDisposition === "same_payment_replay";
       await recordVerifiedPaymentEvent(connection, {
         orderId: order.id,
         orderNumber: cleanOrderNumber,
