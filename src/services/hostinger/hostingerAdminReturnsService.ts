@@ -22,7 +22,7 @@ export interface AdminCapturedPayment {
 export interface AdminRefundRequest {
   id: string; orderNumber: string; customer: { name: string; email: string; phone: string };
   capturedPayments: AdminCapturedPayment[]; refundHistory: AdminRefundHistoryItem[];
-  amountRequested: number; paymentMethod: string; paymentStatus: string; orderStatus: string;
+  amountRequested: number; refundRequired: boolean; paymentMethod: string; paymentStatus: string; orderStatus: string;
   razorpayPaymentId: string | null; cancellationReason: string; createdAt: string | null;
   cancelledAt: string | null; paymentEventCount: number; latestPaymentEvent: string | null;
   latestPaymentEventStatus: string | null; latestPaymentEventAt: string | null;
