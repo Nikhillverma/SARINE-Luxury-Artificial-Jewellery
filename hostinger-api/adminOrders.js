@@ -3,6 +3,7 @@ import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { canShipOrder, shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
+import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
 
 const router = Router();
 
@@ -148,8 +149,10 @@ router.get("/", async (req, res, next) => {
       const orderIds = orderRows.map((r) => r.id);
       const placeholders = orderIds.map(() => "?").join(",");
 
+      await ensureProductVariantSchema();
       const [itemRows] = await pool.query(
-        `SELECT order_id, product_id, product_name, sku, unit_price, quantity, image
+        `SELECT order_id, product_id, product_name, sku, unit_price, quantity, image,
+                variant_id, variant_sku, variant_label, variant_options
          FROM order_items
          WHERE order_id IN (${placeholders})
          ORDER BY source_line ASC, id ASC`,
@@ -186,7 +189,11 @@ router.get("/", async (req, res, next) => {
         name: line.product_name || "",
         image: line.image || "",
         quantity: Number(line.quantity) || 1,
-        unitPrice: Number(line.unit_price) || 0
+        unitPrice: Number(line.unit_price) || 0,
+        sku: line.variant_sku || line.sku || undefined,
+        variantId: line.variant_id || undefined,
+        variantLabel: line.variant_label || undefined,
+        variantOptions: parseJson(line.variant_options, undefined)
       }));
 
       const note = row.admin_note || notesByOrderId[row.id] || undefined;
@@ -487,11 +494,12 @@ router.post("/update", async (req, res, next) => {
       const stockWasDecremented = shouldRestoreStockOnCancellation(order);
 
       if (stockWasDecremented) {
+        await ensureProductVariantSchema();
         const [lines] = await connection.execute(
-          `SELECT product_id, SUM(quantity) AS quantity
+          `SELECT product_id, variant_id, SUM(quantity) AS quantity
            FROM order_items
            WHERE order_id = ? AND product_id IS NOT NULL
-           GROUP BY product_id`,
+           GROUP BY product_id, variant_id`,
           [order.id]
         );
 
@@ -499,33 +507,58 @@ router.post("/update", async (req, res, next) => {
           const quantity = Number(line.quantity);
           if (!line.product_id || !Number.isSafeInteger(quantity) || quantity <= 0) continue;
 
+          if (line.variant_id) {
+            const [variants] = await connection.execute(
+              `SELECT v.*, p.name AS product_name FROM product_variants v
+               INNER JOIN products p ON p.id = v.product_id
+               WHERE v.id = ? AND v.product_id = ? FOR UPDATE`,
+              [line.variant_id, line.product_id]
+            );
+            if (!variants.length) continue;
+            const variant = variants[0];
+            const previousStock = Number(variant.stock || 0);
+            const newStock = previousStock + quantity;
+            if (!Number.isSafeInteger(newStock) || newStock > 2147483647) {
+              throw new Error("Variant stock restoration would exceed the supported inventory balance.");
+            }
+            await connection.execute(
+              "UPDATE product_variants SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?",
+              [newStock, line.variant_id]
+            );
+            await syncProductVariantStock(connection, line.product_id);
+            await recordVariantInventoryMovement(connection, {
+              variantId: line.variant_id, productId: line.product_id,
+              productName: variant.product_name, variantSku: variant.sku,
+              variantLabel: [variant.option1_value, variant.option2_value].filter(Boolean).join(" / "),
+              previousStock, quantityDelta: quantity, newStock,
+              reason: `Order cancellation restock ${cleanOrderNumber}`,
+              adminId: req.admin?.id || "admin", adminName: req.admin?.name || adminEmail,
+              adminEmail
+            });
+            continue;
+          }
+
           const [products] = await connection.execute(
             `SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE`,
             [line.product_id]
           );
           if (!products.length) continue;
-
           const product = products[0];
           const previousStock = Number(product.stock || 0);
           const newStock = previousStock + quantity;
           if (!Number.isSafeInteger(newStock) || newStock > 2147483647) {
             throw new Error("Stock restoration would exceed the supported inventory balance.");
           }
-
           await connection.execute(
             `UPDATE products SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
             [newStock, line.product_id]
           );
           await recordInventoryMovement(connection, {
-            productId: product.id,
-            productName: product.name,
-            previousStock,
-            quantityDelta: quantity,
-            newStock,
+            productId: product.id, productName: product.name, previousStock,
+            quantityDelta: quantity, newStock,
             reason: `Order cancellation restock ${cleanOrderNumber}`,
             actorId: req.admin?.id || "admin",
-            actorName: req.admin?.name || adminEmail,
-            actorEmail: adminEmail
+            actorName: req.admin?.name || adminEmail, actorEmail: adminEmail
           });
         }
       }
