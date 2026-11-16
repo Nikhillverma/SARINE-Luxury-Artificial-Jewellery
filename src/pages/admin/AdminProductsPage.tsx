@@ -321,7 +321,7 @@ export const AdminProductsPage: React.FC = () => {
           </div>
         </div>}
         {bulkOpen && <BulkProductEditor products={products.filter(product => selectedIds.includes(product.id))} categories={categories} onApply={applyBulkChanges} onClose={() => setBulkOpen(false)}/>}
-        {variantProduct && <ProductVariantsManager product={variantProduct} onClose={() => setVariantProduct(null)} onSaved={(stock) => { setProducts(current => current.map(item => item.id === variantProduct.id ? { ...item, stock } : item)); void load(); }}/ >}
+        {variantProduct && <ProductVariantsManager product={variantProduct} onClose={() => setVariantProduct(null)} onSaved={(stock) => { setProducts(current => current.map(item => item.id === variantProduct.id ? { ...item, stock } : item)); void load(); }} />}
         <div className="bg-white rounded-2xl border border-[#EADFF0] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
