@@ -675,7 +675,7 @@ router.post("/verify", async (req, res, next) => {
         }
         item.productName = variantRows[0].name || item.productName;
         item.variantSku = variantRows[0].sku || item.variantSku;
-        item.variantLabel = [variantRows[0].option1_value, variantRows[0].option2_value].filter(Boolean).join(" / ") || item.variantLabel;
+        item.variantLabel = formatVariantLabel(variantRows[0].option1_name, variantRows[0].option1_value, variantRows[0].option2_name, variantRows[0].option2_value) || item.variantLabel;
         item.previousStock = Number(variantRows[0].stock || 0);
       } else {
         const [prod] = await connection.execute(
