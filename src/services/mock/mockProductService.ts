@@ -156,6 +156,12 @@ export class MockProductService implements IProductService {
     });
   }
 
+  async getBestSellingProducts(limit = 8): Promise<Product[]> {
+    // Mock mode has no order history; it must not invent sales rankings.
+    await sleep(NETWORK_DELAY_MS);
+    return [];
+  }
+
   async getFeaturedProducts(limit = 4): Promise<Product[]> {
     await sleep(NETWORK_DELAY_MS);
 
