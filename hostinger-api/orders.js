@@ -14,6 +14,7 @@ const router = Router();
 import { calculateShippingFee, getCheckoutConfig } from "./checkoutPolicy.js";
 import { buildOrderInsert } from "./orderInsertPolicy.js";
 import { matchesOrderRazorpayId } from "./paymentValidation.js";
+import { ensurePaymentEventLogTable, recordVerifiedPaymentEvent } from "./paymentEventPolicy.js";
 import { ensureMarketingSchema, lockAndValidateCoupon, reserveCouponRedemption, releaseCouponReservation, confirmCouponRedemption } from "./marketingPolicy.js";
 
 function hashToken(token) {
@@ -124,6 +125,7 @@ router.post("/create", async (req, res, next) => {
     await ensureMarketingSchema();
     await ensureInventoryTable();
     await ensureProductVariantSchema();
+    await ensurePaymentEventLogTable();
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
@@ -607,20 +609,6 @@ router.post("/verify", async (req, res, next) => {
       return res.status(400).json({ error: "Payment does not belong to this SARINE order." });
     }
 
-    // Idempotency: if already paid, return success immediately
-    if (order.payment_status === "paid") {
-      await connection.commit();
-      connection.release();
-      connection = null;
-      return res.json({
-        success: true,
-        orderNumber: cleanOrderNumber,
-        paymentStatus: "paid",
-        orderStatus: order.order_status,
-        alreadyProcessed: true
-      });
-    }
-
     const expectedAmountPaise = Number(
       order.razorpay_amount_paise || Math.round(Number(order.total) * 100)
     );
@@ -629,6 +617,59 @@ router.post("/verify", async (req, res, next) => {
       connection.release();
       connection = null;
       return res.status(400).json({ error: "Payment amount mismatch with order total." });
+    }
+
+    // Idempotent replay of the same captured payment is safe. A different
+    // captured payment against an already-paid order is a second charge and
+    // must be surfaced for refund review rather than silently accepted.
+    if (order.payment_status === "paid") {
+      const samePayment = order.razorpay_payment_id === razorpay_payment_id;
+      await recordVerifiedPaymentEvent(connection, {
+        orderId: order.id,
+        orderNumber: cleanOrderNumber,
+        gatewayOrderId: razorpay_order_id,
+        gatewayPaymentId: razorpay_payment_id,
+        amountPaise: Number(paymentRecord.amount),
+        currency: paymentRecord.currency,
+        eventType: "payment_captured",
+        eventStatus: samePayment ? "already_processed" : "additional_capture_refund_review"
+      });
+
+      if (!samePayment) {
+        const additionalAmount = Number(paymentRecord.amount) / 100;
+        await connection.execute(
+          `UPDATE orders
+           SET refund_needed = 1,
+               refund_amount = COALESCE(refund_amount, 0) + ?,
+               updated_at = UTC_TIMESTAMP(3)
+           WHERE id = ?`,
+          [additionalAmount, order.id]
+        );
+        await connection.execute(
+          `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
+           VALUES (?, ?, ?, ?, 'system', UTC_TIMESTAMP(3))`,
+          [order.id, order.order_status, order.order_status,
+            `Additional captured payment ${razorpay_payment_id} requires manual refund review.`]
+        );
+      }
+
+      await connection.commit();
+      connection.release();
+      connection = null;
+      return res.json(samePayment ? {
+        success: true,
+        orderNumber: cleanOrderNumber,
+        paymentStatus: "paid",
+        orderStatus: order.order_status,
+        alreadyProcessed: true
+      } : {
+        success: false,
+        needsRefund: true,
+        additionalPaymentCaptured: true,
+        orderNumber: cleanOrderNumber,
+        orderStatus: order.order_status,
+        message: "An additional payment was captured for an already-paid order. It has been flagged for manual refund review."
+      });
     }
 
     // Lock product items
@@ -745,6 +786,16 @@ router.post("/verify", async (req, res, next) => {
         [order.id, order.order_status]
       );
       await confirmCouponRedemption(connection, order.id);
+      await recordVerifiedPaymentEvent(connection, {
+        orderId: order.id,
+        orderNumber: cleanOrderNumber,
+        gatewayOrderId: razorpay_order_id,
+        gatewayPaymentId: razorpay_payment_id,
+        amountPaise: Number(paymentRecord.amount),
+        currency: paymentRecord.currency,
+        eventType: "payment_captured",
+        eventStatus: "confirmed"
+      });
       await connection.commit();
       connection.release();
       connection = null;
@@ -774,6 +825,16 @@ router.post("/verify", async (req, res, next) => {
          VALUES (?, ?, 'needs_refund', 'Stock exhausted between order creation and payment authorization. Flagged for full refund.', 'system', UTC_TIMESTAMP(3))`,
         [order.id, order.order_status]
       );
+      await recordVerifiedPaymentEvent(connection, {
+        orderId: order.id,
+        orderNumber: cleanOrderNumber,
+        gatewayOrderId: razorpay_order_id,
+        gatewayPaymentId: razorpay_payment_id,
+        amountPaise: Number(paymentRecord.amount),
+        currency: paymentRecord.currency,
+        eventType: "payment_captured",
+        eventStatus: "stock_conflict_refund_required"
+      });
       await connection.commit();
       connection.release();
       connection = null;
