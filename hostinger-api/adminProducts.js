@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
+import { validateBulkProductRequest } from "./bulkProductPolicy.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -194,6 +195,81 @@ router.put("/:id", async (req, res, next) => {
   } catch (error) {
     if (error.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "A product with this slug already exists." });
     next(error);
+  }
+});
+
+
+router.post("/bulk", async (req, res, next) => {
+  let connection;
+  try {
+    const { productIds, updates } = req.body || {};
+    const validation = validateBulkProductRequest(productIds, updates);
+    if (validation) return res.status(400).json({ error: validation });
+
+    if (updates.categoryId !== undefined) {
+      const [categories] = await pool.execute(
+        "SELECT id FROM categories WHERE id = ? LIMIT 1",
+        [updates.categoryId]
+      );
+      if (!categories.length) return res.status(400).json({ error: "Choose an existing category." });
+    }
+
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const placeholders = productIds.map(() => "?").join(",");
+    const [rows] = await connection.execute(
+      `SELECT id, name, status, price, compare_at_price
+       FROM products WHERE id IN (${placeholders}) FOR UPDATE`,
+      productIds
+    );
+    const byId = new Map(rows.map(row => [row.id, row]));
+    const results = [];
+
+    for (const id of productIds) {
+      const product = byId.get(id);
+      if (!product) {
+        results.push({ productId: id, status: "not_found", message: "Product no longer exists." });
+        continue;
+      }
+      if (product.status === "archived") {
+        results.push({ productId: id, productName: product.name, status: "skipped", message: "Archived products cannot be bulk edited." });
+        continue;
+      }
+
+      const nextPrice = updates.price !== undefined ? updates.price : Number(product.price);
+      const nextCompareAt = updates.compareAtPrice !== undefined ? updates.compareAtPrice : (product.compare_at_price == null ? null : Number(product.compare_at_price));
+      if (nextCompareAt !== null && nextCompareAt <= nextPrice) {
+        results.push({ productId: id, productName: product.name, status: "skipped", message: "Comparison price must be higher than the selling price." });
+        continue;
+      }
+
+      const columns = [];
+      const values = [];
+      if (updates.price !== undefined) { columns.push("price = ?"); values.push(updates.price); }
+      if (updates.compareAtPrice !== undefined) { columns.push("compare_at_price = ?"); values.push(updates.compareAtPrice); }
+      if (updates.categoryId !== undefined) { columns.push("category_id = ?"); values.push(updates.categoryId); }
+      if (updates.status !== undefined) { columns.push("status = ?"); values.push(updates.status); }
+      columns.push("updated_at = CURRENT_TIMESTAMP(3)");
+      values.push(id);
+      await connection.execute(
+        `UPDATE products SET ${columns.join(", ")} WHERE id = ?`,
+        values
+      );
+      results.push({ productId: id, productName: product.name, status: "updated", message: "Changes saved." });
+    }
+
+    await connection.commit();
+    const updated = results.filter(item => item.status === "updated").length;
+    res.json({
+      success: true,
+      summary: { requested: productIds.length, updated, skipped: results.length - updated },
+      results
+    });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    next(error);
+  } finally {
+    connection?.release();
   }
 });
 
