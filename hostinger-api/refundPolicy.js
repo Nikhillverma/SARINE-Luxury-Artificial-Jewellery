@@ -43,3 +43,9 @@ export function normalizeGatewayRefundStatus(status) {
   if (status === "pending") return "pending";
   return "unknown";
 }
+
+export function hasUnresolvedRefundRequest(statuses) {
+  return Array.isArray(statuses) && statuses.some(status =>
+    ["submitting", "unknown", "pending"].includes(String(status))
+  );
+}
