@@ -94,7 +94,7 @@ router.get("/", async (req, res, next) => {
       `SELECT o.id, o.order_number, o.customer_name, o.customer_email, o.customer_phone,
               o.total, o.refund_amount, o.refund_needed, o.order_status,
               o.payment_method, o.payment_status, o.razorpay_payment_id, o.razorpay_order_id,
-              o.created_at, o.cancelled_at, o.cancellation_reason,
+              o.razorpay_amount_paise, o.created_at, o.cancelled_at, o.cancellation_reason,
               (SELECT COUNT(*) FROM payment_event_log pe WHERE pe.order_id = o.id) AS payment_event_count,
               (SELECT pe.event_type FROM payment_event_log pe WHERE pe.order_id = o.id
                ORDER BY pe.created_at DESC, pe.id DESC LIMIT 1) AS latest_payment_event,
