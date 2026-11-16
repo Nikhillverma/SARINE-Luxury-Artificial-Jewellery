@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { pool, testDatabase } from "./db.js";
+import { markExistingOrdersAsPrelaunchTests } from "./prelaunchOrderMigration.js";
 import adminAuthRouter from "./adminAuth.js";
 import customerAuthRouter from "./customerAuth.js";
 import adminDatabaseAuditRouter from "./adminDatabaseAudit.js";
@@ -269,7 +270,8 @@ app.get("/api/bestsellers", async (req, res, next) => {
            SUM(oi.quantity * oi.unit_price) AS item_sales
          FROM order_items oi
          INNER JOIN orders o ON o.id = oi.order_id
-         WHERE o.payment_status = 'paid'
+         WHERE o.is_test = 0
+           AND o.payment_status = 'paid'
            AND o.order_status NOT IN ('cancelled', 'returned', 'failed', 'needs_refund')
            AND (LOWER(COALESCE(o.payment_method, 'online')) <> 'cod' OR o.order_status = 'delivered')
          GROUP BY oi.product_id
@@ -428,7 +430,16 @@ app.use((error, _req, res, _next) => {
   });
 });
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`SARINE Hostinger API listening on port ${PORT}`);
+async function startServer() {
+  // Finish the one-time pre-launch order classification before accepting requests.
+  await markExistingOrdersAsPrelaunchTests();
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`SARINE Hostinger API listening on port ${PORT}`);
+  });
+}
+
+startServer().catch(error => {
+  console.error("SARINE startup migration failed:", error);
+  process.exitCode = 1;
 });
 
