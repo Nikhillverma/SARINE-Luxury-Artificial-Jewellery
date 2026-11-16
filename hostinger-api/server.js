@@ -22,6 +22,7 @@ import adminStorefrontRouter, { publicStorefrontRouter } from "./adminStorefront
 import adminHomepageLayoutRouter, { publicHomepageLayoutRouter } from "./homepageLayout.js";
 import adminCuratedFavouritesRouter, { publicCuratedFavouritesRouter } from "./curatedFavourites.js";
 import ordersRouter from "./orders.js";
+import razorpayWebhooksRouter from "./razorpayWebhooks.js";
 import { publicMediaRouter, adminMediaRouter } from "./media.js";
 import { getProductVariants } from "./productVariantSchema.js";
 
@@ -399,6 +400,9 @@ app.use("/api/admin/inventory-settings", adminInventorySettingsRouter);
 // Hostinger admin orders and returns/refund request queues
 app.use("/api/admin/orders", adminOrdersRouter);
 app.use("/api/admin/returns", adminReturnsRouter);
+
+// Signed Razorpay webhook intake (raw request bytes are retained by express.json verify).
+app.use("/api/webhooks", razorpayWebhooksRouter);
 
 // Hostinger orders router
 app.use("/api/orders", ordersRouter);
