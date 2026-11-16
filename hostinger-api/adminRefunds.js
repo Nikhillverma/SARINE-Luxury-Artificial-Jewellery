@@ -5,6 +5,7 @@ import { requireAdminAuth } from "./adminAuth.js";
 import { buildRefundRequest, buildRefundGatewayRequest, normalizeGatewayRefundStatus, calculateRefundableBalance, hasUnresolvedRefundRequest } from "./refundPolicy.js";
 import { ensureRefundLedgerSchema, refreshOrderRefundFlag } from "./refundLedger.js";
 import { ensureRazorpayWebhookSchema } from "./razorpayWebhookPolicy.js";
+import { ensurePaymentEventLogTable } from "./paymentEventPolicy.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -106,6 +107,7 @@ router.post("/", async (req, res, next) => {
     const request = buildRefundRequest(req.body);
     await ensureRefundLedgerSchema();
     await ensureRazorpayWebhookSchema();
+    await ensurePaymentEventLogTable();
 
     const [initialRows] = await pool.execute(
       "SELECT * FROM orders WHERE order_number = ? LIMIT 1",
