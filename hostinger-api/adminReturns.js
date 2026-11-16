@@ -93,6 +93,8 @@ router.get("/", async (req, res, next) => {
               (SELECT COUNT(*) FROM payment_event_log pe WHERE pe.order_id = o.id) AS payment_event_count,
               (SELECT pe.event_type FROM payment_event_log pe WHERE pe.order_id = o.id
                ORDER BY pe.created_at DESC, pe.id DESC LIMIT 1) AS latest_payment_event,
+              (SELECT pe.event_status FROM payment_event_log pe WHERE pe.order_id = o.id
+               ORDER BY pe.created_at DESC, pe.id DESC LIMIT 1) AS latest_payment_event_status,
               (SELECT pe.created_at FROM payment_event_log pe WHERE pe.order_id = o.id
                ORDER BY pe.created_at DESC, pe.id DESC LIMIT 1) AS latest_payment_event_at
        FROM orders o
