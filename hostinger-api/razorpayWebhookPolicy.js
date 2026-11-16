@@ -106,3 +106,20 @@ export async function storeRazorpayWebhookEvent(record) {
   );
   return { inserted: Number(result.affectedRows) === 1 };
 }
+
+export async function getRazorpayWebhookEventStatus(eventId) {
+  const { pool } = await import("./db.js");
+  const [rows] = await pool.execute(
+    "SELECT event_status FROM razorpay_webhook_events WHERE event_id = ? LIMIT 1",
+    [eventId]
+  );
+  return rows[0]?.event_status || null;
+}
+
+export async function markRazorpayWebhookEventStatus(eventId, status) {
+  const { pool } = await import("./db.js");
+  await pool.execute(
+    "UPDATE razorpay_webhook_events SET event_status = ?, processed_at = UTC_TIMESTAMP(3) WHERE event_id = ?",
+    [status, eventId]
+  );
+}
