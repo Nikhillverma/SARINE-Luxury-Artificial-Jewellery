@@ -7,6 +7,7 @@ import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
+import type { Product } from '../types/product';
 import { formatInr } from '../utils/currency';
 import { X, Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
 
@@ -40,7 +41,7 @@ export const WishlistDrawer: React.FC = () => {
 
   if (!isWishlistOpen) return null;
 
-  const handleMoveToBag = (product: any) => {
+  const handleMoveToBag = (product: Product) => {
     addItem(product, 1);
     removeFromWishlist(product.id);
     closeWishlist();
