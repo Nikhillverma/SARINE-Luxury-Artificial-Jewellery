@@ -68,6 +68,11 @@ export class HostingerAdminProductService implements IAdminProductService {
     });
   }
 
+  async getVariantInventoryMovements(productId: string): Promise<VariantInventoryMovement[]> {
+    const result = await request<{ movements: VariantInventoryMovement[] }>(`/admin/inventory/variants/movements?productId=${encodeURIComponent(productId)}`);
+    return result.movements;
+  }
+
   async bulkUpdateProducts(productIds: string[], updates: BulkProductUpdates): Promise<BulkProductUpdateResult> {
     return request<BulkProductUpdateResult>("/admin/products/bulk", {
       method: "POST", body: JSON.stringify({ productIds, updates })
