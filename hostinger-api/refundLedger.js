@@ -74,10 +74,10 @@ export async function applyGatewayRefundEvent(record) {
         `UPDATE razorpay_refund_records
          SET gateway_refund_id = COALESCE(gateway_refund_id, ?),
              status = ?, gateway_status = ?, error_message = NULL,
-             processed_at = CASE WHEN ? = 'processed' THEN UTC_TIMESTAMP(3) ELSE processed_at END,
+             processed_at = CASE WHEN ? = 'processed' THEN UTC_TIMESTAMP(3) WHEN ? = 'reversed' THEN NULL ELSE processed_at END,
              updated_at = UTC_TIMESTAMP(3)
          WHERE id = ?`,
-        [record.gatewayRefundId, nextStatus, record.gatewayStatus, nextStatus, refund.id]
+        [record.gatewayRefundId, nextStatus, record.gatewayStatus, nextStatus, nextStatus, refund.id]
       );
     }
     if (nextStatus === "processed" || nextStatus === "reversed") {
