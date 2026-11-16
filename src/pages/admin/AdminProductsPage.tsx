@@ -4,6 +4,8 @@ import { adminProductService, categoryService, hostingerMediaService } from '../
 import type { Product, JewelleryType, ProductStatus } from '../../types/product';
 import type { Category } from '../../types/category';
 import { JEWELLERY_TYPE_LABELS } from '../../types/product';
+import { BulkProductEditor } from '../../components/admin/BulkProductEditor';
+import type { BulkProductUpdates, BulkProductUpdateResult } from '../../services/interfaces';
 import { formatInr } from '../../utils/currency';
 import { Plus, Search, Edit2, Copy, Archive, X, RefreshCw, Upload, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 
@@ -31,6 +33,8 @@ export const AdminProductsPage: React.FC = () => {
   const [form, setForm] = useState(EMPTY_FORM);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -59,6 +63,27 @@ export const AdminProductsPage: React.FC = () => {
     const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
     return matchesText && matchesStatus;
   }), [products, search, statusFilter]);
+
+
+  const allVisibleSelected = visibleProducts.length > 0 && visibleProducts.every(product => selectedIds.includes(product.id));
+  const toggleProductSelection = (id: string) => setSelectedIds(current =>
+    current.includes(id) ? current.filter(item => item !== id) : current.length >= 100 ? current : [...current, id]
+  );
+  const toggleVisibleSelection = () => setSelectedIds(current => allVisibleSelected
+    ? current.filter(id => !visibleProducts.some(product => product.id === id))
+    : Array.from(new Set([...current, ...visibleProducts.map(product => product.id)])).slice(0, 100)
+  );
+  const applyBulkChanges = async (updates: BulkProductUpdates): Promise<BulkProductUpdateResult> => {
+    const result = await adminProductService.bulkUpdateProducts(selectedIds, updates);
+    const skipped = result.results.filter(item => item.status !== "updated");
+    const detail = skipped.length
+      ? " Skipped: " + skipped.map(item => (item.productName || item.productId) + ": " + item.message).join(" | ")
+      : "";
+    setNotice("Bulk update complete: " + result.summary.updated + " updated, " + result.summary.skipped + " skipped." + detail);
+    setSelectedIds([]);
+    await load();
+    return result;
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -261,17 +286,27 @@ export const AdminProductsPage: React.FC = () => {
           </select>
         </div>
 
+
+        {selectedIds.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#D9C8E2] bg-[#F7F0FA] p-3">
+          <div className="text-xs text-[#563568]"><strong>{selectedIds.length}</strong> product{selectedIds.length === 1 ? "" : "s"} selected <span className="text-[#806B8D]">· Maximum 100 per operation</span></div>
+          <div className="flex gap-2">
+            <button onClick={() => setSelectedIds([])} className="min-h-10 rounded-lg border border-[#D9C8E2] px-3 text-xs">Clear selection</button>
+            <button onClick={() => setBulkOpen(true)} className="min-h-10 rounded-lg bg-[#563568] px-4 text-xs font-semibold text-white">Bulk edit selected</button>
+          </div>
+        </div>}
+        {bulkOpen && <BulkProductEditor products={products.filter(product => selectedIds.includes(product.id))} categories={categories} onApply={applyBulkChanges} onClose={() => setBulkOpen(false)}/>}
         <div className="bg-white rounded-2xl border border-[#EADFF0] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-[#FAF5FC] text-[#705E7B] uppercase"><tr>
-                <th className="p-3">Product</th><th className="p-3">Category</th><th className="p-3">Price</th><th className="p-3">Stock</th><th className="p-3">Status</th><th className="p-3 text-right">Actions</th>
+                <th className="p-3"><input type="checkbox" aria-label="Select all visible products" checked={allVisibleSelected} onChange={toggleVisibleSelection} className="accent-[#563568]"/></th><th className="p-3">Product</th><th className="p-3">Category</th><th className="p-3">Price</th><th className="p-3">Stock</th><th className="p-3">Status</th><th className="p-3 text-right">Actions</th>
               </tr></thead>
               <tbody className="divide-y divide-[#F5EDF8]">
-                {loading ? <tr><td colSpan={6} className="p-10 text-center text-[#8E769E]">Loading catalogue…</td></tr> :
-                visibleProducts.length === 0 ? <tr><td colSpan={6} className="p-10 text-center text-[#8E769E]">No products found.</td></tr> :
+                {loading ? <tr><td colSpan={7} className="p-10 text-center text-[#8E769E]">Loading catalogue…</td></tr> :
+                visibleProducts.length === 0 ? <tr><td colSpan={7} className="p-10 text-center text-[#8E769E]">No products found.</td></tr> :
                 visibleProducts.map(product => (
                   <tr key={product.id} className="hover:bg-[#FAF5FC]">
+                    <td className="p-3"><input type="checkbox" aria-label={"Select " + product.name} checked={selectedIds.includes(product.id)} onChange={() => toggleProductSelection(product.id)} className="accent-[#563568]"/></td>
                     <td className="p-3"><div className="flex items-center gap-3">
                       <img src={product.images?.[0] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=100&q=80'} alt="" className="w-11 h-11 rounded-lg object-cover"/>
                       <div><div className="font-semibold text-[#2C1838]">{product.name}</div><div className="text-[10px] text-[#8E769E] font-mono">{product.id}</div></div>

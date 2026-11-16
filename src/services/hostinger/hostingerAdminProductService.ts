@@ -1,5 +1,5 @@
 import type { Product } from '../../types/product';
-import type { IAdminProductService, InventoryMovement } from '../interfaces';
+import type { IAdminProductService, InventoryMovement, BulkProductUpdates, BulkProductUpdateResult } from '../interfaces';
 
 const API_BASE = (
   import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
@@ -48,6 +48,12 @@ export class HostingerAdminProductService implements IAdminProductService {
     return result.product;
   }
 
+
+  async bulkUpdateProducts(productIds: string[], updates: BulkProductUpdates): Promise<BulkProductUpdateResult> {
+    return request<BulkProductUpdateResult>("/admin/products/bulk", {
+      method: "POST", body: JSON.stringify({ productIds, updates })
+    });
+  }
 
   async adjustStock(id: string, quantityDelta: number, reason: string): Promise<InventoryMovement> {
     const result = await request<{ movement: InventoryMovement }>('/admin/inventory/adjustments', {

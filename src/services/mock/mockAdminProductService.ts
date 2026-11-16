@@ -4,7 +4,7 @@
  * from customer storefront views.
  */
 
-import { IAdminProductService, InventoryMovement } from '../interfaces';
+import { IAdminProductService, InventoryMovement, BulkProductUpdates, BulkProductUpdateResult } from '../interfaces';
 import { Product } from '../../types/product';
 import { MockProductService } from './mockProductService';
 
@@ -56,6 +56,29 @@ export class MockAdminProductService implements IAdminProductService {
 
     products[index] = updated;
     return updated;
+  }
+
+  async bulkUpdateProducts(productIds: string[], updates: BulkProductUpdates): Promise<BulkProductUpdateResult> {
+    await sleep(NETWORK_DELAY_MS);
+    const products = this.productService._getAllInternal();
+    const results = productIds.map(productId => {
+      const product = products.find(item => item.id === productId);
+      if (!product || product.status === 'archived') {
+        return { productId, productName: product?.name, status: 'skipped' as const, message: 'Product unavailable.' };
+      }
+      const nextPrice = updates.price ?? product.price;
+      const nextCompareAt = updates.compareAtPrice === undefined ? product.compareAtPrice : updates.compareAtPrice;
+      if (nextCompareAt != null && nextCompareAt <= nextPrice) {
+        return { productId, productName: product.name, status: 'skipped' as const, message: 'Comparison price must exceed selling price.' };
+      }
+      if (updates.price !== undefined) product.price = updates.price;
+      if (updates.compareAtPrice !== undefined) product.compareAtPrice = updates.compareAtPrice ?? undefined;
+      if (updates.categoryId !== undefined) product.categoryId = updates.categoryId;
+      if (updates.status !== undefined) product.status = updates.status;
+      return { productId, productName: product.name, status: 'updated' as const, message: 'Changes saved.' };
+    });
+    const updated = results.filter(item => item.status === 'updated').length;
+    return { summary: { requested: productIds.length, updated, skipped: results.length - updated }, results };
   }
 
   async adjustStock(id: string, quantityDelta: number, reason: string): Promise<InventoryMovement> {
