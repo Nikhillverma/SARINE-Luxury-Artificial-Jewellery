@@ -51,6 +51,7 @@ router.get("/", async (req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
     await ensurePaymentEventLogTable();
+    await ensureRefundLedgerSchema();
     const search = typeof req.query.search === "string" ? req.query.search.trim().slice(0, 120) : "";
     const status = typeof req.query.status === "string" ? req.query.status.trim() : "all";
     const type = typeof req.query.type === "string" ? req.query.type.trim() : "all";
@@ -88,7 +89,7 @@ router.get("/", async (req, res, next) => {
       refundValues.push(term, term, term);
     }
     const [refundRows] = await pool.execute(
-      `SELECT o.order_number, o.customer_name, o.customer_email, o.customer_phone,
+      `SELECT o.id, o.order_number, o.customer_name, o.customer_email, o.customer_phone,
               o.total, o.refund_amount, o.refund_needed, o.order_status,
               o.payment_method, o.payment_status, o.razorpay_payment_id,
               o.created_at, o.cancelled_at, o.cancellation_reason,
@@ -106,9 +107,61 @@ router.get("/", async (req, res, next) => {
       [...refundValues, limit]
     );
 
+    const refundOrderIds = refundRows.map(row => row.id);
+    const refundHistoryByOrder = new Map();
+    const capturedPaymentsByOrder = new Map();
+    if (refundOrderIds.length) {
+      const placeholders = refundOrderIds.map(() => "?").join(",");
+      const [historyRows] = await pool.query(
+        `SELECT id, order_id, gateway_payment_id, gateway_refund_id, amount_paise,
+                status, reason, requested_by, created_at, processed_at, error_message
+         FROM razorpay_refund_records
+         WHERE order_id IN (${placeholders})
+         ORDER BY created_at DESC, id DESC`,
+        refundOrderIds.map(String)
+      );
+      for (const entry of historyRows) {
+        const key = String(entry.order_id);
+        if (!refundHistoryByOrder.has(key)) refundHistoryByOrder.set(key, []);
+        refundHistoryByOrder.get(key).push({
+          id: Number(entry.id), paymentId: entry.gateway_payment_id,
+          gatewayRefundId: entry.gateway_refund_id || null,
+          amountPaise: Number(entry.amount_paise), status: entry.status,
+          reason: entry.reason, requestedBy: entry.requested_by,
+          createdAt: toIso(entry.created_at), processedAt: toIso(entry.processed_at),
+          errorMessage: entry.error_message || null
+        });
+      }
+      const [paymentRows] = await pool.query(
+        `SELECT order_id, gateway_payment_id, amount_paise, event_status
+         FROM payment_event_log
+         WHERE order_id IN (${placeholders})
+         ORDER BY created_at ASC, id ASC`,
+        refundOrderIds.map(String)
+      );
+      for (const entry of paymentRows) {
+        const key = String(entry.order_id);
+        if (!capturedPaymentsByOrder.has(key)) capturedPaymentsByOrder.set(key, []);
+        capturedPaymentsByOrder.get(key).push({
+          paymentId: entry.gateway_payment_id,
+          amountPaise: Number(entry.amount_paise),
+          eventStatus: entry.event_status
+        });
+      }
+    }
+
     return res.json({
       returns: returnRows.map(mapReturn),
       refundRequests: refundRows.map(row => ({
+        id: String(row.id),
+        capturedPayments: (() => {
+          const items = capturedPaymentsByOrder.get(String(row.id)) || [];
+          if (row.razorpay_payment_id && !items.some(item => item.paymentId === row.razorpay_payment_id)) {
+            items.unshift({ paymentId: row.razorpay_payment_id, amountPaise: Number(row.razorpay_amount_paise || Math.round(Number(row.total) * 100)), eventStatus: "primary_payment" });
+          }
+          return items;
+        })(),
+        refundHistory: refundHistoryByOrder.get(String(row.id)) || [],
         orderNumber: row.order_number,
         customer: { name: row.customer_name || "", email: row.customer_email || "", phone: row.customer_phone || "" },
         amountRequested: Number(row.refund_amount ?? row.total) || 0,
