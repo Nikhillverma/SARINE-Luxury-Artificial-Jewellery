@@ -43,6 +43,9 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
   const searchParamSort = searchParams.get('sort') || 'newest';
   const searchParamType = searchParams.get('type') || '';
   const searchParamOccasion = searchParams.get('occasion') || '';
+  const searchParamMetal = searchParams.get('metal') || '';
+  const searchParamPlating = searchParams.get('plating') || '';
+  const searchParamStone = searchParams.get('stone') || '';
 
   // Local filter states
   const [searchQuery, setSearchQuery] = useState<string>(searchParamQuery);
@@ -52,6 +55,9 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
   const [customMax, setCustomMax] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>(searchParamType);
   const [selectedOccasion, setSelectedOccasion] = useState<string>(searchParamOccasion);
+  const [selectedMetal, setSelectedMetal] = useState<string>(searchParamMetal);
+  const [selectedPlating, setSelectedPlating] = useState<string>(searchParamPlating);
+  const [selectedStone, setSelectedStone] = useState<string>(searchParamStone);
   const [inStockOnly, setInStockOnly] = useState<boolean>(false);
 
   // Sync with URL params
@@ -74,6 +80,10 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
   useEffect(() => {
     setSelectedOccasion(searchParamOccasion);
   }, [searchParamOccasion]);
+
+  useEffect(() => { setSelectedMetal(searchParamMetal); }, [searchParamMetal]);
+  useEffect(() => { setSelectedPlating(searchParamPlating); }, [searchParamPlating]);
+  useEffect(() => { setSelectedStone(searchParamStone); }, [searchParamStone]);
 
   // Load categories
   useEffect(() => {
@@ -141,6 +151,10 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     return map;
   }, [categories]);
 
+  const availableMetals = useMemo(() => Array.from(new Set(allProducts.map(product => product.baseMetal?.trim()).filter((value): value is string => Boolean(value)))).sort(), [allProducts]);
+  const availablePlatings = useMemo(() => Array.from(new Set(allProducts.map(product => product.platingFinish?.trim()).filter((value): value is string => Boolean(value)))).sort(), [allProducts]);
+  const availableStones = useMemo(() => Array.from(new Set(allProducts.map(product => product.stoneType?.trim()).filter((value): value is string => Boolean(value)))).sort(), [allProducts]);
+
   // Update query params helper
   const updateFilter = (updates: Record<string, string | null>) => {
     const next = new URLSearchParams(searchParams);
@@ -161,6 +175,9 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     setCustomMax('');
     setSelectedType('');
     setSelectedOccasion('');
+    setSelectedMetal('');
+    setSelectedPlating('');
+    setSelectedStone('');
     setInStockOnly(false);
     setSearchParams({});
   };
@@ -195,6 +212,10 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
         if (!hasOccasion) return false;
       }
 
+      if (selectedMetal && product.baseMetal !== selectedMetal) return false;
+      if (selectedPlating && product.platingFinish !== selectedPlating) return false;
+      if (selectedStone && product.stoneType !== selectedStone) return false;
+
       // Search Query filter
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
@@ -228,6 +249,9 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     selectedCategorySlug,
     selectedType,
     selectedOccasion,
+    selectedMetal,
+    selectedPlating,
+    selectedStone,
     searchQuery,
     pricePreset,
     customMin,
@@ -263,9 +287,12 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     if (pricePreset !== 'all' || customMin || customMax) count++;
     if (selectedType) count++;
     if (selectedOccasion) count++;
+    if (selectedMetal) count++;
+    if (selectedPlating) count++;
+    if (selectedStone) count++;
     if (inStockOnly) count++;
     return count;
-  }, [selectedCategorySlug, searchQuery, pricePreset, customMin, customMax, selectedType, selectedOccasion, inStockOnly]);
+  }, [selectedCategorySlug, searchQuery, pricePreset, customMin, customMax, selectedType, selectedOccasion, selectedMetal, selectedPlating, selectedStone, inStockOnly]);
 
   const currentCategory = selectedCategorySlug ? categoryMap[selectedCategorySlug] : null;
 
@@ -431,6 +458,10 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                 </button>
               </span>
             )}
+
+            {selectedMetal && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F7F0FA] text-[#563568] border border-[#E7DCEB] rounded-xs">Metal: {selectedMetal}<button onClick={() => { setSelectedMetal(''); updateFilter({ metal: null }); }}><X size={11}/></button></span>}
+            {selectedPlating && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F7F0FA] text-[#563568] border border-[#E7DCEB] rounded-xs">Finish: {selectedPlating}<button onClick={() => { setSelectedPlating(''); updateFilter({ plating: null }); }}><X size={11}/></button></span>}
+            {selectedStone && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F7F0FA] text-[#563568] border border-[#E7DCEB] rounded-xs">Stone: {selectedStone}<button onClick={() => { setSelectedStone(''); updateFilter({ stone: null }); }}><X size={11}/></button></span>}
 
             {pricePreset !== 'all' && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F7F0FA] text-[#563568] border border-[#E7DCEB] rounded-xs">
@@ -608,6 +639,16 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                   ))}
                 </div>
               </div>
+
+              {/* 4. Craftsmanship Filters */}
+              {(availableMetals.length > 0 || availablePlatings.length > 0 || availableStones.length > 0) && (
+                <div className="pt-4 border-t border-[#E7DCEB] space-y-4">
+                  <span className="text-xs uppercase tracking-wider text-[#6F6475] font-medium block">Craftsmanship</span>
+                  {availableMetals.length > 0 && <label className="block text-xs text-[#6F6475]">Base metal<select value={selectedMetal} onChange={event => { setSelectedMetal(event.target.value); updateFilter({ metal: event.target.value || null }); }} className="mt-1.5 w-full min-h-10 rounded-lg border border-[#E7DCEB] bg-[#F7F0FA] px-3 text-xs text-[#302438]"><option value="">All metals</option>{availableMetals.map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
+                  {availablePlatings.length > 0 && <label className="block text-xs text-[#6F6475]">Plating / finish<select value={selectedPlating} onChange={event => { setSelectedPlating(event.target.value); updateFilter({ plating: event.target.value || null }); }} className="mt-1.5 w-full min-h-10 rounded-lg border border-[#E7DCEB] bg-[#F7F0FA] px-3 text-xs text-[#302438]"><option value="">All finishes</option>{availablePlatings.map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
+                  {availableStones.length > 0 && <label className="block text-xs text-[#6F6475]">Stones & embellishments<select value={selectedStone} onChange={event => { setSelectedStone(event.target.value); updateFilter({ stone: event.target.value || null }); }} className="mt-1.5 w-full min-h-10 rounded-lg border border-[#E7DCEB] bg-[#F7F0FA] px-3 text-xs text-[#302438]"><option value="">All stones</option>{availableStones.map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
+                </div>
+              )}
             </div>
           </aside>
 
