@@ -66,6 +66,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   // Storefront Data
   const [categories, setCategories] = useState<Category[]>([]);
   const [bestsellers, setBestsellers] = useState<Product[]>([]);
+  const [curatedFavourites, setCuratedFavourites] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<boolean>(false);
@@ -179,9 +180,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       setLoading(true);
       setLoadError(false);
       try {
-        const [cats, bestSelling, newest] = await Promise.all([
+        const [cats, bestSelling, curated, newest] = await Promise.all([
           categoryService.getCategories({ activeOnly: true }),
           productService.getBestSellingProducts(10),
+          productService.getFeaturedProducts(8),
           productService.getProducts({ sortBy: 'newest', inStockOnly: true, includeAll })
         ]);
 
@@ -203,6 +205,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           setCategories(sortedCats);
 
           setBestsellers(bestSelling);
+          setCuratedFavourites(curated);
 
           // 4 newest products sorted by createdAt descending
           const sortedNewest = [...newest].sort((a, b) => {
@@ -505,14 +508,16 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-8 sm:mb-10">
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
-              Best Sellers
+              {bestsellers.length > 0 ? 'Best Sellers' : 'Curated Favourites'}
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
-              Our most cherished pieces, loved for their enduring finish and timeless beauty.
+              {bestsellers.length > 0
+                ? 'Our most cherished pieces, loved for their enduring finish and timeless beauty.'
+                : 'A considered edit of beautiful pieces selected from the SARINE collection.'}
             </p>
             <div className="mt-3">
               <Link
-                to="/shop?sort=bestseller"
+                to={bestsellers.length > 0 ? '/shop?sort=bestseller' : '/shop'}
                 className="text-xs sm:text-[13px] text-[#302438] hover:text-[#563568] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
               >
                 <span>View All</span>
@@ -532,15 +537,15 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 </div>
               ))}
             </div>
-          ) : bestsellers.length > 0 ? (
+          ) : (bestsellers.length > 0 || curatedFavourites.length > 0) ? (
             <div className="product-grid">
-              {bestsellers.slice(0, 8).map((product) => (
+              {(bestsellers.length > 0 ? bestsellers : curatedFavourites).slice(0, 8).map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
           ) : (
             <p className="col-span-full py-8 text-center text-xs text-[#6F6475]">
-              {loadError ? 'We could not load featured pieces right now. Please try again shortly.' : 'Featured pieces will be available soon. Please explore the full collection.'}
+              {loadError ? 'We could not load collection pieces right now. Please try again shortly.' : 'New collection pieces will be available soon. Please explore the full collection.'}
             </p>
           )}
         </div>
