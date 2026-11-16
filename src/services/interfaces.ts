@@ -24,6 +24,7 @@ export interface IProductService {
   getProductsByIds(ids: string[], options?: { includeAll?: boolean }): Promise<Product[]>;
   searchProducts(query: string, options?: { includeAll?: boolean }): Promise<Product[]>;
   getFeaturedProducts(limit?: number): Promise<Product[]>;
+  getBestSellingProducts(limit?: number): Promise<Product[]>;
   getRelatedProducts(productId: string, limit?: number): Promise<Product[]>;
 }
 export interface ICategoryService {
