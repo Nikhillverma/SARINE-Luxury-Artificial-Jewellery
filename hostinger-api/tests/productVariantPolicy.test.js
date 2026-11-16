@@ -8,9 +8,9 @@ import {
 } from "../productVariantPolicy.js";
 
 test("formats one-option and two-option variant labels", () => {
-  assert.equal(formatVariantLabel("Size 6", null), "Size 6");
-  assert.equal(formatVariantLabel("Size 6", "Rose Gold"), "Size 6 / Rose Gold");
-  assert.equal(formatVariantLabel("  Size 6 ", " "), "Size 6");
+  assert.equal(formatVariantLabel("Size", "6", null, null), "Size: 6");
+  assert.equal(formatVariantLabel("Size", "6", "Colour", "Rose Gold"), "Size: 6 / Colour: Rose Gold");
+  assert.equal(formatVariantLabel("Size", " 6 ", "Colour", " "), "Size: 6");
 });
 
 test("accepts safe unique-SKU character format and rejects invalid values", () => {
