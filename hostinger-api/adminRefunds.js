@@ -218,6 +218,45 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+router.post("/:id/reconcile", async (req, res) => {
+  try {
+    const id = Number.parseInt(String(req.params.id), 10);
+    if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ error: "Invalid refund request reference." });
+    await ensureRefundLedgerSchema();
+    const [rows] = await pool.execute("SELECT * FROM razorpay_refund_records WHERE id = ? LIMIT 1", [id]);
+    if (!rows.length) return res.status(404).json({ error: "Refund request not found." });
+    const record = rows[0];
+    if (!record.gateway_refund_id) {
+      return res.status(409).json({ error: "Razorpay has not returned a refund ID yet. Use the same-key retry only if the gateway outcome is unknown." });
+    }
+    const response = await fetch(`https://api.razorpay.com/v1/refunds/${encodeURIComponent(record.gateway_refund_id)}`, {
+      headers: { Authorization: `Basic ${credentials()}`, Accept: "application/json" }
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.id !== record.gateway_refund_id ||
+        data.payment_id !== record.gateway_payment_id ||
+        Number(data.amount) !== Number(record.amount_paise) || data.currency !== "INR") {
+      return res.status(502).json({ error: "Razorpay refund status could not be safely verified. Check the Razorpay Dashboard." });
+    }
+    const status = normalizeGatewayRefundStatus(data.status);
+    if (status === "unknown") return res.status(502).json({ error: "Razorpay returned an unsupported refund status." });
+    await saveGatewayOutcome(id, {
+      status, gatewayRefundId: data.id, gatewayStatus: data.status, error: null
+    });
+    return res.json({
+      success: true, refundId: id, gatewayRefundId: data.id, status,
+      message: status === "processed"
+        ? "Razorpay confirms this refund is processed."
+        : status === "failed"
+          ? "Razorpay confirms this refund failed."
+          : "Razorpay confirms this refund is still pending."
+    });
+  } catch (error) {
+    console.error("[admin.refunds.reconcile] Refund status check failed:", error.message);
+    return res.status(500).json({ error: "Razorpay refund status could not be checked." });
+  }
+});
+
 router.post("/:id/retry", async (req, res) => {
   try {
     const id = Number.parseInt(String(req.params.id), 10);
