@@ -3,6 +3,8 @@ import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { ensurePaymentEventLogTable } from "./paymentEventPolicy.js";
 import { ensureRazorpayWebhookSchema } from "./razorpayWebhookPolicy.js";
+import { ensureRefundLedgerSchema } from "./refundLedger.js";
+import { classifyWebhookReconciliation } from "./webhookReconciliationPolicy.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -50,6 +52,8 @@ router.get("/", async (req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
     await ensurePaymentEventLogTable();
+    await ensureRazorpayWebhookSchema();
+    await ensureRefundLedgerSchema();
     const search = typeof req.query.search === "string" ? req.query.search.trim().slice(0, 120) : "";
     const status = typeof req.query.status === "string" ? req.query.status.trim() : "all";
     const type = typeof req.query.type === "string" ? req.query.type.trim() : "all";
@@ -87,10 +91,10 @@ router.get("/", async (req, res, next) => {
       refundValues.push(term, term, term);
     }
     const [refundRows] = await pool.execute(
-      `SELECT o.order_number, o.customer_name, o.customer_email, o.customer_phone,
+      `SELECT o.id, o.order_number, o.customer_name, o.customer_email, o.customer_phone,
               o.total, o.refund_amount, o.refund_needed, o.order_status,
-              o.payment_method, o.payment_status, o.razorpay_payment_id,
-              o.created_at, o.cancelled_at, o.cancellation_reason,
+              o.payment_method, o.payment_status, o.razorpay_payment_id, o.razorpay_order_id,
+              o.razorpay_amount_paise, o.created_at, o.cancelled_at, o.cancellation_reason,
               (SELECT COUNT(*) FROM payment_event_log pe WHERE pe.order_id = o.id) AS payment_event_count,
               (SELECT pe.event_type FROM payment_event_log pe WHERE pe.order_id = o.id
                ORDER BY pe.created_at DESC, pe.id DESC LIMIT 1) AS latest_payment_event,
@@ -105,9 +109,82 @@ router.get("/", async (req, res, next) => {
       [...refundValues, limit]
     );
 
+    const refundOrderIds = refundRows.map(row => row.id);
+    const refundHistoryByOrder = new Map();
+    const capturedPaymentsByOrder = new Map();
+    if (refundOrderIds.length) {
+      const placeholders = refundOrderIds.map(() => "?").join(",");
+      const [historyRows] = await pool.query(
+        `SELECT id, order_id, gateway_payment_id, gateway_refund_id, amount_paise,
+                status, reason, requested_by, created_at, processed_at, error_message
+         FROM razorpay_refund_records
+         WHERE order_id IN (${placeholders})
+         ORDER BY created_at DESC, id DESC`,
+        refundOrderIds.map(String)
+      );
+      for (const entry of historyRows) {
+        const key = String(entry.order_id);
+        if (!refundHistoryByOrder.has(key)) refundHistoryByOrder.set(key, []);
+        refundHistoryByOrder.get(key).push({
+          id: Number(entry.id), paymentId: entry.gateway_payment_id,
+          gatewayRefundId: entry.gateway_refund_id || null,
+          amountPaise: Number(entry.amount_paise), status: entry.status,
+          reason: entry.reason, requestedBy: entry.requested_by,
+          createdAt: toIso(entry.created_at), processedAt: toIso(entry.processed_at),
+          errorMessage: entry.error_message || null
+        });
+      }
+      const [paymentRows] = await pool.query(
+        `SELECT order_id, gateway_payment_id, amount_paise, event_status
+         FROM payment_event_log
+         WHERE order_id IN (${placeholders})
+         ORDER BY created_at ASC, id ASC`,
+        refundOrderIds.map(String)
+      );
+      for (const entry of paymentRows) {
+        const key = String(entry.order_id);
+        if (!capturedPaymentsByOrder.has(key)) capturedPaymentsByOrder.set(key, []);
+        capturedPaymentsByOrder.get(key).push({
+          paymentId: entry.gateway_payment_id,
+          amountPaise: Number(entry.amount_paise),
+          eventStatus: entry.event_status
+        });
+      }
+      const [webhookPaymentRows] = await pool.query(
+        `SELECT o.id AS order_id, e.gateway_payment_id, e.amount_paise, e.gateway_status
+         FROM razorpay_webhook_events e
+         INNER JOIN orders o
+           ON o.razorpay_order_id COLLATE utf8mb4_unicode_ci = e.gateway_order_id COLLATE utf8mb4_unicode_ci
+         WHERE o.id IN (${placeholders}) AND e.event_type = 'payment.captured'
+         ORDER BY e.received_at ASC, e.id ASC`,
+        refundOrderIds.map(String)
+      );
+      for (const entry of webhookPaymentRows) {
+        const key = String(entry.order_id);
+        if (!capturedPaymentsByOrder.has(key)) capturedPaymentsByOrder.set(key, []);
+        const items = capturedPaymentsByOrder.get(key);
+        if (!items.some(item => item.paymentId === entry.gateway_payment_id)) {
+          items.push({
+            paymentId: entry.gateway_payment_id,
+            amountPaise: Number(entry.amount_paise),
+            eventStatus: `webhook_${entry.gateway_status || "captured"}`
+          });
+        }
+      }
+    }
+
     return res.json({
       returns: returnRows.map(mapReturn),
       refundRequests: refundRows.map(row => ({
+        id: String(row.id),
+        capturedPayments: (() => {
+          const items = capturedPaymentsByOrder.get(String(row.id)) || [];
+          if (row.razorpay_payment_id && !items.some(item => item.paymentId === row.razorpay_payment_id)) {
+            items.unshift({ paymentId: row.razorpay_payment_id, amountPaise: Number(row.razorpay_amount_paise || Math.round(Number(row.total) * 100)), eventStatus: "primary_payment" });
+          }
+          return items;
+        })(),
+        refundHistory: refundHistoryByOrder.get(String(row.id)) || [],
         orderNumber: row.order_number,
         customer: { name: row.customer_name || "", email: row.customer_email || "", phone: row.customer_phone || "" },
         amountRequested: Number(row.refund_amount ?? row.total) || 0,
@@ -133,41 +210,45 @@ router.get("/webhook-events", async (req, res, next) => {
     res.set("Cache-Control", "no-store");
     await ensurePaymentEventLogTable();
     await ensureRazorpayWebhookSchema();
+    await ensureRefundLedgerSchema();
     const limitValue = Number.parseInt(String(req.query.limit || "100"), 10);
     const limit = Math.min(Math.max(Number.isFinite(limitValue) ? limitValue : 100, 1), 200);
     const [rows] = await pool.execute(
       `SELECT e.id, e.event_id, e.event_type, e.gateway_order_id,
-              e.gateway_payment_id, e.gateway_refund_id, e.amount_paise,
+              e.gateway_payment_id, e.gateway_refund_id, e.gateway_receipt, e.amount_paise,
               e.currency, e.gateway_status, e.event_status, e.received_at,
               o.order_number, o.payment_status, o.order_status, o.razorpay_payment_id,
               o.total, o.razorpay_amount_paise,
-              pe.gateway_payment_id AS ledger_payment_id, pe.amount_paise AS ledger_amount_paise
+              pe.gateway_payment_id AS ledger_payment_id, pe.amount_paise AS ledger_amount_paise,
+              rr.status AS refund_record_status
        FROM razorpay_webhook_events e
        LEFT JOIN orders o
          ON (e.gateway_order_id IS NOT NULL AND o.razorpay_order_id COLLATE utf8mb4_unicode_ci = e.gateway_order_id COLLATE utf8mb4_unicode_ci)
          OR (e.gateway_payment_id IS NOT NULL AND o.razorpay_payment_id COLLATE utf8mb4_unicode_ci = e.gateway_payment_id COLLATE utf8mb4_unicode_ci)
        LEFT JOIN payment_event_log pe ON pe.gateway_payment_id COLLATE utf8mb4_unicode_ci = e.gateway_payment_id COLLATE utf8mb4_unicode_ci
+       LEFT JOIN razorpay_refund_records rr
+         ON (rr.gateway_refund_id COLLATE utf8mb4_unicode_ci = e.gateway_refund_id COLLATE utf8mb4_unicode_ci AND e.gateway_refund_id IS NOT NULL)
+         OR (rr.gateway_receipt COLLATE utf8mb4_unicode_ci = e.gateway_receipt COLLATE utf8mb4_unicode_ci AND e.gateway_receipt IS NOT NULL)
        ORDER BY e.received_at DESC, e.id DESC
        LIMIT ?`,
       [limit]
     );
     const events = rows.map(row => {
-      let reconciliationStatus = "event_logged";
-      if (row.event_type === "payment.captured") {
-        if (!row.order_number) reconciliationStatus = "unmatched_order";
-        else if (Number(row.amount_paise) !== Number(row.razorpay_amount_paise || Math.round(Number(row.total) * 100))) reconciliationStatus = "amount_mismatch";
-        else if (row.payment_status !== "paid" || !row.ledger_payment_id) reconciliationStatus = "gateway_capture_not_reconciled";
-        else if (row.razorpay_payment_id !== row.gateway_payment_id) reconciliationStatus = "additional_capture_review";
-        else reconciliationStatus = "matched";
-      } else if (row.event_type.startsWith("refund.")) {
-        reconciliationStatus = row.order_number ? "refund_event_needs_ledger_match" : "unmatched_refund";
-      } else if (row.event_type === "payment.failed") {
-        reconciliationStatus = row.order_number ? "payment_failed_event" : "unmatched_order";
-      }
+      const reconciliationStatus = classifyWebhookReconciliation({
+        eventType: row.event_type,
+        orderFound: Boolean(row.order_number),
+        amountMatches: Number(row.amount_paise) === Number(row.razorpay_amount_paise || Math.round(Number(row.total) * 100)),
+        orderPaymentStatus: row.payment_status,
+        orderPaymentId: row.razorpay_payment_id,
+        gatewayPaymentId: row.gateway_payment_id,
+        paymentLedgerFound: Boolean(row.ledger_payment_id),
+        refundRecordStatus: row.refund_record_status
+      });
       return {
         id: Number(row.id), eventId: row.event_id, eventType: row.event_type,
         gatewayOrderId: row.gateway_order_id, gatewayPaymentId: row.gateway_payment_id,
-        gatewayRefundId: row.gateway_refund_id, amountPaise: row.amount_paise === null ? null : Number(row.amount_paise),
+        gatewayRefundId: row.gateway_refund_id, gatewayReceipt: row.gateway_receipt || null,
+        refundRecordStatus: row.refund_record_status || null, amountPaise: row.amount_paise === null ? null : Number(row.amount_paise),
         currency: row.currency, gatewayStatus: row.gateway_status, eventStatus: row.event_status,
         receivedAt: toIso(row.received_at), orderNumber: row.order_number || null,
         orderPaymentStatus: row.payment_status || null, orderStatus: row.order_status || null,

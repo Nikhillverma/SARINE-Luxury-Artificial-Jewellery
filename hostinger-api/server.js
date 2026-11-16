@@ -9,6 +9,7 @@ import customerAuthRouter from "./customerAuth.js";
 import adminDatabaseAuditRouter from "./adminDatabaseAudit.js";
 import adminOrdersRouter from "./adminOrders.js";
 import adminReturnsRouter from "./adminReturns.js";
+import adminRefundsRouter from "./adminRefunds.js";
 import adminDashboardRouter from "./adminDashboard.js";
 import adminAnalyticsRouter from "./adminAnalytics.js";
 import adminProductsRouter from "./adminProducts.js";
@@ -400,6 +401,7 @@ app.use("/api/admin/inventory-settings", adminInventorySettingsRouter);
 // Hostinger admin orders and returns/refund request queues
 app.use("/api/admin/orders", adminOrdersRouter);
 app.use("/api/admin/returns", adminReturnsRouter);
+app.use("/api/admin/refunds", adminRefundsRouter);
 
 // Signed Razorpay webhook intake (raw request bytes are retained by express.json verify).
 app.use("/api/webhooks", razorpayWebhooksRouter);

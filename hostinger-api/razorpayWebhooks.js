@@ -4,6 +4,7 @@ import {
   storeRazorpayWebhookEvent,
   verifyRazorpayWebhookSignature
 } from "./razorpayWebhookPolicy.js";
+import { applyGatewayRefundEvent } from "./refundLedger.js";
 
 const router = Router();
 
@@ -27,9 +28,16 @@ router.post("/razorpay", async (req, res) => {
   try {
     const record = buildRazorpayWebhookRecord(eventId, req.body);
     const result = await storeRazorpayWebhookEvent(record);
+    let refundMatched = null;
+    if (record.eventType.startsWith("refund.")) {
+      // Apply refund outcomes idempotently. Replays are safe and can recover
+      // a webhook whose first delivery arrived before the API response save.
+      refundMatched = await applyGatewayRefundEvent(record);
+    }
     return res.status(200).json({
       received: true,
-      duplicate: !result.inserted
+      duplicate: !result.inserted,
+      refundMatched: refundMatched?.matched ?? null
     });
   } catch (error) {
     console.error("[razorpay.webhook] Durable event intake failed:", error.message);
