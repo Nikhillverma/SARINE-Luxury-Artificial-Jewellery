@@ -718,7 +718,7 @@ export const CheckoutPage: React.FC = () => {
             {/* Item Miniatures List */}
             <div className="divide-y divide-[#E7DCEB] max-h-80 overflow-y-auto pr-1">
               {items.map((item) => (
-                <div key={item.productId} className="py-3 flex gap-3 items-center">
+                <div key={`${item.productId}-${item.variantId || 'default'}`} className="py-3 flex gap-3 items-center">
                   <div className="w-14 h-16 bg-[#F7F0FA] border border-[#E7DCEB] shrink-0 overflow-hidden rounded-xs">
                     <img
                       src={item.product.images[0]}
