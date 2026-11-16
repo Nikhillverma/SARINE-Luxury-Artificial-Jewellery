@@ -62,28 +62,28 @@ async function buildReport(range) {
         SUM(CASE WHEN ${PAID_ORDER} THEN COALESCE(refund_amount,0) ELSE 0 END) AS refunds,
         SUM(CASE WHEN payment_status = 'pending' OR payment_status = 'failed' THEN 1 ELSE 0 END) AS unpaid_orders,
         SUM(CASE WHEN order_status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_orders
-       FROM orders WHERE created_at >= ? AND created_at < ?`,
+       FROM orders WHERE is_test = 0 AND created_at >= ? AND created_at < ?`,
       params
     ),
     pool.execute(
       `SELECT DATE(DATE_ADD(created_at, INTERVAL 330 MINUTE)) AS report_day,
         COUNT(*) AS orders,
         SUM(CASE WHEN ${PAID_ORDER} THEN GREATEST(COALESCE(total,0)-COALESCE(refund_amount,0),0) ELSE 0 END) AS revenue
-       FROM orders WHERE created_at >= ? AND created_at < ?
+       FROM orders WHERE is_test = 0 AND created_at >= ? AND created_at < ?
        GROUP BY DATE(DATE_ADD(created_at, INTERVAL 330 MINUTE))
        ORDER BY report_day ASC`,
       params
     ),
     pool.execute(
       `SELECT order_status AS label, COUNT(*) AS count
-       FROM orders WHERE created_at >= ? AND created_at < ?
+       FROM orders WHERE is_test = 0 AND created_at >= ? AND created_at < ?
        GROUP BY order_status ORDER BY count DESC`,
       params
     ),
     pool.execute(
       `SELECT COALESCE(payment_method,'unknown') AS label, COUNT(*) AS count,
         SUM(CASE WHEN ${PAID_ORDER} THEN GREATEST(COALESCE(total,0)-COALESCE(refund_amount,0),0) ELSE 0 END) AS revenue
-       FROM orders WHERE created_at >= ? AND created_at < ?
+       FROM orders WHERE is_test = 0 AND created_at >= ? AND created_at < ?
        GROUP BY payment_method ORDER BY count DESC`,
       params
     ),
@@ -93,7 +93,7 @@ async function buildReport(range) {
         SUM(oi.quantity * oi.unit_price) AS item_sales
        FROM order_items oi
        INNER JOIN orders o ON o.id = oi.order_id
-       WHERE o.created_at >= ? AND o.created_at < ?
+       WHERE o.is_test = 0 AND o.created_at >= ? AND o.created_at < ?
          AND ${PAID_ORDER.replaceAll("payment_status", "o.payment_status").replaceAll("order_status", "o.order_status").replaceAll("payment_method", "o.payment_method").replaceAll("total", "o.total").replaceAll("refund_amount", "o.refund_amount")}
        GROUP BY oi.product_id, oi.product_name
        ORDER BY units_sold DESC, item_sales DESC
@@ -108,7 +108,7 @@ async function buildReport(range) {
        INNER JOIN orders o ON o.id = oi.order_id
        LEFT JOIN products p ON p.id = oi.product_id
        LEFT JOIN categories c ON c.id = p.category_id
-       WHERE o.created_at >= ? AND o.created_at < ?
+       WHERE o.is_test = 0 AND o.created_at >= ? AND o.created_at < ?
          AND ${PAID_ORDER.replaceAll("payment_status", "o.payment_status").replaceAll("order_status", "o.order_status").replaceAll("payment_method", "o.payment_method").replaceAll("total", "o.total").replaceAll("refund_amount", "o.refund_amount")}
        GROUP BY c.name ORDER BY item_sales DESC`,
       params
