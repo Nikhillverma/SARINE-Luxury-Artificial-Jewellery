@@ -279,9 +279,16 @@ export const CheckoutPage: React.FC = () => {
                 razorpay_signature: response.razorpay_signature
               });
 
-              // If verifyPayment returns pending: true (or success: true), navigate to the order page and clear the cart
-              if (verifyResult.success || verifyResult.pending) {
-                console.log('[Checkout] Payment verification handled (success or pending):', order.orderNumber);
+              // A captured payment with exhausted stock is not a failed payment:
+              // the backend has flagged the order for a full refund and the order page
+              // explains the paid / needs-refund state to the customer.
+              if (verifyResult.success || verifyResult.pending || verifyResult.needsRefund) {
+                console.log(
+                  verifyResult.needsRefund
+                    ? '[Checkout] Payment captured; order flagged for refund:'
+                    : '[Checkout] Payment verification handled (success or pending):',
+                  order.orderNumber
+                );
                 setOrderPlaced(true);
                 orderPlacedRef.current = true;
 
