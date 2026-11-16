@@ -5,6 +5,7 @@ import Razorpay from "razorpay";
 import { pool } from "./db.js";
 import { getAuthenticatedCustomer } from "./customerAuth.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
+import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
 
 const router = Router();
 
@@ -118,6 +119,7 @@ router.post("/create", async (req, res, next) => {
 
     await ensureMarketingSchema();
     await ensureInventoryTable();
+    await ensureProductVariantSchema();
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
@@ -145,12 +147,46 @@ router.post("/create", async (req, res, next) => {
         await connection.rollback();
         connection.release();
         connection = null;
-        return res.status(400).json({
-          error: `"${p.name || 'Selected item'}" is no longer active in our collection.`
-        });
+        return res.status(400).json({ error: `"${p.name || 'Selected item'}" is no longer active in our collection.` });
       }
-      const availableStock = Number(p.stock || 0);
-      const reservation = reservedStockByProduct.get(p.id) || {
+
+      const [activeVariants] = await connection.execute(
+        "SELECT id FROM product_variants WHERE product_id = ? AND status = 'active' LIMIT 1",
+        [p.id]
+      );
+      let variant = null;
+      if (activeVariants.length) {
+        if (!itm.variantId || typeof itm.variantId !== "string") {
+          await connection.rollback();
+          connection.release();
+          connection = null;
+          return res.status(400).json({ error: `Please choose an available option for "${p.name}".` });
+        }
+        const [variantRows] = await connection.execute(
+          "SELECT * FROM product_variants WHERE id = ? AND product_id = ? AND status = 'active' LIMIT 1 FOR UPDATE",
+          [itm.variantId, p.id]
+        );
+        if (!variantRows.length) {
+          await connection.rollback();
+          connection.release();
+          connection = null;
+          return res.status(400).json({ error: `The selected option for "${p.name}" is no longer available. Please refresh your bag.` });
+        }
+        variant = variantRows[0];
+      } else if (itm.variantId) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        return res.status(400).json({ error: `The selected option for "${p.name}" is no longer available. Please refresh your bag.` });
+      }
+
+      const stockKey = variant ? `variant:${variant.id}` : `product:${p.id}`;
+      const availableStock = Number(variant ? variant.stock : p.stock) || 0;
+      const reservation = reservedStockByProduct.get(stockKey) || {
+        productId: p.id,
+        variantId: variant?.id || null,
+        variantSku: variant?.sku || null,
+        variantLabel: variant ? [variant.option1_value, variant.option2_value].filter(Boolean).join(" / ") : "",
         previousStock: availableStock,
         quantity: 0
       };
@@ -160,25 +196,31 @@ router.post("/create", async (req, res, next) => {
         connection.release();
         connection = null;
         return res.status(400).json({
-          error: `Only ${Math.max(0, remainingStock)} ${remainingStock === 1 ? 'piece is' : 'pieces are'} available for "${p.name}".`
+          error: `Only ${Math.max(0, remainingStock)} ${remainingStock === 1 ? 'piece is' : 'pieces are'} available for "${p.name}"${variant ? ` (${reservation.variantLabel})` : ""}.`
         });
       }
       reservation.quantity += Number(itm.quantity);
-      reservedStockByProduct.set(p.id, reservation);
-      const unitPrice = Math.round(Number(p.price) || 0);
+      reservedStockByProduct.set(stockKey, reservation);
+      const unitPrice = Math.round(Number(variant?.price ?? p.price) || 0);
       calculatedSubtotal += unitPrice * Number(itm.quantity);
       let images = [];
-      try {
-        images = typeof p.images === "string" ? JSON.parse(p.images) : (p.images || []);
-      } catch {}
+      try { images = typeof p.images === "string" ? JSON.parse(p.images) : (p.images || []); } catch {}
+      const variantOptions = variant ? {
+        [variant.option1_name]: variant.option1_value,
+        ...(variant.option2_name && variant.option2_value ? { [variant.option2_name]: variant.option2_value } : {})
+      } : null;
       verifiedLines.push({
         productId: p.id,
+        variantId: variant?.id || null,
+        variantSku: variant?.sku || null,
+        variantLabel: reservation.variantLabel || null,
+        variantOptions,
         name: p.name,
         unitPrice,
         quantity: Number(itm.quantity),
         previousStock: availableStock,
         image: Array.isArray(images) && images[0] ? String(images[0]) : "",
-        sku: null, // The live products table has no SKU column.
+        sku: variant?.sku || null,
         sourceLine: i
       });
     }
@@ -253,23 +295,34 @@ router.post("/create", async (req, res, next) => {
     // 7. Insert Order record and items based on paymentMethod
     if (paymentMethod === "cod") {
       // Deduct each distinct product once and record the movement in this transaction.
-      for (const [productId, reservation] of reservedStockByProduct) {
+      for (const [stockKey, reservation] of reservedStockByProduct) {
         const newStock = reservation.previousStock - reservation.quantity;
-        const productLine = verifiedLines.find((line) => line.productId === productId);
-        await connection.execute(
-          `UPDATE products SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
-          [newStock, productId]
-        );
-        await recordInventoryMovement(connection, {
-          productId,
-          productName: productLine?.name || "Product",
-          previousStock: reservation.previousStock,
-          quantityDelta: -reservation.quantity,
-          newStock,
-          reason: `COD order placed ${orderNumber}`,
-          actorName: "Customer checkout",
-          actorEmail: "system@sarine.local"
-        });
+        const productLine = verifiedLines.find(line => line.productId === reservation.productId && line.variantId === reservation.variantId);
+        if (reservation.variantId) {
+          await connection.execute(
+            "UPDATE product_variants SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?",
+            [newStock, reservation.variantId]
+          );
+          await syncProductVariantStock(connection, reservation.productId);
+          await recordVariantInventoryMovement(connection, {
+            variantId: reservation.variantId, productId: reservation.productId,
+            productName: productLine?.name || "Product", variantSku: reservation.variantSku,
+            variantLabel: reservation.variantLabel, previousStock: reservation.previousStock,
+            quantityDelta: -reservation.quantity, newStock, reason: `COD order placed ${orderNumber}`,
+            adminName: "Customer checkout", adminEmail: "system@sarine.local"
+          });
+        } else {
+          await connection.execute(
+            "UPDATE products SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?",
+            [newStock, reservation.productId]
+          );
+          await recordInventoryMovement(connection, {
+            productId: reservation.productId, productName: productLine?.name || "Product",
+            previousStock: reservation.previousStock, quantityDelta: -reservation.quantity,
+            newStock, reason: `COD order placed ${orderNumber}`,
+            actorName: "Customer checkout", actorEmail: "system@sarine.local"
+          });
+        }
       }
 
       await connection.execute(
@@ -297,9 +350,9 @@ router.post("/create", async (req, res, next) => {
 
       for (const line of verifiedLines) {
         await connection.execute(
-          `INSERT INTO order_items (order_id, product_id, product_name, sku, unit_price, quantity, image, source_line)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [orderNumber, line.productId, line.name, line.sku, line.unitPrice, line.quantity, line.image, line.sourceLine]
+          `INSERT INTO order_items (order_id, product_id, product_name, sku, unit_price, quantity, image, source_line, variant_id, variant_sku, variant_label, variant_options)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [orderNumber, line.productId, line.name, line.sku, line.unitPrice, line.quantity, line.image, line.sourceLine, line.variantId, line.variantSku, line.variantLabel, line.variantOptions ? JSON.stringify(line.variantOptions) : null]
         );
       }
 
@@ -350,9 +403,9 @@ router.post("/create", async (req, res, next) => {
 
       for (const line of verifiedLines) {
         await connection.execute(
-          `INSERT INTO order_items (order_id, product_id, product_name, sku, unit_price, quantity, image, source_line)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [orderNumber, line.productId, line.name, line.sku, line.unitPrice, line.quantity, line.image, line.sourceLine]
+          `INSERT INTO order_items (order_id, product_id, product_name, sku, unit_price, quantity, image, source_line, variant_id, variant_sku, variant_label, variant_options)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [orderNumber, line.productId, line.name, line.sku, line.unitPrice, line.quantity, line.image, line.sourceLine, line.variantId, line.variantSku, line.variantLabel, line.variantOptions ? JSON.stringify(line.variantOptions) : null]
         );
       }
 
