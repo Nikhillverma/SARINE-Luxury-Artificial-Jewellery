@@ -566,6 +566,7 @@ router.post("/verify", async (req, res, next) => {
 
     // 3. Atomic database transaction for stock decrement and payment confirmation
     await ensureInventoryTable();
+    await ensureProductVariantSchema();
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
@@ -623,7 +624,8 @@ router.post("/verify", async (req, res, next) => {
 
     // Lock product items
     const [orderItems] = await connection.execute(
-      `SELECT product_id, quantity, product_name FROM order_items WHERE order_id = ?`,
+      `SELECT product_id, variant_id, variant_sku, variant_label, quantity, product_name
+       FROM order_items WHERE order_id = ?`,
       [order.id]
     );
 
@@ -634,12 +636,16 @@ router.post("/verify", async (req, res, next) => {
         hasSufficientStock = false;
         break;
       }
-      const existing = aggregatedItems.get(item.product_id);
+      const stockKey = item.variant_id ? `variant:${item.variant_id}` : `product:${item.product_id}`;
+      const existing = aggregatedItems.get(stockKey);
       if (existing) {
         existing.quantity += Number(item.quantity);
       } else {
-        aggregatedItems.set(item.product_id, {
+        aggregatedItems.set(stockKey, {
           productId: item.product_id,
+          variantId: item.variant_id || null,
+          variantSku: item.variant_sku || null,
+          variantLabel: item.variant_label || "",
           productName: item.product_name || "Product",
           quantity: Number(item.quantity),
           previousStock: null
@@ -648,36 +654,65 @@ router.post("/verify", async (req, res, next) => {
     }
 
     for (const item of aggregatedItems.values()) {
-      const [prod] = await connection.execute(
-        `SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE`,
-        [item.productId]
-      );
-      if (!prod.length || Number(prod[0].stock || 0) < item.quantity) {
-        hasSufficientStock = false;
-        break;
+      if (item.variantId) {
+        const [variantRows] = await connection.execute(
+          `SELECT v.id, v.product_id, v.sku, v.option1_value, v.option2_value, v.stock, p.name
+           FROM product_variants v INNER JOIN products p ON p.id = v.product_id
+           WHERE v.id = ? AND v.product_id = ? FOR UPDATE`,
+          [item.variantId, item.productId]
+        );
+        if (!variantRows.length || Number(variantRows[0].stock || 0) < item.quantity) {
+          hasSufficientStock = false;
+          break;
+        }
+        item.productName = variantRows[0].name || item.productName;
+        item.variantSku = variantRows[0].sku || item.variantSku;
+        item.variantLabel = [variantRows[0].option1_value, variantRows[0].option2_value].filter(Boolean).join(" / ") || item.variantLabel;
+        item.previousStock = Number(variantRows[0].stock || 0);
+      } else {
+        const [prod] = await connection.execute(
+          `SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE`,
+          [item.productId]
+        );
+        if (!prod.length || Number(prod[0].stock || 0) < item.quantity) {
+          hasSufficientStock = false;
+          break;
+        }
+        item.productName = prod[0].name || item.productName;
+        item.previousStock = Number(prod[0].stock || 0);
       }
-      item.productName = prod[0].name || item.productName;
-      item.previousStock = Number(prod[0].stock || 0);
     }
 
     if (hasSufficientStock) {
-      // Deduct each distinct product once and record the movement atomically.
+      // Deduct each distinct product or variant once and record the movement atomically.
       for (const item of aggregatedItems.values()) {
         const newStock = item.previousStock - item.quantity;
-        await connection.execute(
-          `UPDATE products SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
-          [newStock, item.productId]
-        );
-        await recordInventoryMovement(connection, {
-          productId: item.productId,
-          productName: item.productName,
-          previousStock: item.previousStock,
-          quantityDelta: -item.quantity,
-          newStock,
-          reason: `Online payment captured ${cleanOrderNumber}`,
-          actorName: "Razorpay payment",
-          actorEmail: "system@sarine.local"
-        });
+        if (item.variantId) {
+          await connection.execute(
+            "UPDATE product_variants SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?",
+            [newStock, item.variantId]
+          );
+          await syncProductVariantStock(connection, item.productId);
+          await recordVariantInventoryMovement(connection, {
+            variantId: item.variantId, productId: item.productId,
+            productName: item.productName, variantSku: item.variantSku,
+            variantLabel: item.variantLabel, previousStock: item.previousStock,
+            quantityDelta: -item.quantity, newStock,
+            reason: `Online payment captured ${cleanOrderNumber}`,
+            adminName: "Razorpay payment", adminEmail: "system@sarine.local"
+          });
+        } else {
+          await connection.execute(
+            `UPDATE products SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
+            [newStock, item.productId]
+          );
+          await recordInventoryMovement(connection, {
+            productId: item.productId, productName: item.productName,
+            previousStock: item.previousStock, quantityDelta: -item.quantity,
+            newStock, reason: `Online payment captured ${cleanOrderNumber}`,
+            actorName: "Razorpay payment", actorEmail: "system@sarine.local"
+          });
+        }
       }
       await connection.execute(
         `UPDATE orders
