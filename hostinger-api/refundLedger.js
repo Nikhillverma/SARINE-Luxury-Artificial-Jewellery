@@ -94,7 +94,6 @@ export async function refreshOrderRefundFlag(connection, orderId) {
     await connection.execute(
       `UPDATE orders
        SET refund_needed = 0,
-           order_status = CASE WHEN order_status = 'needs_refund' THEN 'cancelled' ELSE order_status END,
            cancelled_at = CASE WHEN order_status = 'needs_refund' THEN COALESCE(cancelled_at, UTC_TIMESTAMP(3)) ELSE cancelled_at END,
            order_status = CASE WHEN order_status = 'needs_refund' THEN 'cancelled' ELSE order_status END,
            updated_at = UTC_TIMESTAMP(3)
