@@ -51,7 +51,7 @@ function ReturnCard({ item, onSaved }: { item: AdminReturnRequest; onSaved: () =
   );
 }
 function RefundCard({ item }: { item: AdminRefundRequest }) {
-  const latest = item.latestPaymentEvent ? ' · latest: ' + item.latestPaymentEvent + ' (' + dateLabel(item.latestPaymentEventAt) + ')' : '';
+  const latest = item.latestPaymentEvent ? ' · latest: ' + item.latestPaymentEvent + (item.latestPaymentEventStatus ? ' — ' + item.latestPaymentEventStatus.replaceAll('_', ' ') : '') + ' (' + dateLabel(item.latestPaymentEventAt) + ')' : '';
   return (
     <article className="bg-white border border-[#EADFF0] rounded-2xl p-4 sm:p-5 space-y-3">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
