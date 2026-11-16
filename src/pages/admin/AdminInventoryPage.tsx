@@ -11,6 +11,7 @@ import type { InventoryMovement } from '../../services/interfaces';
 import { Category } from '../../types/category';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { InventoryAlertSettings } from '../../components/admin/InventoryAlertSettings';
+import { ProductInventoryAlertControl } from '../../components/admin/ProductInventoryAlertControl';
 import { inventorySettingsService } from '../../services/hostinger/inventorySettingsService';
 import { formatInr } from '../../utils/currency';
 import {
@@ -34,6 +35,7 @@ export const AdminInventoryPage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [lowStockThreshold, setLowStockThreshold] = useState(DEFAULT_LOW_STOCK_THRESHOLD);
+  const [productThresholds, setProductThresholds] = useState<Record<string, number>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -61,6 +63,7 @@ export const AdminInventoryPage: React.FC = () => {
         setProducts(prods);
         setMovements(inventoryMovements);
         setLowStockThreshold(alertSettings.threshold);
+        setProductThresholds(alertSettings.productThresholds || {});
       } catch (err) {
         console.error('[AdminInventoryPage] Failed to load inventory:', err);
       } finally {
@@ -85,7 +88,8 @@ export const AdminInventoryPage: React.FC = () => {
       if (statusFilter !== 'all' && p.status !== statusFilter) {
         return false;
       }
-      if (stockFilter === 'low' && (p.stock < 0 || p.stock > lowStockThreshold)) {
+      const effectiveThreshold = productThresholds[p.id] ?? lowStockThreshold;
+      if (stockFilter === 'low' && (p.stock < 0 || p.stock > effectiveThreshold)) {
         return false;
       }
       if (stockFilter === 'out' && p.stock > 0) {
@@ -96,9 +100,9 @@ export const AdminInventoryPage: React.FC = () => {
       }
       return true;
     });
-  }, [products, searchTerm, selectedCategory, statusFilter, stockFilter, lowStockThreshold]);
+  }, [products, searchTerm, selectedCategory, statusFilter, stockFilter, lowStockThreshold, productThresholds]);
 
-  const lowStockCount = products.filter((p) => p.status === 'active' && p.stock >= 0 && p.stock <= lowStockThreshold).length;
+  const lowStockCount = products.filter((p) => p.status === 'active' && p.stock >= 0 && p.stock <= (productThresholds[p.id] ?? lowStockThreshold)).length;
   const outOfStockCount = products.filter((p) => p.status === 'active' && p.stock <= 0).length;
   const totalStockUnits = products.reduce((sum, p) => sum + (p.stock || 0), 0);
 
@@ -182,7 +186,7 @@ export const AdminInventoryPage: React.FC = () => {
           <div className="bg-white p-4 border border-[#E7DCEB] rounded-xs shadow-2xs space-y-1">
             <span className="text-xs text-[#6F6475] uppercase tracking-wider font-medium flex items-center gap-1.5">
               <AlertTriangle size={13} className="text-amber-600" />
-              <span>Low Stock Alert (≤ {lowStockThreshold} units)</span>
+              <span>Low Stock Alerts (global default {lowStockThreshold})</span>
             </span>
             <div className="font-serif text-2xl text-amber-700">{lowStockCount} Items</div>
             <p className="text-[11px] text-[#6F6475]">Needs atelier crafting restock</p>
@@ -245,7 +249,7 @@ export const AdminInventoryPage: React.FC = () => {
               className="py-2 px-3 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:outline-none text-[#302438]"
             >
               <option value="all">All Stock Levels</option>
-              <option value="low">Low Stock Only (&le; 5)</option>
+              <option value="low">Low Stock Only (product threshold)</option>
               <option value="out">Out of Stock Only</option>
               <option value="in">In Stock Only</option>
             </select>
@@ -263,13 +267,14 @@ export const AdminInventoryPage: React.FC = () => {
                   <th className="p-3">Price</th>
                   <th className="p-3 text-center">Stock on Hand</th>
                   <th className="p-3">Status</th>
+                  <th className="p-3">Low-stock Alert</th>
                   <th className="p-3 text-right">Inventory Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E7DCEB]">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-[#6F6475]">
+                    <td colSpan={7} className="p-8 text-center text-[#6F6475]">
                       Loading inventory records...
                     </td>
                   </tr>
@@ -281,7 +286,8 @@ export const AdminInventoryPage: React.FC = () => {
                   </tr>
                 ) : (
                   filteredProducts.map((p) => {
-                    const isLow = p.stock > 0 && p.stock <= lowStockThreshold;
+                    const effectiveThreshold = productThresholds[p.id] ?? lowStockThreshold;
+                    const isLow = p.stock > 0 && p.stock <= effectiveThreshold;
                     const isOut = p.stock <= 0;
 
                     return (
@@ -343,6 +349,21 @@ export const AdminInventoryPage: React.FC = () => {
                           >
                             {p.status}
                           </span>
+                        </td>
+
+                        {/* Product-specific low-stock threshold */}
+                        <td className="p-3">
+                          <ProductInventoryAlertControl
+                            productId={p.id}
+                            globalThreshold={lowStockThreshold}
+                            savedThreshold={productThresholds[p.id]}
+                            onSaved={(productId, threshold) => setProductThresholds(previous => {
+                              const next = { ...previous };
+                              if (threshold === null) delete next[productId];
+                              else next[productId] = threshold;
+                              return next;
+                            })}
+                          />
                         </td>
 
                         {/* Action: Stock adjustment */}
