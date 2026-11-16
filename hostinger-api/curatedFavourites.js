@@ -1,13 +1,13 @@
 import { Router } from "express";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
+import { MAX_CURATED_PRODUCTS, EMPTY_CURATED_FAVOURITES as EMPTY_CURATION, validateCuratedFavourites } from "./curatedFavouritesPolicy.js";
 
 const admin = Router();
 const publicRouter = Router();
 const adminOnly = Router();
 adminOnly.use(requireAdminAuth);
 
-import { MAX_CURATED_PRODUCTS, EMPTY_CURATED_FAVOURITES as EMPTY_CURATION, validateCuratedFavourites } from "./curatedFavouritesPolicy.js";
 
 let schemaReady;
 async function ensureSchema() {
