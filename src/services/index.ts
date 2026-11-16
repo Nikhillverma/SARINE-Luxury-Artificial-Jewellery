@@ -41,6 +41,19 @@ export const adminProductService: IAdminProductService =
       Object.assign(item, updates);
       return item;
     },
+    bulkUpdateProducts: async (productIds, updates) => {
+      const results = productIds.map(productId => {
+        const item = mockProductService._getAllInternal().find(p => p.id === productId);
+        if (!item || item.status === "archived") return { productId, productName: item?.name, status: "skipped" as const, message: "Product unavailable." };
+        if (updates.price !== undefined) item.price = updates.price;
+        if (updates.compareAtPrice !== undefined) item.compareAtPrice = updates.compareAtPrice ?? undefined;
+        if (updates.categoryId !== undefined) item.categoryId = updates.categoryId;
+        if (updates.status !== undefined) item.status = updates.status;
+        return { productId, productName: item.name, status: "updated" as const, message: "Changes saved." };
+      });
+      const updated = results.filter(result => result.status === "updated").length;
+      return { summary: { requested: productIds.length, updated, skipped: results.length - updated }, results };
+    },
     adjustStock: async (id, quantityDelta, reason): Promise<InventoryMovement> => {
       const item = mockProductService._getAllInternal().find(p => p.id === id);
       if (!item) throw new Error('Product not found.');
