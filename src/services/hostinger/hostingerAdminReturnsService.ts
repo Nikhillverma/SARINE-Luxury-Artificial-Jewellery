@@ -64,6 +64,11 @@ export const hostingerAdminReturnsService = {
       method: 'POST', body: JSON.stringify({})
     });
   },
+  reconcileRefund(id: number) {
+    return refundRequest<{ success: boolean; refundId: number; gatewayRefundId: string; status: string; message: string }>('/' + id + '/reconcile', {
+      method: 'POST', body: JSON.stringify({})
+    });
+  },
   updateReturn(id: number, status: ReturnStatus, resolutionNotes: string) {
     return request<{ success: boolean; id: number; status: ReturnStatus; resolutionNotes: string }>('/' + id, {
       method: 'PUT', body: JSON.stringify({ status, resolutionNotes })
