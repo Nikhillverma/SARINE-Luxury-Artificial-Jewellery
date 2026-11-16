@@ -501,7 +501,8 @@ router.post("/update", async (req, res, next) => {
           `SELECT product_id, variant_id, SUM(quantity) AS quantity
            FROM order_items
            WHERE order_id = ? AND product_id IS NOT NULL
-           GROUP BY product_id, variant_id`,
+           GROUP BY product_id, variant_id
+           ORDER BY product_id ASC, variant_id ASC`,
           [order.id]
         );
 
@@ -509,14 +510,27 @@ router.post("/update", async (req, res, next) => {
           const quantity = Number(line.quantity);
           if (!line.product_id || !Number.isSafeInteger(quantity) || quantity <= 0) continue;
 
+          // Match checkout's lock order: parent product first, then its variant.
+          // This serializes all variant stock changes for a product before the
+          // aggregate parent stock is recalculated, avoiding stale totals.
+          const [products] = await connection.execute(
+            `SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE`,
+            [line.product_id]
+          );
+          if (!products.length) {
+            throw new Error(`Cannot restore inventory: product ${line.product_id} for order ${cleanOrderNumber} no longer exists.`);
+          }
+          const product = products[0];
+
           if (line.variant_id) {
             const [variants] = await connection.execute(
-              `SELECT v.*, p.name AS product_name FROM product_variants v
-               INNER JOIN products p ON p.id = v.product_id
-               WHERE v.id = ? AND v.product_id = ? FOR UPDATE`,
+              `SELECT * FROM product_variants
+               WHERE id = ? AND product_id = ? FOR UPDATE`,
               [line.variant_id, line.product_id]
             );
-            if (!variants.length) continue;
+            if (!variants.length) {
+              throw new Error(`Cannot restore inventory: variant ${line.variant_id} for order ${cleanOrderNumber} no longer exists.`);
+            }
             const variant = variants[0];
             const previousStock = Number(variant.stock || 0);
             const newStock = previousStock + quantity;
@@ -540,12 +554,6 @@ router.post("/update", async (req, res, next) => {
             continue;
           }
 
-          const [products] = await connection.execute(
-            `SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE`,
-            [line.product_id]
-          );
-          if (!products.length) continue;
-          const product = products[0];
           const previousStock = Number(product.stock || 0);
           const newStock = previousStock + quantity;
           if (!Number.isSafeInteger(newStock) || newStock > 2147483647) {
