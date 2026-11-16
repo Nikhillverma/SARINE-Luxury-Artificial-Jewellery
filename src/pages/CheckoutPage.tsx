@@ -731,6 +731,7 @@ export const CheckoutPage: React.FC = () => {
                       {item.product.name}
                     </p>
                     <p className="text-[11px] text-[#6F6475] font-sans">
+                      {item.variant && <span className="block text-[#563568]">{item.variant.label} · SKU: {item.variant.sku}</span>}
                       Qty: {item.quantity} × {formatInr(item.unitPrice)}
                     </p>
                   </div>
