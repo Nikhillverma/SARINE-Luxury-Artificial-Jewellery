@@ -570,6 +570,7 @@ router.post("/verify", async (req, res, next) => {
     // 3. Atomic database transaction for stock decrement and payment confirmation
     await ensureInventoryTable();
     await ensureProductVariantSchema();
+    await ensurePaymentEventLogTable();
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
