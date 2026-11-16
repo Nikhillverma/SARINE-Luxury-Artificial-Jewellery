@@ -57,7 +57,7 @@ export async function applyGatewayRefundEvent(record) {
     }
     const nextStatus = record.eventType === "refund.processed" ? "processed"
       : record.eventType === "refund.failed" ? "failed" : "pending";
-    if (refund.status !== "processed" && refund.status !== "failed") {
+    if (refund.status !== "processed" && (nextStatus === "processed" || refund.status !== "failed")) {
       await connection.execute(
         `UPDATE razorpay_refund_records
          SET gateway_refund_id = COALESCE(gateway_refund_id, ?),
