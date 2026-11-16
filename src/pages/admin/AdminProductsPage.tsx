@@ -303,7 +303,7 @@ export const AdminProductsPage: React.FC = () => {
               </tr></thead>
               <tbody className="divide-y divide-[#F5EDF8]">
                 {loading ? <tr><td colSpan={7} className="p-10 text-center text-[#8E769E]">Loading catalogue…</td></tr> :
-                visibleProducts.length === 0 ? <tr><td colSpan={6} className="p-10 text-center text-[#8E769E]">No products found.</td></tr> :
+                visibleProducts.length === 0 ? <tr><td colSpan={7} className="p-10 text-center text-[#8E769E]">No products found.</td></tr> :
                 visibleProducts.map(product => (
                   <tr key={product.id} className="hover:bg-[#FAF5FC]">
                     <td className="p-3"><input type="checkbox" aria-label={"Select " + product.name} checked={selectedIds.includes(product.id)} onChange={() => toggleProductSelection(product.id)} className="accent-[#563568]"/></td>
