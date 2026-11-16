@@ -8,7 +8,7 @@ const adminOnly = Router();
 adminOnly.use(requireAdminAuth);
 
 const MAX_CURATED_PRODUCTS = 12;
-const EMPTY_CURATION = Object.freeze({ version: 1, productIds: [] });
+const EMPTY_CURATION = Object.freeze({ version: 1, productIds: [], configured: false });
 
 export function validateCuratedFavourites(input) {
   if (!input || typeof input !== "object" || !Array.isArray(input.productIds)) {
@@ -26,7 +26,7 @@ export function validateCuratedFavourites(input) {
   if (new Set(productIds).size !== productIds.length) {
     throw new Error("A product cannot be added to Curated Favourites more than once.");
   }
-  return { version: 1, productIds };
+  return { version: 1, productIds, configured: true };
 }
 
 let schemaReady;
@@ -127,7 +127,7 @@ publicRouter.get("/", async (_req, res, next) => {
   try {
     const curation = await readCuration("curated_favourites_published");
     if (!curation.productIds.length) {
-      res.set("Cache-Control", "no-store").json({ products: [], configured: false });
+      res.set("Cache-Control", "no-store").json({ products: [], configured: curation.configured === true });
       return;
     }
     const placeholders = curation.productIds.map(() => "?").join(",");
@@ -140,7 +140,7 @@ publicRouter.get("/", async (_req, res, next) => {
       .map((id) => byId.get(id))
       .filter(Boolean)
       .map(mapPublicProduct);
-    res.set("Cache-Control", "no-store").json({ products, configured: true });
+    res.set("Cache-Control", "no-store").json({ products, configured: curation.configured === true });
   } catch (error) { next(error); }
 });
 
