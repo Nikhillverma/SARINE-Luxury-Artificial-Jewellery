@@ -17,11 +17,11 @@ const EMPTY_FORM = {
 };
 
 function splitList(value: string): string[] {
-  return Array.from(new Set(value.split(/[\\n,]/).map(item => item.trim()).filter(Boolean)));
+  return Array.from(new Set(value.split(',').flatMap(item => item.split(String.fromCharCode(10))).map(item => item.trim()).filter(Boolean)));
 }
 
 function splitLines(value: string): string[] {
-  return Array.from(new Set(value.split(/\\r?\\n/).map(item => item.trim()).filter(Boolean)));
+  return Array.from(new Set(value.split(String.fromCharCode(10)).map(item => item.trim()).filter(Boolean)));
 }
 
 function slugify(value: string): string {
