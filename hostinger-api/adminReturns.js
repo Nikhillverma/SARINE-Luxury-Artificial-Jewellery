@@ -116,7 +116,8 @@ router.get("/", async (req, res, next) => {
         createdAt: toIso(row.created_at),
         cancelledAt: toIso(row.cancelled_at),
         paymentEventCount: Number(row.payment_event_count) || 0,
-        latestPaymentEvent: row.latest_payment_event || null,\n        latestPaymentEventStatus: row.latest_payment_event_status || null,
+        latestPaymentEvent: row.latest_payment_event || null,
+        latestPaymentEventStatus: row.latest_payment_event_status || null,
         latestPaymentEventAt: toIso(row.latest_payment_event_at)
       }))
     });
