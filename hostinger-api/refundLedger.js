@@ -51,7 +51,8 @@ export async function applyGatewayRefundEvent(record) {
     }
     const refund = rows[0];
     if (refund.gateway_payment_id !== record.gatewayPaymentId ||
-        Number(refund.amount_paise) !== Number(record.amountPaise)) {
+        Number(refund.amount_paise) !== Number(record.amountPaise) ||
+        (refund.gateway_refund_id && refund.gateway_refund_id !== record.gatewayRefundId)) {
       await connection.rollback();
       return { matched: false, mismatch: true };
     }
