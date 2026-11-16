@@ -2,7 +2,7 @@
  * Central Service Switch for SARINE.
  * Storefront catalogue and administrative product writes use Hostinger MariaDB.
  */
-import type { IProductService, ICategoryService, IAdminProductService, IOrderService, InventoryMovement } from './interfaces';
+import type { IProductService, ICategoryService, IAdminProductService, IOrderService, InventoryMovement, ProductVariantDraft, VariantInventoryMovement } from './interfaces';
 import { MockProductService } from './mock/mockProductService';
 import { MockCategoryService } from './mock/mockCategoryService';
 import { HostingerProductService } from './hostinger/hostingerProductService';
@@ -20,6 +20,7 @@ const hostingerProductService = new HostingerProductService();
 const hostingerCategoryService = new HostingerCategoryService();
 const hostingerOrderService = new HostingerOrderService();
 const hostingerAdminProductService = new HostingerAdminProductService();
+const mockVariantMovements: VariantInventoryMovement[] = [];
 export const hostingerMediaService = new HostingerMediaService();
 
 export const productService: IProductService =
@@ -41,6 +42,48 @@ export const adminProductService: IAdminProductService =
       Object.assign(item, updates);
       return item;
     },
+    getProductVariants: async productId => mockProductService._getAllInternal().find(item => item.id === productId)?.variants || [],
+    saveProductVariants: async (productId, drafts: ProductVariantDraft[]) => {
+      const item = mockProductService._getAllInternal().find(product => product.id === productId);
+      if (!item) throw new Error('Product not found.');
+      const variants = drafts.map((draft, index) => ({
+        id: draft.id || `mock-variant-${Date.now()}-${index}`,
+        productId,
+        option1Name: draft.option1Name,
+        option1Value: draft.option1Value,
+        ...(draft.option2Name ? { option2Name: draft.option2Name } : {}),
+        ...(draft.option2Value ? { option2Value: draft.option2Value } : {}),
+        label: [draft.option1Value, draft.option2Value].filter(Boolean).join(' / '),
+        sku: draft.sku,
+        ...(draft.price == null ? {} : { price: draft.price }),
+        ...(draft.compareAtPrice == null ? {} : { compareAtPrice: draft.compareAtPrice }),
+        stock: draft.stock,
+        status: draft.status,
+        sortOrder: draft.sortOrder ?? index
+      }));
+      item.variants = variants;
+      item.stock = variants.filter(variant => variant.status === 'active').reduce((sum, variant) => sum + variant.stock, 0);
+      return { variants, stock: item.stock };
+    },
+    adjustVariantStock: async (variantId, quantityDelta, reason) => {
+      const item = mockProductService._getAllInternal().find(product => product.variants?.some(variant => variant.id === variantId));
+      const variant = item?.variants?.find(entry => entry.id === variantId);
+      if (!item || !variant) throw new Error('Product variant not found.');
+      const previousStock = variant.stock;
+      const newStock = previousStock + quantityDelta;
+      if (!Number.isInteger(quantityDelta) || quantityDelta === 0 || newStock < 0) throw new Error('Invalid variant stock adjustment.');
+      variant.stock = newStock;
+      item.stock = item.variants!.filter(entry => entry.status === 'active').reduce((sum, entry) => sum + entry.stock, 0);
+      const movement: VariantInventoryMovement = {
+        id: `mock-variant-movement-${Date.now()}`, variantId, productId: item.id,
+        productName: item.name, variantSku: variant.sku, variantLabel: variant.label,
+        adminName: 'Mock Admin', adminEmail: '', previousStock, quantityDelta,
+        newStock, reason, createdAt: new Date().toISOString()
+      };
+      mockVariantMovements.unshift(movement);
+      return { movement, productStock: item.stock };
+    },
+    getVariantInventoryMovements: async productId => mockVariantMovements.filter(movement => movement.productId === productId),
     bulkUpdateProducts: async (productIds, updates) => {
       const results = productIds.map(productId => {
         const item = mockProductService._getAllInternal().find(p => p.id === productId);
