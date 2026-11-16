@@ -156,17 +156,28 @@ router.post("/", async (req, res, next) => {
 
     const isPrimaryPayment = order.razorpay_payment_id === request.paymentId;
     const [eventRows] = await connection.execute(
-      "SELECT gateway_payment_id FROM payment_event_log WHERE gateway_payment_id = ? AND order_id = ? LIMIT 1",
+      "SELECT gateway_payment_id, amount_paise FROM payment_event_log WHERE gateway_payment_id = ? AND order_id = ? LIMIT 1",
       [request.paymentId, String(order.id)]
     );
     const [webhookPaymentRows] = await connection.execute(
-      `SELECT gateway_payment_id FROM razorpay_webhook_events
+      `SELECT gateway_payment_id, amount_paise FROM razorpay_webhook_events
        WHERE gateway_payment_id = ? AND gateway_order_id = ? AND event_type = 'payment.captured'
        LIMIT 1`,
       [request.paymentId, order.razorpay_order_id]
     );
     if (!isPrimaryPayment && !eventRows.length && !webhookPaymentRows.length) {
       throw new Error("Selected payment is not recorded against this SARINE order.");
+    }
+    if (isPrimaryPayment) {
+      const expectedPrimaryAmount = Number(order.razorpay_amount_paise || Math.round(Number(order.total) * 100));
+      if (Number(payment.amount) !== expectedPrimaryAmount) {
+        throw new Error("Selected primary payment amount does not match the SARINE order amount.");
+      }
+    } else {
+      const linkedPayment = eventRows[0] || webhookPaymentRows[0];
+      if (Number(linkedPayment.amount_paise) !== Number(payment.amount)) {
+        throw new Error("Selected additional payment amount does not match its verified gateway event.");
+      }
     }
 
     const [balanceRows] = await connection.execute(
