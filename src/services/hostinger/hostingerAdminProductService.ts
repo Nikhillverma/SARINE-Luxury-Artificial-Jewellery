@@ -28,7 +28,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export class HostingerAdminProductService implements IAdminProductService {
   async getProducts(): Promise<Product[]> {
-    const result = await request<ProductsResponse>('/admin/products');
+    const result = await request<ProductsResponse>('/admin/products?limit=100&page=1');
     return result.products;
   }
 
