@@ -10,6 +10,8 @@ import { Product, JEWELLERY_TYPE_LABELS } from '../../types/product';
 import type { InventoryMovement } from '../../services/interfaces';
 import { Category } from '../../types/category';
 import { AdminLayout } from '../../components/admin/AdminLayout';
+import { InventoryAlertSettings } from '../../components/admin/InventoryAlertSettings';
+import { inventorySettingsService } from '../../services/hostinger/inventorySettingsService';
 import { formatInr } from '../../utils/currency';
 import {
   Package,
@@ -24,13 +26,14 @@ import {
   Minus
 } from 'lucide-react';
 
-const LOW_STOCK_THRESHOLD = 5;
+const DEFAULT_LOW_STOCK_THRESHOLD = 5;
 
 export const AdminInventoryPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [movements, setMovements] = useState<InventoryMovement[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lowStockThreshold, setLowStockThreshold] = useState(DEFAULT_LOW_STOCK_THRESHOLD);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -48,14 +51,16 @@ export const AdminInventoryPage: React.FC = () => {
     async function loadData() {
       setLoading(true);
       try {
-        const [cats, prods] = await Promise.all([
+        const [cats, prods, inventoryMovements, alertSettings] = await Promise.all([
           categoryService.getCategories({ activeOnly: false }),
           adminProductService.getProducts(),
-          adminProductService.getInventoryMovements()
+          adminProductService.getInventoryMovements(),
+          inventorySettingsService.get()
         ]);
         setCategories(cats);
         setProducts(prods);
-        setMovements(movements);
+        setMovements(inventoryMovements);
+        setLowStockThreshold(alertSettings.threshold);
       } catch (err) {
         console.error('[AdminInventoryPage] Failed to load inventory:', err);
       } finally {
@@ -80,7 +85,7 @@ export const AdminInventoryPage: React.FC = () => {
       if (statusFilter !== 'all' && p.status !== statusFilter) {
         return false;
       }
-      if (stockFilter === 'low' && (p.stock <= 0 || p.stock > LOW_STOCK_THRESHOLD)) {
+      if (stockFilter === 'low' && (p.stock < 0 || p.stock > lowStockThreshold)) {
         return false;
       }
       if (stockFilter === 'out' && p.stock > 0) {
@@ -91,9 +96,9 @@ export const AdminInventoryPage: React.FC = () => {
       }
       return true;
     });
-  }, [products, searchTerm, selectedCategory, statusFilter, stockFilter]);
+  }, [products, searchTerm, selectedCategory, statusFilter, stockFilter, lowStockThreshold]);
 
-  const lowStockCount = products.filter((p) => p.status === 'active' && p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD).length;
+  const lowStockCount = products.filter((p) => p.status === 'active' && p.stock >= 0 && p.stock <= lowStockThreshold).length;
   const outOfStockCount = products.filter((p) => p.status === 'active' && p.stock <= 0).length;
   const totalStockUnits = products.reduce((sum, p) => sum + (p.stock || 0), 0);
 
@@ -150,6 +155,8 @@ export const AdminInventoryPage: React.FC = () => {
           </div>
         </div>
 
+        <InventoryAlertSettings threshold={lowStockThreshold} onSaved={setLowStockThreshold} />
+
         {/* Feedback Alert */}
         {adjustError && (
           <div role="alert" className="p-3 bg-red-50 border border-red-200 text-xs text-red-800 rounded-xs">
@@ -175,7 +182,7 @@ export const AdminInventoryPage: React.FC = () => {
           <div className="bg-white p-4 border border-[#E7DCEB] rounded-xs shadow-2xs space-y-1">
             <span className="text-xs text-[#6F6475] uppercase tracking-wider font-medium flex items-center gap-1.5">
               <AlertTriangle size={13} className="text-amber-600" />
-              <span>Low Stock Alert (&le; {LOW_STOCK_THRESHOLD} units)</span>
+              <span>Low Stock Alert (≤ {lowStockThreshold} units)</span>
             </span>
             <div className="font-serif text-2xl text-amber-700">{lowStockCount} Items</div>
             <p className="text-[11px] text-[#6F6475]">Needs atelier crafting restock</p>
@@ -274,7 +281,7 @@ export const AdminInventoryPage: React.FC = () => {
                   </tr>
                 ) : (
                   filteredProducts.map((p) => {
-                    const isLow = p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD;
+                    const isLow = p.stock > 0 && p.stock <= lowStockThreshold;
                     const isOut = p.stock <= 0;
 
                     return (
