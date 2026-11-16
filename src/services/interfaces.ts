@@ -96,6 +96,7 @@ export interface IAdminProductService {
   getProductVariants(productId: string): Promise<ProductVariant[]>;
   saveProductVariants(productId: string, variants: ProductVariantDraft[]): Promise<{ variants: ProductVariant[]; stock: number }>;
   adjustVariantStock(variantId: string, quantityDelta: number, reason: string): Promise<{ movement: VariantInventoryMovement; productStock: number }>;
+  getVariantInventoryMovements(productId: string): Promise<VariantInventoryMovement[]>;
   bulkUpdateProducts(productIds: string[], updates: BulkProductUpdates): Promise<BulkProductUpdateResult>;
   adjustStock(id: string, quantityDelta: number, reason: string): Promise<InventoryMovement>;
   getInventoryMovements(): Promise<InventoryMovement[]>;
