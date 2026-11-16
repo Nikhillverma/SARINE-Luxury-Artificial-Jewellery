@@ -43,6 +43,7 @@ jobs:
           node --check homepageLayout.js
           node --check homepageLayoutPolicy.js
           node --check curatedFavourites.js
+          node --check curatedFavouritesPolicy.js
           node --check adminAnalytics.js
           node --check adminDashboard.js
           node --check adminCustomers.js
