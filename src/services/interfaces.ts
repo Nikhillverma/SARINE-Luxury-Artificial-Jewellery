@@ -1,7 +1,7 @@
 /**
  * Core service interfaces defining contracts for all data access in SARINE.
  */
-import { Product, JewelleryType } from '../types/product';
+import { Product, ProductVariant, JewelleryType } from '../types/product';
 import { Category } from '../types/category';
 import { Order, CreateOrderInput, VerifyPaymentInput, VerifyPaymentResult } from '../types/order';
 
@@ -59,10 +59,43 @@ export interface BulkProductUpdateResult {
   results: { productId: string; productName?: string; status: "updated" | "skipped" | "not_found"; message: string }[];
 }
 
+export interface ProductVariantDraft {
+  id?: string;
+  option1Name: string;
+  option1Value: string;
+  option2Name?: string;
+  option2Value?: string;
+  sku: string;
+  price?: number | null;
+  compareAtPrice?: number | null;
+  stock: number;
+  status: 'active' | 'inactive';
+  sortOrder?: number;
+}
+
+export interface VariantInventoryMovement {
+  id: string;
+  variantId: string;
+  productId: string;
+  productName: string;
+  variantSku: string;
+  variantLabel: string;
+  adminName: string;
+  adminEmail: string;
+  previousStock: number;
+  quantityDelta: number;
+  newStock: number;
+  reason: string;
+  createdAt: string;
+}
+
 export interface IAdminProductService {
   getProducts(): Promise<Product[]>;
   createProduct(product: Omit<Product, 'id' | 'createdAt'>): Promise<Product>;
   updateProduct(id: string, updates: Partial<Product>): Promise<Product>;
+  getProductVariants(productId: string): Promise<ProductVariant[]>;
+  saveProductVariants(productId: string, variants: ProductVariantDraft[]): Promise<{ variants: ProductVariant[]; stock: number }>;
+  adjustVariantStock(variantId: string, quantityDelta: number, reason: string): Promise<{ movement: VariantInventoryMovement; productStock: number }>;
   bulkUpdateProducts(productIds: string[], updates: BulkProductUpdates): Promise<BulkProductUpdateResult>;
   adjustStock(id: string, quantityDelta: number, reason: string): Promise<InventoryMovement>;
   getInventoryMovements(): Promise<InventoryMovement[]>;
