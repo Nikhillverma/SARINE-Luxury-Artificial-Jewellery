@@ -10,10 +10,15 @@ import { formatInr } from '../../utils/currency';
 import { Plus, Search, Edit2, Copy, Archive, X, RefreshCw, Upload, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 
 const EMPTY_FORM = {
-  name: '', price: '', costPrice: '', stock: '0', categoryId: '',
-  jewelleryType: 'necklace' as JewelleryType, description: '', imageUrls: [] as string[],
-  status: 'draft' as ProductStatus
+  name: '', price: '', compareAtPrice: '', costPrice: '', stock: '0', categoryId: '',
+  jewelleryType: 'necklace' as JewelleryType, shortDescription: '', description: '',
+  tags: '', collectionSlugs: '', baseMetal: '', platingFinish: '', stoneType: '', closureType: '', careInstructions: '',
+  imageUrls: [] as string[], status: 'draft' as ProductStatus
 };
+
+function splitList(value: string): string[] {
+  return Array.from(new Set(value.split(/[\\n,]/).map(item => item.trim()).filter(Boolean)));
+}
 
 function slugify(value: string): string {
   return value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
@@ -97,11 +102,20 @@ export const AdminProductsPage: React.FC = () => {
     setForm({
       name: product.name,
       price: String(product.price),
+      compareAtPrice: product.compareAtPrice == null ? '' : String(product.compareAtPrice),
       costPrice: product.costPrice == null ? '' : String(product.costPrice),
       stock: String(product.stock),
       categoryId: product.categoryId,
       jewelleryType: product.jewelleryType,
+      shortDescription: product.shortDescription || '',
       description: product.description || '',
+      tags: (product.tags || []).join(', '),
+      collectionSlugs: (product.collectionSlugs || []).join(', '),
+      baseMetal: product.baseMetal || '',
+      platingFinish: product.platingFinish || '',
+      stoneType: product.stoneType || '',
+      closureType: product.closureType || '',
+      careInstructions: (product.careInstructions || []).join('\\n'),
       imageUrls: product.images || [],
       status: product.status
     });
@@ -170,25 +184,31 @@ export const AdminProductsPage: React.FC = () => {
         slug: editing && editing.name === form.name ? editing.slug : baseSlug,
         name: form.name.trim(),
         description: form.description.trim(),
-        shortDescription: editing?.shortDescription || '',
+        shortDescription: form.shortDescription.trim(),
         price,
+        compareAtPrice: form.compareAtPrice.trim() ? Number(form.compareAtPrice) : null,
         ...(form.costPrice.trim() ? { costPrice: Number(form.costPrice) } : {}),
         images: form.imageUrls,
         categoryId: form.categoryId,
-        collectionSlugs: editing?.collectionSlugs || [],
+        collectionSlugs: splitList(form.collectionSlugs),
         jewelleryType: form.jewelleryType,
         stock,
         status: form.status,
-        tags: editing?.tags || [],
-        ...(editing?.baseMetal ? { baseMetal: editing.baseMetal } : {}),
-        ...(editing?.platingFinish ? { platingFinish: editing.platingFinish } : {}),
-        ...(editing?.stoneType ? { stoneType: editing.stoneType } : {}),
-        ...(editing?.closureType ? { closureType: editing.closureType } : {}),
-        careInstructions: editing?.careInstructions || []
+        tags: splitList(form.tags),
+        baseMetal: form.baseMetal.trim(),
+        platingFinish: form.platingFinish.trim(),
+        stoneType: form.stoneType.trim(),
+        closureType: form.closureType.trim(),
+        careInstructions: splitList(form.careInstructions)
       };
       if (form.costPrice.trim() && (!Number.isFinite(Number(form.costPrice)) || Number(form.costPrice) < 0)) {
         throw new Error('Enter a valid cost price.');
       }
+      if (form.compareAtPrice.trim() && (!Number.isFinite(Number(form.compareAtPrice)) || Number(form.compareAtPrice) <= price)) {
+        throw new Error('Comparison price must be greater than the selling price.');
+      }
+      if (form.shortDescription.length > 240 || form.description.length > 5000) throw new Error('Short description is limited to 240 characters and full description to 5,000 characters.');
+      if (splitList(form.tags).length > 20 || splitList(form.collectionSlugs).length > 20 || splitList(form.careInstructions).length > 20) throw new Error('Use no more than 20 tags, collections or care instructions.');
       if (editing) {
         await adminProductService.updateProduct(editing.id, payload);
         setNotice('Product changes saved to Hostinger database.');
@@ -390,7 +410,26 @@ export const AdminProductsPage: React.FC = () => {
                   </div>
                 )}
               </section>
-              <label className="block">Description<textarea rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
+              <section className="space-y-3 rounded-xl border border-[#E7DCEB] bg-[#FCF9FD] p-4">
+                <div><h3 className="font-semibold text-sm text-[#2C1838]">Product story & merchandising</h3><p className="text-[11px] text-[#806B8D] mt-1">These details appear on the customer product page and help organise catalogue discovery.</p></div>
+                <label className="block">Short description <span className="text-[#8E769E]">(up to 240 characters)</span><input maxLength={240} value={form.shortDescription} onChange={e => setForm({ ...form, shortDescription: e.target.value })} placeholder="A concise line shown below the product name" className="mt-1 w-full min-h-10 px-3 bg-white border border-[#E7DCEB] rounded-lg"/></label>
+                <label className="block">Full product description <span className="text-[#8E769E]">(up to 5,000 characters)</span><textarea rows={4} maxLength={5000} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Describe the design, occasion, finish and styling..." className="mt-1 w-full p-3 bg-white border border-[#E7DCEB] rounded-lg"/></label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className="block">Comparison / MRP price (₹)<input type="number" min="0" step="0.01" value={form.compareAtPrice} onChange={e => setForm({ ...form, compareAtPrice: e.target.value })} placeholder="Leave empty to remove" className="mt-1 w-full min-h-10 px-3 bg-white border border-[#E7DCEB] rounded-lg"/><span className="text-[10px] text-[#806B8D]">Must be higher than selling price. Leave empty to clear.</span></label>
+                  <label className="block">Search tags <textarea rows={2} value={form.tags} onChange={e => setForm({ ...form, tags: e.target.value })} placeholder="kundan, festive, wedding, statement" className="mt-1 w-full p-3 bg-white border border-[#E7DCEB] rounded-lg"/><span className="text-[10px] text-[#806B8D]">Separate tags with commas or new lines (max 20).</span></label>
+                  <label className="block">Collections <input value={form.collectionSlugs} onChange={e => setForm({ ...form, collectionSlugs: e.target.value })} placeholder="festive, everyday, heritage" className="mt-1 w-full min-h-10 px-3 bg-white border border-[#E7DCEB] rounded-lg"/><span className="text-[10px] text-[#806B8D]">Use existing collection slugs, separated by commas.</span></label>
+                </div>
+              </section>
+              <section className="space-y-3 rounded-xl border border-[#E7DCEB] bg-[#FCF9FD] p-4">
+                <div><h3 className="font-semibold text-sm text-[#2C1838]">Craftsmanship & specifications</h3><p className="text-[11px] text-[#806B8D] mt-1">Only details you enter are shown to customers; blank fields stay hidden.</p></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className="block">Base metal<input maxLength={120} value={form.baseMetal} onChange={e => setForm({ ...form, baseMetal: e.target.value })} placeholder="e.g. Brass, stainless steel" className="mt-1 w-full min-h-10 px-3 bg-white border border-[#E7DCEB] rounded-lg"/></label>
+                  <label className="block">Plating / finish<input maxLength={120} value={form.platingFinish} onChange={e => setForm({ ...form, platingFinish: e.target.value })} placeholder="e.g. 18K gold-tone plating" className="mt-1 w-full min-h-10 px-3 bg-white border border-[#E7DCEB] rounded-lg"/></label>
+                  <label className="block">Stones & embellishments<input maxLength={160} value={form.stoneType} onChange={e => setForm({ ...form, stoneType: e.target.value })} placeholder="e.g. American diamonds, pearls" className="mt-1 w-full min-h-10 px-3 bg-white border border-[#E7DCEB] rounded-lg"/></label>
+                  <label className="block">Closure / fastening<input maxLength={120} value={form.closureType} onChange={e => setForm({ ...form, closureType: e.target.value })} placeholder="e.g. Push-back, lobster clasp" className="mt-1 w-full min-h-10 px-3 bg-white border border-[#E7DCEB] rounded-lg"/></label>
+                </div>
+                <label className="block">Care instructions <textarea rows={4} value={form.careInstructions} onChange={e => setForm({ ...form, careInstructions: e.target.value })} placeholder={"Store in a dry pouch\\nAvoid perfume and water\\nWipe gently after wear"} className="mt-1 w-full p-3 bg-white border border-[#E7DCEB] rounded-lg"/><span className="text-[10px] text-[#806B8D]">Enter one instruction per line (max 20).</span></label>
+              </section>
               <div className="flex justify-end gap-2 pt-3 border-t border-[#E7DCEB]">
                 <button type="button" onClick={() => setModalOpen(false)} className="px-4 py-2 border rounded-xl">Cancel</button>
                 <button disabled={saving || uploadingImages} type="submit" className="px-5 py-2 bg-[#563568] text-white rounded-xl disabled:opacity-50">{uploadingImages ? 'Uploading images…' : saving ? 'Saving…' : editing ? 'Save Changes' : 'Create Draft/Product'}</button>
