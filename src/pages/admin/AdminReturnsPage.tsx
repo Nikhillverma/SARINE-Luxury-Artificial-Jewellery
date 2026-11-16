@@ -138,7 +138,8 @@ function RefundCard({ item, onSaved }: { item: AdminRefundRequest; onSaved: () =
 }
 function WebhookEventCard({ item }: { item: AdminWebhookEvent }) {
   const status = item.reconciliationStatus.replaceAll('_', ' ');
-  const isMatched = item.reconciliationStatus === 'matched';
+  const isMatched = ['matched', 'refund_processed', 'superseded_by_capture'].includes(item.reconciliationStatus);
+  const refundOutcomeNeedsAction = ['failed', 'reversed'].includes(item.refundRecordStatus || '');
   return (
     <article className="bg-white border border-[#EADFF0] rounded-2xl p-4 sm:p-5 space-y-3">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
@@ -152,7 +153,8 @@ function WebhookEventCard({ item }: { item: AdminWebhookEvent }) {
         <div>Gateway order: <span className="font-mono break-all">{item.gatewayOrderId || '—'}</span></div>
         {item.gatewayRefundId && <div>Gateway refund: <span className="font-mono break-all">{item.gatewayRefundId}</span></div>}{item.gatewayReceipt && <div>Refund receipt: <span className="font-mono break-all">{item.gatewayReceipt}</span></div>}{item.refundRecordStatus && <div>Refund ledger: {item.refundRecordStatus}</div>}
       </div>
-      {!isMatched && <p className="text-[11px] text-amber-800 flex items-start gap-2"><AlertTriangle size={14} className="shrink-0 mt-0.5"/>Review this event against Razorpay and SARINE records. This view does not alter payment or order status.</p>}
+      {refundOutcomeNeedsAction && <p className="text-[11px] text-amber-800 flex items-start gap-2"><AlertTriangle size={14} className="shrink-0 mt-0.5"/>Razorpay reports this refund as {item.refundRecordStatus}. The refund requirement remains open for review.</p>}
+      {!isMatched && !item.refundRecordStatus && <p className="text-[11px] text-amber-800 flex items-start gap-2"><AlertTriangle size={14} className="shrink-0 mt-0.5"/>Review this event against Razorpay and SARINE records. This view does not alter payment or order status.</p>}
     </article>
   );
 }
