@@ -156,6 +156,13 @@ router.post("/create", async (req, res, next) => {
         [p.id]
       );
       let variant = null;
+      const selectionError = validateVariantSelection(activeVariants.length > 0, itm.variantId);
+      if (selectionError) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        return res.status(400).json({ error: `${selectionError.replace("product option", `option for "${p.name}"`)}` });
+      }
       if (activeVariants.length) {
         if (!itm.variantId || typeof itm.variantId !== "string") {
           await connection.rollback();
