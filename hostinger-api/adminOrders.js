@@ -5,6 +5,7 @@ import { canShipOrder, shouldRestoreStockOnCancellation } from "./orderAdminPoli
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
 import { formatVariantLabel } from "./productVariantPolicy.js";
+import { ensureMarketingSchema, releaseCouponRedemptionForCancelledOrder } from "./marketingPolicy.js";
 
 const router = Router();
 
@@ -562,6 +563,12 @@ router.post("/update", async (req, res, next) => {
             actorName: req.admin?.name || adminEmail, actorEmail: adminEmail
           });
         }
+      }
+
+      // Release coupon capacity atomically with cancellation for reserved and redeemed uses.
+      if (order.coupon_code) {
+        await ensureMarketingSchema();
+        await releaseCouponRedemptionForCancelledOrder(connection, order.id);
       }
 
       const reason = cancellationReason || (typeof note === "string" ? note : "Cancelled by atelier admin");
