@@ -1,4 +1,4 @@
-import { Router } from "express";
+import express, { Router } from "express";
 import {
   buildRazorpayWebhookRecord,
   getRazorpayWebhookEventStatus,
@@ -12,13 +12,17 @@ const router = Router();
 
 // Razorpay signs the original request bytes. server.js captures them in
 // express.json({ verify }) before this route is mounted.
-router.post("/razorpay", async (req, res) => {
+router.post("/razorpay", express.raw({ type: "application/json", limit: "1mb" }), async (req, res) => {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
   if (!secret) {
     return res.status(503).json({ error: "Razorpay webhook receiver is not configured." });
   }
+  const rawBody = req.body;
+  if (!Buffer.isBuffer(rawBody) || rawBody.length === 0) {
+    return res.status(415).json({ error: "Expected a raw JSON webhook payload." });
+  }
   const signature = req.get("x-razorpay-signature") || "";
-  if (!verifyRazorpayWebhookSignature(req.rawBody, signature, secret)) {
+  if (!verifyRazorpayWebhookSignature(rawBody, signature, secret)) {
     return res.status(401).json({ error: "Invalid webhook signature." });
   }
 
@@ -28,7 +32,10 @@ router.post("/razorpay", async (req, res) => {
   }
 
   try {
-    const record = buildRazorpayWebhookRecord(eventId, req.body);
+    let payload;
+    try { payload = JSON.parse(rawBody.toString("utf8")); }
+    catch { return res.status(400).json({ error: "Invalid JSON webhook payload." }); }
+    const record = buildRazorpayWebhookRecord(eventId, payload);
     const result = await storeRazorpayWebhookEvent(record);
     let refundMatched = null;
     if (record.eventType.startsWith("refund.")) {
