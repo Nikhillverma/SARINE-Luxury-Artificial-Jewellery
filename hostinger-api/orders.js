@@ -194,7 +194,7 @@ router.post("/create", async (req, res, next) => {
         productId: p.id,
         variantId: variant?.id || null,
         variantSku: variant?.sku || null,
-        variantLabel: variant ? [variant.option1_value, variant.option2_value].filter(Boolean).join(" / ") : "",
+        variantLabel: variant ? formatVariantLabel(variant.option1_name, variant.option1_value, variant.option2_name, variant.option2_value) : "",
         previousStock: availableStock,
         quantity: 0
       };
