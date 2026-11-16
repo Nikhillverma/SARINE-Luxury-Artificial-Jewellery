@@ -41,6 +41,7 @@ export class HostingerOrderService implements IOrderService {
         body: JSON.stringify({
           items: input.lines.map((l) => ({
             productId: l.productId,
+            ...(l.variantId ? { variantId: l.variantId } : {}),
             quantity: l.quantity
           })),
           customer: input.customer,
