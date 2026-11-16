@@ -35,6 +35,7 @@ interface DashboardMetrics {
   draftProducts: number;
   archivedProducts: number;
   lowStockProducts: number;
+  testOrders: number;
 }
 
 interface RecentOrder {
@@ -67,7 +68,7 @@ const emptyMetrics: DashboardMetrics = {
   orders: 0, pendingOrders: 0, processingOrders: 0, shippedOrders: 0,
   deliveredOrders: 0, cancelledOrders: 0, paidRevenue: 0, todayRevenue: 0,
   todayOrders: 0, products: 0, activeProducts: 0, draftProducts: 0,
-  archivedProducts: 0, lowStockProducts: 0
+  archivedProducts: 0, lowStockProducts: 0, testOrders: 0
 };
 
 function formatDateTime(value: string | null): string {
@@ -234,6 +235,11 @@ export const AdminDashboardPage: React.FC = () => {
                 );
               })}
             </div>
+            {metrics.testOrders > 0 && (
+              <p className="mt-4 rounded-lg border border-[#E7DCEB] bg-[#FAF7FB] px-3 py-2 text-[11px] leading-relaxed text-[#6F5B79]">
+                {metrics.testOrders.toLocaleString('en-IN')} historical test {metrics.testOrders === 1 ? 'order is' : 'orders are'} retained in Recent Orders but excluded from live revenue and fulfilment totals.
+              </p>
+            )}
             <div className="mt-5 pt-4 border-t border-[#F0E8F3] flex flex-wrap gap-x-6 gap-y-2 text-[11px] text-[#817487]">
               <span><strong className="text-[#302438]">{metrics.products}</strong> catalogue products</span>
               <span><strong className="text-[#15803D]">{metrics.activeProducts}</strong> active</span>
