@@ -915,6 +915,7 @@ export const AdminOrdersPage: React.FC = () => {
                           )}
                           <div>
                             <p className="font-medium text-[#302438] line-clamp-1">{line.name}</p>
+                            {line.variantLabel && <p className="text-[11px] text-[#563568]">{line.variantLabel}{line.sku ? ` · ${line.sku}` : ''}</p>}
                             <p className="text-[11px] text-[#6F6475]">
                               Qty: {line.quantity} × {formatInr(line.unitPrice)}
                             </p>
