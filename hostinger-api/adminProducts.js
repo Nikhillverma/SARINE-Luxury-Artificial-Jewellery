@@ -204,8 +204,8 @@ router.put("/:id/variants", async (req, res, next) => {
   let connection;
   try {
     const variants = req.body?.variants;
-    if (!Array.isArray(variants) || variants.length > 100) {
-      return res.status(400).json({ error: "Provide a list of up to 100 product variants." });
+    if (!Array.isArray(variants) || variants.length < 1 || variants.length > 100) {
+      return res.status(400).json({ error: "Provide between 1 and 100 product variants. Set unwanted options to inactive instead of removing the entire variant set." });
     }
     await ensureProductVariantSchema();
     connection = await pool.getConnection();
@@ -240,6 +240,10 @@ router.put("/:id/variants", async (req, res, next) => {
       const option2Name = String(item.option2Name || "").trim().slice(0, 60);
       const option2Value = String(item.option2Value || "").trim().slice(0, 100);
       const sku = String(item.sku || "").trim().toUpperCase();
+      if (item.status !== undefined && !["active", "inactive"].includes(item.status)) {
+        await connection.rollback();
+        return res.status(400).json({ error: "Variant status must be active or inactive." });
+      }
       const status = item.status === "inactive" ? "inactive" : "active";
       if (!option1Name || !option1Value || !/^[A-Z0-9][A-Z0-9._-]{1,99}$/.test(sku)) {
         await connection.rollback();
