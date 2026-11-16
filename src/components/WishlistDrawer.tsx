@@ -163,7 +163,7 @@ export const WishlistDrawer: React.FC = () => {
                           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#563568] text-white hover:bg-[#A184BD] text-xs font-medium rounded-xs transition-colors shadow-2xs cursor-pointer"
                         >
                           <ShoppingBag size={13} />
-                          <span>Move to Bag</span>
+                          <span>{product.variants?.length ? 'Choose Options' : 'Move to Bag'}</span>
                         </button>
                       ) : (
                         <span className="text-[11px] text-[#6F6475] font-medium bg-[#F7F0FA] px-2.5 py-1 rounded-xs border border-[#E7DCEB]">
