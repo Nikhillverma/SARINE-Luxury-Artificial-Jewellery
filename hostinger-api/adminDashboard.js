@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
+import { getLowStockThreshold } from "./inventorySettings.js";
 
 const router = Router();
 
@@ -34,6 +35,7 @@ router.get("/", async (_req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
 
+    const lowStockThreshold = await getLowStockThreshold();
     const [orderRows, productRows, recentRows, lowStockRows] = await Promise.all([
       pool.execute(
         `SELECT
@@ -75,8 +77,9 @@ router.get("/", async (_req, res, next) => {
            SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) AS active_products,
            SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) AS draft_products,
            SUM(CASE WHEN status = 'archived' THEN 1 ELSE 0 END) AS archived_products,
-           SUM(CASE WHEN status = 'active' AND stock <= 5 THEN 1 ELSE 0 END) AS low_stock_products
-         FROM products`
+           SUM(CASE WHEN status = 'active' AND stock <= ? THEN 1 ELSE 0 END) AS low_stock_products
+         FROM products`,
+        [lowStockThreshold]
       ),
       pool.execute(
         `SELECT
@@ -91,9 +94,10 @@ router.get("/", async (_req, res, next) => {
       pool.execute(
         `SELECT id, slug, name, stock, images
          FROM products
-         WHERE status = 'active' AND stock <= 5
+         WHERE status = 'active' AND stock <= ?
          ORDER BY stock ASC, updated_at DESC, name ASC
-         LIMIT 5`
+         LIMIT 5`,
+        [lowStockThreshold]
       )
     ]);
 
@@ -101,6 +105,7 @@ router.get("/", async (_req, res, next) => {
     const productMetrics = productRows[0][0] || {};
 
     return res.json({
+      lowStockThreshold,
       metrics: {
         orders: Number(orderMetrics.orders) || 0,
         pendingOrders: Number(orderMetrics.pending_orders) || 0,
