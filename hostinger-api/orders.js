@@ -15,7 +15,7 @@ import { calculateShippingFee, getCheckoutConfig } from "./checkoutPolicy.js";
 import { buildOrderInsert } from "./orderInsertPolicy.js";
 import { matchesOrderRazorpayId, classifyCapturedPayment } from "./paymentValidation.js";
 import { ensurePaymentEventLogTable, recordVerifiedPaymentEvent } from "./paymentEventPolicy.js";
-import { ensureMarketingSchema, lockAndValidateCoupon, reserveCouponRedemption, releaseCouponReservation, confirmCouponRedemption, releaseCouponRedemptionForCancelledOrder } from "./marketingPolicy.js";
+import { ensureMarketingSchema, lockAndValidateCoupon, reserveCouponRedemption, confirmCouponRedemption, releaseCouponRedemptionForCancelledOrder } from "./marketingPolicy.js";
 
 function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -439,16 +439,35 @@ router.post("/create", async (req, res, next) => {
         });
       } catch (rpErr) {
         console.error("[orders.create] Razorpay order creation failed:", rpErr.message);
-        await pool.execute(
-          `UPDATE orders SET payment_status = 'failed', order_status = 'failed', cancellation_reason = ? WHERE id = ?`,
-          [rpErr.message || "Gateway order initialization failed", orderNumber]
-        );
-        await pool.execute(
-          `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
-           VALUES (?, 'awaiting_payment', 'failed', 'Payment gateway order creation failed', 'system', UTC_TIMESTAMP(3))`,
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        const [failedOrders] = await connection.execute(
+          "SELECT id, order_status, coupon_code FROM orders WHERE id = ? FOR UPDATE",
           [orderNumber]
         );
-        await releaseCouponReservation(orderNumber);
+        if (!failedOrders.length) {
+          throw new Error("Unable to locate the order after payment gateway initialization failed.");
+        }
+        const failedOrder = failedOrders[0];
+        await connection.execute(
+          `UPDATE orders
+           SET payment_status = 'failed', order_status = 'failed',
+               cancellation_reason = 'Payment gateway order initialization failed.',
+               updated_at = UTC_TIMESTAMP(3)
+           WHERE id = ?`,
+          [failedOrder.id]
+        );
+        await connection.execute(
+          `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
+           VALUES (?, ?, 'failed', 'Payment gateway order creation failed', 'system', UTC_TIMESTAMP(3))`,
+          [failedOrder.id, failedOrder.order_status]
+        );
+        if (failedOrder.coupon_code) {
+          await releaseCouponRedemptionForCancelledOrder(connection, failedOrder.id);
+        }
+        await connection.commit();
+        connection.release();
+        connection = null;
         return res.status(500).json({
           error: "Unable to initiate payment with the payment gateway. Please try again."
         });
