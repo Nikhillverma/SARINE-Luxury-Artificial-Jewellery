@@ -11,8 +11,17 @@ export interface AdminReturnRequest {
   customer: { name: string; email: string; phone: string };
   order: { total: number; paymentMethod: string; paymentStatus: string; orderStatus: string };
 }
+export interface AdminRefundHistoryItem {
+  id: number; paymentId: string; gatewayRefundId: string | null; amountPaise: number;
+  status: string; reason: string; requestedBy: string; createdAt: string | null;
+  processedAt: string | null; errorMessage: string | null;
+}
+export interface AdminCapturedPayment {
+  paymentId: string; amountPaise: number; eventStatus: string;
+}
 export interface AdminRefundRequest {
-  orderNumber: string; customer: { name: string; email: string; phone: string };
+  id: string; orderNumber: string; customer: { name: string; email: string; phone: string };
+  capturedPayments: AdminCapturedPayment[]; refundHistory: AdminRefundHistoryItem[];
   amountRequested: number; paymentMethod: string; paymentStatus: string; orderStatus: string;
   razorpayPaymentId: string | null; cancellationReason: string; createdAt: string | null;
   cancelledAt: string | null; paymentEventCount: number; latestPaymentEvent: string | null;
@@ -27,6 +36,15 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!response.ok) throw new Error(typeof data.error === 'string' ? data.error : 'Returns & refunds data could not be loaded.');
   return data as T;
 }
+async function refundRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await fetch(API_BASE + '/admin/refunds' + path, {
+    ...init, credentials: 'include', cache: 'no-store',
+    headers: { Accept: 'application/json', ...(init.body ? { 'Content-Type': 'application/json' } : {}), ...init.headers }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok && response.status !== 202) throw new Error(typeof data.error === 'string' ? data.error : typeof data.message === 'string' ? data.message : 'Refund request could not be completed.');
+  return data as T;
+}
 export const hostingerAdminReturnsService = {
   getQueue(search = '') {
     const params = new URLSearchParams({ limit: '100' });
@@ -35,6 +53,16 @@ export const hostingerAdminReturnsService = {
   },
   getWebhookEvents() {
     return request<{ events: AdminWebhookEvent[] }>('/webhook-events?limit=100');
+  },
+  createRefund(input: { orderNumber: string; paymentId: string; amountPaise: number; reason: string }) {
+    return refundRequest<{ success: boolean; refundId: number; gatewayRefundId: string | null; status: string; message: string }>('/', {
+      method: 'POST', body: JSON.stringify(input)
+    });
+  },
+  retryRefund(id: number) {
+    return refundRequest<{ success: boolean; refundId: number; gatewayRefundId: string | null; status: string; message: string }>('/' + id + '/retry', {
+      method: 'POST', body: JSON.stringify({})
+    });
   },
   updateReturn(id: number, status: ReturnStatus, resolutionNotes: string) {
     return request<{ success: boolean; id: number; status: ReturnStatus; resolutionNotes: string }>('/' + id, {
@@ -45,7 +73,8 @@ export const hostingerAdminReturnsService = {
 
 export interface AdminWebhookEvent {
   id: number; eventId: string; eventType: string; gatewayOrderId: string | null;
-  gatewayPaymentId: string | null; gatewayRefundId: string | null;
+  gatewayPaymentId: string | null; gatewayRefundId: string | null; gatewayReceipt: string | null;
+  refundRecordStatus: string | null;
   amountPaise: number | null; currency: string | null; gatewayStatus: string | null;
   eventStatus: string; receivedAt: string | null; orderNumber: string | null;
   orderPaymentStatus: string | null; orderStatus: string | null;
