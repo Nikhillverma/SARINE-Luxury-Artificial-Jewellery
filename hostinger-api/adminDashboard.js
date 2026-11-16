@@ -77,8 +77,9 @@ router.get("/", async (_req, res, next) => {
            SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) AS active_products,
            SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) AS draft_products,
            SUM(CASE WHEN status = 'archived' THEN 1 ELSE 0 END) AS archived_products,
-           SUM(CASE WHEN status = 'active' AND stock <= ? THEN 1 ELSE 0 END) AS low_stock_products
-         FROM products`,
+           SUM(CASE WHEN status = 'active' AND stock <= COALESCE(alert.threshold, ?) THEN 1 ELSE 0 END) AS low_stock_products
+         FROM products p
+         LEFT JOIN product_inventory_alert_settings alert ON alert.product_id = p.id`,
         [lowStockThreshold]
       ),
       pool.execute(
@@ -92,12 +93,15 @@ router.get("/", async (_req, res, next) => {
          LIMIT 5`
       ),
       pool.execute(
-        `SELECT id, slug, name, stock, images
-         FROM products
-         WHERE status = 'active' AND stock <= ?
-         ORDER BY stock ASC, updated_at DESC, name ASC
+        `SELECT p.id, p.slug, p.name, p.stock, p.images,
+           COALESCE(alert.threshold, ?) AS alert_threshold,
+           (alert.product_id IS NOT NULL) AS has_custom_threshold
+         FROM products p
+         LEFT JOIN product_inventory_alert_settings alert ON alert.product_id = p.id
+         WHERE p.status = 'active' AND p.stock <= COALESCE(alert.threshold, ?)
+         ORDER BY p.stock ASC, p.updated_at DESC, p.name ASC
          LIMIT 5`,
-        [lowStockThreshold]
+        [lowStockThreshold, lowStockThreshold]
       )
     ]);
 
@@ -135,7 +139,9 @@ router.get("/", async (_req, res, next) => {
         slug: row.slug,
         name: row.name,
         stock: Number(row.stock) || 0,
-        images: parseJson(row.images)
+        images: parseJson(row.images),
+        alertThreshold: Number(row.alert_threshold),
+        hasCustomThreshold: Boolean(row.has_custom_threshold)
       }))
     });
   } catch (error) {
