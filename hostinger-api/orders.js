@@ -913,7 +913,7 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
     }
 
     const [items] = await pool.execute(
-      `SELECT product_name, quantity, image, unit_price
+      `SELECT product_name, quantity, image, unit_price, variant_sku, variant_label, variant_options
        FROM order_items
        WHERE order_id = ?`,
       [order.id]
@@ -924,7 +924,10 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
       name: itm.product_name,
       quantity: Number(itm.quantity),
       image: itm.image || "",
-      unitPrice: Number(itm.unit_price || 0)
+      unitPrice: Number(itm.unit_price || 0),
+      sku: itm.variant_sku || undefined,
+      variantLabel: itm.variant_label || undefined,
+      variantOptions: typeof itm.variant_options === "string" ? JSON.parse(itm.variant_options) : (itm.variant_options || undefined)
     }));
 
     return res.json({
