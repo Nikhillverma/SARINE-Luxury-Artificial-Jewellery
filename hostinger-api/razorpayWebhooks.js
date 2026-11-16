@@ -1,6 +1,8 @@
 import { Router } from "express";
 import {
   buildRazorpayWebhookRecord,
+  getRazorpayWebhookEventStatus,
+  markRazorpayWebhookEventStatus,
   storeRazorpayWebhookEvent,
   verifyRazorpayWebhookSignature
 } from "./razorpayWebhookPolicy.js";
@@ -30,9 +32,20 @@ router.post("/razorpay", async (req, res) => {
     const result = await storeRazorpayWebhookEvent(record);
     let refundMatched = null;
     if (record.eventType.startsWith("refund.")) {
-      // Apply refund outcomes idempotently. Replays are safe and can recover
-      // a webhook whose first delivery arrived before the API response save.
-      refundMatched = await applyGatewayRefundEvent(record);
+      const currentEventStatus = result.inserted
+        ? "received"
+        : await getRazorpayWebhookEventStatus(record.eventId);
+      if (currentEventStatus === "received") {
+        // A failed database processing attempt remains retryable; a handled
+        // event is not replayed later and cannot overwrite a newer outcome.
+        refundMatched = await applyGatewayRefundEvent(record);
+        const handled = Boolean(refundMatched?.matched) &&
+          refundMatched?.status !== "awaiting_verified_status" &&
+          !refundMatched?.mismatch;
+        await markRazorpayWebhookEventStatus(record.eventId, handled ? "processed" : "needs_review");
+      } else {
+        refundMatched = { matched: currentEventStatus === "processed" };
+      }
     }
     return res.status(200).json({
       received: true,
