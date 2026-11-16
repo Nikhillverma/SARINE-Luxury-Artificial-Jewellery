@@ -27,6 +27,9 @@ interface TrackedOrderLine {
   image?: string;
   quantity: number;
   unitPrice: number;
+  sku?: string;
+  variantLabel?: string;
+  variantOptions?: Record<string, string>;
 }
 
 interface TrackedOrder {
