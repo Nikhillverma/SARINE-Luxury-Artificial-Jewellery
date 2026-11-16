@@ -7,6 +7,7 @@ import { getAuthenticatedCustomer } from "./customerAuth.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
 import { validateVariantSelection, getVariantStockKey, formatVariantLabel } from "./productVariantPolicy.js";
+import { sortStockItems } from "./stockLockPolicy.js";
 
 const router = Router();
 
@@ -130,8 +131,8 @@ router.post("/create", async (req, res, next) => {
     const verifiedLines = [];
     const reservedStockByProduct = new Map();
     let calculatedSubtotal = 0;
-    for (let i = 0; i < items.length; i++) {
-      const itm = items[i];
+    const checkoutItems = sortStockItems(items.map((item, sourceLine) => ({ ...item, sourceLine })));
+    for (const itm of checkoutItems) {
       const [pRows] = await connection.execute(
         `SELECT id, name, price, stock, status, images
          FROM products
@@ -231,7 +232,7 @@ router.post("/create", async (req, res, next) => {
         previousStock: availableStock,
         image: Array.isArray(images) && images[0] ? String(images[0]) : "",
         sku: variant?.sku || null,
-        sourceLine: i
+        sourceLine: itm.sourceLine
       });
     }
 
@@ -305,7 +306,7 @@ router.post("/create", async (req, res, next) => {
     // 7. Insert Order record and items based on paymentMethod
     if (paymentMethod === "cod") {
       // Deduct each distinct product once and record the movement in this transaction.
-      for (const [stockKey, reservation] of reservedStockByProduct) {
+      for (const reservation of sortStockItems([...reservedStockByProduct.values()])) {
         const newStock = reservation.previousStock - reservation.quantity;
         const productLine = verifiedLines.find(line => line.productId === reservation.productId && line.variantId === reservation.variantId);
         if (reservation.variantId) {
@@ -661,39 +662,46 @@ router.post("/verify", async (req, res, next) => {
       }
     }
 
-    for (const item of aggregatedItems.values()) {
+    // Use the same deterministic parent-first lock order as checkout and cancellation.
+    const stockItems = sortStockItems([...aggregatedItems.values()]);
+    for (const item of stockItems) {
+      const [products] = await connection.execute(
+        `SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE`,
+        [item.productId]
+      );
+      if (!products.length) {
+        hasSufficientStock = false;
+        break;
+      }
+      const product = products[0];
+      item.productName = product.name || item.productName;
+
       if (item.variantId) {
         const [variantRows] = await connection.execute(
-          `SELECT v.id, v.product_id, v.sku, v.option1_name, v.option1_value, v.option2_name, v.option2_value, v.stock, p.name
-           FROM product_variants v INNER JOIN products p ON p.id = v.product_id
-           WHERE v.id = ? AND v.product_id = ? FOR UPDATE`,
+          `SELECT id, product_id, sku, option1_name, option1_value, option2_name, option2_value, stock
+           FROM product_variants
+           WHERE id = ? AND product_id = ? FOR UPDATE`,
           [item.variantId, item.productId]
         );
         if (!variantRows.length || Number(variantRows[0].stock || 0) < item.quantity) {
           hasSufficientStock = false;
           break;
         }
-        item.productName = variantRows[0].name || item.productName;
         item.variantSku = variantRows[0].sku || item.variantSku;
         item.variantLabel = formatVariantLabel(variantRows[0].option1_name, variantRows[0].option1_value, variantRows[0].option2_name, variantRows[0].option2_value) || item.variantLabel;
         item.previousStock = Number(variantRows[0].stock || 0);
       } else {
-        const [prod] = await connection.execute(
-          `SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE`,
-          [item.productId]
-        );
-        if (!prod.length || Number(prod[0].stock || 0) < item.quantity) {
+        if (Number(product.stock || 0) < item.quantity) {
           hasSufficientStock = false;
           break;
         }
-        item.productName = prod[0].name || item.productName;
-        item.previousStock = Number(prod[0].stock || 0);
+        item.previousStock = Number(product.stock || 0);
       }
     }
 
     if (hasSufficientStock) {
       // Deduct each distinct product or variant once and record the movement atomically.
-      for (const item of aggregatedItems.values()) {
+      for (const item of stockItems) {
         const newStock = item.previousStock - item.quantity;
         if (item.variantId) {
           await connection.execute(
