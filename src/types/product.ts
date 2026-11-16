@@ -22,6 +22,23 @@ export const JEWELLERY_TYPE_LABELS: Record<JewelleryType, string> = {
   set: 'Jewellery Set'
 } as const;
 
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  option1Name: string;
+  option1Value: string;
+  option2Name?: string;
+  option2Value?: string;
+  label: string;
+  sku: string;
+  /** Optional variant override; omitted values inherit the parent product. */
+  price?: number;
+  compareAtPrice?: number;
+  stock: number;
+  status: 'active' | 'inactive';
+  sortOrder: number;
+}
+
 export interface Product {
   id: string;
   slug: string;
@@ -57,6 +74,8 @@ export interface Product {
   stoneType?: string;
   closureType?: string;
   careInstructions?: string[];
+  /** Active purchasable size/colour combinations, if this design uses variants. */
+  variants?: ProductVariant[];
 }
 
 /* ==========================================================================
