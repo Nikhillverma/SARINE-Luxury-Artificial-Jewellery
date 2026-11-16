@@ -92,7 +92,7 @@ router.post("/variants/adjustments", async (req, res, next) => {
     const movement = await recordVariantInventoryMovement(connection, {
       variantId, productId: variant.product_id, productName: variant.product_name,
       variantSku: variant.sku,
-      variantLabel: [variant.option1_value, variant.option2_value].filter(Boolean).join(" / "),
+      variantLabel: formatVariantLabel(variant.option1_name, variant.option1_value, variant.option2_name, variant.option2_value),
       previousStock, quantityDelta: delta, newStock, reason,
       adminId: req.admin.id, adminName: req.admin.name || req.admin.email,
       adminEmail: req.admin.email
