@@ -5,7 +5,7 @@
  */
 
 import { IAdminProductService, InventoryMovement, BulkProductUpdates, BulkProductUpdateResult, ProductVariantDraft, VariantInventoryMovement } from '../interfaces';
-import { Product } from '../../types/product';
+import { Product, ProductVariant } from '../../types/product';
 import { MockProductService } from './mockProductService';
 
 const NETWORK_DELAY_MS = 200;
@@ -17,6 +17,7 @@ function sleep(ms: number): Promise<void> {
 export class MockAdminProductService implements IAdminProductService {
   private productService: MockProductService;
   private movements: InventoryMovement[] = [];
+  private variantMovements: VariantInventoryMovement[] = [];
 
   constructor(productService: MockProductService) {
     this.productService = productService;
@@ -56,6 +57,60 @@ export class MockAdminProductService implements IAdminProductService {
 
     products[index] = updated;
     return updated;
+  }
+
+  async getProductVariants(productId: string): Promise<ProductVariant[]> {
+    await sleep(NETWORK_DELAY_MS);
+    return [...(this.productService._getAllInternal().find(item => item.id === productId)?.variants || [])];
+  }
+
+  async saveProductVariants(productId: string, drafts: ProductVariantDraft[]): Promise<{ variants: ProductVariant[]; stock: number }> {
+    await sleep(NETWORK_DELAY_MS);
+    const product = this.productService._getAllInternal().find(item => item.id === productId);
+    if (!product) throw new Error('Product not found.');
+    const variants: ProductVariant[] = drafts.map((item, index) => ({
+      id: item.id || `mock-variant-${Date.now()}-${index}`,
+      productId,
+      option1Name: item.option1Name,
+      option1Value: item.option1Value,
+      ...(item.option2Name ? { option2Name: item.option2Name } : {}),
+      ...(item.option2Value ? { option2Value: item.option2Value } : {}),
+      label: [item.option1Value, item.option2Value].filter(Boolean).join(' / '),
+      sku: item.sku,
+      ...(item.price == null ? {} : { price: item.price }),
+      ...(item.compareAtPrice == null ? {} : { compareAtPrice: item.compareAtPrice }),
+      stock: item.stock,
+      status: item.status,
+      sortOrder: item.sortOrder ?? index
+    }));
+    product.variants = variants;
+    product.stock = variants.filter(item => item.status === 'active').reduce((sum, item) => sum + item.stock, 0);
+    return { variants, stock: product.stock };
+  }
+
+  async adjustVariantStock(variantId: string, quantityDelta: number, reason: string): Promise<{ movement: VariantInventoryMovement; productStock: number }> {
+    await sleep(NETWORK_DELAY_MS);
+    const product = this.productService._getAllInternal().find(item => item.variants?.some(variant => variant.id === variantId));
+    const variant = product?.variants?.find(item => item.id === variantId);
+    if (!product || !variant) throw new Error('Product variant not found.');
+    const previousStock = variant.stock;
+    const newStock = previousStock + quantityDelta;
+    if (!Number.isInteger(quantityDelta) || quantityDelta === 0 || newStock < 0) throw new Error('Invalid variant stock adjustment.');
+    variant.stock = newStock;
+    product.stock = product.variants!.filter(item => item.status === 'active').reduce((sum, item) => sum + item.stock, 0);
+    const movement: VariantInventoryMovement = {
+      id: `mock-variant-movement-${Date.now()}`, variantId, productId: product.id,
+      productName: product.name, variantSku: variant.sku, variantLabel: variant.label,
+      adminName: 'Mock Admin', adminEmail: '', previousStock, quantityDelta,
+      newStock, reason, createdAt: new Date().toISOString()
+    };
+    this.variantMovements.unshift(movement);
+    return { movement, productStock: product.stock };
+  }
+
+  async getVariantInventoryMovements(productId: string): Promise<VariantInventoryMovement[]> {
+    await sleep(NETWORK_DELAY_MS);
+    return this.variantMovements.filter(item => item.productId === productId);
   }
 
   async bulkUpdateProducts(productIds: string[], updates: BulkProductUpdates): Promise<BulkProductUpdateResult> {
