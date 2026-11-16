@@ -4,7 +4,8 @@ import { hostingerStorefrontService, type HomepageLayout } from "../../services/
 const sectionLabels: Record<string, { title: string; description: string }> = {
   categories: { title: "Shop by Category", description: "Your active jewellery categories, managed in Categories." },
   "new-arrivals": { title: "New Arrivals", description: "Newest active products with available stock." },
-  "best-sellers": { title: "Best Sellers / Curated Favourites", description: "True sales ranking; when there are no qualifying launch sales, the existing curated fallback is shown." },
+  "best-sellers": { title: "Best Sellers", description: "Products ranked by genuine qualifying sales. Curated Favourites is managed separately." },
+  "curated-favourites": { title: "Curated Favourites", description: "Your manually selected products, ordered and published from the Curated Favourites manager." },
   occasions: { title: "Shop by Occasion", description: "Daily Wear, Festive, Wedding and Gifting discovery cards." },
   price: { title: "Shop by Price", description: "The four preset price-navigation links." },
   "our-story": { title: "Our Story", description: "Brand story, image and three brand pillars." },
