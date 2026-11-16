@@ -326,7 +326,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
           '@type': 'Product',
           name: product.name,
           image: resolvedImages,
-          description: product.description,
+          description: product.shortDescription || product.description,
           sku: product.id,
           offers: {
             '@type': 'Offer',
@@ -435,6 +435,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               <h1 className="font-serif text-2xl sm:text-3xl text-[#302438] font-normal leading-snug">
                 {product.name}
               </h1>
+              {product.shortDescription && <p className="mt-2 text-sm leading-relaxed text-[#6F6475]">{product.shortDescription}</p>}
+              {product.tags?.length > 0 && <div className="mt-3 flex flex-wrap gap-2" aria-label="Product tags">{product.tags.map(tag => <span key={tag} className="rounded-full border border-[#E7DCEB] bg-[#F7F0FA] px-2.5 py-1 text-[10px] text-[#563568]">{tag}</span>)}</div>}
 
               {/* Customer Rating snippet */}
               <div className="flex items-center gap-2 mt-2.5 text-xs text-[#6F6475]">
@@ -688,37 +690,39 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
           <div className="p-6 sm:p-8 text-xs sm:text-sm text-[#6F6475] leading-relaxed">
             {activeTab === 'details' && (
               <div className="space-y-4">
-                <p className="text-[#302438]">{product.description}</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-8 pt-4 border-t border-[#E7DCEB]">
-                  <div className="flex justify-between py-1 border-b border-[#E7DCEB]/50">
-                    <span className="text-[#6F6475]">Base Metal</span>
-                    <span className="font-medium text-[#302438]">{product.baseMetal || 'Brass with Sterling Silver Accent'}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-[#E7DCEB]/50">
-                    <span className="text-[#6F6475]">Plating Finish</span>
-                    <span className="font-medium text-[#302438]">{product.platingFinish || '18K Demi-Fine Gold Polish'}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-[#E7DCEB]/50">
-                    <span className="text-[#6F6475]">Stones & Embellishments</span>
-                    <span className="font-medium text-[#302438]">{product.stoneType || 'High-Grade Polki & Kundan Stones'}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-[#E7DCEB]/50">
-                    <span className="text-[#6F6475]">Closure & Fastening</span>
-                    <span className="font-medium text-[#302438]">{product.closureType || 'Adjustable Dori / Push-back'}</span>
-                  </div>
-                </div>
+                {product.description && <p className="whitespace-pre-line text-[#302438]">{product.description}</p>}
+                {[
+                  ['Base Metal', product.baseMetal],
+                  ['Plating / Finish', product.platingFinish],
+                  ['Stones & Embellishments', product.stoneType],
+                  ['Closure / Fastening', product.closureType]
+                ].filter(([, value]) => Boolean(value)).length > 0 && (
+                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-8 pt-4 border-t border-[#E7DCEB]">
+                    {[
+                      ['Base Metal', product.baseMetal],
+                      ['Plating / Finish', product.platingFinish],
+                      ['Stones & Embellishments', product.stoneType],
+                      ['Closure / Fastening', product.closureType]
+                    ].filter(([, value]) => Boolean(value)).map(([label, value]) => (
+                      <div key={label} className="flex justify-between gap-4 py-2 border-b border-[#E7DCEB]/50">
+                        <dt className="text-[#6F6475]">{label}</dt>
+                        <dd className="text-right font-medium text-[#302438]">{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+                {!product.description && !product.baseMetal && !product.platingFinish && !product.stoneType && !product.closureType && <p>Product specifications will be added soon.</p>}
               </div>
             )}
 
             {activeTab === 'care' && (
               <div className="space-y-3">
                 <h4 className="font-serif text-base text-[#302438]">Maintaining Your SARINE Pieces</h4>
-                <ul className="list-disc pl-5 space-y-2 text-[#6F6475]">
-                  <li>Store separately in the provided zip pouch or air-tight box to prevent atmospheric oxidation.</li>
-                  <li>Avoid direct exposure to perfume, hairsprays, sanitizers, and direct water contact.</li>
-                  <li>Clean gently using a dry, lint-free microfiber cloth after every festive wear.</li>
-                  <li>Put your jewellery on last when getting dressed, and take it off first before sleeping.</li>
-                </ul>
+                {product.careInstructions?.length ? (
+                  <ul className="list-disc pl-5 space-y-2 text-[#6F6475]">{product.careInstructions.map((instruction, index) => <li key={index}>{instruction}</li>)}</ul>
+                ) : (
+                  <p className="text-[#6F6475]">Care guidance for this piece has not been added yet. As a general precaution, keep jewellery dry, avoid direct contact with perfumes and cosmetics, and store it separately in a soft pouch.</p>
+                )}
               </div>
             )}
 

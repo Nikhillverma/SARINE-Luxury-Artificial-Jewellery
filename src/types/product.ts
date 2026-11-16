@@ -30,7 +30,7 @@ export interface Product {
   /** Price in INR as an integer, e.g. 1499 */
   price: number;
   /** Optional comparison MRP/original price for discount display */
-  compareAtPrice?: number;
+  compareAtPrice?: number | null;
   /** Optional manufacturing / procurement cost price in INR */
   costPrice?: number;
   /** Array of product photo URLs */
