@@ -147,7 +147,7 @@ export const AdminDashboardPage: React.FC = () => {
   const cards = [
     { label: 'Paid Revenue', value: formatInr(metrics.paidRevenue), note: `${formatInr(metrics.todayRevenue)} today`, icon: IndianRupee },
     { label: 'Total Orders', value: metrics.orders.toLocaleString('en-IN'), note: `${metrics.todayOrders} today`, icon: ShoppingBag },
-    { label: 'Low Stock Alerts', value: metrics.lowStockProducts.toLocaleString('en-IN'), note: `${data?.lowStockThreshold ?? 5} or fewer units`, icon: AlertTriangle }
+    { label: 'Low Stock Alerts', value: metrics.lowStockProducts.toLocaleString('en-IN'), note: `Global default ${data?.lowStockThreshold ?? 5}; product overrides apply`, icon: AlertTriangle }
   ];
 
   const orderStatuses = [
