@@ -10,6 +10,8 @@ import { Product, JEWELLERY_TYPE_LABELS } from '../../types/product';
 import type { InventoryMovement } from '../../services/interfaces';
 import { Category } from '../../types/category';
 import { AdminLayout } from '../../components/admin/AdminLayout';
+import { InventoryAlertSettings } from '../../components/admin/InventoryAlertSettings';
+import { inventorySettingsService } from '../../services/hostinger/inventorySettingsService';
 import { formatInr } from '../../utils/currency';
 import {
   Package,
@@ -24,13 +26,14 @@ import {
   Minus
 } from 'lucide-react';
 
-const LOW_STOCK_THRESHOLD = 5;
+const DEFAULT_LOW_STOCK_THRESHOLD = 5;
 
 export const AdminInventoryPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [movements, setMovements] = useState<InventoryMovement[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lowStockThreshold, setLowStockThreshold] = useState(DEFAULT_LOW_STOCK_THRESHOLD);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -48,14 +51,16 @@ export const AdminInventoryPage: React.FC = () => {
     async function loadData() {
       setLoading(true);
       try {
-        const [cats, prods] = await Promise.all([
+        const [cats, prods, inventoryMovements, alertSettings] = await Promise.all([
           categoryService.getCategories({ activeOnly: false }),
           adminProductService.getProducts(),
-          adminProductService.getInventoryMovements()
+          adminProductService.getInventoryMovements(),
+          inventorySettingsService.get()
         ]);
         setCategories(cats);
         setProducts(prods);
-        setMovements(movements);
+        setMovements(inventoryMovements);
+        setLowStockThreshold(alertSettings.threshold);
       } catch (err) {
         console.error('[AdminInventoryPage] Failed to load inventory:', err);
       } finally {
@@ -91,7 +96,7 @@ export const AdminInventoryPage: React.FC = () => {
       }
       return true;
     });
-  }, [products, searchTerm, selectedCategory, statusFilter, stockFilter]);
+  }, [products, searchTerm, selectedCategory, statusFilter, stockFilter, lowStockThreshold]);
 
   const lowStockCount = products.filter((p) => p.status === 'active' && p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD).length;
   const outOfStockCount = products.filter((p) => p.status === 'active' && p.stock <= 0).length;
@@ -149,6 +154,8 @@ export const AdminInventoryPage: React.FC = () => {
             </span>
           </div>
         </div>
+
+        <InventoryAlertSettings threshold={lowStockThreshold} onSaved={setLowStockThreshold} />
 
         {/* Feedback Alert */}
         {adjustError && (
