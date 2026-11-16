@@ -104,3 +104,13 @@ export class HostingerAdminProductService implements IAdminProductService {
     return result.product;
   }
 }
+
+export async function fetchAdminProductPreview(productId: string): Promise<Product> {
+  const result = await request<{ product: Product; previewOnly: true; purchaseEnabled: false }>(
+    `/admin/products/${encodeURIComponent(productId)}/preview`
+  );
+  if (result.previewOnly !== true || result.purchaseEnabled !== false) {
+    throw new Error('The product preview response was not marked as read-only.');
+  }
+  return result.product;
+}
