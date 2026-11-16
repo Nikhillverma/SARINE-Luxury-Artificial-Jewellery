@@ -40,6 +40,8 @@ jobs:
           node --check adminOrders.js
           node --check adminReturns.js
           node --check adminStorefront.js
+          node --check homepageLayout.js
+          node --check homepageLayoutPolicy.js
           node --check adminAnalytics.js
           node --check adminDashboard.js
           node --check adminCustomers.js
