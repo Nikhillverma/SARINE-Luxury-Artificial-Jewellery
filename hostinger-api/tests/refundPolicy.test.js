@@ -4,7 +4,8 @@ import {
   buildRefundRequest,
   calculateRefundableBalance,
   buildRefundGatewayRequest,
-  normalizeGatewayRefundStatus
+  normalizeGatewayRefundStatus,
+  hasUnresolvedRefundRequest
 } from "../refundPolicy.js";
 
 test("validates SARINE refund request and integer paise", () => {
@@ -39,4 +40,11 @@ test("normalizes only known terminal and pending gateway states", () => {
   assert.equal(normalizeGatewayRefundStatus("failed"), "failed");
   assert.equal(normalizeGatewayRefundStatus("pending"), "pending");
   assert.equal(normalizeGatewayRefundStatus("created"), "unknown");
+});
+
+test("blocks a second refund while the first request is submitting, unknown or pending", () => {
+  assert.equal(hasUnresolvedRefundRequest(["processed", "pending"]), true);
+  assert.equal(hasUnresolvedRefundRequest(["failed", "processed"]), false);
+  assert.equal(hasUnresolvedRefundRequest([]), false);
+  assert.equal(hasUnresolvedRefundRequest(null), false);
 });

@@ -2,9 +2,10 @@ import { Router } from "express";
 import crypto from "node:crypto";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
-import { buildRefundRequest, buildRefundGatewayRequest, normalizeGatewayRefundStatus, calculateRefundableBalance } from "./refundPolicy.js";
+import { buildRefundRequest, buildRefundGatewayRequest, normalizeGatewayRefundStatus, calculateRefundableBalance, hasUnresolvedRefundRequest } from "./refundPolicy.js";
 import { ensureRefundLedgerSchema, refreshOrderRefundFlag } from "./refundLedger.js";
 import { ensureRazorpayWebhookSchema } from "./razorpayWebhookPolicy.js";
+import { ensurePaymentEventLogTable } from "./paymentEventPolicy.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -106,6 +107,7 @@ router.post("/", async (req, res, next) => {
     const request = buildRefundRequest(req.body);
     await ensureRefundLedgerSchema();
     await ensureRazorpayWebhookSchema();
+    await ensurePaymentEventLogTable();
 
     const [initialRows] = await pool.execute(
       "SELECT * FROM orders WHERE order_number = ? LIMIT 1",
@@ -142,20 +144,40 @@ router.post("/", async (req, res, next) => {
         !(order.refund_needed || order.order_status === "needs_refund")) {
       throw new Error("Order refund eligibility changed. Refresh the queue and review it again.");
     }
+    const [activeRefundRows] = await connection.execute(
+      `SELECT status FROM razorpay_refund_records
+       WHERE order_id = ? AND status IN ('submitting', 'unknown', 'pending')
+       ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
+      [String(order.id)]
+    );
+    if (hasUnresolvedRefundRequest(activeRefundRows.map(row => row.status))) {
+      throw new Error("A refund request for this order is already awaiting gateway confirmation. Reconcile or retry that same request first.");
+    }
 
     const isPrimaryPayment = order.razorpay_payment_id === request.paymentId;
     const [eventRows] = await connection.execute(
-      "SELECT gateway_payment_id FROM payment_event_log WHERE gateway_payment_id = ? AND order_id = ? LIMIT 1",
+      "SELECT gateway_payment_id, amount_paise FROM payment_event_log WHERE gateway_payment_id = ? AND order_id = ? LIMIT 1",
       [request.paymentId, String(order.id)]
     );
     const [webhookPaymentRows] = await connection.execute(
-      `SELECT gateway_payment_id FROM razorpay_webhook_events
+      `SELECT gateway_payment_id, amount_paise FROM razorpay_webhook_events
        WHERE gateway_payment_id = ? AND gateway_order_id = ? AND event_type = 'payment.captured'
        LIMIT 1`,
       [request.paymentId, order.razorpay_order_id]
     );
     if (!isPrimaryPayment && !eventRows.length && !webhookPaymentRows.length) {
       throw new Error("Selected payment is not recorded against this SARINE order.");
+    }
+    if (isPrimaryPayment) {
+      const expectedPrimaryAmount = Number(order.razorpay_amount_paise || Math.round(Number(order.total) * 100));
+      if (Number(payment.amount) !== expectedPrimaryAmount) {
+        throw new Error("Selected primary payment amount does not match the SARINE order amount.");
+      }
+    } else {
+      const linkedPayment = eventRows[0] || webhookPaymentRows[0];
+      if (Number(linkedPayment.amount_paise) !== Number(payment.amount)) {
+        throw new Error("Selected additional payment amount does not match its verified gateway event.");
+      }
     }
 
     const [balanceRows] = await connection.execute(
@@ -221,7 +243,8 @@ router.post("/", async (req, res, next) => {
       await connection.rollback();
       connection.release();
     }
-    const status = /required|valid|eligible|captured|belong|balance|recorded|changed|exceeds|not found/i.test(error.message) ? 400 : 500;
+    const status = /already awaiting gateway confirmation/i.test(error.message) ? 409
+      : /required|valid|eligible|captured|belong|balance|recorded|changed|exceeds|not found/i.test(error.message) ? 400 : 500;
     return res.status(status).json({ error: error.message || "Refund request could not be completed." });
   }
 });
