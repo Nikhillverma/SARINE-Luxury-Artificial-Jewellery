@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Plus, Trash2, RefreshCw, Save, PackagePlus } from 'lucide-react';
 import type { Product, ProductVariant } from '../../types/product';
-import type { ProductVariantDraft } from '../../services/interfaces';
+import type { ProductVariantDraft, VariantInventoryMovement } from '../../services/interfaces';
 import { adminProductService } from '../../services';
 
 interface ProductVariantsManagerProps {
@@ -50,6 +50,7 @@ function toDraft(variant: ProductVariant): ProductVariantDraft {
 
 export const ProductVariantsManager: React.FC<ProductVariantsManagerProps> = ({ product, onClose, onSaved }) => {
   const [variants, setVariants] = useState<ProductVariantDraft[]>([]);
+  const [movements, setMovements] = useState<VariantInventoryMovement[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -64,8 +65,12 @@ export const ProductVariantsManager: React.FC<ProductVariantsManagerProps> = ({ 
     setLoading(true);
     setError('');
     try {
-      const rows = await adminProductService.getProductVariants(product.id);
+      const [rows, history] = await Promise.all([
+        adminProductService.getProductVariants(product.id),
+        adminProductService.getVariantInventoryMovements(product.id)
+      ]);
       setVariants(rows.map(toDraft));
+      setMovements(history);
       setDirty(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load product variants.');
@@ -202,6 +207,32 @@ export const ProductVariantsManager: React.FC<ProductVariantsManagerProps> = ({ 
               ))}
 
               <button type="button" onClick={() => { setVariants(current => [...current, blankVariant(current.length)]); setDirty(true); }} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-dashed border-[#B69ACF] px-4 text-xs font-semibold text-[#563568]"><Plus size={15}/> Add variant</button>
+
+              <section className="overflow-hidden rounded-xl border border-[#E7DCEB]">
+                <div className="border-b border-[#E7DCEB] bg-[#FAF5FC] p-3">
+                  <h3 className="text-xs font-semibold text-[#2C1838]">Variant stock movement history</h3>
+                  <p className="mt-1 text-[10px] text-[#705E7B]">Audited adjustments, COD sales, online payment deductions and cancellation restorations.</p>
+                </div>
+                {movements.length ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[650px] text-left text-[11px]">
+                      <thead className="bg-white text-[#705E7B]"><tr><th className="p-3">Date</th><th className="p-3">Variant / SKU</th><th className="p-3">Change</th><th className="p-3">Balance</th><th className="p-3">Reason</th><th className="p-3">Recorded by</th></tr></thead>
+                      <tbody className="divide-y divide-[#F0E8F3]">
+                        {movements.map(item => (
+                          <tr key={item.id}>
+                            <td className="p-3 whitespace-nowrap text-[#705E7B]">{new Date(item.createdAt).toLocaleString('en-IN')}</td>
+                            <td className="p-3"><strong className="block text-[#302438]">{item.variantLabel}</strong><span className="font-mono text-[#8E769E]">{item.variantSku}</span></td>
+                            <td className={`p-3 font-semibold ${item.quantityDelta > 0 ? 'text-emerald-700' : 'text-red-700'}`}>{item.quantityDelta > 0 ? '+' : ''}{item.quantityDelta}</td>
+                            <td className="p-3 font-mono text-[#302438]">{item.newStock}</td>
+                            <td className="p-3 text-[#705E7B]">{item.reason}</td>
+                            <td className="p-3 text-[#705E7B]">{item.adminName}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : <p className="p-4 text-xs text-[#8E769E]">No variant stock movements recorded yet.</p>}
+              </section>
             </div>
           )}
         </div>
