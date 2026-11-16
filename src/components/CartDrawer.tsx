@@ -255,6 +255,7 @@ export const CartDrawer: React.FC = () => {
                       <p className="text-xs text-[#6F6475] mt-0.5">
                         {formatInr(item.unitPrice)} each
                       </p>
+                      {item.variant && <p className="text-[11px] text-[#563568] mt-1">{item.variant.label} · SKU: {item.variant.sku}</p>}
                     </div>
 
                     {/* Actions Row: Quantity Stepper & Save to Wishlist */}
