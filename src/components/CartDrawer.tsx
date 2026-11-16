@@ -108,7 +108,7 @@ export const CartDrawer: React.FC = () => {
 
   const handleSaveToWishlist = (item: any) => {
     toggleWishlist(item.product);
-    removeItem(item.productId);
+    removeItem(item.productId, item.variantId);
   };
 
   const currentDiscount = activeCoupon ? activeCoupon.discount : 0;
@@ -213,11 +213,11 @@ export const CartDrawer: React.FC = () => {
             </div>
           ) : (
             items.map((item) => {
-              const maxStock = item.product.stock;
+              const maxStock = item.variant?.stock ?? item.product.stock;
               const isAtMax = item.quantity >= maxStock;
 
               return (
-                <div key={item.productId} className="py-4 first:pt-0 last:pb-0 flex gap-4">
+                <div key={`${item.productId}-${item.variantId || 'default'}`} className="py-4 first:pt-0 last:pb-0 flex gap-4">
                   {/* Image */}
                   <Link
                     to={`/product/${item.product.slug}`}
@@ -243,7 +243,7 @@ export const CartDrawer: React.FC = () => {
                           {item.product.name}
                         </Link>
                         <button
-                          onClick={() => removeItem(item.productId)}
+                          onClick={() => removeItem(item.productId, item.variantId)}
                           className="text-[#6F6475] hover:text-[#DC2626] transition-colors p-1 cursor-pointer"
                           title="Remove item"
                           aria-label={`Remove ${item.product.name}`}
@@ -262,7 +262,7 @@ export const CartDrawer: React.FC = () => {
                       <div className="flex items-center gap-3">
                         <div className="flex items-center border border-[#E7DCEB] bg-white rounded-xs">
                           <button
-                            onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                            onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variantId)}
                             disabled={item.quantity <= 1}
                             className="w-7 h-7 flex items-center justify-center text-xs text-[#302438] hover:bg-[#F7F0FA] disabled:opacity-30 transition-colors cursor-pointer"
                             aria-label="Decrease quantity"
@@ -273,7 +273,7 @@ export const CartDrawer: React.FC = () => {
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                            onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variantId)}
                             disabled={isAtMax}
                             className="w-7 h-7 flex items-center justify-center text-xs text-[#302438] hover:bg-[#F7F0FA] disabled:opacity-30 transition-colors cursor-pointer"
                             aria-label="Increase quantity"
