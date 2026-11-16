@@ -88,7 +88,7 @@ router.get("/", async (_req, res, next) => {
            COALESCE(o.created_at, initial_history.initial_created_at) AS created_at
          FROM orders o
          LEFT JOIN (${INITIAL_ORDER_HISTORY}) AS initial_history
-           ON initial_history.order_id = o.id
+           ON initial_history.order_id COLLATE utf8mb4_unicode_ci = o.id COLLATE utf8mb4_unicode_ci
          ORDER BY COALESCE(o.created_at, initial_history.initial_created_at) DESC, o.id DESC
          LIMIT 5`
       ),
@@ -97,7 +97,7 @@ router.get("/", async (_req, res, next) => {
            COALESCE(alert.threshold, ?) AS alert_threshold,
            (alert.product_id IS NOT NULL) AS has_custom_threshold
          FROM products p
-         LEFT JOIN product_inventory_alert_settings alert ON alert.product_id = p.id
+         LEFT JOIN product_inventory_alert_settings alert ON alert.product_id COLLATE utf8mb4_unicode_ci = p.id COLLATE utf8mb4_unicode_ci
          WHERE p.status = 'active' AND p.stock <= COALESCE(alert.threshold, ?)
          ORDER BY p.stock ASC, p.updated_at DESC, p.name ASC
          LIMIT 5`,
