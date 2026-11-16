@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { pool } from "./db.js";
+import { formatVariantLabel } from "./productVariantPolicy.js";
 
 let schemaPromise;
 
