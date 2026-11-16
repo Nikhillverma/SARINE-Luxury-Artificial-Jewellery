@@ -16,7 +16,7 @@ export interface AdminRefundRequest {
   amountRequested: number; paymentMethod: string; paymentStatus: string; orderStatus: string;
   razorpayPaymentId: string | null; cancellationReason: string; createdAt: string | null;
   cancelledAt: string | null; paymentEventCount: number; latestPaymentEvent: string | null;
-  latestPaymentEventAt: string | null;
+  latestPaymentEventStatus: string | null; latestPaymentEventAt: string | null;
 }
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(API_BASE + '/admin/returns' + path, {
