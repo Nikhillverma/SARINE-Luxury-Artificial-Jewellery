@@ -645,7 +645,7 @@ router.post("/verify", async (req, res, next) => {
     if (order.payment_status === "paid") {
       const captureDisposition = classifyCapturedPayment(order, razorpay_payment_id);
       const samePayment = captureDisposition === "same_payment_replay";
-      await recordVerifiedPaymentEvent(connection, {
+      const paymentEvent = await recordVerifiedPaymentEvent(connection, {
         orderId: order.id,
         orderNumber: cleanOrderNumber,
         gatewayOrderId: razorpay_order_id,
@@ -656,8 +656,10 @@ router.post("/verify", async (req, res, next) => {
         eventStatus: samePayment ? "already_processed" : "additional_capture_refund_review"
       });
 
-      if (!samePayment) {
-        const additionalAmount = Number(paymentRecord.amount) / 100;
+      // A replay of the same additional capture must not increase the refund
+      // balance a second time.
+      if (!samePayment && paymentEvent.inserted) {
+        const additionalAmount = (Number(paymentRecord.amount) / 100).toFixed(2);
         await connection.execute(
           `UPDATE orders
            SET refund_needed = 1,
