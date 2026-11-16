@@ -530,7 +530,7 @@ router.post("/update", async (req, res, next) => {
             await recordVariantInventoryMovement(connection, {
               variantId: line.variant_id, productId: line.product_id,
               productName: variant.product_name, variantSku: variant.sku,
-              variantLabel: [variant.option1_value, variant.option2_value].filter(Boolean).join(" / "),
+              variantLabel: formatVariantLabel(variant.option1_name, variant.option1_value, variant.option2_name, variant.option2_value),
               previousStock, quantityDelta: quantity, newStock,
               reason: `Order cancellation restock ${cleanOrderNumber}`,
               adminId: req.admin?.id || "admin", adminName: req.admin?.name || adminEmail,
