@@ -21,7 +21,7 @@ for (const paymentMethod of ["cod", "online"]) {
   test(`${paymentMethod.toUpperCase()} order insert has one value for every SQL placeholder`, () => {
     const { sql, values } = buildOrderInsert({ ...order, paymentMethod });
 
-    assert.equal((sql.match(/\\?/g) || []).length, values.length);
+    assert.equal((sql.match(/\?/g) || []).length, values.length);
     assert.equal(values.length, 13);
     assert.deepEqual(values.slice(10), ["TEST250", 250, "test-token-hash"]);
     assert.match(sql, new RegExp(`'${paymentMethod}'`));
