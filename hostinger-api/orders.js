@@ -12,6 +12,7 @@ const router = Router();
 
 import { calculateShippingFee, getCheckoutConfig } from "./checkoutPolicy.js";
 import { buildOrderInsert } from "./orderInsertPolicy.js";
+import { matchesOrderRazorpayId } from "./paymentValidation.js";
 import { ensureMarketingSchema, lockAndValidateCoupon, reserveCouponRedemption, releaseCouponReservation, confirmCouponRedemption } from "./marketingPolicy.js";
 
 function hashToken(token) {
@@ -595,6 +596,14 @@ router.post("/verify", async (req, res, next) => {
       connection.release();
       connection = null;
       return res.status(400).json({ error: "This order does not require online payment." });
+    }
+
+    // Bind the captured gateway payment to the exact Razorpay order stored for this SARINE order.
+    if (!matchesOrderRazorpayId(order, razorpay_order_id, paymentRecord.order_id)) {
+      await connection.rollback();
+      connection.release();
+      connection = null;
+      return res.status(400).json({ error: "Payment does not belong to this SARINE order." });
     }
 
     // Idempotency: if already paid, return success immediately
