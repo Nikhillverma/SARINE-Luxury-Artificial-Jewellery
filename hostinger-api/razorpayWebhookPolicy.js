@@ -1,9 +1,8 @@
 import crypto from "node:crypto";
-import { pool } from "./db.js";
-
 let schemaPromise;
 
 export async function ensureRazorpayWebhookSchema() {
+  const { pool } = await import("./db.js");
   if (!schemaPromise) {
     schemaPromise = pool.query(`
       CREATE TABLE IF NOT EXISTS razorpay_webhook_events (
@@ -82,6 +81,7 @@ export function buildRazorpayWebhookRecord(eventId, payload) {
 }
 
 export async function storeRazorpayWebhookEvent(record) {
+  const { pool } = await import("./db.js");
   await ensureRazorpayWebhookSchema();
   const [result] = await pool.execute(
     `INSERT IGNORE INTO razorpay_webhook_events
