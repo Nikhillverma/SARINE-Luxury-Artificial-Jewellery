@@ -6,6 +6,9 @@ import type { Product, ProductVariant } from '../../types/product';
 import { formatInr } from '../../utils/currency';
 import { ArrowLeft, Eye, ShieldCheck, ShoppingBag, Package, AlertCircle } from 'lucide-react';
 
+// Normalize option-label capitalization for display only; stored variant data remains unchanged.
+const formatVariantLabel = (label: string): string => label.replace(/\b[a-z]/g, character => character.toUpperCase());
+
 export const AdminProductPreviewPage: React.FC = () => {
   const { id = '' } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
@@ -97,7 +100,7 @@ export const AdminProductPreviewPage: React.FC = () => {
                     const active = variant.status === 'active';
                     const chosen = selectedVariantId === variant.id;
                     return <button key={variant.id} type="button" disabled={!active} onClick={() => setSelectedVariantId(variant.id)} className={`min-h-16 rounded-xl border p-3 text-left transition-colors ${chosen ? 'border-[#563568] bg-[#F7F0FA] ring-1 ring-[#563568]' : 'border-[#EADFF0] bg-white'} ${!active ? 'cursor-not-allowed opacity-50' : 'hover:border-[#B69ACF]'}`}>
-                      <span className="flex items-center justify-between gap-2 text-xs font-semibold text-[#392247]"><span>{variant.label}</span><span className="text-[10px] uppercase">{active ? (variant.stock > 0 ? 'In stock' : 'Out of stock') : 'Inactive'}</span></span>
+                      <span className="flex items-center justify-between gap-2 text-xs font-semibold text-[#392247]"><span>{formatVariantLabel(variant.label)}</span><span className="text-[10px] uppercase">{active ? (variant.stock > 0 ? 'In stock' : 'Out of stock') : 'Inactive'}</span></span>
                       <span className="mt-1 block text-[10px] text-[#806B8D]">SKU: {variant.sku} · {formatInr(variant.price ?? product.price)}</span>
                       <span className="mt-1 block text-[10px] text-[#806B8D]">Stock: {variant.stock}</span>
                     </button>;
