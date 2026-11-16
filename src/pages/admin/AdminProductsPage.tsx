@@ -119,7 +119,7 @@ export const AdminProductsPage: React.FC = () => {
       platingFinish: product.platingFinish || '',
       stoneType: product.stoneType || '',
       closureType: product.closureType || '',
-      careInstructions: (product.careInstructions || []).join('\\n'),
+      careInstructions: (product.careInstructions || []).join(String.fromCharCode(10)),
       imageUrls: product.images || [],
       status: product.status
     });
