@@ -22,18 +22,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const wishlisted = isInWishlist(product.id);
   const discountPercent = getDiscountPercent(product);
 
-  const isAnanya = product.slug === 'ananya-temple-coin-bracelet' || product.id === 'prod-003';
-  const isZoya = product.slug === 'zoya-open-cuff-leaf-bangle' || product.id === 'prod-008';
-  const primaryImage = isAnanya
-    ? '/images/ananya-temple-coin-bracelet.jpg'
-    : isZoya
-    ? '/images/zoya-open-cuff-leaf-bangle.jpg'
-    : (product.images[0] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80');
-  const secondaryImage = isAnanya
-    ? '/src/assets/images/temple_coin_bracelet_1792768038164.jpg'
-    : isZoya
-    ? '/src/assets/images/zoya_leaf_bangle_1792768482264.jpg'
-    : product.images[1];
+  const primaryImage = product.images[0] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80';
+  const secondaryImage = product.images[1];
 
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.preventDefault();

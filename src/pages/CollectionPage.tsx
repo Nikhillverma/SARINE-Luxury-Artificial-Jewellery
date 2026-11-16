@@ -215,7 +215,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
         if (product.price < min || product.price > max) return false;
       } else if (pricePreset !== 'all') {
         if (pricePreset === 'under-999' && product.price >= 1000) return false;
-        if (pricePreset === '1000-2000' && (product.price < 1000 || product.price > 2000)) return false;
+        if (pricePreset === '1000-2000' && (product.price < 1000 || product.price > 1999)) return false;
         if (pricePreset === 'above-2000' && product.price <= 2000) return false;
       }
 
@@ -531,7 +531,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                   {[
                     { id: 'all', label: 'All Prices' },
                     { id: 'under-999', label: 'Under ₹999' },
-                    { id: '1000-2000', label: '₹1,000 to ₹2,000' },
+                    { id: '1000-2000', label: '₹1,000 to ₹1,999' },
                     { id: 'above-2000', label: '₹2,000 and above' }
                   ].map((preset) => (
                     <button
