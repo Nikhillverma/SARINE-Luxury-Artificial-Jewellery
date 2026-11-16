@@ -368,16 +368,22 @@ export const AdminInventoryPage: React.FC = () => {
 
                         {/* Action: Stock adjustment */}
                         <td className="p-3 text-right">
-                          <button
-                            onClick={() => {
-                              setAdjustingProduct(p);
-                              setStockDelta(0);
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#563568] text-[#563568] hover:bg-[#563568] hover:text-white rounded-xs transition-colors cursor-pointer text-xs font-medium"
-                          >
-                            <Edit2 size={12} />
-                            <span>Adjust Stock</span>
-                          </button>
+                          {p.variants?.length ? (
+                            <Link to="/admin/products" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#563568] text-[#563568] hover:bg-[#F7F0FA] rounded-xs transition-colors text-xs font-medium">
+                              Manage Variants
+                            </Link>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setAdjustingProduct(p);
+                                setStockDelta(0);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#563568] text-[#563568] hover:bg-[#563568] hover:text-white rounded-xs transition-colors cursor-pointer text-xs font-medium"
+                            >
+                              <Edit2 size={12} />
+                              <span>Adjust Stock</span>
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );
