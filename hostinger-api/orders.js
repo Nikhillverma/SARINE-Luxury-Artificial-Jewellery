@@ -188,7 +188,7 @@ router.post("/create", async (req, res, next) => {
         return res.status(400).json({ error: `The selected option for "${p.name}" is no longer available. Please refresh your bag.` });
       }
 
-      const stockKey = variant ? `variant:${variant.id}` : `product:${p.id}`;
+      const stockKey = getVariantStockKey(p.id, variant?.id);
       const availableStock = Number(variant ? variant.stock : p.stock) || 0;
       const reservation = reservedStockByProduct.get(stockKey) || {
         productId: p.id,
