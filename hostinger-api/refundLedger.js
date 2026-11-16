@@ -1,4 +1,5 @@
 import { pool } from "./db.js";
+import { normalizeGatewayRefundStatus } from "./refundPolicy.js";
 
 let schemaPromise;
 export async function ensureRefundLedgerSchema() {
@@ -56,9 +57,19 @@ export async function applyGatewayRefundEvent(record) {
       await connection.rollback();
       return { matched: false, mismatch: true };
     }
-    const nextStatus = record.eventType === "refund.processed" ? "processed"
-      : record.eventType === "refund.failed" ? "failed" : "pending";
-    if (refund.status !== "processed" && (nextStatus === "processed" || refund.status !== "failed")) {
+    const nextStatus = record.eventType === "refund.failed" ? "failed"
+      : record.eventType === "refund.reversed" ? "reversed"
+      : record.eventType === "refund.created" ? "pending"
+      : record.eventType === "refund.processed" ? normalizeGatewayRefundStatus(record.gatewayStatus)
+      : "unknown";
+    if (nextStatus === "unknown") {
+      await connection.commit();
+      return { matched: true, refundId: Number(refund.id), status: "awaiting_verified_status" };
+    }
+    const terminalStatuses = ["processed", "failed", "reversed"];
+    const canApply = !terminalStatuses.includes(refund.status) ||
+      (refund.status === "processed" && nextStatus === "reversed");
+    if (canApply) {
       await connection.execute(
         `UPDATE razorpay_refund_records
          SET gateway_refund_id = COALESCE(gateway_refund_id, ?),
@@ -69,7 +80,9 @@ export async function applyGatewayRefundEvent(record) {
         [record.gatewayRefundId, nextStatus, record.gatewayStatus, nextStatus, refund.id]
       );
     }
-    if (nextStatus === "processed") await refreshOrderRefundFlag(connection, refund.order_id);
+    if (nextStatus === "processed" || nextStatus === "reversed") {
+      await refreshOrderRefundFlag(connection, refund.order_id);
+    }
     await connection.commit();
     return { matched: true, refundId: Number(refund.id), status: nextStatus };
   } catch (error) {
@@ -91,15 +104,14 @@ export async function refreshOrderRefundFlag(connection, orderId) {
     [orderId]
   );
   const targetPaise = Math.round(Number(orders[0].refund_amount) * 100);
-  if (Number(rows[0]?.processed_paise || 0) >= targetPaise) {
-    await connection.execute(
-      `UPDATE orders
-       SET refund_needed = 0,
-           cancelled_at = CASE WHEN order_status = 'needs_refund' THEN COALESCE(cancelled_at, UTC_TIMESTAMP(3)) ELSE cancelled_at END,
-           order_status = CASE WHEN order_status = 'needs_refund' THEN 'cancelled' ELSE order_status END,
-           updated_at = UTC_TIMESTAMP(3)
-       WHERE id = ?`,
-      [orderId]
-    );
-  }
+  const fullyRefunded = Number(rows[0]?.processed_paise || 0) >= targetPaise;
+  await connection.execute(
+    `UPDATE orders
+     SET refund_needed = ?,
+         cancelled_at = CASE WHEN ? = 0 AND order_status = 'needs_refund' THEN COALESCE(cancelled_at, UTC_TIMESTAMP(3)) ELSE cancelled_at END,
+         order_status = CASE WHEN ? = 0 AND order_status = 'needs_refund' THEN 'cancelled' ELSE order_status END,
+         updated_at = UTC_TIMESTAMP(3)
+     WHERE id = ?`,
+    [fullyRefunded ? 0 : 1, fullyRefunded ? 0 : 1, fullyRefunded ? 0 : 1, orderId]
+  );
 }
