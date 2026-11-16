@@ -50,17 +50,88 @@ function ReturnCard({ item, onSaved }: { item: AdminReturnRequest; onSaved: () =
     </article>
   );
 }
-function RefundCard({ item }: { item: AdminRefundRequest }) {
-  const latest = item.latestPaymentEvent ? ' · latest: ' + item.latestPaymentEvent + (item.latestPaymentEventStatus ? ' — ' + item.latestPaymentEventStatus.replaceAll('_', ' ') : '') + ' (' + dateLabel(item.latestPaymentEventAt) + ')' : '';
+function RefundCard({ item, onSaved }: { item: AdminRefundRequest; onSaved: () => void }) {
+  const payments = item.capturedPayments || [];
+  const [paymentId, setPaymentId] = useState(payments[0]?.paymentId || item.razorpayPaymentId || '');
+  const [amount, setAmount] = useState(Number(item.amountRequested || 0).toFixed(2));
+  const [reason, setReason] = useState(item.cancellationReason || 'Approved customer refund');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const history = item.refundHistory || [];
+  const unresolved = history.find(entry => ['unknown', 'submitting'].includes(entry.status));
+  const pendingRecord = history.find(entry => entry.status === 'pending');
+  const pending = Boolean(pendingRecord);
+
+  const issueRefund = async () => {
+    const rupees = Number(amount);
+    if (!paymentId || !Number.isFinite(rupees) || rupees < 1 || !reason.trim()) {
+      setError('Choose a captured payment, enter a valid amount and provide a reason.');
+      return;
+    }
+    if (!window.confirm('Send a Razorpay refund of ' + formatInr(rupees) + ' for ' + item.orderNumber + '? This will contact the live payment gateway.')) return;
+    setSaving(true); setError(''); setFeedback('');
+    try {
+      const result = await hostingerAdminReturnsService.createRefund({
+        orderNumber: item.orderNumber, paymentId, amountPaise: Math.round(rupees * 100), reason: reason.trim()
+      });
+      setFeedback(result.message + ' Status: ' + result.status.replaceAll('_', ' ') + '.');
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Refund request could not be completed.');
+    } finally { setSaving(false); }
+  };
+
+  const reconcileRefund = async () => {
+    if (!pendingRecord || !window.confirm('Fetch the current refund status directly from Razorpay for ' + item.orderNumber + '?')) return;
+    setSaving(true); setError(''); setFeedback('');
+    try {
+      const result = await hostingerAdminReturnsService.reconcileRefund(pendingRecord.id);
+      setFeedback(result.message);
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Razorpay refund status could not be checked.');
+    } finally { setSaving(false); }
+  };
+
+  const retryRefund = async () => {
+    if (!unresolved || !window.confirm('Retry this exact refund using its original Razorpay idempotency key?')) return;
+    setSaving(true); setError(''); setFeedback('');
+    try {
+      const result = await hostingerAdminReturnsService.retryRefund(unresolved.id);
+      setFeedback(result.message + ' Status: ' + result.status.replaceAll('_', ' ') + '.');
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Refund retry could not be completed.');
+    } finally { setSaving(false); }
+  };
+
   return (
-    <article className="bg-white border border-[#EADFF0] rounded-2xl p-4 sm:p-5 space-y-3">
+    <article className="bg-white border border-[#EADFF0] rounded-2xl p-4 sm:p-5 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
         <div><div className="flex items-center gap-2"><h3 className="font-semibold text-[#563568]">{item.orderNumber}</h3><span className="px-2 py-1 rounded-full bg-amber-50 text-amber-800 text-[10px]">Refund required</span></div><p className="text-xs text-[#302438] mt-2">{item.customer.name} · {item.customer.email}</p><p className="text-[11px] text-[#8E769E] mt-1">{item.customer.phone || 'Phone not provided'} · {item.paymentMethod} · payment {item.paymentStatus}</p></div>
-        <div className="sm:text-right"><div className="text-[10px] uppercase tracking-wider text-[#8E769E]">Amount requested</div><div className="font-serif text-2xl text-[#302438]">{formatInr(item.amountRequested)}</div></div>
+        <div className="sm:text-right"><div className="text-[10px] uppercase tracking-wider text-[#8E769E]">Refund target</div><div className="font-serif text-2xl text-[#302438]">{formatInr(item.amountRequested)}</div></div>
       </div>
       {item.cancellationReason && <p className="text-xs text-[#705E7B]">Reason: {item.cancellationReason}</p>}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-xl bg-[#FAF5FC] p-3 text-[11px] text-[#705E7B]"><div>Order date: {dateLabel(item.createdAt)}</div><div>Cancellation date: {dateLabel(item.cancelledAt)}</div><div>Razorpay payment reference: <span className="font-mono break-all">{item.razorpayPaymentId || 'Not available'}</span></div><div>Payment events recorded: {item.paymentEventCount}{latest}</div></div>
-      <p className="text-[11px] text-amber-800 flex items-start gap-2"><AlertTriangle size={14} className="shrink-0 mt-0.5"/>This is a refund-required/requested record, not proof of a completed refund. Verify the actual refund in Razorpay or the bank before recording it as paid.</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-xl bg-[#FAF5FC] p-3 text-[11px] text-[#705E7B]"><div>Order date: {dateLabel(item.createdAt)}</div><div>Cancellation date: {dateLabel(item.cancelledAt)}</div><div>Payment events recorded: {item.paymentEventCount}</div><div>Primary payment: <span className="font-mono break-all">{item.razorpayPaymentId || 'Not available'}</span></div></div>
+
+      {history.length > 0 && <div className="space-y-2"><p className="text-[10px] uppercase tracking-wider text-[#8E769E]">Refund audit history</p>{history.map(entry => <div key={entry.id} className="rounded-xl border border-[#EADFF0] p-3 text-[11px] space-y-1"><div className="flex flex-wrap justify-between gap-2"><strong className="text-[#563568]">{formatInr(entry.amountPaise / 100)} · {entry.status.replaceAll('_', ' ')}</strong><span className="text-[#8E769E]">{dateLabel(entry.processedAt || entry.createdAt)}</span></div><div className="text-[#705E7B]">Payment: <span className="font-mono break-all">{entry.paymentId}</span></div>{entry.gatewayRefundId && <div className="text-[#705E7B]">Razorpay refund: <span className="font-mono break-all">{entry.gatewayRefundId}</span></div>}<div className="text-[#705E7B]">{entry.reason} · requested by {entry.requestedBy}</div>{entry.errorMessage && <p className="text-amber-800">{entry.errorMessage}</p>}</div>)}</div>}
+
+      {unresolved && <div className="rounded-xl bg-amber-50 p-3 text-[11px] text-amber-900 space-y-2"><p>The gateway outcome is not yet confirmed. Do not create a new refund. Retry will reuse the original idempotency key and exact amount.</p><button onClick={() => void retryRefund()} disabled={saving} className="rounded-lg border border-amber-300 px-3 py-2 font-medium disabled:opacity-50">{saving ? 'Checking…' : 'Retry same refund safely'}</button></div>}
+      {pending && <div className="rounded-xl bg-amber-50 p-3 text-[11px] text-amber-900 space-y-2"><p>A refund is pending at Razorpay. Do not submit another refund while this one is pending.</p><button onClick={() => void reconcileRefund()} disabled={saving} className="rounded-lg border border-amber-300 px-3 py-2 font-medium disabled:opacity-50">{saving ? 'Checking Razorpay…' : 'Refresh verified gateway status'}</button></div>}
+
+      {!unresolved && !pending && <div className="rounded-xl border border-[#EADFF0] p-3 space-y-3">
+        <p className="text-[10px] uppercase tracking-wider text-[#8E769E]">Issue a verified Razorpay refund</p>
+        <label className="block text-[10px] uppercase tracking-wider text-[#705E7B]">Captured payment<select value={paymentId} onChange={e => setPaymentId(e.target.value)} className="mt-1.5 w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-xs normal-case tracking-normal text-[#302438]">{payments.map(payment => <option key={payment.paymentId} value={payment.paymentId}>{formatInr(payment.amountPaise / 100)} · {payment.paymentId} · {payment.eventStatus.replaceAll('_', ' ')}</option>)}</select></label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label className="text-[10px] uppercase tracking-wider text-[#705E7B]">Refund amount (₹)<input type="number" min="1" step="0.01" max={item.amountRequested} value={amount} onChange={e => setAmount(e.target.value)} className="mt-1.5 w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-xs normal-case tracking-normal text-[#302438]"/></label>
+          <label className="text-[10px] uppercase tracking-wider text-[#705E7B]">Reason<input value={reason} onChange={e => setReason(e.target.value)} maxLength={500} className="mt-1.5 w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-xs normal-case tracking-normal text-[#302438]"/></label>
+        </div>
+        <div className="flex justify-end"><button onClick={() => void issueRefund()} disabled={saving || !payments.length} className="inline-flex items-center gap-2 rounded-lg bg-[#563568] px-4 py-2.5 text-xs font-medium text-white disabled:opacity-50"><IndianRupee size={13}/>{saving ? 'Contacting Razorpay…' : 'Issue refund'}</button></div>
+        {!payments.length && <p className="text-[11px] text-amber-800">No captured payment is linked to this order yet. Reconcile the payment before issuing a refund.</p>}
+      </div>}
+      {error && <p role="alert" className="text-xs text-red-700">{error}</p>}{feedback && <p role="status" className="text-xs text-[#563568]">{feedback}</p>}
+      <p className="text-[11px] text-amber-800 flex items-start gap-2"><AlertTriangle size={14} className="shrink-0 mt-0.5"/>Only a verified Razorpay “processed” response or matching signed refund webhook clears the refund requirement. Pending or uncertain outcomes remain open for reconciliation.</p>
     </article>
   );
 }
@@ -78,7 +149,7 @@ function WebhookEventCard({ item }: { item: AdminWebhookEvent }) {
         <div>SARINE payment: {item.orderPaymentStatus || 'Not linked'} · {item.orderStatus || '—'}</div>
         <div>Gateway payment: <span className="font-mono break-all">{item.gatewayPaymentId || '—'}</span></div>
         <div>Gateway order: <span className="font-mono break-all">{item.gatewayOrderId || '—'}</span></div>
-        {item.gatewayRefundId && <div>Gateway refund: <span className="font-mono break-all">{item.gatewayRefundId}</span></div>}
+        {item.gatewayRefundId && <div>Gateway refund: <span className="font-mono break-all">{item.gatewayRefundId}</span></div>}{item.gatewayReceipt && <div>Refund receipt: <span className="font-mono break-all">{item.gatewayReceipt}</span></div>}{item.refundRecordStatus && <div>Refund ledger: {item.refundRecordStatus}</div>}
       </div>
       {!isMatched && <p className="text-[11px] text-amber-800 flex items-start gap-2"><AlertTriangle size={14} className="shrink-0 mt-0.5"/>Review this event against Razorpay and SARINE records. This view does not alter payment or order status.</p>}
     </article>
@@ -111,7 +182,7 @@ export const AdminReturnsPage: React.FC = () => {
         {loading ? <div className="bg-white border border-[#EADFF0] rounded-2xl p-10 text-center text-xs text-[#8E769E]">Loading live records from MariaDB…</div> :
           tab === 'returns' ? (returns.length ? <div className="space-y-3">{returns.map(item => <ReturnCard key={item.id} item={item} onSaved={() => void load()}/>)}</div> :
             <div className="bg-white border border-[#EADFF0] rounded-2xl p-10 text-center"><RotateCcw size={24} className="mx-auto text-[#8E769E]"/><h2 className="font-serif text-xl text-[#302438] mt-3">No return requests recorded</h2><p className="text-xs text-[#705E7B] mt-2">Customer return and exchange requests submitted through Track Order will appear here.</p></div>) :
-          tab === 'refunds' ? (refunds.length ? <div className="space-y-3">{refunds.map(item => <RefundCard key={item.orderNumber} item={item}/>)}</div> :
+          tab === 'refunds' ? (refunds.length ? <div className="space-y-3">{refunds.map(item => <RefundCard key={item.orderNumber} item={item} onSaved={() => void load()}/>)}</div> :
             <div className="bg-white border border-[#EADFF0] rounded-2xl p-10 text-center"><IndianRupee size={24} className="mx-auto text-[#8E769E]"/><h2 className="font-serif text-xl text-[#302438] mt-3">No refund-required orders</h2><p className="text-xs text-[#705E7B] mt-2">Orders flagged for refund handling will appear here.</p></div>) :
           (webhookEvents.length ? <div className="space-y-3">{webhookEvents.map(item => <WebhookEventCard key={item.eventId} item={item}/>)}</div> :
             <div className="bg-white border border-[#EADFF0] rounded-2xl p-10 text-center"><ShieldCheck size={24} className="mx-auto text-[#8E769E]"/><h2 className="font-serif text-xl text-[#302438] mt-3">No verified webhook events yet</h2><p className="text-xs text-[#705E7B] mt-2">Signed payment and refund events will appear here after the Razorpay webhook is configured.</p></div>)}
