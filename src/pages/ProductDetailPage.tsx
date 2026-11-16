@@ -318,7 +318,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
   const hasVariants = Boolean(product.variants?.length);
   const selectedVariant = product.variants?.find((variant) => variant.id === selectedVariantId);
   const currentPrice = selectedVariant?.price ?? product.price;
-  const currentCompareAtPrice = selectedVariant?.compareAtPrice ?? product.compareAtPrice;
+  const currentCompareAtPrice = selectedVariant
+    ? (selectedVariant.compareAtPrice ?? (selectedVariant.price == null ? product.compareAtPrice : undefined))
+    : product.compareAtPrice;
   const maxStock = selectedVariant?.stock ?? product.stock;
   const inStock = hasVariants ? Boolean(selectedVariant && selectedVariant.stock > 0) : isInStock(product);
   const discountPercent = currentCompareAtPrice && currentCompareAtPrice > currentPrice
