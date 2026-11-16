@@ -2,7 +2,7 @@ import { Router } from "express";
 import crypto from "node:crypto";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
-import { buildRefundRequest, buildRefundGatewayRequest, normalizeGatewayRefundStatus, calculateRefundableBalance } from "./refundPolicy.js";
+import { buildRefundRequest, buildRefundGatewayRequest, normalizeGatewayRefundStatus, calculateRefundableBalance, hasUnresolvedRefundRequest } from "./refundPolicy.js";
 import { ensureRefundLedgerSchema, refreshOrderRefundFlag } from "./refundLedger.js";
 import { ensureRazorpayWebhookSchema } from "./razorpayWebhookPolicy.js";
 
@@ -141,6 +141,15 @@ router.post("/", async (req, res, next) => {
     if (order.payment_status !== "paid" || order.payment_method !== "online" ||
         !(order.refund_needed || order.order_status === "needs_refund")) {
       throw new Error("Order refund eligibility changed. Refresh the queue and review it again.");
+    }
+    const [activeRefundRows] = await connection.execute(
+      `SELECT status FROM razorpay_refund_records
+       WHERE order_id = ? AND status IN ('submitting', 'unknown', 'pending')
+       ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
+      [String(order.id)]
+    );
+    if (hasUnresolvedRefundRequest(activeRefundRows.map(row => row.status))) {
+      throw new Error("A refund request for this order is already awaiting gateway confirmation. Reconcile or retry that same request first.");
     }
 
     const isPrimaryPayment = order.razorpay_payment_id === request.paymentId;
