@@ -5,7 +5,8 @@ import { validateCuratedFavourites } from "../curatedFavouritesPolicy.js";
 test("accepts an ordered list of unique product IDs", () => {
   assert.deepEqual(validateCuratedFavourites({ productIds: ["product-a", "product-b"] }), {
     version: 1,
-    productIds: ["product-a", "product-b"]
+    productIds: ["product-a", "product-b"],
+    configured: true
   });
 });
 
