@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
+import { Link } from 'react-router-dom';
 import { adminProductService, categoryService, hostingerMediaService } from '../../services';
 import type { Product, JewelleryType, ProductStatus } from '../../types/product';
 import type { Category } from '../../types/category';
@@ -8,7 +9,7 @@ import { BulkProductEditor } from '../../components/admin/BulkProductEditor';
 import { ProductVariantsManager } from '../../components/admin/ProductVariantsManager';
 import type { BulkProductUpdates, BulkProductUpdateResult } from '../../services/interfaces';
 import { formatInr } from '../../utils/currency';
-import { Plus, Search, Edit2, Copy, Archive, X, RefreshCw, Upload, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Search, Edit2, Copy, Archive, X, RefreshCw, Upload, Trash2, ChevronUp, ChevronDown, Eye } from 'lucide-react';
 
 const EMPTY_FORM = {
   name: '', price: '', compareAtPrice: '', costPrice: '', stock: '0', categoryId: '',
@@ -344,6 +345,7 @@ export const AdminProductsPage: React.FC = () => {
                     <td className="p-3"><span className="capitalize">{product.status}</span></td>
                     <td className="p-3 text-right whitespace-nowrap">
                       {product.status !== 'archived' && <button onClick={() => void toggleStatus(product)} title="Toggle active/draft" className="p-2 hover:bg-[#F3E8FF] rounded-lg text-[#563568]">{product.status === 'active' ? 'Unpublish' : 'Publish'}</button>}
+                      <Link to={`/admin/products/${encodeURIComponent(product.id)}/preview`} title="Preview product privately (no purchasing)" className="inline-flex items-center gap-1 px-2 py-1.5 hover:bg-[#F3E8FF] rounded-lg text-[10px] font-semibold text-[#563568]"><Eye size={13}/> Preview</Link>
                       <button onClick={() => setVariantProduct(product)} title="Manage sizes, colours and variant stock" className="px-2 py-1.5 hover:bg-[#F3E8FF] rounded-lg text-[10px] font-semibold text-[#563568]">Variants{product.variants?.length ? ` (${product.variants.length})` : ''}</button>
                       <button onClick={() => openEdit(product)} title="Edit" className="p-2 hover:bg-[#F3E8FF] rounded-lg"><Edit2 size={14}/></button>
                       <button onClick={() => void duplicate(product)} title="Duplicate as draft" className="p-2 hover:bg-[#F3E8FF] rounded-lg"><Copy size={14}/></button>
