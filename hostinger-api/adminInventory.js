@@ -68,16 +68,34 @@ router.post("/variants/adjustments", async (req, res, next) => {
     await ensureProductVariantSchema();
     connection = await pool.getConnection();
     await connection.beginTransaction();
-    const [rows] = await connection.execute(
-      `SELECT v.*, p.name AS product_name FROM product_variants v
-       INNER JOIN products p ON p.id = v.product_id WHERE v.id = ? LIMIT 1 FOR UPDATE`,
+    // Resolve the parent ID without locking, then acquire locks parent-first
+    // to match checkout, payment capture and order cancellation.
+    const [variantRefs] = await connection.execute(
+      "SELECT product_id FROM product_variants WHERE id = ? LIMIT 1",
       [variantId]
+    );
+    if (!variantRefs.length) {
+      await connection.rollback();
+      return res.status(404).json({ error: "Product variant not found." });
+    }
+    const productId = variantRefs[0].product_id;
+    const [products] = await connection.execute(
+      "SELECT id, name FROM products WHERE id = ? LIMIT 1 FOR UPDATE",
+      [productId]
+    );
+    if (!products.length) {
+      await connection.rollback();
+      return res.status(404).json({ error: "Parent product not found for this variant." });
+    }
+    const [rows] = await connection.execute(
+      "SELECT * FROM product_variants WHERE id = ? AND product_id = ? LIMIT 1 FOR UPDATE",
+      [variantId, productId]
     );
     if (!rows.length) {
       await connection.rollback();
       return res.status(404).json({ error: "Product variant not found." });
     }
-    const variant = rows[0];
+    const variant = { ...rows[0], product_name: products[0].name };
     const previousStock = Number(variant.stock);
     const newStock = previousStock + delta;
     if (!Number.isSafeInteger(newStock) || newStock < 0 || newStock > 2147483647) {
@@ -131,14 +149,8 @@ router.post("/adjustments", async (req, res, next) => {
     await connection.beginTransaction();
 
     await ensureProductVariantSchema();
-    const [variantRows] = await connection.execute(
-      "SELECT id FROM product_variants WHERE product_id = ? AND status = 'active' LIMIT 1",
-      [productId]
-    );
-    if (variantRows.length) {
-      await connection.rollback();
-      return res.status(400).json({ error: "This product uses variants. Adjust stock for the specific size or colour in Product Variants instead." });
-    }
+    // Lock the parent before checking its variant mode. Variant creation/editing
+    // also locks this row, so the check cannot race with a variant being added.
     const [products] = await connection.execute(
       "SELECT id, name, stock FROM products WHERE id = ? LIMIT 1 FOR UPDATE",
       [productId]
@@ -146,6 +158,15 @@ router.post("/adjustments", async (req, res, next) => {
     if (!products.length) {
       await connection.rollback();
       return res.status(404).json({ error: "Product not found." });
+    }
+
+    const [variantRows] = await connection.execute(
+      "SELECT id FROM product_variants WHERE product_id = ? AND status = 'active' LIMIT 1 FOR UPDATE",
+      [productId]
+    );
+    if (variantRows.length) {
+      await connection.rollback();
+      return res.status(400).json({ error: "This product uses variants. Adjust stock for the specific size or colour in Product Variants instead." });
     }
 
     const product = products[0];
