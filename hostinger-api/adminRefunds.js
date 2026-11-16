@@ -72,25 +72,26 @@ async function submitRefund(record) {
   return { status, gatewayRefundId: data.id, gatewayStatus: data.status, error: null };
 }
 
-async function saveGatewayOutcome(recordId, outcome) {
+async function saveGatewayOutcome(recordId, outcome, { authoritative = false } = {}) {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
     const [rows] = await connection.execute("SELECT * FROM razorpay_refund_records WHERE id = ? FOR UPDATE", [recordId]);
     if (!rows.length) throw new Error("Saved refund request could not be found.");
     const record = rows[0];
-    if (record.status !== "processed" && (outcome.status === "processed" || record.status !== "failed")) {
+    const terminalStatuses = ["processed", "failed", "reversed"];
+    if (authoritative || !terminalStatuses.includes(record.status)) {
       await connection.execute(
         `UPDATE razorpay_refund_records
          SET gateway_refund_id = COALESCE(?, gateway_refund_id),
              status = ?, gateway_status = ?, error_message = ?,
-             processed_at = CASE WHEN ? = 'processed' THEN UTC_TIMESTAMP(3) ELSE processed_at END,
+             processed_at = CASE WHEN ? = 'processed' THEN UTC_TIMESTAMP(3) WHEN ? = 'reversed' THEN NULL ELSE processed_at END,
              updated_at = UTC_TIMESTAMP(3)
          WHERE id = ?`,
         [outcome.gatewayRefundId || null, outcome.status, outcome.gatewayStatus || null,
-          outcome.error || null, outcome.status, recordId]
+          outcome.error || null, outcome.status, outcome.status, recordId]
       );
-      if (outcome.status === "processed") await refreshOrderRefundFlag(connection, record.order_id);
+      if (terminalStatuses.includes(outcome.status)) await refreshOrderRefundFlag(connection, record.order_id);
     }
     await connection.commit();
   } catch (error) {
@@ -228,7 +229,7 @@ router.post("/", async (req, res, next) => {
 
     const [savedRows] = await pool.execute("SELECT * FROM razorpay_refund_records WHERE id = ? LIMIT 1", [insert.insertId]);
     const outcome = await submitRefund(savedRows[0]);
-    await saveGatewayOutcome(insert.insertId, outcome);
+    await saveGatewayOutcome(insert.insertId, outcome, { authoritative: true });
     return res.status(outcome.status === "unknown" ? 202 : outcome.status === "failed" ? 502 : 200).json({
       success: outcome.status === "processed" || outcome.status === "pending",
       refundId: insert.insertId,
@@ -273,7 +274,7 @@ router.post("/:id/reconcile", async (req, res) => {
     if (status === "unknown") return res.status(502).json({ error: "Razorpay returned an unsupported refund status." });
     await saveGatewayOutcome(id, {
       status, gatewayRefundId: data.id, gatewayStatus: data.status, error: null
-    });
+    }, { authoritative: true });
     return res.json({
       success: true, refundId: id, gatewayRefundId: data.id, status,
       message: status === "processed"
@@ -300,7 +301,7 @@ router.post("/:id/retry", async (req, res) => {
       return res.status(409).json({ error: "Only an unconfirmed refund request can be retried with its original idempotency key." });
     }
     const outcome = await submitRefund(record);
-    await saveGatewayOutcome(id, outcome);
+    await saveGatewayOutcome(id, outcome, { authoritative: true });
     return res.status(outcome.status === "unknown" ? 202 : outcome.status === "failed" ? 502 : 200).json({
       success: outcome.status === "processed" || outcome.status === "pending",
       refundId: id, gatewayRefundId: outcome.gatewayRefundId || record.gateway_refund_id || null,

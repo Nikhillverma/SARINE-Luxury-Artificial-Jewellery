@@ -32,7 +32,7 @@ export function buildRefundGatewayRequest({ amountPaise, idempotencyKey, orderNu
   if (!ORDER_NUMBER.test(String(orderNumber || ""))) throw new Error("Invalid SARINE order number.");
   return {
     amount: amountPaise,
-    receipt: `SARINE-${idempotencyKey}`,
+    receipt: `SR-${idempotencyKey}`,
     notes: { sarine_order: orderNumber, reason: String(reason || "").slice(0, 512) }
   };
 }
@@ -40,6 +40,7 @@ export function buildRefundGatewayRequest({ amountPaise, idempotencyKey, orderNu
 export function normalizeGatewayRefundStatus(status) {
   if (status === "processed") return "processed";
   if (status === "failed") return "failed";
+  if (status === "reversed") return "reversed";
   if (status === "pending") return "pending";
   return "unknown";
 }
@@ -48,4 +49,12 @@ export function hasUnresolvedRefundRequest(statuses) {
   return Array.isArray(statuses) && statuses.some(status =>
     ["submitting", "unknown", "pending"].includes(String(status))
   );
+}
+
+export function mapRefundWebhookStatus(eventType, gatewayStatus) {
+  if (eventType === "refund.failed") return "failed";
+  if (eventType === "refund.reversed") return "reversed";
+  if (eventType === "refund.created") return "pending";
+  if (eventType === "refund.processed") return normalizeGatewayRefundStatus(gatewayStatus);
+  return "unknown";
 }

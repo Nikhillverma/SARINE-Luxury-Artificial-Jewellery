@@ -1,4 +1,5 @@
 import { pool } from "./db.js";
+import { mapRefundWebhookStatus } from "./refundPolicy.js";
 
 let schemaPromise;
 export async function ensureRefundLedgerSchema() {
@@ -56,20 +57,28 @@ export async function applyGatewayRefundEvent(record) {
       await connection.rollback();
       return { matched: false, mismatch: true };
     }
-    const nextStatus = record.eventType === "refund.processed" ? "processed"
-      : record.eventType === "refund.failed" ? "failed" : "pending";
-    if (refund.status !== "processed" && (nextStatus === "processed" || refund.status !== "failed")) {
+    const nextStatus = mapRefundWebhookStatus(record.eventType, record.gatewayStatus);
+    if (nextStatus === "unknown") {
+      await connection.commit();
+      return { matched: true, refundId: Number(refund.id), status: "awaiting_verified_status" };
+    }
+    const terminalStatuses = ["processed", "failed", "reversed"];
+    const finalWebhookEvent = ["refund.processed", "refund.failed", "refund.reversed"].includes(record.eventType);
+    const canApply = !terminalStatuses.includes(refund.status) || finalWebhookEvent;
+    if (canApply) {
       await connection.execute(
         `UPDATE razorpay_refund_records
          SET gateway_refund_id = COALESCE(gateway_refund_id, ?),
              status = ?, gateway_status = ?, error_message = NULL,
-             processed_at = CASE WHEN ? = 'processed' THEN UTC_TIMESTAMP(3) ELSE processed_at END,
+             processed_at = CASE WHEN ? = 'processed' THEN UTC_TIMESTAMP(3) ELSE NULL END,
              updated_at = UTC_TIMESTAMP(3)
          WHERE id = ?`,
         [record.gatewayRefundId, nextStatus, record.gatewayStatus, nextStatus, refund.id]
       );
     }
-    if (nextStatus === "processed") await refreshOrderRefundFlag(connection, refund.order_id);
+    if (["processed", "failed", "reversed"].includes(nextStatus)) {
+      await refreshOrderRefundFlag(connection, refund.order_id);
+    }
     await connection.commit();
     return { matched: true, refundId: Number(refund.id), status: nextStatus };
   } catch (error) {
@@ -82,24 +91,23 @@ export async function applyGatewayRefundEvent(record) {
 
 export async function refreshOrderRefundFlag(connection, orderId) {
   const [orders] = await connection.execute(
-    "SELECT id, order_number, order_status, refund_amount FROM orders WHERE id = ? FOR UPDATE",
+    "SELECT id, order_number, order_status, refund_amount, total FROM orders WHERE id = ? FOR UPDATE",
     [orderId]
   );
-  if (!orders.length || orders[0].refund_amount === null || orders[0].refund_amount === undefined) return;
+  if (!orders.length) return;
   const [rows] = await connection.execute(
     "SELECT COALESCE(SUM(amount_paise), 0) AS processed_paise FROM razorpay_refund_records WHERE order_id = ? AND status = 'processed'",
     [orderId]
   );
-  const targetPaise = Math.round(Number(orders[0].refund_amount) * 100);
-  if (Number(rows[0]?.processed_paise || 0) >= targetPaise) {
-    await connection.execute(
-      `UPDATE orders
-       SET refund_needed = 0,
-           cancelled_at = CASE WHEN order_status = 'needs_refund' THEN COALESCE(cancelled_at, UTC_TIMESTAMP(3)) ELSE cancelled_at END,
-           order_status = CASE WHEN order_status = 'needs_refund' THEN 'cancelled' ELSE order_status END,
-           updated_at = UTC_TIMESTAMP(3)
-       WHERE id = ?`,
-      [orderId]
-    );
-  }
+  const targetPaise = Math.round(Number(orders[0].refund_amount ?? orders[0].total) * 100);
+  const fullyRefunded = Number(rows[0]?.processed_paise || 0) >= targetPaise;
+  await connection.execute(
+    `UPDATE orders
+     SET refund_needed = ?,
+         cancelled_at = CASE WHEN ? = 0 AND order_status = 'needs_refund' THEN COALESCE(cancelled_at, UTC_TIMESTAMP(3)) ELSE cancelled_at END,
+         order_status = CASE WHEN ? = 0 AND order_status = 'needs_refund' THEN 'cancelled' ELSE order_status END,
+         updated_at = UTC_TIMESTAMP(3)
+     WHERE id = ?`,
+    [fullyRefunded ? 0 : 1, fullyRefunded ? 0 : 1, fullyRefunded ? 0 : 1, orderId]
+  );
 }
