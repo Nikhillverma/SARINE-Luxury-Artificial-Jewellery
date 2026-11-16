@@ -85,7 +85,7 @@ export const AdminInventoryPage: React.FC = () => {
       if (statusFilter !== 'all' && p.status !== statusFilter) {
         return false;
       }
-      if (stockFilter === 'low' && (p.stock <= 0 || p.stock > lowStockThreshold)) {
+      if (stockFilter === 'low' && (p.stock < 0 || p.stock > lowStockThreshold)) {
         return false;
       }
       if (stockFilter === 'out' && p.stock > 0) {
@@ -98,7 +98,7 @@ export const AdminInventoryPage: React.FC = () => {
     });
   }, [products, searchTerm, selectedCategory, statusFilter, stockFilter, lowStockThreshold]);
 
-  const lowStockCount = products.filter((p) => p.status === 'active' && p.stock > 0 && p.stock <= lowStockThreshold).length;
+  const lowStockCount = products.filter((p) => p.status === 'active' && p.stock >= 0 && p.stock <= lowStockThreshold).length;
   const outOfStockCount = products.filter((p) => p.status === 'active' && p.stock <= 0).length;
   const totalStockUnits = products.reduce((sum, p) => sum + (p.stock || 0), 0);
 
