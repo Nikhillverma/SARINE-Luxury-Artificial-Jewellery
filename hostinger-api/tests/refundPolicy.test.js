@@ -5,7 +5,8 @@ import {
   calculateRefundableBalance,
   buildRefundGatewayRequest,
   normalizeGatewayRefundStatus,
-  hasUnresolvedRefundRequest
+  hasUnresolvedRefundRequest,
+  mapRefundWebhookStatus
 } from "../refundPolicy.js";
 
 test("validates SARINE refund request and integer paise", () => {
@@ -48,4 +49,14 @@ test("blocks a second refund while the first request is submitting, unknown or p
   assert.equal(hasUnresolvedRefundRequest(["failed", "processed"]), false);
   assert.equal(hasUnresolvedRefundRequest([]), false);
   assert.equal(hasUnresolvedRefundRequest(null), false);
+});
+
+test("uses the actual gateway status for refund.processed webhooks", () => {
+  assert.equal(mapRefundWebhookStatus("refund.processed", "processed"), "processed");
+  assert.equal(mapRefundWebhookStatus("refund.processed", "failed"), "failed");
+  assert.equal(mapRefundWebhookStatus("refund.processed", "reversed"), "reversed");
+  assert.equal(mapRefundWebhookStatus("refund.processed", "created"), "unknown");
+  assert.equal(mapRefundWebhookStatus("refund.failed", "pending"), "failed");
+  assert.equal(mapRefundWebhookStatus("refund.reversed", "processed"), "reversed");
+  assert.equal(mapRefundWebhookStatus("refund.created", "processed"), "pending");
 });
