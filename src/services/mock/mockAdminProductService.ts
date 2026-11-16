@@ -4,7 +4,7 @@
  * from customer storefront views.
  */
 
-import { IAdminProductService, InventoryMovement, BulkProductUpdates, BulkProductUpdateResult } from '../interfaces';
+import { IAdminProductService, InventoryMovement, BulkProductUpdates, BulkProductUpdateResult, ProductVariantDraft, VariantInventoryMovement } from '../interfaces';
 import { Product } from '../../types/product';
 import { MockProductService } from './mockProductService';
 
