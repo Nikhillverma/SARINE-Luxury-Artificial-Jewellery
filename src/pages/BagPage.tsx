@@ -87,7 +87,7 @@ export const BagPage: React.FC = () => {
 
   const handleSaveToWishlist = (item: any) => {
     toggleWishlist(item.product);
-    removeItem(item.productId);
+    removeItem(item.productId, item.variantId);
   };
 
   const currentDiscount = activeCoupon ? activeCoupon.discount : 0;
@@ -194,12 +194,12 @@ export const BagPage: React.FC = () => {
                   {/* Line Items */}
                   <div className="divide-y divide-[#E7DCEB]">
                     {items.map((item) => {
-                      const maxStock = item.product.stock;
+                      const maxStock = item.variant?.stock ?? item.product.stock;
                       const isAtMax = item.quantity >= maxStock;
 
                       return (
                         <div
-                          key={item.productId}
+                          key={`${item.productId}-${item.variantId || 'default'}`}
                           className="p-4 sm:p-5 flex flex-col sm:grid sm:grid-cols-12 sm:items-center gap-4"
                         >
                           {/* Product Preview & Title (6 cols) */}
@@ -225,10 +225,11 @@ export const BagPage: React.FC = () => {
                                 <span className="text-[11px] text-[#6F6475] block mt-0.5 font-sans">
                                   SKU: {item.product.id.toUpperCase()}
                                 </span>
+                                {item.variant && <span className="text-[11px] text-[#563568] block mt-1">{item.variant.label} · SKU: {item.variant.sku}</span>}
                               </div>
                               <div className="flex items-center gap-3 mt-2">
                                 <button
-                                  onClick={() => removeItem(item.productId)}
+                                  onClick={() => removeItem(item.productId, item.variantId)}
                                   className="inline-flex items-center gap-1 text-xs text-[#DC2626] hover:underline cursor-pointer"
                                 >
                                   <Trash2 size={12} />
@@ -255,7 +256,7 @@ export const BagPage: React.FC = () => {
                           <div className="sm:col-span-2 flex flex-col items-start sm:items-center">
                             <div className="flex items-center border border-[#E7DCEB] bg-white rounded-xs">
                               <button
-                                onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                                onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variantId)}
                                 disabled={item.quantity <= 1}
                                 className="w-7 h-8 flex items-center justify-center text-xs text-[#302438] hover:bg-[#F7F0FA] disabled:opacity-30 transition-colors cursor-pointer"
                                 aria-label="Decrease quantity"
@@ -266,7 +267,7 @@ export const BagPage: React.FC = () => {
                                 {item.quantity}
                               </span>
                               <button
-                                onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                                onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variantId)}
                                 disabled={isAtMax}
                                 className="w-7 h-8 flex items-center justify-center text-xs text-[#302438] hover:bg-[#F7F0FA] disabled:opacity-30 transition-colors cursor-pointer"
                                 aria-label="Increase quantity"
