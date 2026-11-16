@@ -31,6 +31,7 @@ import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminProductsPage } from './pages/admin/AdminProductsPage';
+import { AdminProductPreviewPage } from './pages/admin/AdminProductPreviewPage';
 import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
 import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
 import { AdminCustomersPage } from './pages/admin/AdminCustomersPage';
@@ -97,6 +98,7 @@ function MainAppShell() {
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/admin/products" element={<AdminProductsPage />} />
+          <Route path="/admin/products/:id/preview" element={<AdminProductPreviewPage />} />
           <Route path="/admin/categories" element={<AdminCategoriesPage />} />
           <Route path="/admin/orders" element={<AdminOrdersPage />} />
           <Route path="/admin/inventory" element={<AdminInventoryPage />} />
