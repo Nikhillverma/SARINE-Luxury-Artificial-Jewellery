@@ -129,7 +129,7 @@ export const CuratedFavouritesManager: React.FC = () => {
                 {product ? <img src={product.images?.[0] || "/images/product-placeholder.png"} alt="" className="w-14 h-16 rounded-lg object-cover bg-[#F7F0FA]" /> : <div className="w-14 h-16 rounded-lg bg-gray-100" />}
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">{product?.name || "Product no longer found"}</p>
-                  <p className={available ? "text-xs text-green-700" : "text-xs text-amber-700"}>{available ? "₹" + product.price.toLocaleString("en-IN") + " · Stock: " + product.stock : product ? "Unavailable · " + product.status + ", stock " + product.stock : "Unavailable · product missing"}</p>
+                  <p className={available ? "text-xs text-green-700" : "text-xs text-amber-700"}>{available && product ? "₹" + product.price.toLocaleString("en-IN") + " · Stock: " + product.stock : product ? "Unavailable · " + product.status + ", stock " + product.stock : "Unavailable · product missing"}</p>
                 </div>
                 <div className="flex flex-col gap-1">
                   <button type="button" aria-label="Move product up" disabled={busy || index === 0} onClick={() => move(index, -1)} className="border rounded px-2 py-1 text-xs disabled:opacity-30">↑</button>
