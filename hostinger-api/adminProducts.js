@@ -6,6 +6,7 @@ import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger
 import { validateBulkProductRequest } from "./bulkProductPolicy.js";
 import { normalizeStringList, validateProductFields } from "./productPolicy.js";
 import { ensureProductVariantSchema, mapVariant, syncProductVariantStock } from "./productVariantSchema.js";
+import { isValidVariantSku } from "./productVariantPolicy.js";
 
 const router = Router();
 router.use(requireAdminAuth);
