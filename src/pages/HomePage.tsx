@@ -39,7 +39,6 @@ export const HOMEPAGE_IMAGES = {
   heroSlide3: '/images/hero-model-3.jpg',
   ourStory: '/images/our-story.jpg',
   editorialBanner: '/images/editorial-banner.jpg',
-  categoryBracelets: '/images/category-bracelets.jpg',
 };
 
 /* ==========================================================================
@@ -69,6 +68,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const [bestsellers, setBestsellers] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<boolean>(false);
 
   // Occasions curation
   const occasions = [
@@ -177,6 +177,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
     async function loadData() {
       setLoading(true);
+      setLoadError(false);
       try {
         const [cats, featured, newest] = await Promise.all([
           categoryService.getCategories({ activeOnly: true }),
@@ -215,6 +216,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         }
       } catch (err) {
         console.error('[HomePage] Error loading storefront collections:', err);
+        if (!isCancelled) setLoadError(true);
       } finally {
         if (!isCancelled) {
           setLoading(false);
@@ -404,13 +406,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
           {/* 5 Category Cards using plain CSS .category-grid */}
           <div className="category-grid">
-            {categories.slice(0, 5).map((cat) => {
-              const catImage =
-                cat.slug === 'bracelets' || cat.id === 'cat-bracelets'
-                  ? HOMEPAGE_IMAGES.categoryBracelets || cat.image
-                  : cat.image;
-
-              return (
+            {categories.slice(0, 5).map((cat) => (
                 <Link
                   key={cat.id}
                   to={`/shop?category=${cat.slug}`}
@@ -419,7 +415,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                   {/* Landscape image wrapper: aspect-[3/2] */}
                   <div className="aspect-[3/2] w-full overflow-hidden bg-[#F0E6F4] border border-[#E7DCEB] rounded-xs relative group-hover:border-[#B69ACF] transition-colors">
                     <img
-                      src={catImage}
+                      src={cat.image}
                       alt={cat.name}
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
@@ -437,8 +433,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                   </span>
                 </div>
               </Link>
-            );
-          })}
+            ))}
           </div>
         </div>
       </section>
@@ -489,7 +484,11 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
-          ) : null}
+          ) : (
+            <p className="col-span-full py-8 text-center text-xs text-[#6F6475]">
+              {loadError ? 'We could not load new arrivals right now. Please try again shortly.' : 'New arrivals are on their way. Please explore the full collection.'}
+            </p>
+          )}
         </div>
       </section>
 
@@ -540,7 +539,11 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
-          ) : null}
+          ) : (
+            <p className="col-span-full py-8 text-center text-xs text-[#6F6475]">
+              {loadError ? 'We could not load featured pieces right now. Please try again shortly.' : 'Featured pieces will be available soon. Please explore the full collection.'}
+            </p>
+          )}
         </div>
       </section>
 
