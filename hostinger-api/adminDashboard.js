@@ -68,7 +68,7 @@ router.get("/", async (_req, res, next) => {
            END) AS today_orders
          FROM orders o
          LEFT JOIN (${INITIAL_ORDER_HISTORY}) AS initial_history
-           ON initial_history.order_id = o.id
+           ON initial_history.order_id COLLATE utf8mb4_unicode_ci = o.id COLLATE utf8mb4_unicode_ci
          WHERE o.is_test = 0`
       ),
       pool.execute(
@@ -79,7 +79,7 @@ router.get("/", async (_req, res, next) => {
            SUM(CASE WHEN status = 'archived' THEN 1 ELSE 0 END) AS archived_products,
            SUM(CASE WHEN status = 'active' AND stock <= COALESCE(alert.threshold, ?) THEN 1 ELSE 0 END) AS low_stock_products
          FROM products p
-         LEFT JOIN product_inventory_alert_settings alert ON alert.product_id = p.id`,
+         LEFT JOIN product_inventory_alert_settings alert ON alert.product_id COLLATE utf8mb4_unicode_ci = p.id COLLATE utf8mb4_unicode_ci`,
         [lowStockThreshold]
       ),
       pool.execute(
