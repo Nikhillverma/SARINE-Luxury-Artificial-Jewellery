@@ -33,7 +33,7 @@ test("extracts only payment and refund identifiers from a verified envelope", ()
   assert.deepEqual(record, {
     eventId: "evt_123456", eventType: "payment.captured",
     gatewayOrderId: "order_123456", gatewayPaymentId: "pay_123456",
-    gatewayRefundId: null, amountPaise: 125000, currency: "INR",
+    gatewayRefundId: null, gatewayReceipt: null, amountPaise: 125000, currency: "INR",
     gatewayStatus: "captured"
   });
 });
