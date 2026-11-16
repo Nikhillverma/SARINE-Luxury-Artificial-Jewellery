@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
+import { ensurePaymentEventLogTable } from "./paymentEventPolicy.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -47,6 +48,7 @@ function mapReturn(row) {
 router.get("/", async (req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
+    await ensurePaymentEventLogTable();
     const search = typeof req.query.search === "string" ? req.query.search.trim().slice(0, 120) : "";
     const status = typeof req.query.status === "string" ? req.query.status.trim() : "all";
     const type = typeof req.query.type === "string" ? req.query.type.trim() : "all";
@@ -88,10 +90,12 @@ router.get("/", async (req, res, next) => {
               o.total, o.refund_amount, o.refund_needed, o.order_status,
               o.payment_method, o.payment_status, o.razorpay_payment_id,
               o.created_at, o.cancelled_at, o.cancellation_reason,
-              (SELECT COUNT(*) FROM payment_events pe WHERE pe.order_id = o.id) AS payment_event_count,
-              (SELECT pe.event_type FROM payment_events pe WHERE pe.order_id = o.id
+              (SELECT COUNT(*) FROM payment_event_log pe WHERE pe.order_id = o.id) AS payment_event_count,
+              (SELECT pe.event_type FROM payment_event_log pe WHERE pe.order_id = o.id
                ORDER BY pe.created_at DESC, pe.id DESC LIMIT 1) AS latest_payment_event,
-              (SELECT pe.created_at FROM payment_events pe WHERE pe.order_id = o.id
+              (SELECT pe.event_status FROM payment_event_log pe WHERE pe.order_id = o.id
+               ORDER BY pe.created_at DESC, pe.id DESC LIMIT 1) AS latest_payment_event_status,
+              (SELECT pe.created_at FROM payment_event_log pe WHERE pe.order_id = o.id
                ORDER BY pe.created_at DESC, pe.id DESC LIMIT 1) AS latest_payment_event_at
        FROM orders o
        WHERE ${refundConditions.join(" AND ")}
@@ -115,6 +119,7 @@ router.get("/", async (req, res, next) => {
         cancelledAt: toIso(row.cancelled_at),
         paymentEventCount: Number(row.payment_event_count) || 0,
         latestPaymentEvent: row.latest_payment_event || null,
+        latestPaymentEventStatus: row.latest_payment_event_status || null,
         latestPaymentEventAt: toIso(row.latest_payment_event_at)
       }))
     });

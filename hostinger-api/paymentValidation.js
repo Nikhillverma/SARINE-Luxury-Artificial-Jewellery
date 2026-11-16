@@ -7,3 +7,10 @@ export function matchesOrderRazorpayId(order, submittedRazorpayOrderId, gatewayR
     && storedId === submittedId
     && storedId === gatewayId);
 }
+
+export function classifyCapturedPayment(order, paymentId) {
+  if (order?.payment_status !== "paid") return "first_capture";
+  return order?.razorpay_payment_id === paymentId
+    ? "same_payment_replay"
+    : "additional_capture";
+}
