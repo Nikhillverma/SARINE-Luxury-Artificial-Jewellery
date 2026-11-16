@@ -1,5 +1,11 @@
-export function formatVariantLabel(option1Value, option2Value) {
-  return [option1Value, option2Value].filter(value => typeof value === "string" && value.trim()).map(value => value.trim()).join(" / ");
+export function formatVariantLabel(option1Name, option1Value, option2Name, option2Value) {
+  const first = typeof option1Value === "string" && option1Value.trim()
+    ? (option1Name ? `${option1Name.trim()}: ${option1Value.trim()}` : option1Value.trim())
+    : "";
+  const second = typeof option2Value === "string" && option2Value.trim()
+    ? (option2Name ? `${option2Name.trim()}: ${option2Value.trim()}` : option2Value.trim())
+    : "";
+  return [first, second].filter(Boolean).join(" / ");
 }
 
 export function isValidVariantSku(value) {
