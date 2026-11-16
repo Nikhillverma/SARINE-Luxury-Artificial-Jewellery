@@ -41,6 +41,10 @@ interface OrderLine {
   image?: string;
   quantity: number;
   unitPrice: number;
+  sku?: string;
+  variantId?: string;
+  variantLabel?: string;
+  variantOptions?: Record<string, string>;
 }
 
 interface AdminOrder {
