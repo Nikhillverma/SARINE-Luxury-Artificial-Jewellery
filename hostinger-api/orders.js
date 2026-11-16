@@ -6,6 +6,7 @@ import { pool } from "./db.js";
 import { getAuthenticatedCustomer } from "./customerAuth.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
+import { validateVariantSelection, getVariantStockKey } from "./productVariantPolicy.js";
 
 const router = Router();
 
