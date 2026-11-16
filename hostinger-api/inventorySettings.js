@@ -47,15 +47,6 @@ export async function getProductLowStockThresholds() {
   return Object.fromEntries(rows.map(row => [String(row.product_id), Number(row.threshold)]));
 }
 
-export async function getEffectiveLowStockThreshold(productId, fallback) {
-  await ensureSettingsTables();
-  const [rows] = await pool.execute(
-    "SELECT threshold FROM product_inventory_alert_settings WHERE product_id = ? LIMIT 1",
-    [productId]
-  );
-  return rows.length ? Number(rows[0].threshold) : fallback;
-}
-
 router.get("/", async (_req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
