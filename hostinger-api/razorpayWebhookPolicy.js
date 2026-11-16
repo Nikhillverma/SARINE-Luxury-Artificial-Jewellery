@@ -4,27 +4,38 @@ let schemaPromise;
 export async function ensureRazorpayWebhookSchema() {
   const { pool } = await import("./db.js");
   if (!schemaPromise) {
-    schemaPromise = pool.query(`
-      CREATE TABLE IF NOT EXISTS razorpay_webhook_events (
-        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        event_id VARCHAR(128) NOT NULL,
-        event_type VARCHAR(80) NOT NULL,
-        gateway_order_id VARCHAR(64) NULL,
-        gateway_payment_id VARCHAR(64) NULL,
-        gateway_refund_id VARCHAR(64) NULL,
-        gateway_receipt VARCHAR(100) NULL,
-        amount_paise BIGINT UNSIGNED NULL,
-        currency CHAR(3) NULL,
-        gateway_status VARCHAR(40) NULL,
-        event_status VARCHAR(40) NOT NULL DEFAULT 'received',
-        received_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-        processed_at DATETIME(3) NULL,
-        UNIQUE KEY uq_razorpay_webhook_event (event_id),
-        KEY idx_razorpay_webhook_payment (gateway_payment_id, received_at),
-        KEY idx_razorpay_webhook_order (gateway_order_id, received_at),
-        KEY idx_razorpay_webhook_status (event_status, received_at)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `).catch(error => {
+    schemaPromise = (async () => {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS razorpay_webhook_events (
+          id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+          event_id VARCHAR(128) NOT NULL,
+          event_type VARCHAR(80) NOT NULL,
+          gateway_order_id VARCHAR(64) NULL,
+          gateway_payment_id VARCHAR(64) NULL,
+          gateway_refund_id VARCHAR(64) NULL,
+          gateway_receipt VARCHAR(100) NULL,
+          amount_paise BIGINT UNSIGNED NULL,
+          currency CHAR(3) NULL,
+          gateway_status VARCHAR(40) NULL,
+          event_status VARCHAR(40) NOT NULL DEFAULT 'received',
+          received_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          processed_at DATETIME(3) NULL,
+          UNIQUE KEY uq_razorpay_webhook_event (event_id),
+          KEY idx_razorpay_webhook_payment (gateway_payment_id, received_at),
+          KEY idx_razorpay_webhook_order (gateway_order_id, received_at),
+          KEY idx_razorpay_webhook_status (event_status, received_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      const [columns] = await pool.execute(
+        `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'razorpay_webhook_events'
+           AND COLUMN_NAME = 'gateway_receipt'`
+      );
+      if (!columns.length) {
+        await pool.query("ALTER TABLE razorpay_webhook_events ADD COLUMN gateway_receipt VARCHAR(100) NULL AFTER gateway_refund_id");
+      }
+    })().catch(error => {
       schemaPromise = undefined;
       throw error;
     });
