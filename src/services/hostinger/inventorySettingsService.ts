@@ -1,11 +1,12 @@
 export interface InventoryAlertSettings {
   threshold: number;
+  productThresholds: Record<string, number>;
 }
 
 const API_BASE = (
   import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
   (import.meta.env.DEV ? '/api' : 'https://lavender-goldfish-844589.hostingersite.com/api')
-).replace(/\/+$/, '');
+).replace(/\\/+$/, '');
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(API_BASE + path, {
@@ -25,6 +26,12 @@ export const inventorySettingsService = {
   },
   async save(threshold: number): Promise<InventoryAlertSettings> {
     return request<InventoryAlertSettings>('/admin/inventory-settings', {
+      method: 'PUT',
+      body: JSON.stringify({ threshold })
+    });
+  },
+  async saveProductThreshold(productId: string, threshold: number | null): Promise<{ productId: string; threshold: number | null; usesGlobalDefault: boolean }> {
+    return request('/admin/inventory-settings/product/' + encodeURIComponent(productId), {
       method: 'PUT',
       body: JSON.stringify({ threshold })
     });
