@@ -112,7 +112,7 @@ router.post("/", async (req, res, next) => {
     if (!initialRows.length) return res.status(404).json({ error: "SARINE order not found." });
     const initialOrder = initialRows[0];
     if (initialOrder.payment_method !== "online" || initialOrder.payment_status !== "paid" ||
-        !(initialOrder.refund_needed || initialOrder.order_status === "needs_refund" || initialOrder.order_status === "cancelled")) {
+        !(initialOrder.refund_needed || initialOrder.order_status === "needs_refund")) {
       return res.status(400).json({ error: "This order is not eligible for a Razorpay refund." });
     }
     if (!initialOrder.razorpay_order_id) return res.status(400).json({ error: "The order has no stored Razorpay order reference." });
@@ -137,7 +137,7 @@ router.post("/", async (req, res, next) => {
     if (!orderRows.length) throw new Error("SARINE order no longer exists.");
     const order = orderRows[0];
     if (order.payment_status !== "paid" || order.payment_method !== "online" ||
-        !(order.refund_needed || order.order_status === "needs_refund" || order.order_status === "cancelled")) {
+        !(order.refund_needed || order.order_status === "needs_refund")) {
       throw new Error("Order refund eligibility changed. Refresh the queue and review it again.");
     }
 
@@ -158,6 +158,21 @@ router.post("/", async (req, res, next) => {
        WHERE gateway_payment_id = ?`,
       [request.paymentId]
     );
+    const [orderBalanceRows] = await connection.execute(
+      `SELECT
+         COALESCE(SUM(CASE WHEN status = 'processed' THEN amount_paise ELSE 0 END), 0) AS processed_paise,
+         COALESCE(SUM(CASE WHEN status IN ('submitting', 'unknown', 'pending') THEN amount_paise ELSE 0 END), 0) AS reserved_paise
+       FROM razorpay_refund_records
+       WHERE order_id = ?`,
+      [String(order.id)]
+    );
+    const orderRefundTargetPaise = Math.round(Number(order.refund_amount ?? order.total) * 100);
+    const orderRefundedPaise = Number(orderBalanceRows[0]?.processed_paise || 0);
+    const orderReservedPaise = Number(orderBalanceRows[0]?.reserved_paise || 0);
+    const orderRefundBalancePaise = Math.max(0, orderRefundTargetPaise - orderRefundedPaise - orderReservedPaise);
+    if (request.amountPaise > orderRefundBalancePaise) {
+      throw new Error(`Refund exceeds the remaining SARINE order refund balance of ₹${(orderRefundBalancePaise / 100).toFixed(2)}.`);
+    }
     const processedPaise = Number(balanceRows[0]?.processed_paise || 0);
     const reservedPaise = Number(balanceRows[0]?.reserved_paise || 0);
     const refundablePaise = calculateRefundableBalance(
