@@ -33,9 +33,21 @@ export const hostingerAdminReturnsService = {
     if (search.trim()) params.set('search', search.trim());
     return request<{ returns: AdminReturnRequest[]; refundRequests: AdminRefundRequest[] }>('?' + params.toString());
   },
+  getWebhookEvents() {
+    return request<{ events: AdminWebhookEvent[] }>('/webhook-events?limit=100');
+  },
   updateReturn(id: number, status: ReturnStatus, resolutionNotes: string) {
     return request<{ success: boolean; id: number; status: ReturnStatus; resolutionNotes: string }>('/' + id, {
       method: 'PUT', body: JSON.stringify({ status, resolutionNotes })
     });
   }
 };
+
+export interface AdminWebhookEvent {
+  id: number; eventId: string; eventType: string; gatewayOrderId: string | null;
+  gatewayPaymentId: string | null; gatewayRefundId: string | null;
+  amountPaise: number | null; currency: string | null; gatewayStatus: string | null;
+  eventStatus: string; receivedAt: string | null; orderNumber: string | null;
+  orderPaymentStatus: string | null; orderStatus: string | null;
+  reconciliationStatus: string;
+}
