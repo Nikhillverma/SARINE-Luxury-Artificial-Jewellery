@@ -91,15 +91,15 @@ export async function applyGatewayRefundEvent(record) {
 
 export async function refreshOrderRefundFlag(connection, orderId) {
   const [orders] = await connection.execute(
-    "SELECT id, order_number, order_status, refund_amount FROM orders WHERE id = ? FOR UPDATE",
+    "SELECT id, order_number, order_status, refund_amount, total FROM orders WHERE id = ? FOR UPDATE",
     [orderId]
   );
-  if (!orders.length || orders[0].refund_amount === null || orders[0].refund_amount === undefined) return;
+  if (!orders.length) return;
   const [rows] = await connection.execute(
     "SELECT COALESCE(SUM(amount_paise), 0) AS processed_paise FROM razorpay_refund_records WHERE order_id = ? AND status = 'processed'",
     [orderId]
   );
-  const targetPaise = Math.round(Number(orders[0].refund_amount) * 100);
+  const targetPaise = Math.round(Number(orders[0].refund_amount ?? orders[0].total) * 100);
   const fullyRefunded = Number(rows[0]?.processed_paise || 0) >= targetPaise;
   await connection.execute(
     `UPDATE orders
