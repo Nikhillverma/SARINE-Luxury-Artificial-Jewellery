@@ -39,6 +39,7 @@ router.get("/", async (_req, res, next) => {
     const [orderRows, productRows, recentRows, lowStockRows] = await Promise.all([
       pool.execute(
         `SELECT
+           (SELECT COUNT(*) FROM orders WHERE is_test = 1) AS test_orders,
            COUNT(*) AS orders,
            SUM(CASE WHEN o.order_status IN ('pending', 'awaiting_payment') THEN 1 ELSE 0 END) AS pending_orders,
            SUM(CASE WHEN o.order_status IN ('placed', 'confirmed', 'processing') THEN 1 ELSE 0 END) AS processing_orders,
@@ -124,7 +125,8 @@ router.get("/", async (_req, res, next) => {
         activeProducts: Number(productMetrics.active_products) || 0,
         draftProducts: Number(productMetrics.draft_products) || 0,
         archivedProducts: Number(productMetrics.archived_products) || 0,
-        lowStockProducts: Number(productMetrics.low_stock_products) || 0
+        lowStockProducts: Number(productMetrics.low_stock_products) || 0,
+        testOrders: Number(orderMetrics.test_orders) || 0
       },
       recentOrders: recentRows[0].map(row => ({
         orderNumber: row.order_number,
