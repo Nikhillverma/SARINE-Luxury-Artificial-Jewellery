@@ -5,8 +5,8 @@ import { requireAdminAuth } from "./adminAuth.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 import { validateBulkProductRequest } from "./bulkProductPolicy.js";
 import { normalizeStringList, validateProductFields } from "./productPolicy.js";
-import { ensureProductVariantSchema, mapVariant, syncProductVariantStock } from "./productVariantSchema.js";
-import { isValidVariantSku } from "./productVariantPolicy.js";
+import { ensureProductVariantSchema, mapVariant, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
+import { isValidVariantSku, formatVariantLabel } from "./productVariantPolicy.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -333,6 +333,23 @@ router.put("/:id/variants", async (req, res, next) => {
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
           [item.id, req.params.id, item.option1Name, item.option1Value, item.option2Name, item.option2Value, item.sku, item.price, item.compareAtPrice, item.stock, item.status, item.sortOrder]
         );
+        // New variant opening balances must be visible in the variant movement ledger.
+        if (item.stock > 0) {
+          await recordVariantInventoryMovement(connection, {
+            variantId: item.id,
+            productId: req.params.id,
+            productName: product.name,
+            variantSku: item.sku,
+            variantLabel: formatVariantLabel(item.option1Name, item.option1Value, item.option2Name, item.option2Value),
+            previousStock: 0,
+            quantityDelta: item.stock,
+            newStock: item.stock,
+            reason: "Initial variant stock",
+            adminId: req.admin?.id || "admin",
+            adminName: req.admin?.name || req.admin?.email || "Atelier admin",
+            adminEmail: req.admin?.email || "admin"
+          });
+        }
       } else {
         await connection.execute(
           `UPDATE product_variants SET option1_name=?, option1_value=?, option2_name=?, option2_value=?,
