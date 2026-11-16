@@ -839,7 +839,10 @@ router.get("/:orderNumber", async (req, res, next) => {
         unitPrice: Number(row.unit_price),
         quantity: Number(row.quantity),
         image: row.image || "",
-        sku: row.sku || undefined
+        sku: row.variant_sku || row.sku || undefined,
+        variantId: row.variant_id || undefined,
+        variantLabel: row.variant_label || undefined,
+        variantOptions: typeof row.variant_options === "string" ? JSON.parse(row.variant_options) : (row.variant_options || undefined)
       })),
       subtotal: Number(order.subtotal),
       shippingFee: Number(order.shipping_fee),
