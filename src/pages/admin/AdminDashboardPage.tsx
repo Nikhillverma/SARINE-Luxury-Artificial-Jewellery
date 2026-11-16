@@ -52,6 +52,8 @@ interface LowStockProduct {
   name: string;
   stock: number;
   images: string[];
+  alertThreshold: number;
+  hasCustomThreshold: boolean;
 }
 
 interface DashboardResponse {
@@ -145,7 +147,7 @@ export const AdminDashboardPage: React.FC = () => {
   const cards = [
     { label: 'Paid Revenue', value: formatInr(metrics.paidRevenue), note: `${formatInr(metrics.todayRevenue)} today`, icon: IndianRupee },
     { label: 'Total Orders', value: metrics.orders.toLocaleString('en-IN'), note: `${metrics.todayOrders} today`, icon: ShoppingBag },
-    { label: 'Low Stock Alerts', value: metrics.lowStockProducts.toLocaleString('en-IN'), note: `${data?.lowStockThreshold ?? 5} or fewer units`, icon: AlertTriangle }
+    { label: 'Low Stock Alerts', value: metrics.lowStockProducts.toLocaleString('en-IN'), note: `Global default ${data?.lowStockThreshold ?? 5}; product overrides apply`, icon: AlertTriangle }
   ];
 
   const orderStatuses = [
@@ -263,7 +265,7 @@ export const AdminDashboardPage: React.FC = () => {
                       <p className="text-xs text-[#302438] font-medium truncate">{product.name}</p>
                       <p className="text-[10px] text-[#8B7598] truncate">{product.slug}</p>
                     </div>
-                    <span className="text-xs font-semibold text-amber-700 whitespace-nowrap">{product.stock} left</span>
+                    <div className="text-right shrink-0"><span className="block text-xs font-semibold text-amber-700 whitespace-nowrap">{product.stock} left</span><span className="block text-[10px] text-[#8B7598]">Alert ≤ {product.alertThreshold}{product.hasCustomThreshold ? ' · custom' : ' · default'}</span></div>
                   </div>
                 ))}
                 <Link to="/admin/products" className="inline-block text-[11px] font-semibold text-[#704A83] hover:underline pt-2">Manage products</Link>
