@@ -50,3 +50,11 @@ export function hasUnresolvedRefundRequest(statuses) {
     ["submitting", "unknown", "pending"].includes(String(status))
   );
 }
+
+export function mapRefundWebhookStatus(eventType, gatewayStatus) {
+  if (eventType === "refund.failed") return "failed";
+  if (eventType === "refund.reversed") return "reversed";
+  if (eventType === "refund.created") return "pending";
+  if (eventType === "refund.processed") return normalizeGatewayRefundStatus(gatewayStatus);
+  return "unknown";
+}
