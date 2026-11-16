@@ -664,7 +664,7 @@ router.post("/verify", async (req, res, next) => {
     for (const item of aggregatedItems.values()) {
       if (item.variantId) {
         const [variantRows] = await connection.execute(
-          `SELECT v.id, v.product_id, v.sku, v.option1_value, v.option2_value, v.stock, p.name
+          `SELECT v.id, v.product_id, v.sku, v.option1_name, v.option1_value, v.option2_name, v.option2_value, v.stock, p.name
            FROM product_variants v INNER JOIN products p ON p.id = v.product_id
            WHERE v.id = ? AND v.product_id = ? FOR UPDATE`,
           [item.variantId, item.productId]
