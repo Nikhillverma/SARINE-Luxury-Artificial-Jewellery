@@ -8,7 +8,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { productService, categoryService } from '../services';
-import { Product, ProductVariant, isInStock, JEWELLERY_TYPE_LABELS } from '../types/product';
+import { Product, isInStock, JEWELLERY_TYPE_LABELS } from '../types/product';
 import { Category } from '../types/category';
 import { formatInr } from '../utils/currency';
 import { ProductCard } from '../components/ProductCard';
