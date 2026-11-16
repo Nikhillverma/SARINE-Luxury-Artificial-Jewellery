@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DEFAULT_HOMEPAGE_LAYOUT, validateHomepageLayout } from "../homepageLayout.js";
+import { DEFAULT_HOMEPAGE_LAYOUT, validateHomepageLayout } from "../homepageLayoutPolicy.js";
 
 test("default homepage layout contains each supported section once in order", () => {
   const layout = validateHomepageLayout(DEFAULT_HOMEPAGE_LAYOUT);
