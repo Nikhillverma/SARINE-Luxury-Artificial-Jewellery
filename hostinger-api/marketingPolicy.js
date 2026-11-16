@@ -166,3 +166,29 @@ export async function confirmCouponRedemption(connection, orderNumber) {
     [orderNumber]
   );
 }
+
+
+/**
+ * Release coupon usage in the caller's transaction when an order is cancelled.
+ * Row locking makes the operation idempotent under concurrent requests.
+ */
+export async function releaseCouponRedemptionForCancelledOrder(connection, orderNumber) {
+  const [rows] = await connection.execute(
+    "SELECT coupon_id, status FROM marketing_coupon_redemptions WHERE order_number = ? FOR UPDATE",
+    [orderNumber]
+  );
+  const redemption = rows[0];
+  if (!redemption || !["reserved", "redeemed"].includes(redemption.status)) {
+    return { released: false, status: redemption?.status || "missing" };
+  }
+
+  await connection.execute(
+    "UPDATE marketing_coupon_redemptions SET status = 'released' WHERE order_number = ? AND status IN ('reserved','redeemed')",
+    [orderNumber]
+  );
+  await connection.execute(
+    "UPDATE marketing_coupons SET used_count = GREATEST(0, used_count - 1) WHERE id = ?",
+    [redemption.coupon_id]
+  );
+  return { released: true, previousStatus: redemption.status };
+}
