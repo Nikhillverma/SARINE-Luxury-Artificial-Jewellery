@@ -4,6 +4,7 @@ import { requireAdminAuth } from "./adminAuth.js";
 import { ensurePaymentEventLogTable } from "./paymentEventPolicy.js";
 import { ensureRazorpayWebhookSchema } from "./razorpayWebhookPolicy.js";
 import { ensureRefundLedgerSchema } from "./refundLedger.js";
+import { classifyWebhookReconciliation } from "./webhookReconciliationPolicy.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -211,20 +212,16 @@ router.get("/webhook-events", async (req, res, next) => {
       [limit]
     );
     const events = rows.map(row => {
-      let reconciliationStatus = "event_logged";
-      if (row.event_type === "payment.captured") {
-        if (!row.order_number) reconciliationStatus = "unmatched_order";
-        else if (Number(row.amount_paise) !== Number(row.razorpay_amount_paise || Math.round(Number(row.total) * 100))) reconciliationStatus = "amount_mismatch";
-        else if (row.payment_status !== "paid" || !row.ledger_payment_id) reconciliationStatus = "gateway_capture_not_reconciled";
-        else if (row.razorpay_payment_id !== row.gateway_payment_id) reconciliationStatus = "additional_capture_review";
-        else reconciliationStatus = "matched";
-      } else if (row.event_type.startsWith("refund.")) {
-        reconciliationStatus = row.refund_record_status
-          ? `refund_${row.refund_record_status}`
-          : row.order_number ? "refund_event_needs_ledger_match" : "unmatched_refund";
-      } else if (row.event_type === "payment.failed") {
-        reconciliationStatus = row.order_number ? "payment_failed_event" : "unmatched_order";
-      }
+      const reconciliationStatus = classifyWebhookReconciliation({
+        eventType: row.event_type,
+        orderFound: Boolean(row.order_number),
+        amountMatches: Number(row.amount_paise) === Number(row.razorpay_amount_paise || Math.round(Number(row.total) * 100)),
+        orderPaymentStatus: row.payment_status,
+        orderPaymentId: row.razorpay_payment_id,
+        gatewayPaymentId: row.gateway_payment_id,
+        paymentLedgerFound: Boolean(row.ledger_payment_id),
+        refundRecordStatus: row.refund_record_status
+      });
       return {
         id: Number(row.id), eventId: row.event_id, eventType: row.event_type,
         gatewayOrderId: row.gateway_order_id, gatewayPaymentId: row.gateway_payment_id,
