@@ -246,7 +246,7 @@ router.put("/:id/variants", async (req, res, next) => {
         return res.status(400).json({ error: "Variant status must be active or inactive." });
       }
       const status = item.status === "inactive" ? "inactive" : "active";
-      if (!option1Name || !option1Value || !/^[A-Z0-9][A-Z0-9._-]{1,99}$/.test(sku)) {
+      if (!option1Name || !option1Value || !isValidVariantSku(sku)) {
         await connection.rollback();
         return res.status(400).json({ error: "Every variant needs an option name, option value and unique SKU (2–100 letters, numbers, dots, underscores or hyphens)." });
       }
