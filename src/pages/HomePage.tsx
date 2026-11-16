@@ -17,7 +17,7 @@ import { Product } from '../types/product';
 import { Category } from '../types/category';
 import { ProductCard } from '../components/ProductCard';
 import { formatInr } from '../utils/currency';
-import { hostingerStorefrontService, type EditorialContent } from '../services/hostinger/hostingerStorefrontService';
+import { hostingerStorefrontService, type EditorialContent, type HomepageLayout } from '../services/hostinger/hostingerStorefrontService';
 import {
   ArrowRight,
   ChevronLeft,
@@ -62,7 +62,25 @@ interface HomePageProps {
   includeAll: boolean;
 }
 
+const defaultHomepageLayout: HomepageLayout = {
+  version: 1,
+  sections: ["categories", "new-arrivals", "best-sellers", "occasions", "price", "our-story", "editorial"]
+    .map((id, sortOrder) => ({ id, enabled: true, sortOrder }))
+};
+
 export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
+  const [homepageLayout, setHomepageLayout] = useState<HomepageLayout>(defaultHomepageLayout);
+  const sectionConfig = (id: string) => homepageLayout.sections.find(section => section.id === id);
+  const sectionVisible = (id: string) => sectionConfig(id)?.enabled ?? true;
+  const sectionOrder = (id: string) => (sectionConfig(id)?.sortOrder ?? defaultHomepageLayout.sections.find(section => section.id === id)?.sortOrder ?? 0) + 1;
+
+  useEffect(() => {
+    let cancelled = false;
+    hostingerStorefrontService.getPublicHomepageLayout()
+      .then(result => { if (!cancelled && result.layout?.sections?.length) setHomepageLayout(result.layout); })
+      .catch(error => console.warn('[HomePage] Published section layout unavailable; using the default order.', error));
+    return () => { cancelled = true; };
+  }, []);
   // Storefront Data
   const [categories, setCategories] = useState<Category[]>([]);
   const [bestsellers, setBestsellers] = useState<Product[]>([]);
@@ -280,7 +298,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const currentHero = heroSlides[activeSlide];
 
   return (
-    <div className="w-full bg-[#F7F0FA] text-[#302438] font-sans selection:bg-[#B69ACF]/30 selection:text-[#302438]">
+    <div className="w-full bg-[#F7F0FA] text-[#302438] font-sans selection:bg-[#B69ACF]/30 selection:text-[#302438]" style={{ display: "flex", flexDirection: "column" }}>
       {/* =========================================================================
           3. HERO SLIDER
           Fixed responsive height: h-[420px] md:h-[520px] lg:h-[600px]
@@ -289,7 +307,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Text in centered container (max-w-[1280px]) with soft lavender gradient overlay
           Slide indicators bottom-left, arrow buttons bottom-right inside container
           ========================================================================= */}
-      <section className="relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[#F0E6F4] border-b border-[#E7DCEB]">
+      <section style={{ order: 0 }} className="relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[#F0E6F4] border-b border-[#E7DCEB]">
         {/* Stacked background slide images */}
         {heroSlides.map((slide, idx) => (
           <div
@@ -385,7 +403,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Category images: aspect-[3/2] object-cover
           Consistent vertical spacing: py-12 sm:py-16 lg:py-20
           ========================================================================= */}
-      <section id="categories" className="w-full py-12 sm:py-16 lg:py-20">
+      <section id="categories" style={{ order: sectionOrder("categories"), display: sectionVisible("categories") ? undefined : "none" }} className="w-full py-12 sm:py-16 lg:py-20">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-8 sm:mb-10">
@@ -445,7 +463,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 newest products (sorted by createdAt descending, else the last 4 in the list),
           same product card as Best Sellers, "View All" linking to /shop?sort=newest
           ========================================================================= */}
-      <section className="py-12 sm:py-16 lg:py-20 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("new-arrivals"), display: sectionVisible("new-arrivals") ? undefined : "none" }} className="py-12 sm:py-16 lg:py-20 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-8 sm:mb-10">
@@ -503,7 +521,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Arrows: absolute inside relative wrapper, never pushing or overflowing
           Consistent vertical spacing: py-12 sm:py-16 lg:py-20
           ========================================================================= */}
-      <section className="py-12 sm:py-16 lg:py-20 border-t border-[#E7DCEB] bg-[#F7F0FA]">
+      <section style={{ order: sectionOrder("best-sellers"), display: sectionVisible("best-sellers") ? undefined : "none" }} className="py-12 sm:py-16 lg:py-20 border-t border-[#E7DCEB] bg-[#F7F0FA]">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-8 sm:mb-10">
@@ -556,7 +574,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 cards: Daily Wear, Festive, Wedding, Gifting
           Using existing product images, linking to /shop with filter queries
           ========================================================================= */}
-      <section className="py-12 sm:py-16 lg:py-20 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") ? undefined : "none" }} className="py-12 sm:py-16 lg:py-20 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
           <div className="w-full text-center mb-8 sm:mb-10">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
@@ -608,7 +626,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 pill buttons: Under ₹999, ₹1,000 to ₹1,999, ₹2,000 and above, All pieces
           Linking to /shop with price presets
           ========================================================================= */}
-      <section className="py-12 sm:py-16 border-t border-[#E7DCEB] bg-[#F7F0FA]">
+      <section style={{ order: sectionOrder("price"), display: sectionVisible("price") ? undefined : "none" }} className="py-12 sm:py-16 border-t border-[#E7DCEB] bg-[#F7F0FA]">
         <div className="site-container">
           <div className="w-full text-center mb-8">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
@@ -657,7 +675,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Centered container mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10
           Consistent vertical spacing: py-12 sm:py-16 lg:py-20
           ========================================================================= */}
-      <section className="bg-[#F0E6F4] border-y border-[#E7DCEB] py-12 sm:py-16 lg:py-20">
+      <section style={{ order: sectionOrder("our-story"), display: sectionVisible("our-story") ? undefined : "none" }} className="bg-[#F0E6F4] border-y border-[#E7DCEB] py-12 sm:py-16 lg:py-20">
         <div className="site-container">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
             {/* Left: Large Jewellery Photo */}
@@ -757,7 +775,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           7. EDITORIAL BANNER
           ========================================================================= */}
       {editorial.active && (
-        <section className="relative overflow-hidden bg-[#EBDFF2] border-b border-[#E7DCEB]">
+        <section style={{ order: sectionOrder("editorial"), display: sectionVisible("editorial") ? undefined : "none" }} className="relative overflow-hidden bg-[#EBDFF2] border-b border-[#E7DCEB]">
           <img src={editorial.imageUrl || HOMEPAGE_IMAGES.editorialBanner} alt={editorial.title} className="absolute inset-0 w-full h-full object-cover object-center" />
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#F0E6F4]/75 to-[#F0E6F4]/95 sm:via-[#F0E6F4]/80 sm:to-[#F0E6F4]/95" />
           <div className="site-container min-h-[320px] sm:min-h-[380px] lg:min-h-[420px] flex items-center justify-end relative z-10">
@@ -774,7 +792,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           8. JEWELLERY CARE & PRESERVATION GUIDE
           ========================================================================= */}
-      <section className="py-14 sm:py-20 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: 100 }} className="py-14 sm:py-20 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
           <div className="max-w-[720px] mx-auto text-center mb-10">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
@@ -827,7 +845,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           9. STAY IN TOUCH
           ========================================================================= */}
-      <section className="py-14 sm:py-20 lg:py-24 bg-[#F7F0FA]">
+      <section style={{ order: 101 }} className="py-14 sm:py-20 lg:py-24 bg-[#F7F0FA]">
         <div className="site-container">
           <div className="max-w-[620px] mx-auto text-center">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">

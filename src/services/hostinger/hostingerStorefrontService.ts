@@ -4,6 +4,16 @@ const API_BASE = (
   (import.meta.env.DEV ? "/api" : "https://lavender-goldfish-844589.hostingersite.com/api")
 ).replace(/\/+$/, "");
 
+export interface HomepageSectionConfig {
+  id: string;
+  enabled: boolean;
+  sortOrder: number;
+}
+export interface HomepageLayout {
+  version: 1;
+  sections: HomepageSectionConfig[];
+}
+
 export interface StorefrontBanner {
   id: string;
   tagline: string;
@@ -28,6 +38,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export const hostingerStorefrontService = {
+  getHomepageLayout: () => request<{ draft: HomepageLayout; published: HomepageLayout }>("/admin/homepage-layout"),
+  getPublicHomepageLayout: () => request<{ layout: HomepageLayout }>("/homepage-layout"),
+  saveHomepageLayout: (layout: HomepageLayout) =>
+    request<{ success: boolean; draft: HomepageLayout }>("/admin/homepage-layout/draft", { method: "PUT", body: JSON.stringify(layout) }),
+  publishHomepageLayout: () =>
+    request<{ success: boolean; published: HomepageLayout }>("/admin/homepage-layout/publish", { method: "POST" }),
   getBanners: () => request<{ banners: StorefrontBanner[] }>("/admin/storefront/banners"),
   getPublicBanners: () => request<{ banners: StorefrontBanner[] }>("/storefront/banners"),
   createBanner: (banner: Omit<StorefrontBanner, "id" | "sortOrder">) =>
