@@ -50,6 +50,11 @@ export async function applyGatewayRefundEvent(record) {
       return { matched: false };
     }
     const refund = rows[0];
+    if (refund.gateway_payment_id !== record.gatewayPaymentId ||
+        Number(refund.amount_paise) !== Number(record.amountPaise)) {
+      await connection.rollback();
+      return { matched: false, mismatch: true };
+    }
     const nextStatus = record.eventType === "refund.processed" ? "processed"
       : record.eventType === "refund.failed" ? "failed" : "pending";
     if (refund.status !== "processed" && refund.status !== "failed") {
@@ -90,7 +95,8 @@ export async function refreshOrderRefundFlag(connection, orderId) {
       `UPDATE orders
        SET refund_needed = 0,
            order_status = CASE WHEN order_status = 'needs_refund' THEN 'cancelled' ELSE order_status END,
-           cancelled_at = CASE WHEN order_status = 'needs_refund' AND cancelled_at IS NULL THEN UTC_TIMESTAMP(3) ELSE cancelled_at END,
+           cancelled_at = CASE WHEN order_status = 'needs_refund' THEN COALESCE(cancelled_at, UTC_TIMESTAMP(3)) ELSE cancelled_at END,
+           order_status = CASE WHEN order_status = 'needs_refund' THEN 'cancelled' ELSE order_status END,
            updated_at = UTC_TIMESTAMP(3)
        WHERE id = ?`,
       [orderId]
