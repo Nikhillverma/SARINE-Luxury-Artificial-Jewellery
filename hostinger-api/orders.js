@@ -15,7 +15,7 @@ import { calculateShippingFee, getCheckoutConfig } from "./checkoutPolicy.js";
 import { buildOrderInsert } from "./orderInsertPolicy.js";
 import { matchesOrderRazorpayId, classifyCapturedPayment } from "./paymentValidation.js";
 import { ensurePaymentEventLogTable, recordVerifiedPaymentEvent } from "./paymentEventPolicy.js";
-import { ensureMarketingSchema, lockAndValidateCoupon, reserveCouponRedemption, releaseCouponReservation, confirmCouponRedemption } from "./marketingPolicy.js";
+import { ensureMarketingSchema, lockAndValidateCoupon, reserveCouponRedemption, releaseCouponReservation, confirmCouponRedemption, releaseCouponRedemptionForCancelledOrder } from "./marketingPolicy.js";
 
 function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -836,6 +836,11 @@ router.post("/verify", async (req, res, next) => {
         eventType: "payment_captured",
         eventStatus: "stock_conflict_refund_required"
       });
+      // A stock-conflict refund will not enter the normal cancellation action.
+      // Release its coupon reservation in this same transaction.
+      if (order.coupon_code) {
+        await releaseCouponRedemptionForCancelledOrder(connection, order.id);
+      }
       await connection.commit();
       connection.release();
       connection = null;
