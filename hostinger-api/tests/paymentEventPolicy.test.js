@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildPaymentEventRecord, recordVerifiedPaymentEvent } from "../paymentEventPolicy.js";
+
+process.env.DB_HOST ||= "127.0.0.1";
+process.env.DB_NAME ||= "sarine_test";
+process.env.DB_USER ||= "sarine_test";
+process.env.DB_PASSWORD ||= "test-only";
+
+const { buildPaymentEventRecord, recordVerifiedPaymentEvent } = await import("../paymentEventPolicy.js");
 
 const event = {
   orderId: "order-row-1",
