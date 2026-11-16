@@ -36,13 +36,16 @@ router.get("/movements", async (_req, res, next) => {
 router.get("/variants/movements", async (_req, res, next) => {
   try {
     await ensureProductVariantSchema();
+    const productId = String(_req.query?.productId || "").trim();
+    const where = productId ? "WHERE product_id = ?" : "";
     const [rows] = await pool.execute(
       `SELECT id, variant_id AS variantId, product_id AS productId, product_name AS productName,
               variant_sku AS variantSku, variant_label AS variantLabel, admin_name AS adminName,
               admin_email AS adminEmail, previous_stock AS previousStock,
               quantity_delta AS quantityDelta, new_stock AS newStock, reason, created_at AS createdAt
-       FROM variant_inventory_movements
-       ORDER BY created_at DESC, id DESC LIMIT 100`
+       FROM variant_inventory_movements ${where}
+       ORDER BY created_at DESC, id DESC LIMIT 100`,
+      productId ? [productId] : []
     );
     res.set("Cache-Control", "no-store");
     res.json({ movements: rows });
