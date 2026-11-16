@@ -917,6 +917,7 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
       return res.status(404).json({ error: GENERIC_NOT_FOUND });
     }
 
+    await ensureProductVariantSchema();
     const [items] = await pool.execute(
       `SELECT product_name, quantity, image, unit_price, variant_sku, variant_label, variant_options
        FROM order_items
