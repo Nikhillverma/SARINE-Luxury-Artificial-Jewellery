@@ -230,7 +230,8 @@ router.post("/", async (req, res, next) => {
       await connection.rollback();
       connection.release();
     }
-    const status = /required|valid|eligible|captured|belong|balance|recorded|changed|exceeds|not found/i.test(error.message) ? 400 : 500;
+    const status = /already awaiting gateway confirmation/i.test(error.message) ? 409
+      : /required|valid|eligible|captured|belong|balance|recorded|changed|exceeds|not found/i.test(error.message) ? 400 : 500;
     return res.status(status).json({ error: error.message || "Refund request could not be completed." });
   }
 });
