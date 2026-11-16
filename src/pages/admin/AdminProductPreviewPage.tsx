@@ -7,7 +7,7 @@ import { formatInr } from '../../utils/currency';
 import { ArrowLeft, Eye, ShieldCheck, ShoppingBag, Package, AlertCircle } from 'lucide-react';
 
 // Normalize option-label capitalization for display only; stored variant data remains unchanged.
-const formatVariantLabel = (label: string): string => label.replace(/\\b[a-z]/g, character => character.toUpperCase());
+const formatVariantLabel = (label: string): string => label.replace(/\b[a-z]/g, character => character.toUpperCase());
 
 export const AdminProductPreviewPage: React.FC = () => {
   const { id = '' } = useParams<{ id: string }>();
