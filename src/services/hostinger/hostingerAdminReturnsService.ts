@@ -42,7 +42,7 @@ async function refundRequest<T>(path: string, init: RequestInit = {}): Promise<T
     headers: { Accept: 'application/json', ...(init.body ? { 'Content-Type': 'application/json' } : {}), ...init.headers }
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok && response.status !== 202) throw new Error(typeof data.error === 'string' ? data.error : typeof data.message === 'string' ? data.message : 'Refund request could not be completed.');
+  if (!response.ok && response.status !== 202 && !(response.status === 502 && data.status === 'failed')) throw new Error(typeof data.error === 'string' ? data.error : typeof data.message === 'string' ? data.message : 'Refund request could not be completed.');
   return data as T;
 }
 export const hostingerAdminReturnsService = {
