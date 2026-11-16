@@ -11,6 +11,7 @@ import { validateVariantSelection, getVariantStockKey, formatVariantLabel } from
 const router = Router();
 
 import { calculateShippingFee, getCheckoutConfig } from "./checkoutPolicy.js";
+import { buildOrderInsert } from "./orderInsertPolicy.js";
 import { ensureMarketingSchema, lockAndValidateCoupon, reserveCouponRedemption, releaseCouponReservation, confirmCouponRedemption } from "./marketingPolicy.js";
 
 function hashToken(token) {
@@ -333,28 +334,22 @@ router.post("/create", async (req, res, next) => {
         }
       }
 
-      await connection.execute(
-        `INSERT INTO orders (
-           id, order_number, customer_id, customer_name, customer_email, customer_phone,
-           shipping_address, subtotal, shipping_fee, total, coupon_code, discount_amount, payment_method,
-           payment_status, order_status, public_token_hash, source_document, created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cod', 'pending', 'placed', ?, 'web_checkout', UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
-        [
-          orderNumber,
-          orderNumber,
-          customerId,
-          String(customerName).trim(),
-          String(customerEmail).trim().toLowerCase(),
-          cleanCustomerPhone,
-          serializedShippingAddress,
-          calculatedSubtotal,
-          shippingFee,
-          total,
-          coupon?.code || null,
-          discountAmount,
-          publicTokenHash
-        ]
-      );
+      const orderInsert = buildOrderInsert({
+        paymentMethod,
+        orderNumber,
+        customerId,
+        customerName: String(customerName).trim(),
+        customerEmail: String(customerEmail).trim().toLowerCase(),
+        customerPhone: cleanCustomerPhone,
+        shippingAddress: serializedShippingAddress,
+        subtotal: calculatedSubtotal,
+        shippingFee,
+        total,
+        couponCode: coupon?.code || null,
+        discountAmount,
+        publicTokenHash
+      });
+      await connection.execute(orderInsert.sql, orderInsert.values);
 
       for (const line of verifiedLines) {
         await connection.execute(
@@ -388,26 +383,22 @@ router.post("/create", async (req, res, next) => {
       });
     } else {
       // Prepaid (Online): Create order in awaiting_payment state WITHOUT deducting stock
-      await connection.execute(
-        `INSERT INTO orders (
-           id, order_number, customer_id, customer_name, customer_email, customer_phone,
-           shipping_address, subtotal, shipping_fee, total, coupon_code, discount_amount, payment_method,
-           payment_status, order_status, public_token_hash, source_document, created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'online', 'pending', 'awaiting_payment', ?, 'web_checkout', UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
-        [
-          orderNumber,
-          orderNumber,
-          customerId,
-          String(customerName).trim(),
-          String(customerEmail).trim().toLowerCase(),
-          cleanCustomerPhone,
-          serializedShippingAddress,
-          calculatedSubtotal,
-          shippingFee,
-          total,
-          publicTokenHash
-        ]
-      );
+      const orderInsert = buildOrderInsert({
+        paymentMethod,
+        orderNumber,
+        customerId,
+        customerName: String(customerName).trim(),
+        customerEmail: String(customerEmail).trim().toLowerCase(),
+        customerPhone: cleanCustomerPhone,
+        shippingAddress: serializedShippingAddress,
+        subtotal: calculatedSubtotal,
+        shippingFee,
+        total,
+        couponCode: coupon?.code || null,
+        discountAmount,
+        publicTokenHash
+      });
+      await connection.execute(orderInsert.sql, orderInsert.values);
 
       for (const line of verifiedLines) {
         await connection.execute(
