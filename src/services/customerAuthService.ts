@@ -1,6 +1,7 @@
 import type { CustomerIdentity } from "../types/customer";
 
 type CustomerRecord = Omit<CustomerIdentity, "displayName" | "uid">;
+type AuthResult = { customer: CustomerRecord; created?: boolean };
 const mapCustomer = (customer: CustomerRecord): CustomerIdentity => ({
   ...customer,
   uid: customer.id,
@@ -38,15 +39,36 @@ export const customerAuthService = {
     }
   },
   async login(email: string, password: string): Promise<CustomerIdentity> {
-    const result = await request<{ customer: CustomerRecord }>("login", {
-      method: "POST", body: JSON.stringify({ email, password })
-    });
+    const result = await request<AuthResult>("login", { method: "POST", body: JSON.stringify({ email, password }) });
     return mapCustomer(result.customer);
   },
   async register(name: string, email: string, password: string): Promise<CustomerIdentity> {
-    const result = await request<{ customer: CustomerRecord }>("register", {
-      method: "POST", body: JSON.stringify({ name, email, password })
+    const result = await request<AuthResult>("register", { method: "POST", body: JSON.stringify({ name, email, password }) });
+    return mapCustomer(result.customer);
+  },
+  async requestOtp(method: "email" | "phone", identifier: string): Promise<{ challengeId: string; expiresInSeconds: number; resendAfterSeconds: number }> {
+    return request("otp/request", { method: "POST", body: JSON.stringify({ method, identifier }) });
+  },
+  async verifyOtp(challengeId: string, otp: string, name?: string): Promise<{ customer: CustomerIdentity; created: boolean }> {
+    const result = await request<AuthResult & { created?: boolean }>("otp/verify", {
+      method: "POST", body: JSON.stringify({ challengeId, otp, name })
     });
+    return { customer: mapCustomer(result.customer), created: Boolean(result.created) };
+  },
+  async requestPasswordRecovery(method: "email" | "phone", identifier: string): Promise<void> {
+    await request("password/forgot/request", { method: "POST", body: JSON.stringify({ method, identifier }) });
+  },
+  async verifyPasswordRecovery(challengeId: string, otp: string): Promise<string> {
+    const result = await request<{ resetToken: string }>("password/forgot/verify", {
+      method: "POST", body: JSON.stringify({ challengeId, otp })
+    });
+    return result.resetToken;
+  },
+  async resetPassword(resetToken: string, password: string): Promise<void> {
+    await request("password/forgot/reset", { method: "POST", body: JSON.stringify({ resetToken, password }) });
+  },
+  async loginWithGoogle(credential: string): Promise<CustomerIdentity> {
+    const result = await request<AuthResult>("google", { method: "POST", body: JSON.stringify({ credential }) });
     return mapCustomer(result.customer);
   },
   async logout(): Promise<void> {
