@@ -116,9 +116,9 @@ export async function getRazorpayWebhookEventStatus(eventId) {
   return rows[0]?.event_status || null;
 }
 
-export async function markRazorpayWebhookEventStatus(eventId, status) {
-  const { pool } = await import("./db.js");
-  await pool.execute(
+export async function markRazorpayWebhookEventStatus(eventId, status, connection = null) {
+  const executor = connection || (await import("./db.js")).pool;
+  await executor.execute(
     "UPDATE razorpay_webhook_events SET event_status = ?, processed_at = UTC_TIMESTAMP(3) WHERE event_id = ?",
     [status, eventId]
   );
