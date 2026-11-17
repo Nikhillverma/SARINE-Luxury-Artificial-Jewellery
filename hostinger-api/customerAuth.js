@@ -5,11 +5,12 @@ import rateLimit from "express-rate-limit";
 import { pool } from "./db.js";
 import { shouldUseSecureSessionCookie } from "./sessionCookiePolicy.js";
 import { normalizeCustomerEmail } from "./customerValidation.js";
-import { shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
+import { canCancelOrder, shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
 import { formatVariantLabel } from "./productVariantPolicy.js";
 import { sortStockItems } from "./stockLockPolicy.js";
+import { ensureMarketingSchema, releaseCouponRedemptionForCancelledOrder } from "./marketingPolicy.js";
 
 const router = Router();
 const COOKIE_NAME = "sarine_customer_session";
@@ -196,6 +197,7 @@ router.post("/cancel", async (req, res, next) => {
 
     await ensureInventoryTable();
     await ensureProductVariantSchema();
+    await ensureMarketingSchema();
     connection = await pool.getConnection();
     await connection.beginTransaction();
     const [rows] = await connection.execute(
@@ -215,13 +217,19 @@ router.post("/cancel", async (req, res, next) => {
       await connection.rollback();
       return res.status(400).json({ error: "This order is already cancelled." });
     }
-    if (!["pending", "placed", "confirmed", "awaiting_payment", "processing"].includes(order.order_status)) {
+    if (!canCancelOrder(order)) {
       await connection.rollback();
       return res.status(400).json({ error: "This order cannot be cancelled in its current status." });
     }
 
     const isPaid = order.payment_status === "paid";
     const stockWasDecremented = shouldRestoreStockOnCancellation(order);
+
+    // Release reserved or redeemed coupon capacity in the same transaction
+    // as cancellation, matching the admin cancellation path.
+    if (order.coupon_code) {
+      await releaseCouponRedemptionForCancelledOrder(connection, order.order_number);
+    }
     if (stockWasDecremented) {
       const [lines] = await connection.execute(
         `SELECT product_id, variant_id, SUM(quantity) AS quantity

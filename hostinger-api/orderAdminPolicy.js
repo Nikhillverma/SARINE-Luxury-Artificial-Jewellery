@@ -16,6 +16,10 @@ export function canShipOrder(order) {
   return order.payment_status === "paid" || order.payment_method === "cod";
 }
 
+export function canCancelOrder(order) {
+  return Boolean(order && ["pending", "placed", "confirmed", "awaiting_payment", "processing"].includes(order.order_status));
+}
+
 export function shouldRestoreStockOnCancellation(order) {
   if (!order || order.refund_needed || order.order_status === "needs_refund") {
     return false;

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
-import { canShipOrder, shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
+import { canCancelOrder, canShipOrder, shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
 import { formatVariantLabel } from "./productVariantPolicy.js";
@@ -281,7 +281,10 @@ router.post("/update", async (req, res, next) => {
 
     const cleanOrderNumber = orderNumber.trim();
     const adminEmail = req.admin?.email || "admin";
-    if (action === "cancel") await ensureInventoryTable();
+    if (action === "cancel") {
+      await ensureInventoryTable();
+      await ensureMarketingSchema();
+    }
 
     connection = await pool.getConnection();
     await connection.beginTransaction();
@@ -481,7 +484,7 @@ router.post("/update", async (req, res, next) => {
         return res.status(400).json({ error: "Order is already cancelled." });
       }
 
-      if (!["pending", "placed", "confirmed", "awaiting_payment"].includes(currentStatus)) {
+      if (!canCancelOrder(order)) {
         await connection.rollback();
         connection.release();
         connection = null;
@@ -575,8 +578,7 @@ router.post("/update", async (req, res, next) => {
 
       // Release coupon capacity atomically with cancellation for reserved and redeemed uses.
       if (order.coupon_code) {
-        await ensureMarketingSchema();
-        await releaseCouponRedemptionForCancelledOrder(connection, order.id);
+        await releaseCouponRedemptionForCancelledOrder(connection, order.order_number);
       }
 
       const reason = cancellationReason || (typeof note === "string" ? note : "Cancelled by atelier admin");
