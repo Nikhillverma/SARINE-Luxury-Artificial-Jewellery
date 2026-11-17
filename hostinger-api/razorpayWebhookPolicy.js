@@ -49,6 +49,7 @@ export async function ensureRazorpayWebhookSchema() {
          WHERE TABLE_SCHEMA = DATABASE()
            AND TABLE_NAME = 'orders'
            AND COLUMN_NAME = 'razorpay_order_id'
+           AND SEQ_IN_INDEX = 1
          LIMIT 1`
       );
       if (!orderIdIndexes.length) {
