@@ -1,0 +1,225 @@
+import { Router } from "express";
+import bcrypt from "bcryptjs";
+import crypto from "node:crypto";
+import rateLimit from "express-rate-limit";
+import { pool } from "./db.js";
+import { shouldUseSecureSessionCookie } from "./sessionCookiePolicy.js";
+import { normalizeCustomerEmail } from "./customerValidation.js";
+import { normalizePhone, createOtp, hashOtp, safeOtpEqual, ensureCustomerOtpSchema, deliverCustomerOtp, CUSTOMER_OTP_POLICY } from "./customerOtpService.js";
+
+const router = Router();
+const COOKIE_NAME = "sarine_customer_session";
+const SESSION_DAYS = 30;
+const requestLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 5, standardHeaders: "draft-8", legacyHeaders: false });
+const verifyLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 15, standardHeaders: "draft-8", legacyHeaders: false });
+
+function hashToken(token) { return crypto.createHash("sha256").update(token).digest("hex"); }
+function setSessionCookie(res, token) {
+  res.cookie(COOKIE_NAME, token, { httpOnly: true, secure: shouldUseSecureSessionCookie(), sameSite: "lax", path: "/api", maxAge: SESSION_DAYS * 86400000 });
+}
+function safeCustomer(row) { return { id: row.id, name: row.name, email: row.email || "", phone: row.phone || "" }; }
+async function createSession(customerId, res) {
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + SESSION_DAYS * 86400000);
+  await pool.execute("INSERT INTO customer_sessions (id, customer_id, expires_at) VALUES (?, ?, ?)", [hashToken(token), customerId, expiresAt]);
+  setSessionCookie(res, token);
+}
+function resolveIdentifier(method, value) {
+  if (method === "email") return normalizeCustomerEmail(value);
+  if (method === "phone") return normalizePhone(value);
+  return "";
+}
+async function findCustomer(method, identifier, connection = pool) {
+  const column = method === "email" ? "email_normalized" : "phone_normalized";
+  const [rows] = await connection.execute(`SELECT id, name, email, phone, status FROM customers WHERE ${column} = ? LIMIT 1`, [identifier]);
+  return rows[0] || null;
+}
+async function createChallenge(method, identifier, purpose) {
+  const [recent] = await pool.execute(
+    "SELECT created_at FROM customer_auth_challenges WHERE identifier = ? AND purpose = ? ORDER BY created_at DESC LIMIT 1",
+    [identifier, purpose]
+  );
+  if (recent.length) {
+    const elapsed = (Date.now() - new Date(recent[0].created_at).getTime()) / 1000;
+    if (elapsed < CUSTOMER_OTP_POLICY.resendCooldownSeconds) {
+      return { cooldown: Math.ceil(CUSTOMER_OTP_POLICY.resendCooldownSeconds - elapsed) };
+    }
+  }
+  const otp = createOtp();
+  const id = crypto.randomUUID();
+  await pool.execute(
+    "UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE identifier = ? AND purpose = ? AND consumed_at IS NULL",
+    [identifier, purpose]
+  );
+  await pool.execute(
+    "INSERT INTO customer_auth_challenges (id, identifier, method, purpose, otp_hash, expires_at) VALUES (?, ?, ?, ?, ?, DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 5 MINUTE))",
+    [id, identifier, method, purpose, hashOtp(id, otp)]
+  );
+  try {
+    await deliverCustomerOtp(method, identifier, otp, purpose);
+  } catch (error) {
+    await pool.execute("UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE id = ?", [id]);
+    throw error;
+  }
+  return { sent: true, challengeId: id };
+}
+
+router.post("/otp/request", requestLimiter, async (req, res, next) => {
+  try {
+    res.set("Cache-Control", "no-store");
+    await ensureCustomerOtpSchema();
+    const method = String(req.body?.method || "").toLowerCase();
+    const identifier = resolveIdentifier(method, req.body?.identifier);
+    if (!identifier) return res.status(400).json({ error: method === "phone" ? "Enter a valid 10-digit Indian mobile number." : "Enter a valid email address." });
+    const result = await createChallenge(method, identifier, "login");
+    if (result.cooldown) return res.status(429).json({ error: `Please wait ${result.cooldown} seconds before requesting another code.`, retryAfterSeconds: result.cooldown });
+    return res.json({ success: true, challengeId: result.challengeId, expiresInSeconds: 300, resendAfterSeconds: CUSTOMER_OTP_POLICY.resendCooldownSeconds });
+  } catch (error) { return next(error); }
+});
+
+router.post("/otp/verify", verifyLimiter, async (req, res, next) => {
+  let connection;
+  try {
+    res.set("Cache-Control", "no-store");
+    await ensureCustomerOtpSchema();
+    const challengeId = String(req.body?.challengeId || "");
+    const otp = String(req.body?.otp || "");
+    const name = String(req.body?.name || "").trim();
+    if (!/^[0-9a-f-]{36}$/i.test(challengeId) || !/^\d{6}$/.test(otp)) return res.status(400).json({ error: "Enter the six-digit verification code." });
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const [challenges] = await connection.execute(
+      "SELECT * FROM customer_auth_challenges WHERE id = ? AND purpose = 'login' AND consumed_at IS NULL AND expires_at > UTC_TIMESTAMP(3) FOR UPDATE",
+      [challengeId]
+    );
+    if (!challenges.length) {
+      await connection.rollback();
+      return res.status(400).json({ error: "This code has expired or is no longer valid. Request a new code." });
+    }
+    const challenge = challenges[0];
+    if (Number(challenge.attempts) >= CUSTOMER_OTP_POLICY.maxAttempts) {
+      await connection.execute("UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE id = ?", [challengeId]);
+      await connection.commit();
+      return res.status(429).json({ error: "Too many incorrect codes. Request a new one." });
+    }
+    if (!safeOtpEqual(challenge.otp_hash, hashOtp(challengeId, otp))) {
+      await connection.execute("UPDATE customer_auth_challenges SET attempts = attempts + 1 WHERE id = ?", [challengeId]);
+      await connection.commit();
+      return res.status(400).json({ error: "The verification code is incorrect." });
+    }
+    let customer = await findCustomer(challenge.method, challenge.identifier, connection);
+    if (customer && customer.status !== "active") {
+      await connection.rollback();
+      return res.status(403).json({ error: "This account is not currently available. Please contact SARINE support." });
+    }
+    if (!customer) {
+      if (name.length < 2 || name.length > 120) {
+        await connection.rollback();
+        return res.status(422).json({ error: "Please enter your full name to create your SARINE account.", requiresName: true });
+      }
+      const id = crypto.randomUUID();
+      const email = challenge.method === "email" ? challenge.identifier : null;
+      const phone = challenge.method === "phone" ? challenge.identifier : null;
+      await connection.execute(
+        `INSERT INTO customers
+         (id, email, email_normalized, phone, phone_normalized, name, password_hash, password_salt, password_scheme, status, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NULL, 'active', UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
+        [id, email, email, phone, phone, name]
+      );
+      customer = { id, name, email: email || "", phone: phone || "", status: "active" };
+    }
+    await connection.execute("UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE id = ?", [challengeId]);
+    await connection.execute("UPDATE customers SET last_login_at = UTC_TIMESTAMP(3) WHERE id = ?", [customer.id]);
+    await connection.commit();
+    await createSession(customer.id, res);
+    return res.json({ success: true, customer: safeCustomer(customer), created: !customer.email && !customer.phone ? true : false });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    if (error?.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "This contact is already linked to another customer account. Please sign in using that account." });
+    return next(error);
+  } finally { connection?.release(); }
+});
+
+router.post("/password/forgot/request", requestLimiter, async (req, res, next) => {
+  try {
+    res.set("Cache-Control", "no-store");
+    await ensureCustomerOtpSchema();
+    const method = String(req.body?.method || "").toLowerCase();
+    const identifier = resolveIdentifier(method, req.body?.identifier);
+    if (!identifier) return res.status(400).json({ error: "Enter a valid registered email address or mobile number." });
+    const customer = await findCustomer(method, identifier);
+    if (customer?.status === "active") {
+      const result = await createChallenge(method, identifier, "password_reset");
+      if (result.cooldown) return res.status(429).json({ error: `Please wait ${result.cooldown} seconds before requesting another code.`, retryAfterSeconds: result.cooldown });
+    }
+    return res.json({ success: true, message: "If an account matches those details, a verification code has been sent." });
+  } catch (error) { return next(error); }
+});
+
+router.post("/password/forgot/verify", verifyLimiter, async (req, res, next) => {
+  let connection;
+  try {
+    res.set("Cache-Control", "no-store");
+    await ensureCustomerOtpSchema();
+    const challengeId = String(req.body?.challengeId || "");
+    const otp = String(req.body?.otp || "");
+    if (!/^[0-9a-f-]{36}$/i.test(challengeId) || !/^\d{6}$/.test(otp)) return res.status(400).json({ error: "Enter the six-digit verification code." });
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const [rows] = await connection.execute(
+      "SELECT * FROM customer_auth_challenges WHERE id = ? AND purpose = 'password_reset' AND consumed_at IS NULL AND expires_at > UTC_TIMESTAMP(3) FOR UPDATE",
+      [challengeId]
+    );
+    const challenge = rows[0];
+    if (!challenge || Number(challenge.attempts) >= CUSTOMER_OTP_POLICY.maxAttempts || !safeOtpEqual(challenge.otp_hash, hashOtp(challengeId, otp))) {
+      if (challenge) await connection.execute("UPDATE customer_auth_challenges SET attempts = attempts + 1 WHERE id = ?", [challengeId]);
+      await connection.commit();
+      return res.status(400).json({ error: "The verification code is invalid or expired. Request a new one." });
+    }
+    const customer = await findCustomer(challenge.method, challenge.identifier, connection);
+    if (!customer || customer.status !== "active") {
+      await connection.execute("UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE id = ?", [challengeId]);
+      await connection.commit();
+      return res.status(400).json({ error: "The verification code is invalid or expired. Request a new one." });
+    }
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    await connection.execute("INSERT INTO customer_password_resets (token_hash, customer_id, expires_at) VALUES (?, ?, DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 10 MINUTE))", [hashToken(resetToken), customer.id]);
+    await connection.execute("UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE id = ?", [challengeId]);
+    await connection.commit();
+    return res.json({ success: true, resetToken, expiresInSeconds: 600 });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    return next(error);
+  } finally { connection?.release(); }
+});
+
+router.post("/password/forgot/reset", requestLimiter, async (req, res, next) => {
+  let connection;
+  try {
+    res.set("Cache-Control", "no-store");
+    await ensureCustomerOtpSchema();
+    const token = String(req.body?.resetToken || "");
+    const password = String(req.body?.password || "");
+    if (!/^[a-f0-9]{64}$/i.test(token) || password.length < 8 || password.length > 128) return res.status(400).json({ error: "Use a valid recovery link and a password of at least 8 characters." });
+    const salt = await bcrypt.genSalt(12);
+    const passwordHash = await bcrypt.hash(password, salt);
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const [rows] = await connection.execute("SELECT customer_id FROM customer_password_resets WHERE token_hash = ? AND used_at IS NULL AND expires_at > UTC_TIMESTAMP(3) FOR UPDATE", [hashToken(token)]);
+    if (!rows.length) {
+      await connection.rollback();
+      return res.status(400).json({ error: "This password recovery session has expired. Please request a new code." });
+    }
+    const customerId = rows[0].customer_id;
+    await connection.execute("UPDATE customers SET password_hash = ?, password_salt = ?, password_scheme = 'bcrypt', updated_at = UTC_TIMESTAMP(3) WHERE id = ?", [passwordHash, salt, customerId]);
+    await connection.execute("UPDATE customer_password_resets SET used_at = UTC_TIMESTAMP(3) WHERE token_hash = ?", [hashToken(token)]);
+    await connection.execute("DELETE FROM customer_sessions WHERE customer_id = ?", [customerId]);
+    await connection.commit();
+    return res.json({ success: true, message: "Your password has been updated. Please sign in again." });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    return next(error);
+  } finally { connection?.release(); }
+});
+
+export default router;
