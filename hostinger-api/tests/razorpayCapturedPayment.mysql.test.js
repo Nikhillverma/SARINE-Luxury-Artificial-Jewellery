@@ -172,7 +172,7 @@ test("MariaDB serializes simultaneous captures so shared settlement deducts stoc
       }
     };
 
-    const [first, second, browserResult] = await Promise.all([
+    const [first, second, duplicateDelivery, browserResult] = await Promise.all([
       processCapturedPaymentWebhook({
         record: { ...baseRecord, eventId: "evt_db_a" },
         eventId: "evt_db_a",
@@ -182,6 +182,11 @@ test("MariaDB serializes simultaneous captures so shared settlement deducts stoc
         record: { ...baseRecord, eventId: "evt_db_b" },
         eventId: "evt_db_b",
         inserted: true
+      }, dependencies),
+      processCapturedPaymentWebhook({
+        record: { ...baseRecord, eventId: "evt_db_a" },
+        eventId: "evt_db_a",
+        inserted: false
       }, dependencies),
       browserVerification()
     ]);
@@ -197,6 +202,7 @@ test("MariaDB serializes simultaneous captures so shared settlement deducts stoc
 
     assert.equal(first.status, 200);
     assert.equal(second.status, 200);
+    assert.equal(duplicateDelivery.status, 200);
     assert.ok(browserResult.success || browserResult.alreadyProcessed);
     assert.equal(orders[0].payment_status, "paid");
     assert.equal(orders[0].order_status, "confirmed");
