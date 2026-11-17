@@ -248,3 +248,40 @@ test("concurrent captured webhooks for one payment deduct stock only once", asyn
   assert.equal(shared.eventStatuses.length, 2);
   assert.ok(shared.eventStatuses.every(event => event.status === "processed"));
 });
+
+
+test("SARINE order amount mismatch is marked for review without settlement", async () => {
+  const { calls, deps, connection } = setup();
+  connection.execute = async () => [[{ ...order, total: "11.00" }]];
+  const result = await processCapturedPaymentWebhook({ record, eventId: record.eventId, inserted: true }, deps);
+
+  assert.equal(result.body.needsReview, true);
+  assert.equal(result.body.reason, "sarine_order_mismatch");
+  assert.equal(calls.settled, 0);
+  assert.equal(calls.marked[0].status, "needs_review");
+  assert.equal(calls.marked[0].transactional, true);
+  assert.equal(calls.committed, 1);
+});
+
+test("unmatched SARINE order is recorded for manual review", async () => {
+  const { calls, deps, connection } = setup();
+  connection.execute = async () => [[]];
+  const result = await processCapturedPaymentWebhook({ record, eventId: record.eventId, inserted: true }, deps);
+
+  assert.equal(result.body.needsReview, true);
+  assert.equal(result.body.reason, "sarine_order_not_found");
+  assert.equal(calls.settled, 0);
+  assert.equal(calls.marked[0].status, "needs_review");
+  assert.equal(calls.committed, 1);
+});
+
+test("additional captured payment is committed to manual refund review", async () => {
+  const { calls, deps } = setup({
+    settleCapturedPayment: async () => ({ success: false, needsRefund: true, additionalPaymentCaptured: true })
+  });
+  const result = await processCapturedPaymentWebhook({ record, eventId: record.eventId, inserted: true }, deps);
+
+  assert.equal(result.body.paymentSettlement, "needs_review");
+  assert.equal(calls.marked[0].status, "needs_review");
+  assert.equal(calls.committed, 1);
+});
