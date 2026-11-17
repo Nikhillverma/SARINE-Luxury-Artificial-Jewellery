@@ -39,6 +39,7 @@ jobs:
       DB_NAME: sarine_test
       DB_USER: root
       DB_PASSWORD: sarine-test
+      SARINE_ALLOW_DESTRUCTIVE_TEST_DB: "true"
     defaults:
       run:
         working-directory: hostinger-api

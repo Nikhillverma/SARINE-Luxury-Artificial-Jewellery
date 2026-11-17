@@ -3,10 +3,13 @@ import assert from "node:assert/strict";
 import { processCapturedPaymentWebhook } from "../razorpayCapturedPayment.js";
 import { settleCapturedPayment } from "../paymentSettlement.js";
 import { classifyCapturedPayment } from "../paymentValidation.js";
+import { assertSafeTestDatabase } from "../testDatabaseSafety.js";
 
 test("MariaDB serializes simultaneous captures so shared settlement deducts stock once", {
   skip: !process.env.DB_HOST
 }, async () => {
+  // Refuse destructive DDL unless this is an explicitly opted-in local test database.
+  assertSafeTestDatabase();
   const { pool } = await import("../db.js");
   const payment = {
     id: "pay_integration_1",
