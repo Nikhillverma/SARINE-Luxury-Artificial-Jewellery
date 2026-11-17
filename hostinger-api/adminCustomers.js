@@ -82,7 +82,7 @@ router.get("/:email/orders", async (req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
     const email = normalizeCustomerEmail(req.params.email);
-    if (!email) return res.status(400).json({ error: "Enter a valid customer email address.");
+    if (!email) return res.status(400).json({ error: "Enter a valid customer email address." });
 
     const sql = "SELECT o.id, o.order_number, COALESCE(o.created_at, " + INITIAL_ORDER_DATE + ") AS created_at, " +
       "o.total, o.payment_method, o.payment_status, o.order_status, o.refund_needed, o.refund_amount " +
