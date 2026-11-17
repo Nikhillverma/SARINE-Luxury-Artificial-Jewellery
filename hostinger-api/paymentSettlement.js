@@ -83,6 +83,60 @@ export async function settleCapturedPayment(connection, {
       });
     }
 
+    // A gateway capture can race with an admin cancellation or a failed
+    // gateway-order initialization. Never resurrect these terminal orders or
+    // deduct inventory after cancellation; record the capture and route it to
+    // the refund queue instead.
+    if (order.order_status === "cancelled" || order.order_status === "failed") {
+      const paymentEvent = await writePaymentEvent(connection, {
+        orderId: order.id,
+        orderNumber: cleanOrderNumber,
+        gatewayOrderId: razorpay_order_id,
+        gatewayPaymentId: razorpay_payment_id,
+        amountPaise: Number(paymentRecord.amount),
+        currency: paymentRecord.currency,
+        eventType: "payment_captured",
+        eventStatus: "late_capture_refund_review"
+      });
+      if (paymentEvent.inserted) {
+        const capturedAmount = (Number(paymentRecord.amount) / 100).toFixed(2);
+        await connection.execute(
+          `UPDATE orders
+           SET payment_status = 'paid',
+               refund_needed = 1,
+               refund_amount = COALESCE(refund_amount, 0) + ?,
+               razorpay_payment_id = ?,
+               updated_at = UTC_TIMESTAMP(3)
+           WHERE id = ?`,
+          [capturedAmount, razorpay_payment_id, order.id]
+        );
+      } else {
+        await connection.execute(
+          `UPDATE orders
+           SET payment_status = 'paid',
+               refund_needed = 1,
+               razorpay_payment_id = ?,
+               updated_at = UTC_TIMESTAMP(3)
+           WHERE id = ?`,
+          [razorpay_payment_id, order.id]
+        );
+      }
+      await connection.execute(
+        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
+         VALUES (?, ?, ?, ?, 'system', UTC_TIMESTAMP(3))`,
+        [order.id, order.order_status, order.order_status,
+          `Payment ${razorpay_payment_id} was captured after the order was ${order.order_status}; manual refund review is required.`]
+      );
+      return onResult({
+        success: false,
+        needsRefund: true,
+        lateCaptureAfterCancellation: true,
+        orderNumber: cleanOrderNumber,
+        orderStatus: order.order_status,
+        message: "Payment was captured after this order was cancelled or failed. It has been flagged for manual refund review; inventory was not deducted."
+      });
+    }
+
     // Lock product items
     const [orderItems] = await connection.execute(
       `SELECT product_id, variant_id, variant_sku, variant_label, quantity, product_name
