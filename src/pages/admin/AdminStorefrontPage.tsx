@@ -44,12 +44,9 @@ export const AdminStorefrontPage: React.FC = () => {
       setEditorial({ ...defaultEditorial, ...editorialResult.editorial });
       setAnnouncement(announcementResult.announcement.message || "");
       setAnnouncementActive(Boolean(announcementResult.announcement.active));
-      setTrustMessages([
-        ...(announcementResult.announcement.trustMessages || []),
-        "Free Shipping Above ₹1,999",
-        "7-Day Easy Returns",
-        "Trusted by 1L+ Happy Customers"
-      ].slice(0, 3));
+      setTrustMessages(Array.isArray(announcementResult.announcement.trustMessages)
+        ? announcementResult.announcement.trustMessages
+        : ["Free Shipping Above ₹1,999", "7-Day Easy Returns", "Trusted by 1L+ Happy Customers"]);
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to load storefront content."); }
     finally { setLoading(false); }
   };
@@ -173,10 +170,14 @@ export const AdminStorefrontPage: React.FC = () => {
           {trustMessages.map((item, index) => (
             <label key={index} className="text-xs space-y-1">
               <span className="font-medium">Trust message {index + 1}</span>
-              <input value={item} maxLength={100} onChange={e => setTrustMessages(current => current.map((value, i) => i === index ? e.target.value : value))} className="w-full border rounded-lg p-3 text-sm" />
+              <div className="flex gap-2">
+                <input value={item} maxLength={100} onChange={e => setTrustMessages(current => current.map((value, i) => i === index ? e.target.value : value))} className="min-w-0 flex-1 border rounded-lg p-3 text-sm" />
+                <button type="button" disabled={busy} onClick={() => setTrustMessages(current => current.filter((_, i) => i !== index))} className="border border-red-200 text-red-700 rounded-lg px-2 text-xs disabled:opacity-50" aria-label={`Remove trust message ${index + 1}`}>Remove</button>
+              </div>
             </label>
           ))}
         </div>
+        <button type="button" disabled={busy || trustMessages.length >= 3} onClick={() => setTrustMessages(current => current.length >= 3 ? current : [...current, ""])} className="border rounded-lg px-3 py-2 text-xs disabled:opacity-50">Add trust message ({trustMessages.length}/3)</button>
         <div className="border-t pt-4 space-y-2">
           <label className="block text-xs font-medium">Promotional announcement</label>
           <input value={announcement} maxLength={300} onChange={e => setAnnouncement(e.target.value)} placeholder="e.g. Diwali Sale — Extra 10% Off Today" className="w-full border rounded-lg p-3 text-sm" />
