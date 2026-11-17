@@ -1,12 +1,14 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
+import rateLimit from "express-rate-limit";
 import { pool } from "./db.js";
 import { shouldUseSecureSessionCookie } from "./sessionCookiePolicy.js";
 import { normalizeCustomerEmail } from "./customerValidation.js";
 import { ensureCustomerOtpSchema } from "./customerOtpService.js";
 
 const router = Router();
+const googleLoginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 8, standardHeaders: "draft-8", legacyHeaders: false });
 const COOKIE_NAME = "sarine_customer_session";
 
 function hashToken(token) { return crypto.createHash("sha256").update(token).digest("hex"); }
@@ -25,7 +27,7 @@ async function createSession(customerId, res) {
   });
 }
 
-router.post("/google", async (req, res, next) => {
+router.post("/google", googleLoginLimiter, async (req, res, next) => {
   let connection;
   try {
     res.set("Cache-Control", "no-store");
