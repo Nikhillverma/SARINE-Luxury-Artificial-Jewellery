@@ -27,7 +27,7 @@ export function buildOrderInsert({
     id, order_number, customer_id, customer_name, customer_email, customer_phone,
     shipping_address, subtotal, shipping_fee, total, coupon_code, discount_amount, payment_method,
     payment_status, order_status, public_token_hash, source_document, created_at, updated_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${state.method}, ${state.paymentStatus}, ${state.orderStatus}, ?, 'web_checkout', UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`;
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${state.method}, ${state.paymentStatus}, ${state.orderStatus}, ?, ?, UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`;
 
   const values = [
     orderNumber,
@@ -42,7 +42,8 @@ export function buildOrderInsert({
     total,
     couponCode,
     discountAmount,
-    publicTokenHash
+    publicTokenHash,
+    JSON.stringify({ source: "web_checkout" })
   ];
 
   return { sql, values };
