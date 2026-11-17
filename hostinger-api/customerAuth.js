@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import rateLimit from "express-rate-limit";
 import { pool } from "./db.js";
+import { shouldUseSecureSessionCookie } from "./sessionCookiePolicy.js";
 import { normalizeCustomerEmail } from "./customerValidation.js";
 import { shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
@@ -43,7 +44,7 @@ function hashToken(token) {
 function setCookie(res, token) {
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureSessionCookie(),
     sameSite: "lax",
     path: "/api",
     maxAge: SESSION_DAYS * 24 * 60 * 60 * 1000
@@ -52,7 +53,7 @@ function setCookie(res, token) {
 function clearCookie(res) {
   res.clearCookie(COOKIE_NAME, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureSessionCookie(),
     sameSite: "lax",
     path: "/api"
   });
