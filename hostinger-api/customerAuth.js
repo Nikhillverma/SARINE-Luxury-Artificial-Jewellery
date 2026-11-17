@@ -197,6 +197,7 @@ router.post("/cancel", async (req, res, next) => {
 
     await ensureInventoryTable();
     await ensureProductVariantSchema();
+    await ensureMarketingSchema();
     connection = await pool.getConnection();
     await connection.beginTransaction();
     const [rows] = await connection.execute(
@@ -227,7 +228,6 @@ router.post("/cancel", async (req, res, next) => {
     // Release reserved or redeemed coupon capacity in the same transaction
     // as cancellation, matching the admin cancellation path.
     if (order.coupon_code) {
-      await ensureMarketingSchema();
       await releaseCouponRedemptionForCancelledOrder(connection, order.order_number);
     }
     if (stockWasDecremented) {
