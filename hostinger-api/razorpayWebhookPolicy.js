@@ -35,6 +35,25 @@ export async function ensureRazorpayWebhookSchema() {
       if (!columns.length) {
         await pool.query("ALTER TABLE razorpay_webhook_events ADD COLUMN gateway_receipt VARCHAR(100) NULL AFTER gateway_refund_id");
       }
+      const [orderIdColumn] = await pool.execute(
+        `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'orders'
+           AND COLUMN_NAME = 'razorpay_order_id'`
+      );
+      if (!orderIdColumn.length) {
+        throw new Error("The orders.razorpay_order_id column is required for captured-payment reconciliation.");
+      }
+      const [orderIdIndexes] = await pool.execute(
+        `SELECT INDEX_NAME FROM information_schema.STATISTICS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'orders'
+           AND COLUMN_NAME = 'razorpay_order_id'
+         LIMIT 1`
+      );
+      if (!orderIdIndexes.length) {
+        await pool.query("CREATE INDEX idx_orders_razorpay_order_id ON orders (razorpay_order_id)");
+      }
     })().catch(error => {
       schemaPromise = undefined;
       throw error;
