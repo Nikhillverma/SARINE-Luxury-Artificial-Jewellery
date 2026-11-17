@@ -301,7 +301,6 @@ router.post("/cancel", async (req, res, next) => {
           actorId: customer.id, actorName: customer.name, actorEmail: customer.email
         });
       }
-      }
     }
 
     const updateFields = [
