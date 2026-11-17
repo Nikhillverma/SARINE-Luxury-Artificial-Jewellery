@@ -6,6 +6,7 @@ import { pool, testDatabase } from "./db.js";
 import { markExistingOrdersAsPrelaunchTests } from "./prelaunchOrderMigration.js";
 import adminAuthRouter from "./adminAuth.js";
 import customerAuthRouter from "./customerAuth.js";
+import customerOtpAuthRouter from "./customerOtpAuth.js";
 import adminDatabaseAuditRouter from "./adminDatabaseAudit.js";
 import adminOrdersRouter from "./adminOrders.js";
 import adminReturnsRouter from "./adminReturns.js";
@@ -337,6 +338,7 @@ app.use("/api/media", publicMediaRouter);
 app.use("/api/admin/media", adminMediaRouter);
 
 // Hostinger customer and admin authentication
+app.use("/api/customer/auth", customerOtpAuthRouter);
 app.use("/api/customer/auth", customerAuthRouter);
 app.use("/api/admin/auth", adminAuthRouter);
 app.use("/api/admin/database-audit", adminDatabaseAuditRouter);
