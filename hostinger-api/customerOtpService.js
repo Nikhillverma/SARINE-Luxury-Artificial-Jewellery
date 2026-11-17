@@ -37,7 +37,7 @@ export async function ensureCustomerOtpSchema() {
   if (schemaReady) return schemaReady;
   schemaReady = (async () => {
   const [columns] = await pool.execute(
-    "SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND COLUMN_NAME IN ('email', 'email_normalized', 'phone', 'phone_normalized')"
+    "SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND COLUMN_NAME IN ('email', 'email_normalized', 'phone', 'phone_normalized', 'google_sub')"
   );
   const byName = new Map(columns.map((column) => [column.COLUMN_NAME, column]));
   for (const name of ["email", "email_normalized"]) {
