@@ -48,6 +48,21 @@ export async function ensureCustomerOtpSchema() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS customer_auth_delivery_events (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      challenge_id CHAR(36) NULL,
+      method VARCHAR(10) NOT NULL,
+      purpose VARCHAR(24) NOT NULL,
+      provider VARCHAR(20) NOT NULL,
+      identifier_masked VARCHAR(254) NOT NULL,
+      status VARCHAR(12) NOT NULL,
+      failure_code VARCHAR(40) NULL,
+      created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+      INDEX idx_customer_auth_delivery_recent (created_at, status),
+      INDEX idx_customer_auth_delivery_method (method, created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS customer_password_resets (
       token_hash CHAR(64) NOT NULL PRIMARY KEY,
       customer_id CHAR(36) NOT NULL,
