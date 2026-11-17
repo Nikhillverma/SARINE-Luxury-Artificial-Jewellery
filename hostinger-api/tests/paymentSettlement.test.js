@@ -104,3 +104,21 @@ test("additional captured payment is flagged once for manual refund review", asy
   assert.equal(result.additionalPaymentCaptured, true);
   assert.ok(connection.calls.some(call => call.sql.includes("refund_amount = COALESCE(refund_amount, 0) + ?")));
 });
+
+
+test("late capture after admin cancellation is flagged for refund without restoring order or deducting stock", async () => {
+  const connection = makeConnection({ productStock: 5 });
+  const order = { ...context.order, order_status: "cancelled", payment_status: "pending" };
+  const result = await settleCapturedPayment(connection, { ...context, order }, value => value, dependencies({
+    recordVerifiedPaymentEvent: async () => ({ inserted: true })
+  }));
+
+  assert.equal(result.needsRefund, true);
+  assert.equal(result.lateCaptureAfterCancellation, true);
+  assert.equal(result.orderStatus, "cancelled");
+  assert.ok(connection.calls.some(call =>
+    call.sql.includes("refund_amount = COALESCE(refund_amount, 0) + ?")
+  ));
+  assert.ok(!connection.calls.some(call => call.sql.includes("FROM order_items")));
+  assert.ok(!connection.calls.some(call => call.sql.includes("UPDATE products SET stock")));
+});
