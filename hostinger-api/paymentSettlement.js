@@ -1,10 +1,6 @@
-import { recordInventoryMovement } from "./inventoryLedger.js";
-import { syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
-import { formatVariantLabel } from "./productVariantPolicy.js";
-import { sortStockItems } from "./stockLockPolicy.js";
-import { recordVerifiedPaymentEvent } from "./paymentEventPolicy.js";
-import { classifyCapturedPayment } from "./paymentValidation.js";
-import { confirmCouponRedemption, releaseCouponRedemptionForCancelledOrder } from "./marketingPolicy.js";
+import { formatVariantLabel as defaultFormatVariantLabel } from "./productVariantPolicy.js";
+import { sortStockItems as defaultSortStockItems } from "./stockLockPolicy.js";
+import { classifyCapturedPayment as defaultClassifyCapturedPayment } from "./paymentValidation.js";
 
 /**
  * Apply a captured Razorpay payment inside the caller's already-open transaction.
@@ -19,17 +15,21 @@ export async function settleCapturedPayment(connection, {
   razorpay_payment_id,
   paymentRecord
 }, onResult = value => value, dependencies = {}) {
-  const {
-    recordInventoryMovement: writeInventoryMovement = recordInventoryMovement,
-    syncProductVariantStock: syncVariantStock = syncProductVariantStock,
-    recordVariantInventoryMovement: writeVariantInventoryMovement = recordVariantInventoryMovement,
-    formatVariantLabel: getVariantLabel = formatVariantLabel,
-    sortStockItems: sortItems = sortStockItems,
-    recordVerifiedPaymentEvent: writePaymentEvent = recordVerifiedPaymentEvent,
-    classifyCapturedPayment: classifyPayment = classifyCapturedPayment,
-    confirmCouponRedemption: confirmCoupon = confirmCouponRedemption,
-    releaseCouponRedemptionForCancelledOrder: releaseCoupon = releaseCouponRedemptionForCancelledOrder
-  } = dependencies;
+  const inventory = dependencies.recordInventoryMovement ? null : await import("./inventoryLedger.js");
+  const variants = (dependencies.syncProductVariantStock && dependencies.recordVariantInventoryMovement)
+    ? null : await import("./productVariantSchema.js");
+  const payments = dependencies.recordVerifiedPaymentEvent ? null : await import("./paymentEventPolicy.js");
+  const marketing = (dependencies.confirmCouponRedemption && dependencies.releaseCouponRedemptionForCancelledOrder)
+    ? null : await import("./marketingPolicy.js");
+  const writeInventoryMovement = dependencies.recordInventoryMovement || inventory.recordInventoryMovement;
+  const syncVariantStock = dependencies.syncProductVariantStock || variants.syncProductVariantStock;
+  const writeVariantInventoryMovement = dependencies.recordVariantInventoryMovement || variants.recordVariantInventoryMovement;
+  const getVariantLabel = dependencies.formatVariantLabel || defaultFormatVariantLabel;
+  const sortItems = dependencies.sortStockItems || defaultSortStockItems;
+  const writePaymentEvent = dependencies.recordVerifiedPaymentEvent || payments.recordVerifiedPaymentEvent;
+  const classifyPayment = dependencies.classifyCapturedPayment || defaultClassifyCapturedPayment;
+  const confirmCoupon = dependencies.confirmCouponRedemption || marketing.confirmCouponRedemption;
+  const releaseCoupon = dependencies.releaseCouponRedemptionForCancelledOrder || marketing.releaseCouponRedemptionForCancelledOrder;
     // Idempotent replay of the same captured payment is safe. A different
     // captured payment against an already-paid order is a second charge and
     // must be surfaced for refund review rather than silently accepted.
