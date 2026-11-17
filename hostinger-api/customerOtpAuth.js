@@ -32,9 +32,10 @@ function resolveIdentifier(method, value) {
 async function findCustomer(method, identifier, connection = pool) {
   const sql = method === "email"
     ? "SELECT id, name, email, phone, status, google_sub FROM customers WHERE email_normalized = ? LIMIT 1"
-    : "SELECT id, name, email, phone, status, google_sub FROM customers WHERE phone_normalized = ? OR phone = ? OR phone = ? LIMIT 1";
+    : "SELECT id, name, email, phone, status, google_sub FROM customers WHERE phone_normalized = ? OR phone = ? OR phone = ? LIMIT 2";
   const values = method === "email" ? [identifier] : [identifier, identifier, "91" + identifier];
   const [rows] = await connection.execute(sql, values);
+  if (method === "phone" && rows.length > 1) return { ambiguous: true };
   return rows[0] || null;
 }
 async function createChallenge(method, identifier, purpose) {
@@ -114,6 +115,7 @@ router.post("/otp/verify", verifyLimiter, async (req, res, next) => {
     }
     let customer = await findCustomer(challenge.method, challenge.identifier, connection);
     let created = false;
+    if (customer?.ambiguous) { await connection.rollback(); return res.status(409).json({ error: "We could not safely match this mobile number to one customer account. Please contact SARINE support." }); }
     if (customer && customer.status !== "active") {
       await connection.rollback();
       return res.status(403).json({ error: "This account is not currently available. Please contact SARINE support." });
