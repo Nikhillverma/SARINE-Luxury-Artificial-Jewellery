@@ -150,13 +150,13 @@ router.post("/otp/verify", verifyLimiter, async (req, res, next) => {
       await connection.execute(
         `INSERT INTO customers
          (id, email, email_normalized, phone, phone_normalized, name, password_hash, password_salt, password_scheme, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, "bcrypt", "active", UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'bcrypt', 'active', UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
         [id, email, email, phone, phone, name, unusablePasswordHash, salt]
       );
       customer = { id, name, email: email || "", phone: phone || "", status: "active" };
       created = true;
     }
-    if (challenge.method === "phone") await connection.execute("UPDATE customers SET phone_normalized = ? WHERE id = ? AND (phone_normalized IS NULL OR phone_normalized = \"\")", [challenge.identifier, customer.id]);
+    if (challenge.method === "phone") await connection.execute("UPDATE customers SET phone_normalized = ? WHERE id = ? AND (phone_normalized IS NULL OR phone_normalized = ?)", [challenge.identifier, customer.id, ""]);
     await connection.execute("UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE id = ?", [challengeId]);
     await connection.execute("UPDATE customers SET last_login_at = UTC_TIMESTAMP(3) WHERE id = ?", [customer.id]);
     await connection.commit();
