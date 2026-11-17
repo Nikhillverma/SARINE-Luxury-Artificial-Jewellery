@@ -4,9 +4,13 @@ export function classifyWebhookReconciliation(input) {
   if (eventType === "payment.captured") {
     if (!orderFound) return "unmatched_order";
     if (!input.amountMatches) return "amount_mismatch";
+    if (["cancelled", "failed", "needs_refund"].includes(input.orderStatus)) {
+      return "refund_review_required";
+    }
     if (input.orderPaymentStatus === "paid" && input.orderPaymentId !== input.gatewayPaymentId) {
       return "additional_capture_review";
     }
+    if (input.eventStatus === "needs_review") return "manual_review";
     if (input.orderPaymentStatus !== "paid" || !input.paymentLedgerFound) {
       return "gateway_capture_not_reconciled";
     }

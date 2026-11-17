@@ -1,4 +1,5 @@
 import express, { Router } from "express";
+import { processCapturedPaymentWebhook } from "./razorpayCapturedPayment.js";
 import {
   buildRazorpayWebhookRecord,
   getRazorpayWebhookEventStatus,
@@ -72,6 +73,15 @@ router.post(
       const record = buildRazorpayWebhookRecord(eventId, payload);
       const result = await storeRazorpayWebhookEvent(record);
       let refundMatched = null;
+
+      if (record.eventType === "payment.captured") {
+        const capturedResult = await processCapturedPaymentWebhook({
+          record,
+          eventId: record.eventId,
+          inserted: result.inserted
+        });
+        return res.status(capturedResult.status).json(capturedResult.body);
+      }
 
       if (record.eventType.startsWith("refund.")) {
         const currentEventStatus = result.inserted

@@ -237,8 +237,10 @@ router.get("/webhook-events", async (req, res, next) => {
     const events = rows.map(row => {
       const reconciliationStatus = classifyWebhookReconciliation({
         eventType: row.event_type,
+        eventStatus: row.event_status,
         orderFound: Boolean(row.order_number),
         amountMatches: Number(row.amount_paise) === Number(row.razorpay_amount_paise || Math.round(Number(row.total) * 100)),
+        orderStatus: row.order_status,
         orderPaymentStatus: row.payment_status,
         orderPaymentId: row.razorpay_payment_id,
         gatewayPaymentId: row.gateway_payment_id,
