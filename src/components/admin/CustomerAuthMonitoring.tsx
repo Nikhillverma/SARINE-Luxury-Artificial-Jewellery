@@ -86,7 +86,7 @@ export const CustomerAuthMonitoring: React.FC = () => {
                 <tbody>{data.events.map(event => <tr key={event.id} className="border-b border-[#F5EFF7]">
                   <td className="py-2 pr-3 text-[#705E7B]">{event.createdAt ? new Date(event.createdAt).toLocaleString() : "—"}</td>
                   <td className="py-2 pr-3 text-[#302438]">{event.identifier_masked}</td>
-                  <td className="py-2 pr-3 text-[#705E7B]">{event.purpose === "password_reset" ? "Password recovery" : "Sign-in"}</td>
+                  <td className="py-2 pr-3 text-[#705E7B]">{event.purpose === "password_reset" ? "Password recovery" : event.purpose === "link_identity" ? "Contact verification" : "Sign-in"}</td>
                   <td className="py-2 pr-3 text-[#705E7B]">{event.provider}</td>
                   <td className="py-2"><span className={event.status === "sent" ? "text-emerald-700" : "text-red-700"}>{event.status === "sent" ? "Sent" : event.failure_code || "Failed"}</span></td>
                 </tr>)}</tbody>
