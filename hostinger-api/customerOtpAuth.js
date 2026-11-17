@@ -161,8 +161,7 @@ router.post("/password/forgot/request", requestLimiter, async (req, res, next) =
     let challengeId = crypto.randomUUID();
     if (customer?.status === "active") {
       const result = await createChallenge(method, identifier, "password_reset");
-      if (result.cooldown) return res.status(429).json({ error: `Please wait ${result.cooldown} seconds before requesting another code.`, retryAfterSeconds: result.cooldown });
-      challengeId = result.challengeId;
+      if (!result.cooldown) challengeId = result.challengeId;
     }
     return res.json({ success: true, challengeId, message: "If an account matches those details, a verification code has been sent." });
   } catch (error) { return next(error); }
