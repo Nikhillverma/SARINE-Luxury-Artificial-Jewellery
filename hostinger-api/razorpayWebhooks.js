@@ -113,12 +113,16 @@ router.post(
         const paymentRecord = await razorpay.payments.fetch(record.gatewayPaymentId);
         if (!paymentRecord ||
             paymentRecord.id !== record.gatewayPaymentId ||
-            paymentRecord.status !== "captured" ||
             paymentRecord.order_id !== record.gatewayOrderId ||
             paymentRecord.currency !== "INR" ||
             Number(paymentRecord.amount) !== record.amountPaise) {
           await markRazorpayWebhookEventStatus(record.eventId, "needs_review");
           return res.status(200).json({ received: true, needsReview: true, reason: "gateway_payment_mismatch" });
+        }
+        if (paymentRecord.status !== "captured") {
+          // A captured event can briefly arrive before the fetch API reflects
+          // the final state. Keep the event retryable instead of discarding it.
+          return res.status(503).json({ error: "Razorpay has not confirmed the captured payment yet." });
         }
 
         await ensureInventoryTable();
