@@ -24,6 +24,28 @@ async function createSession(customerId, res) {
   await pool.execute("INSERT INTO customer_sessions (id, customer_id, expires_at) VALUES (?, ?, ?)", [hashToken(token), customerId, expiresAt]);
   setSessionCookie(res, token);
 }
+function readCustomerSessionToken(req) {
+  for (const part of String(req.headers.cookie || "").split(";")) {
+    const separator = part.indexOf("=");
+    if (separator < 0) continue;
+    if (part.slice(0, separator).trim() === COOKIE_NAME) {
+      try { return decodeURIComponent(part.slice(separator + 1).trim()); } catch { return null; }
+    }
+  }
+  return null;
+}
+async function getSessionCustomer(req, connection = pool) {
+  const token = readCustomerSessionToken(req);
+  if (!token || !/^[a-f0-9]{64}$/i.test(token)) return null;
+  const [rows] = await connection.execute(
+    "SELECT c.id, c.name, c.email, c.phone, c.status FROM customer_sessions s INNER JOIN customers c ON c.id = s.customer_id WHERE s.id = ? AND s.expires_at > UTC_TIMESTAMP(3) AND c.status = 'active' LIMIT 1",
+    [hashToken(token)]
+  );
+  if (!rows.length) return null;
+  await connection.execute("UPDATE customer_sessions SET last_used_at = UTC_TIMESTAMP(3) WHERE id = ?", [hashToken(token)]);
+  return rows[0];
+}
+
 function resolveIdentifier(method, value) {
   if (method === "email") return normalizeCustomerEmail(value);
   if (method === "phone") return normalizePhone(value);
