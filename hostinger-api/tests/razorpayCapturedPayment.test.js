@@ -252,7 +252,7 @@ test("concurrent captured webhooks for one payment deduct stock only once", asyn
 
 test("SARINE order amount mismatch is marked for review without settlement", async () => {
   const { calls, deps, connection } = setup();
-  connection.execute = async () => [[{ ...order, total: "11.00" }]];
+  connection.execute = async () => [[{ ...order, total: "11.00", razorpay_amount_paise: null }]];
   const result = await processCapturedPaymentWebhook({ record, eventId: record.eventId, inserted: true }, deps);
 
   assert.equal(result.body.needsReview, true);
