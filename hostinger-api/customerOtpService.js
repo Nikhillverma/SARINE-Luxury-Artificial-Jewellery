@@ -32,7 +32,10 @@ export function safeOtpEqual(expected, actual) {
   return crypto.timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(actual, "hex"));
 }
 
+let schemaReady;
 export async function ensureCustomerOtpSchema() {
+  if (schemaReady) return schemaReady;
+  schemaReady = (async () => {
   const [columns] = await pool.execute(
     "SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND COLUMN_NAME IN ('email', 'email_normalized', 'phone', 'phone_normalized')"
   );
@@ -46,6 +49,9 @@ export async function ensureCustomerOtpSchema() {
   }
   if (!byName.has("phone_normalized")) {
     await pool.query("ALTER TABLE customers ADD COLUMN phone_normalized VARCHAR(20) NULL");
+  }
+  if (!byName.has("google_sub")) {
+    await pool.query("ALTER TABLE customers ADD COLUMN google_sub VARCHAR(255) NULL");
   }
   const [indexes] = await pool.execute(
     "SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND INDEX_NAME = 'uq_customers_phone_normalized'"
@@ -78,6 +84,8 @@ export async function ensureCustomerOtpSchema() {
       INDEX idx_customer_password_reset_customer (customer_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+  })().catch((error) => { schemaReady = null; throw error; });
+  return schemaReady;
 }
 
 async function sendEmail(to, otp, purpose) {
