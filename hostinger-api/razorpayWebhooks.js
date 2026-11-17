@@ -1,4 +1,11 @@
 import express, { Router } from "express";
+import Razorpay from "razorpay";
+import { pool } from "./db.js";
+import { ensureInventoryTable } from "./inventoryLedger.js";
+import { ensureProductVariantSchema } from "./productVariantSchema.js";
+import { ensurePaymentEventLogTable } from "./paymentEventPolicy.js";
+import { matchesOrderRazorpayId } from "./paymentValidation.js";
+import { settleCapturedPayment } from "./paymentSettlement.js";
 import {
   buildRazorpayWebhookRecord,
   getRazorpayWebhookEventStatus,
@@ -72,6 +79,104 @@ router.post(
       const record = buildRazorpayWebhookRecord(eventId, payload);
       const result = await storeRazorpayWebhookEvent(record);
       let refundMatched = null;
+
+      if (record.eventType === "payment.captured") {
+        const currentEventStatus = result.inserted
+          ? "received"
+          : await getRazorpayWebhookEventStatus(record.eventId);
+
+        if (currentEventStatus !== "received") {
+          return res.status(200).json({
+            received: true,
+            duplicate: true,
+            paymentSettlement: currentEventStatus
+          });
+        }
+
+        if (!record.gatewayOrderId || !record.gatewayPaymentId ||
+            !Number.isSafeInteger(record.amountPaise) || record.amountPaise <= 0) {
+          await markRazorpayWebhookEventStatus(record.eventId, "needs_review");
+          return res.status(200).json({ received: true, needsReview: true, reason: "incomplete_payment_reference" });
+        }
+
+        const key_id = process.env.RAZORPAY_KEY_ID;
+        const key_secret = process.env.RAZORPAY_KEY_SECRET;
+        if (!key_id || !key_secret) {
+          // Leave the durable event in "received" so Razorpay can retry after
+          // the gateway credentials are corrected.
+          return res.status(503).json({ error: "Razorpay API credentials are not configured." });
+        }
+
+        // Never trust the webhook body alone for settlement. Fetch the payment
+        // independently from Razorpay and compare all gateway references.
+        const razorpay = new Razorpay({ key_id, key_secret });
+        const paymentRecord = await razorpay.payments.fetch(record.gatewayPaymentId);
+        if (!paymentRecord ||
+            paymentRecord.id !== record.gatewayPaymentId ||
+            paymentRecord.status !== "captured" ||
+            paymentRecord.order_id !== record.gatewayOrderId ||
+            paymentRecord.currency !== "INR" ||
+            Number(paymentRecord.amount) !== record.amountPaise) {
+          await markRazorpayWebhookEventStatus(record.eventId, "needs_review");
+          return res.status(200).json({ received: true, needsReview: true, reason: "gateway_payment_mismatch" });
+        }
+
+        await ensureInventoryTable();
+        await ensureProductVariantSchema();
+        await ensurePaymentEventLogTable();
+
+        let connection;
+        try {
+          connection = await pool.getConnection();
+          await connection.beginTransaction();
+          const [orderRows] = await connection.execute(
+            "SELECT * FROM orders WHERE razorpay_order_id = ? LIMIT 1 FOR UPDATE",
+            [record.gatewayOrderId]
+          );
+
+          if (!orderRows.length) {
+            await markRazorpayWebhookEventStatus(record.eventId, "needs_review", connection);
+            await connection.commit();
+            return res.status(200).json({ received: true, needsReview: true, reason: "sarine_order_not_found" });
+          }
+
+          const order = orderRows[0];
+          const expectedAmountPaise = Number(
+            order.razorpay_amount_paise || Math.round(Number(order.total) * 100)
+          );
+          if (order.payment_method !== "online" ||
+              !matchesOrderRazorpayId(order, record.gatewayOrderId, paymentRecord.order_id) ||
+              expectedAmountPaise !== Number(paymentRecord.amount)) {
+            await markRazorpayWebhookEventStatus(record.eventId, "needs_review", connection);
+            await connection.commit();
+            return res.status(200).json({ received: true, needsReview: true, reason: "sarine_order_mismatch" });
+          }
+
+          const settlement = await settleCapturedPayment(connection, {
+            order,
+            cleanOrderNumber: order.order_number,
+            razorpay_order_id: record.gatewayOrderId,
+            razorpay_payment_id: record.gatewayPaymentId,
+            paymentRecord
+          });
+          const eventStatus = settlement.needsRefund || settlement.additionalPaymentCaptured
+            ? "needs_review"
+            : "processed";
+          await markRazorpayWebhookEventStatus(record.eventId, eventStatus, connection);
+          await connection.commit();
+          return res.status(200).json({
+            received: true,
+            duplicate: !result.inserted,
+            paymentSettlement: eventStatus,
+            settlement
+          });
+        } catch (settlementError) {
+          if (connection) await connection.rollback().catch(() => {});
+          throw settlementError;
+        } finally {
+          connection?.release();
+        }
+      }
 
       if (record.eventType.startsWith("refund.")) {
         const currentEventStatus = result.inserted
