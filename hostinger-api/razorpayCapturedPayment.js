@@ -78,7 +78,7 @@ export async function processCapturedPaymentWebhook({
     connection = await getConnection();
     await connection.beginTransaction();
     const [orderRows] = await connection.execute(
-      "SELECT * FROM orders WHERE razorpay_order_id = ? LIMIT 1 FOR UPDATE",
+      "SELECT * FROM orders WHERE razorpay_order_id = ? LIMIT 2 FOR UPDATE",
       [record.gatewayOrderId]
     );
 
@@ -86,6 +86,11 @@ export async function processCapturedPaymentWebhook({
       await markEventStatus(eventId, "needs_review", connection);
       await connection.commit();
       return { status: 200, body: { received: true, needsReview: true, reason: "sarine_order_not_found" } };
+    }
+    if (orderRows.length > 1) {
+      await markEventStatus(eventId, "needs_review", connection);
+      await connection.commit();
+      return { status: 200, body: { received: true, needsReview: true, reason: "duplicate_sarine_gateway_order_reference" } };
     }
 
     const order = orderRows[0];
