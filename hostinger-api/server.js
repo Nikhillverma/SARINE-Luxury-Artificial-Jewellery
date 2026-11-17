@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import { pool, testDatabase } from "./db.js";
 import { markExistingOrdersAsPrelaunchTests } from "./prelaunchOrderMigration.js";
 import adminAuthRouter from "./adminAuth.js";
+import adminCustomerAuthRouter from "./adminCustomerAuth.js";
 import customerAuthRouter from "./customerAuth.js";
 import customerOtpAuthRouter from "./customerOtpAuth.js";
 import customerGoogleAuthRouter from "./customerGoogleAuth.js";
@@ -343,6 +344,7 @@ app.use("/api/customer/auth", customerGoogleAuthRouter);
 app.use("/api/customer/auth", customerOtpAuthRouter);
 app.use("/api/customer/auth", customerAuthRouter);
 app.use("/api/admin/auth", adminAuthRouter);
+app.use("/api/admin/customer-auth", adminCustomerAuthRouter);
 app.use("/api/admin/database-audit", adminDatabaseAuditRouter);
 
 // Hostinger admin dashboard, category and product management
