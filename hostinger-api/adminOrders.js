@@ -281,7 +281,10 @@ router.post("/update", async (req, res, next) => {
 
     const cleanOrderNumber = orderNumber.trim();
     const adminEmail = req.admin?.email || "admin";
-    if (action === "cancel") await ensureInventoryTable();
+    if (action === "cancel") {
+      await ensureInventoryTable();
+      await ensureMarketingSchema();
+    }
 
     connection = await pool.getConnection();
     await connection.beginTransaction();
@@ -575,7 +578,6 @@ router.post("/update", async (req, res, next) => {
 
       // Release coupon capacity atomically with cancellation for reserved and redeemed uses.
       if (order.coupon_code) {
-        await ensureMarketingSchema();
         await releaseCouponRedemptionForCancelledOrder(connection, order.order_number);
       }
 
