@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
+import { ensureCustomerOtpSchema } from "./customerOtpService.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -20,6 +21,7 @@ router.get("/status", async (_req, res, next) => {
 router.get("/delivery-events", async (req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
+    await ensureCustomerOtpSchema();
     const limitValue = Number.parseInt(String(req.query.limit || "50"), 10);
     const limit = Number.isInteger(limitValue) ? Math.min(Math.max(limitValue, 1), 100) : 50;
     const [events] = await pool.execute(
@@ -43,6 +45,7 @@ router.get("/delivery-events", async (req, res, next) => {
 router.get("/security", async (_req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
+    await ensureCustomerOtpSchema();
     const [challenges] = await pool.execute(
       "SELECT method, purpose, COUNT(*) AS total, SUM(attempts) AS incorrectAttempts FROM customer_auth_challenges WHERE created_at >= DATE_SUB(UTC_TIMESTAMP(3), INTERVAL 24 HOUR) GROUP BY method, purpose"
     );
