@@ -5,6 +5,7 @@ import { requireAdminAuth } from "./adminAuth.js";
 import rateLimit from "express-rate-limit";
 import { validateImageUpload } from "./mediaValidation.js";
 import { getCheckoutConfig, saveCheckoutConfig } from "./checkoutPolicy.js";
+import { buildAnnouncementSettings, normalizeAnnouncementSettings } from "./announcementPolicy.js";
 
 const admin = Router();
 const publicRouter = Router();
@@ -135,22 +136,25 @@ adminOnly.put("/banners/reorder", async (req, res, next) => {
 adminOnly.put("/announcement", async (req, res, next) => {
   try {
     await ensureSchema();
-    const message = String(req.body?.message || "").trim();
-    const active = req.body?.active === true;
-    if (message.length > 300) return res.status(400).json({ error: "Announcement must be 300 characters or fewer." });
+    const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='announcement' LIMIT 1");
+    let announcement;
+    try {
+      announcement = buildAnnouncementSettings(req.body || {}, rows[0]?.setting_value);
+    } catch (error) {
+      return res.status(400).json({ error: error instanceof Error ? error.message : "Announcement settings are invalid." });
+    }
     await pool.execute(
       "INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('announcement', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)",
-      [JSON.stringify({ message, active })]
+      [JSON.stringify(announcement)]
     );
-    res.json({ success: true, announcement: { message, active } });
+    res.json({ success: true, announcement });
   } catch (error) { next(error); }
 });
 adminOnly.get("/announcement", async (_req, res, next) => {
   try {
     await ensureSchema();
     const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='announcement' LIMIT 1");
-    let announcement = { message: "", active: false };
-    if (rows.length) { try { announcement = JSON.parse(rows[0].setting_value); } catch {} }
+    const announcement = normalizeAnnouncementSettings(rows[0]?.setting_value);
     res.set("Cache-Control", "no-store").json({ announcement });
   } catch (error) { next(error); }
 });
@@ -188,8 +192,7 @@ publicRouter.get("/announcement", async (_req, res, next) => {
   try {
     await ensureSchema();
     const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='announcement' LIMIT 1");
-    let announcement = { message: "", active: false };
-    if (rows.length) { try { announcement = JSON.parse(rows[0].setting_value); } catch {} }
+    const announcement = normalizeAnnouncementSettings(rows[0]?.setting_value);
     res.set("Cache-Control", "no-store").json({ announcement });
   } catch (error) { next(error); }
 });
