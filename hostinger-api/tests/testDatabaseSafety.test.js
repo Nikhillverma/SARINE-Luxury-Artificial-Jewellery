@@ -15,7 +15,7 @@ test("allows explicitly opted-in loopback test database", () => {
 test("refuses destructive tests without explicit opt-in", () => {
   assert.throws(
     () => assertSafeTestDatabase({ ...safeEnvironment, SARINE_ALLOW_DESTRUCTIVE_TEST_DB: "false" }),
-    /explicitly opted-in/
+    /SARINE_ALLOW_DESTRUCTIVE_TEST_DB=true/
   );
 });
 
@@ -34,5 +34,5 @@ test("refuses database names without a test suffix", () => {
 });
 
 test("refuses missing database configuration", () => {
-  assert.throws(() => assertSafeTestDatabase({}), /explicitly opted-in/);
+  assert.throws(() => assertSafeTestDatabase({}), /SARINE_ALLOW_DESTRUCTIVE_TEST_DB=true/);
 });
