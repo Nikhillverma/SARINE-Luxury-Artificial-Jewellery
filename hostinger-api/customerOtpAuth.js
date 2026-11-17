@@ -148,11 +148,13 @@ router.post("/password/forgot/request", requestLimiter, async (req, res, next) =
     const identifier = resolveIdentifier(method, req.body?.identifier);
     if (!identifier) return res.status(400).json({ error: "Enter a valid registered email address or mobile number." });
     const customer = await findCustomer(method, identifier);
+    let challengeId = crypto.randomUUID();
     if (customer?.status === "active") {
       const result = await createChallenge(method, identifier, "password_reset");
       if (result.cooldown) return res.status(429).json({ error: `Please wait ${result.cooldown} seconds before requesting another code.`, retryAfterSeconds: result.cooldown });
+      challengeId = result.challengeId;
     }
-    return res.json({ success: true, message: "If an account matches those details, a verification code has been sent." });
+    return res.json({ success: true, challengeId, message: "If an account matches those details, a verification code has been sent." });
   } catch (error) { return next(error); }
 });
 
