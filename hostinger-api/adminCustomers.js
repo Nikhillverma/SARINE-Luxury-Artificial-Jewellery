@@ -31,7 +31,7 @@ router.get("/", async (req, res, next) => {
     const search = typeof req.query.search === "string" ? req.query.search.trim().slice(0, 120) : "";
     const limit = positiveInteger(req.query.limit, 50, MAX_PAGE_SIZE);
     const offset = Math.min(Math.max(Number.parseInt(String(req.query.offset || "0"), 10) || 0, 0), MAX_OFFSET);
-    const conditions = ["o.customer_email IS NOT NULL", "TRIM(o.customer_email) <> ''"];
+    const conditions = ["o.is_test = 0", "o.customer_email IS NOT NULL", "TRIM(o.customer_email) <> ''"];
     const values = [];
 
     if (search) {
@@ -82,11 +82,11 @@ router.get("/:email/orders", async (req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
     const email = normalizeCustomerEmail(req.params.email);
-    if (!email) return res.status(400).json({ error: "Enter a valid customer email address." });
+    if (!email) return res.status(400).json({ error: "Enter a valid customer email address.");
 
     const sql = "SELECT o.id, o.order_number, COALESCE(o.created_at, " + INITIAL_ORDER_DATE + ") AS created_at, " +
       "o.total, o.payment_method, o.payment_status, o.order_status, o.refund_needed, o.refund_amount " +
-      "FROM orders o WHERE LOWER(TRIM(o.customer_email)) = ? " +
+      "FROM orders o WHERE o.is_test = 0 AND LOWER(TRIM(o.customer_email)) = ? " +
       "ORDER BY COALESCE(o.created_at, " + INITIAL_ORDER_DATE + ") DESC, o.id DESC LIMIT 100";
     const [orders] = await pool.execute(sql, [email]);
     const ids = orders.map((order) => order.id);
