@@ -39,6 +39,8 @@ export const CustomerIdentityLink: React.FC<Props> = ({ customer, onUpdated }) =
     try {
       const updated = await customerAuthService.verifyIdentityLink(challengeId, otp);
       onUpdated(updated);
+      const remaining = (["email", "phone"] as const).filter(item => !updated[item]);
+      if (remaining.length) setMethod(remaining[0]);
       setSent(false); setChallengeId(""); setIdentifier(""); setOtp("");
       setNotice("Your contact has been verified and linked securely.");
     } catch (err) { setError(err instanceof Error ? err.message : "Unable to verify this contact."); }
