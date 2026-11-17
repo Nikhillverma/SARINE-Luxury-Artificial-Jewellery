@@ -50,8 +50,17 @@ const trackingLimiter = rateLimit({
   message: { error: "Too many tracking attempts. Please try again later." }
 });
 
+// Protect the payment gateway and order database from automated checkout bursts.
+const checkoutLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Too many checkout attempts. Please wait before trying again." }
+});
+
 // POST /api/orders/create (and /api/create-order)
-router.post("/create", async (req, res, next) => {
+router.post("/create", checkoutLimiter, async (req, res, next) => {
   let connection;
   try {
     const { items, customer, shippingAddress, paymentMethod, couponCode } = req.body || {};
