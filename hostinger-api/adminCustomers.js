@@ -25,6 +25,20 @@ const INITIAL_ORDER_DATE = "(SELECT MIN(h.created_at) " +
   "AND h.old_status IS NULL " +
   "AND h.new_status IN ('placed', 'awaiting_payment'))";
 
+const PAID_ORDER_CONDITION = "o.payment_status = 'paid' " +
+  "AND o.order_status NOT IN ('cancelled', 'returned', 'failed') " +
+  "AND (LOWER(COALESCE(o.payment_method, 'online')) <> 'cod' OR o.order_status = 'delivered')";
+
+const LATEST_ORDER_ID = "(SELECT candidate.id FROM orders candidate " +
+  "WHERE candidate.is_test = 0 " +
+  "AND LOWER(TRIM(candidate.customer_email)) = customer_summary.email " +
+  "ORDER BY COALESCE(candidate.created_at, " +
+    "(SELECT MIN(history.created_at) FROM order_status_history history " +
+     "WHERE history.order_id = candidate.id " +
+     "AND history.old_status IS NULL " +
+     "AND history.new_status IN ('placed', 'awaiting_payment'))) DESC, " +
+  "candidate.id DESC LIMIT 1)";
+
 router.get("/", async (req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
@@ -45,17 +59,24 @@ router.get("/", async (req, res, next) => {
       values
     );
 
-    const sql = "SELECT LOWER(TRIM(o.customer_email)) AS email, " +
-      "MAX(NULLIF(TRIM(o.customer_name), '')) AS name, " +
-      "MAX(NULLIF(TRIM(o.customer_phone), '')) AS phone, " +
-      "MAX(NULLIF(CASE WHEN JSON_VALID(o.shipping_address) THEN JSON_UNQUOTE(JSON_EXTRACT(o.shipping_address, '$.city')) ELSE NULL END, '')) AS city, " +
-      "MAX(NULLIF(CASE WHEN JSON_VALID(o.shipping_address) THEN JSON_UNQUOTE(JSON_EXTRACT(o.shipping_address, '$.state')) ELSE NULL END, '')) AS state, " +
-      "COUNT(*) AS total_orders, " +
-      "SUM(CASE WHEN o.payment_status = 'paid' OR (o.payment_method = 'cod' AND o.order_status = 'delivered') " +
-      "THEN COALESCE(o.total, 0) ELSE 0 END) AS lifetime_spend, " +
-      "MAX(COALESCE(o.created_at, " + INITIAL_ORDER_DATE + ")) AS last_order_at " +
-      "FROM orders o WHERE " + where +
-      " GROUP BY LOWER(TRIM(o.customer_email)) ORDER BY last_order_at DESC, email ASC LIMIT ? OFFSET ?";
+    const sql = "SELECT customer_summary.email, " +
+      "NULLIF(TRIM(latest_order.customer_name), '') AS name, " +
+      "NULLIF(TRIM(latest_order.customer_phone), '') AS phone, " +
+      "NULLIF(CASE WHEN JSON_VALID(latest_order.shipping_address) " +
+        "THEN JSON_UNQUOTE(JSON_EXTRACT(latest_order.shipping_address, '$.city')) ELSE NULL END, '') AS city, " +
+      "NULLIF(CASE WHEN JSON_VALID(latest_order.shipping_address) " +
+        "THEN JSON_UNQUOTE(JSON_EXTRACT(latest_order.shipping_address, '$.state')) ELSE NULL END, '') AS state, " +
+      "customer_summary.total_orders, customer_summary.lifetime_spend, customer_summary.last_order_at " +
+      "FROM (" +
+        "SELECT LOWER(TRIM(o.customer_email)) AS email, COUNT(*) AS total_orders, " +
+        "SUM(CASE WHEN " + PAID_ORDER_CONDITION +
+          " THEN GREATEST(COALESCE(o.total, 0) - COALESCE(o.refund_amount, 0), 0) ELSE 0 END) AS lifetime_spend, " +
+        "MAX(COALESCE(o.created_at, " + INITIAL_ORDER_DATE + ")) AS last_order_at " +
+        "FROM orders o WHERE " + where +
+        " GROUP BY LOWER(TRIM(o.customer_email))" +
+      ") AS customer_summary " +
+      "LEFT JOIN orders latest_order ON latest_order.id = " + LATEST_ORDER_ID +
+      " ORDER BY customer_summary.last_order_at DESC, customer_summary.email ASC LIMIT ? OFFSET ?";
 
     const [rows] = await pool.execute(sql, [...values, limit, offset]);
     return res.json({
