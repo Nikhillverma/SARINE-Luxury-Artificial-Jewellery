@@ -124,3 +124,126 @@ test("settlement failure rolls back so the received webhook can be retried", asy
   assert.equal(calls.released, 1);
   assert.equal(calls.marked.length, 0);
 });
+
+
+test("failed webhook transaction can be retried from received status", async () => {
+  const { calls, deps } = setup();
+  let attempts = 0;
+  deps.settleCapturedPayment = async () => {
+    attempts += 1;
+    if (attempts === 1) throw new Error("temporary database interruption");
+    return { success: true, paymentStatus: "paid", orderStatus: "confirmed" };
+  };
+
+  await assert.rejects(
+    processCapturedPaymentWebhook({ record, eventId: record.eventId, inserted: true }, deps),
+    /temporary database interruption/
+  );
+  const retry = await processCapturedPaymentWebhook({ record, eventId: record.eventId, inserted: false }, deps);
+
+  assert.equal(retry.status, 200);
+  assert.equal(retry.body.paymentSettlement, "processed");
+  assert.equal(attempts, 2);
+  assert.equal(calls.rolledBack, 1);
+  assert.equal(calls.committed, 1);
+  assert.equal(calls.marked.length, 1);
+});
+
+test("concurrent captured webhooks for one payment deduct stock only once", async () => {
+  const shared = {
+    order: { ...order },
+    productStock: 3,
+    inventoryWrites: 0,
+    paymentIds: new Set(),
+    eventStatuses: []
+  };
+  let lockTail = Promise.resolve();
+
+  function connectionForTransaction() {
+    let releaseLock = null;
+    let hasLock = false;
+    return {
+      async beginTransaction() {},
+      async execute(sql, values = []) {
+        if (sql.includes("FROM orders WHERE razorpay_order_id")) {
+          const previous = lockTail;
+          let unlock;
+          lockTail = new Promise(resolve => { unlock = resolve; });
+          await previous;
+          releaseLock = unlock;
+          hasLock = true;
+          return [[{ ...shared.order }]];
+        }
+        if (sql.includes("FROM order_items")) {
+          return [[{ product_id: "prod-1", variant_id: null, quantity: 1, product_name: "Test item" }]];
+        }
+        if (sql.includes("FROM products")) {
+          return [[{ id: "prod-1", name: "Test item", stock: shared.productStock }]];
+        }
+        if (sql.includes("UPDATE products SET stock")) {
+          shared.productStock = Number(values[0]);
+          return [{ affectedRows: 1 }];
+        }
+        if (sql.includes("UPDATE orders") && sql.includes("payment_status = 'paid'")) {
+          shared.order.payment_status = "paid";
+          shared.order.order_status = "confirmed";
+          shared.order.razorpay_payment_id = values[0];
+          return [{ affectedRows: 1 }];
+        }
+        return [{ affectedRows: 1 }];
+      },
+      async commit() { if (hasLock) { hasLock = false; releaseLock(); } },
+      async rollback() { if (hasLock) { hasLock = false; releaseLock(); } },
+      release() {}
+    };
+  }
+
+  const settleDependencies = {
+    sortStockItems: items => items,
+    formatVariantLabel: () => "Default",
+    syncProductVariantStock: async () => {},
+    recordVariantInventoryMovement: async () => {},
+    recordInventoryMovement: async () => { shared.inventoryWrites += 1; },
+    confirmCouponRedemption: async () => {},
+    releaseCouponRedemptionForCancelledOrder: async () => {},
+    recordVerifiedPaymentEvent: async (_connection, event) => {
+      const inserted = !shared.paymentIds.has(event.gatewayPaymentId);
+      shared.paymentIds.add(event.gatewayPaymentId);
+      return { inserted };
+    },
+    classifyCapturedPayment: currentOrder =>
+      currentOrder.payment_status === "paid" &&
+      currentOrder.razorpay_payment_id === paymentRecord.id
+        ? "same_payment_replay"
+        : "first_capture"
+  };
+
+  const deps = {
+    getEventStatus: async () => "received",
+    markEventStatus: async (eventId, status) => { shared.eventStatuses.push({ eventId, status }); },
+    ensureInventoryTable: async () => {},
+    ensureProductVariantSchema: async () => {},
+    ensurePaymentEventLogTable: async () => {},
+    getConnection: async () => connectionForTransaction(),
+    getRazorpay: () => ({ payments: { fetch: async () => paymentRecord } }),
+    matchesOrderRazorpayId: () => true,
+    settleCapturedPayment: (connection, context) =>
+      settleCapturedPayment(connection, context, value => value, settleDependencies)
+  };
+
+  const firstRecord = { ...record, eventId: "evt_capture_concurrent_a" };
+  const secondRecord = { ...record, eventId: "evt_capture_concurrent_b" };
+  const [first, second] = await Promise.all([
+    processCapturedPaymentWebhook({ record: firstRecord, eventId: firstRecord.eventId, inserted: true }, deps),
+    processCapturedPaymentWebhook({ record: secondRecord, eventId: secondRecord.eventId, inserted: true }, deps)
+  ]);
+
+  assert.equal(first.status, 200);
+  assert.equal(second.status, 200);
+  assert.equal(shared.order.payment_status, "paid");
+  assert.equal(shared.productStock, 2);
+  assert.equal(shared.inventoryWrites, 1);
+  assert.equal(shared.paymentIds.size, 1);
+  assert.equal(shared.eventStatuses.length, 2);
+  assert.ok(shared.eventStatuses.every(event => event.status === "processed"));
+});
