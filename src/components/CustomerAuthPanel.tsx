@@ -180,6 +180,9 @@ export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, co
           ) : (
             <form onSubmit={verifyOtp} className="space-y-4">
               <p className="text-xs text-[#6F6475]">Enter the 6-digit code sent to <strong>{identifier}</strong>.</p>
+              <label className={labelClass}>Full name <span className="text-[#A89BAE]">(only needed when creating a new account)</span>
+                <input value={name} onChange={event => setName(event.target.value)} autoComplete="name" placeholder="Your full name" className={fieldClass} />
+              </label>
               <label className={labelClass}>Verification code
                 <input required inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp} onChange={event => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="••••••" className={fieldClass + " text-center tracking-[0.5em] text-lg"} />
               </label>
