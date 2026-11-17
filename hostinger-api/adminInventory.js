@@ -145,10 +145,11 @@ router.post("/adjustments", async (req, res, next) => {
   let connection;
   try {
     await ensureInventoryTable();
+    // Schema helpers may execute CREATE/ALTER TABLE, which implicitly commits
+    // in MariaDB. Finish schema preparation before opening the stock transaction.
+    await ensureProductVariantSchema();
     connection = await pool.getConnection();
     await connection.beginTransaction();
-
-    await ensureProductVariantSchema();
     // Lock the parent before checking its variant mode. Variant creation/editing
     // also locks this row, so the check cannot race with a variant being added.
     const [products] = await connection.execute(
