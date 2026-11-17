@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
-import { canShipOrder, shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
+import { canCancelOrder, canShipOrder, shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
 import { formatVariantLabel } from "./productVariantPolicy.js";
@@ -481,7 +481,7 @@ router.post("/update", async (req, res, next) => {
         return res.status(400).json({ error: "Order is already cancelled." });
       }
 
-      if (!["pending", "placed", "confirmed", "awaiting_payment"].includes(currentStatus)) {
+      if (!canCancelOrder(order)) {
         await connection.rollback();
         connection.release();
         connection = null;
