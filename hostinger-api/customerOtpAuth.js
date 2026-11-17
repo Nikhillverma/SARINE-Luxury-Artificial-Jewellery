@@ -38,6 +38,14 @@ async function findCustomer(method, identifier, connection = pool) {
   if (method === "phone" && rows.length > 1) return { ambiguous: true };
   return rows[0] || null;
 }
+function maskIdentifier(method, identifier) {
+  if (method === "email") {
+    const [local, domain] = identifier.split("@");
+    return (local?.slice(0, 1) || "*") + "***@" + (domain || "");
+  }
+  return "******" + identifier.slice(-2);
+}
+
 async function createChallenge(method, identifier, purpose) {
   const [recent] = await pool.execute(
     "SELECT COUNT(*) AS total, MAX(created_at) AS created_at FROM customer_auth_challenges WHERE identifier = ? AND purpose = ? AND created_at >= DATE_SUB(UTC_TIMESTAMP(3), INTERVAL 1 HOUR)",
@@ -63,8 +71,17 @@ async function createChallenge(method, identifier, purpose) {
   );
   try {
     await deliverCustomerOtp(method, identifier, otp, purpose);
+    await pool.execute(
+      "INSERT INTO customer_auth_delivery_events (challenge_id, method, purpose, provider, identifier_masked, status) VALUES (?, ?, ?, ?, ?, 'sent')",
+      [id, method, purpose, method === "email" ? "resend" : "msg91", maskIdentifier(method, identifier)]
+    );
   } catch (error) {
     await pool.execute("UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE id = ?", [id]);
+    const failureCode = String(error?.message || "").includes("not configured") ? "provider_not_configured" : "provider_delivery_failed";
+    await pool.execute(
+      "INSERT INTO customer_auth_delivery_events (challenge_id, method, purpose, provider, identifier_masked, status, failure_code) VALUES (?, ?, ?, ?, ?, 'failed', ?)",
+      [id, method, purpose, method === "email" ? "resend" : "msg91", maskIdentifier(method, identifier), failureCode]
+    );
     throw error;
   }
   return { sent: true, challengeId: id };
