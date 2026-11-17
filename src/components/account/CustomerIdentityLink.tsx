@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { customerAuthService } from "../services/customerAuthService";
-import type { CustomerIdentity } from "../types/customer";
+import { customerAuthService } from "../../services/customerAuthService";
+import type { CustomerIdentity } from "../../types/customer";
 
 interface Props { customer: CustomerIdentity; onUpdated: (customer: CustomerIdentity) => void; }
 
