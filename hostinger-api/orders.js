@@ -13,6 +13,7 @@ import { isValidPublicOrderToken } from "./orderAccessPolicy.js";
 const router = Router();
 
 import { calculateShippingFee, getCheckoutConfig } from "./checkoutPolicy.js";
+import { validateCheckoutItems } from "./checkoutRequestPolicy.js";
 import { buildOrderInsert } from "./orderInsertPolicy.js";
 import { matchesOrderRazorpayId } from "./paymentValidation.js";
 import { ensurePaymentEventLogTable } from "./paymentEventPolicy.js";
@@ -130,16 +131,9 @@ router.post("/create", checkoutLimiter, async (req, res, next) => {
     }
 
     // 4. Validate items array
-    if (!Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: "Your shopping bag is empty." });
-    }
-    for (const itm of items) {
-      if (!itm.productId || typeof itm.productId !== "string") {
-        return res.status(400).json({ error: "Invalid product in order list." });
-      }
-      if (!Number.isInteger(Number(itm.quantity)) || Number(itm.quantity) <= 0) {
-        return res.status(400).json({ error: "Product quantity must be a positive integer." });
-      }
+    const checkoutItemsError = validateCheckoutItems(items);
+    if (checkoutItemsError) {
+      return res.status(400).json({ error: checkoutItemsError });
     }
 
     await ensureMarketingSchema();
