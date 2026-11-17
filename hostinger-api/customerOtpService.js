@@ -1,36 +1,7 @@
 import crypto from "node:crypto";
 import { pool } from "./db.js";
-
-const OTP_TTL_MINUTES = 5;
-const RESEND_COOLDOWN_SECONDS = 45;
-const MAX_ATTEMPTS = 5;
-
-function otpSecret() {
-  const secret = process.env.CUSTOMER_OTP_SECRET;
-  if (!secret || secret.length < 32) {
-    throw new Error("CUSTOMER_OTP_SECRET must be configured with at least 32 characters.");
-  }
-  return secret;
-}
-
-export function normalizePhone(value) {
-  const digits = String(value || "").replace(/\D/g, "");
-  const local = digits.startsWith("91") && digits.length === 12 ? digits.slice(2) : digits;
-  return /^[6-9]\d{9}$/.test(local) ? local : "";
-}
-
-export function createOtp() {
-  return crypto.randomInt(0, 1_000_000).toString().padStart(6, "0");
-}
-
-export function hashOtp(challengeId, otp) {
-  return crypto.createHmac("sha256", otpSecret()).update(`${challengeId}:${otp}`).digest("hex");
-}
-
-export function safeOtpEqual(expected, actual) {
-  if (typeof expected !== "string" || typeof actual !== "string" || expected.length !== actual.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(actual, "hex"));
-}
+import { CUSTOMER_OTP_POLICY, normalizePhone, createOtp, hashOtp, safeOtpEqual } from "./customerOtpPolicy.js";
+export { CUSTOMER_OTP_POLICY, normalizePhone, createOtp, hashOtp, safeOtpEqual };
 
 let schemaReady;
 export async function ensureCustomerOtpSchema() {
