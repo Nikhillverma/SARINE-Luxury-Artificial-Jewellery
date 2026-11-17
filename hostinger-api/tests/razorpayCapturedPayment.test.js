@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { processCapturedPaymentWebhook } from "../razorpayCapturedPayment.js";
+import { settleCapturedPayment } from "../paymentSettlement.js";
 
 const record = {
   eventId: "evt_capture_1",
