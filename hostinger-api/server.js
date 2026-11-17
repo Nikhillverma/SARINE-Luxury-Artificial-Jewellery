@@ -27,6 +27,7 @@ import razorpayWebhooksRouter from "./razorpayWebhooks.js";
 import { publicMediaRouter, adminMediaRouter } from "./media.js";
 import { getProductVariants } from "./productVariantSchema.js";
 import { isAllowedBrowserOrigin } from "./adminOriginPolicy.js";
+import { parseCatalogueQuery } from "./catalogueQueryPolicy.js";
 
 const app = express();
 
@@ -161,20 +162,9 @@ app.get("/health/db", async (_req, res) => {
 // Public product catalogue
 app.get("/api/products", async (req, res, next) => {
   try {
-    const {
-      categorySlug,
-      categoryId,
-      jewelleryType,
-      collectionSlug,
-      inStockOnly,
-      minPrice,
-      maxPrice,
-      sortBy,
-      page = "1",
-      pageSize = "24",
-      search
-    } = req.query;
-
+    const parsedQuery = parseCatalogueQuery(req.query);
+    if (parsedQuery.error) return res.status(400).json({ error: parsedQuery.error });
+    const { categorySlug, categoryId, jewelleryType, collectionSlug, inStockOnly, minPrice, maxPrice, sortBy, page: currentPage, pageSize: limit, search } = parsedQuery.filters;
     const conditions = ["p.status = 'active'"];
     const values = [];
 
@@ -204,45 +194,29 @@ app.get("/api/products", async (req, res, next) => {
       conditions.push("p.stock > 0");
     }
 
-    if (
-      minPrice !== undefined &&
-      Number.isFinite(Number(minPrice))
-    ) {
+    if (minPrice !== undefined) {
       conditions.push("p.price >= ?");
-      values.push(Number(minPrice));
+      values.push(minPrice);
     }
 
-    if (
-      maxPrice !== undefined &&
-      Number.isFinite(Number(maxPrice))
-    ) {
+    if (maxPrice !== undefined) {
       conditions.push("p.price <= ?");
-      values.push(Number(maxPrice));
+      values.push(maxPrice);
     }
 
-    if (search && String(search).trim()) {
-      const term = `%${String(search).trim()}%`;
-      conditions.push(
-        "(p.name LIKE ? OR p.description LIKE ? OR p.jewellery_type LIKE ?)"
-      );
+    if (search) {
+      // Treat SQL LIKE metacharacters as literal customer search text.
+      const term = "%" + search.replace(/[!%_]/g, "!$&") + "%";
+      conditions.push("(p.name LIKE ? ESCAPE '!' OR p.description LIKE ? ESCAPE '!' OR p.jewellery_type LIKE ? ESCAPE '!')");
       values.push(term, term, term);
     }
-
     const orderOptions = {
       newest: "p.created_at DESC",
       "price-asc": "p.price ASC",
       "price-desc": "p.price DESC"
     };
 
-    const orderBy = orderOptions[sortBy] || orderOptions.newest;
-    const currentPage = Math.max(
-      1,
-      Number.parseInt(page, 10) || 1
-    );
-    const limit = Math.min(
-      100,
-      Math.max(1, Number.parseInt(pageSize, 10) || 24)
-    );
+    const orderBy = orderOptions[sortBy];
     const offset = (currentPage - 1) * limit;
     const where = conditions.join(" AND ");
 
