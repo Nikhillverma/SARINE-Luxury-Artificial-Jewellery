@@ -576,7 +576,7 @@ router.post("/update", async (req, res, next) => {
       // Release coupon capacity atomically with cancellation for reserved and redeemed uses.
       if (order.coupon_code) {
         await ensureMarketingSchema();
-        await releaseCouponRedemptionForCancelledOrder(connection, order.id);
+        await releaseCouponRedemptionForCancelledOrder(connection, order.order_number);
       }
 
       const reason = cancellationReason || (typeof note === "string" ? note : "Cancelled by atelier admin");
