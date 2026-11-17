@@ -9,6 +9,7 @@ import { shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
 import { formatVariantLabel } from "./productVariantPolicy.js";
+import { sortStockItems } from "./stockLockPolicy.js";
 
 const router = Router();
 const COOKIE_NAME = "sarine_customer_session";
@@ -223,20 +224,45 @@ router.post("/cancel", async (req, res, next) => {
     const stockWasDecremented = shouldRestoreStockOnCancellation(order);
     if (stockWasDecremented) {
       const [lines] = await connection.execute(
-        "SELECT product_id, variant_id, SUM(quantity) AS quantity FROM order_items WHERE order_id = ? AND product_id IS NOT NULL GROUP BY product_id, variant_id",
+        `SELECT product_id, variant_id, SUM(quantity) AS quantity
+         FROM order_items
+         WHERE order_id = ? AND product_id IS NOT NULL
+         GROUP BY product_id, variant_id`,
         [order.id]
       );
-      for (const line of lines) {
+      const stockItems = sortStockItems(lines.map(line => ({
+        ...line,
+        productId: line.product_id,
+        variantId: line.variant_id || null
+      })));
+
+      for (const line of stockItems) {
         const quantity = Number(line.quantity);
-        if (!line.product_id || !Number.isSafeInteger(quantity) || quantity <= 0) continue;
+        if (!Number.isSafeInteger(quantity) || quantity <= 0) {
+          throw new Error("Cannot restore inventory: an order line has an invalid quantity.");
+        }
+
+        // All checkout, payment settlement, and admin cancellation paths lock
+        // the parent product before any variant, in the same deterministic order.
+        const [products] = await connection.execute(
+          "SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE",
+          [line.product_id]
+        );
+        if (!products.length) {
+          throw new Error(`Cannot restore inventory: product ${line.product_id} for order ${orderNumber} no longer exists.`);
+        }
+        const product = products[0];
+
         if (line.variant_id) {
           const [variants] = await connection.execute(
-            `SELECT v.*, p.name AS product_name FROM product_variants v
-             INNER JOIN products p ON p.id = v.product_id
-             WHERE v.id = ? AND v.product_id = ? FOR UPDATE`,
+            `SELECT id, product_id, sku, option1_name, option1_value, option2_name, option2_value, stock
+             FROM product_variants
+             WHERE id = ? AND product_id = ? FOR UPDATE`,
             [line.variant_id, line.product_id]
           );
-          if (!variants.length) continue;
+          if (!variants.length) {
+            throw new Error(`Cannot restore inventory: variant ${line.variant_id} for order ${orderNumber} no longer exists.`);
+          }
           const variant = variants[0];
           const previousStock = Number(variant.stock || 0);
           const newStock = previousStock + quantity;
@@ -250,7 +276,7 @@ router.post("/cancel", async (req, res, next) => {
           await syncProductVariantStock(connection, line.product_id);
           await recordVariantInventoryMovement(connection, {
             variantId: line.variant_id, productId: line.product_id,
-            productName: variant.product_name, variantSku: variant.sku,
+            productName: product.name, variantSku: variant.sku,
             variantLabel: formatVariantLabel(variant.option1_name, variant.option1_value, variant.option2_name, variant.option2_value),
             previousStock, quantityDelta: quantity, newStock,
             reason: `Customer cancellation restock ${orderNumber}`,
@@ -258,12 +284,7 @@ router.post("/cancel", async (req, res, next) => {
           });
           continue;
         }
-        const [products] = await connection.execute(
-          "SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE",
-          [line.product_id]
-        );
-        if (!products.length) continue;
-        const product = products[0];
+
         const previousStock = Number(product.stock || 0);
         const newStock = previousStock + quantity;
         if (!Number.isSafeInteger(newStock) || newStock > 2147483647) {
