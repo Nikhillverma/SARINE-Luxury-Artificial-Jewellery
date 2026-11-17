@@ -60,3 +60,4 @@ jobs:
           node --check razorpayWebhooks.js
           node --check razorpayCapturedPayment.js
           node --check razorpayWebhookPolicy.js
+          node --check adminReturns.js
