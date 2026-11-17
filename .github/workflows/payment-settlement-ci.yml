@@ -1,0 +1,42 @@
+name: Razorpay settlement backend CI
+
+on:
+  push:
+    branches:
+      - fix/razorpay-webhook-settlement
+    paths:
+      - "hostinger-api/**"
+      - ".github/workflows/payment-settlement-ci.yml"
+  pull_request:
+    branches:
+      - fix/order-timestamps
+    paths:
+      - "hostinger-api/**"
+      - ".github/workflows/payment-settlement-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hostinger-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: hostinger-api/package-lock.json
+      - name: Install backend dependencies
+        run: npm ci
+      - name: Run backend tests
+        run: npm test
+      - name: Check payment modules
+        run: |
+          node --check orders.js
+          node --check paymentSettlement.js
+          node --check razorpayWebhooks.js
+          node --check razorpayWebhookPolicy.js
