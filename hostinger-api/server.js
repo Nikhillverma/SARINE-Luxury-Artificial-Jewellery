@@ -27,6 +27,7 @@ import razorpayWebhooksRouter from "./razorpayWebhooks.js";
 import { publicMediaRouter, adminMediaRouter } from "./media.js";
 import { getProductVariants } from "./productVariantSchema.js";
 import { isAllowedBrowserOrigin } from "./adminOriginPolicy.js";
+import { mapPublicProduct } from "./publicProductMapper.js";
 import { parseCatalogueQuery } from "./catalogueQueryPolicy.js";
 
 const app = express();
@@ -74,52 +75,10 @@ app.use(express.json({
   }
 }));
 
-function parseJson(value, fallback = []) {
-  if (value === null || value === undefined || value === "") return fallback;
-  if (typeof value !== "string") return value;
-
-  try {
-    return JSON.parse(value);
-  } catch {
-    return fallback;
-  }
-}
-
-function mapProduct(row) {
-  return {
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    description: row.description || "",
-    shortDescription: row.short_description || "",
-    price: Number(row.price),
-    compareAtPrice: row.compare_at_price === null
-      ? undefined
-      : Number(row.compare_at_price),
-    costPrice: row.cost_price === null
-      ? undefined
-      : Number(row.cost_price),
-    images: parseJson(row.images),
-    categoryId: row.category_id,
-    collectionSlugs: parseJson(row.collection_slugs),
-    jewelleryType: row.jewellery_type,
-    stock: Number(row.stock),
-    status: row.status,
-    tags: parseJson(row.tags),
-    baseMetal: row.base_metal || undefined,
-    platingFinish: row.plating_finish || undefined,
-    stoneType: row.stone_type || undefined,
-    closureType: row.closure_type || undefined,
-    careInstructions: parseJson(row.care_instructions),
-    variants: [],
-    createdAt: row.created_at
-  };
-}
-
 async function mapProductsWithVariants(rows) {
   const grouped = await getProductVariants(rows.map(row => row.id), { activeOnly: true });
   return rows.map(row => ({
-    ...mapProduct(row),
+    ...mapPublicProduct(row),
     variants: grouped.get(row.id) || []
   }));
 }
