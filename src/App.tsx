@@ -12,6 +12,7 @@ import { Navbar } from './components/Navbar';
 import { ScrollToTop } from './components/ScrollToTop';
 import { CartDrawer } from './components/CartDrawer';
 import { WishlistDrawer } from './components/WishlistDrawer';
+import { CustomerLoginPrompt } from './components/CustomerLoginPrompt';
 import { Footer } from './components/Footer';
 import { HomePage } from './pages/HomePage';
 import { CollectionPage } from './pages/CollectionPage';
@@ -68,6 +69,7 @@ function MainAppShell() {
           />
           <CartDrawer />
           <WishlistDrawer />
+          <CustomerLoginPrompt />
         </>
       )}
 
