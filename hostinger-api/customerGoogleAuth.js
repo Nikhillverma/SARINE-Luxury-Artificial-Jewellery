@@ -35,7 +35,7 @@ router.post("/google", async (req, res, next) => {
     if (!clientId || !credential || credential.length > 10000) {
       return res.status(503).json({ error: "Google sign-in is not configured yet." });
     }
-    const response = await fetch("https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(credential));
+    const response = await fetch("https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(credential), { signal: AbortSignal.timeout(5000) });
     if (!response.ok) return res.status(401).json({ error: "Google sign-in could not be verified. Please try again." });
     const profile = await response.json();
     if (profile.aud !== clientId || !["accounts.google.com", "https://accounts.google.com"].includes(profile.iss) ||
