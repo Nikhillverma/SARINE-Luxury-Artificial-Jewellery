@@ -13,8 +13,8 @@ const router = Router();
 
 import { calculateShippingFee, getCheckoutConfig } from "./checkoutPolicy.js";
 import { buildOrderInsert } from "./orderInsertPolicy.js";
-import { matchesOrderRazorpayId, classifyCapturedPayment } from "./paymentValidation.js";
-import { ensurePaymentEventLogTable, recordVerifiedPaymentEvent } from "./paymentEventPolicy.js";
+import { matchesOrderRazorpayId } from "./paymentValidation.js";
+import { ensurePaymentEventLogTable } from "./paymentEventPolicy.js";
 import { ensureMarketingSchema, lockAndValidateCoupon, reserveCouponRedemption, confirmCouponRedemption, releaseCouponRedemptionForCancelledOrder } from "./marketingPolicy.js";
 import { settleCapturedPayment } from "./paymentSettlement.js";
 
