@@ -37,6 +37,7 @@ test("MariaDB serializes simultaneous captures so shared settlement deducts stoc
         razorpay_order_id VARCHAR(64) NOT NULL,
         razorpay_payment_id VARCHAR(64) NULL,
         updated_at DATETIME(3) NULL,
+        UNIQUE KEY uq_test_order_number (order_number),
         KEY idx_orders_razorpay_order_id (razorpay_order_id)
       ) ENGINE=InnoDB
     `);
@@ -144,7 +145,32 @@ test("MariaDB serializes simultaneous captures so shared settlement deducts stoc
       currency: "INR",
       gatewayStatus: "captured"
     };
-    const [first, second] = await Promise.all([
+    const browserVerification = async () => {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        const [lockedOrders] = await connection.execute(
+          "SELECT * FROM orders WHERE order_number = ? FOR UPDATE",
+          [orderNumber]
+        );
+        const settlement = await settleCapturedPayment(connection, {
+          order: lockedOrders[0],
+          cleanOrderNumber: orderNumber,
+          razorpay_order_id: payment.order_id,
+          razorpay_payment_id: payment.id,
+          paymentRecord: payment
+        }, value => value, settlementDependencies);
+        await connection.commit();
+        return settlement;
+      } catch (error) {
+        await connection.rollback().catch(() => {});
+        throw error;
+      } finally {
+        connection.release();
+      }
+    };
+
+    const [first, second, browserResult] = await Promise.all([
       processCapturedPaymentWebhook({
         record: { ...baseRecord, eventId: "evt_db_a" },
         eventId: "evt_db_a",
@@ -154,7 +180,8 @@ test("MariaDB serializes simultaneous captures so shared settlement deducts stoc
         record: { ...baseRecord, eventId: "evt_db_b" },
         eventId: "evt_db_b",
         inserted: true
-      }, dependencies)
+      }, dependencies),
+      browserVerification()
     ]);
 
     const [orders] = await pool.execute(
@@ -168,6 +195,7 @@ test("MariaDB serializes simultaneous captures so shared settlement deducts stoc
 
     assert.equal(first.status, 200);
     assert.equal(second.status, 200);
+    assert.ok(browserResult.success || browserResult.alreadyProcessed);
     assert.equal(orders[0].payment_status, "paid");
     assert.equal(orders[0].order_status, "confirmed");
     assert.equal(orders[0].razorpay_payment_id, payment.id);
