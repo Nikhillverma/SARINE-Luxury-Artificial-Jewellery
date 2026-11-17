@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CustomerAuthPanel } from "../components/CustomerAuthPanel";
+import { CustomerIdentityLink } from "../components/account/CustomerIdentityLink";
 import { customerAuthService } from "../services/customerAuthService";
 import type { CustomerIdentity } from "../types/customer";
 
@@ -45,6 +46,7 @@ export const AccountPage: React.FC = () => {
               <p className="mt-2 text-sm text-[#6F6475]">{customer.email || customer.phone}</p>
               {customer.email && customer.phone && <p className="mt-1 text-xs text-[#8A7B90]">{customer.phone}</p>}
               {error && <p role="alert" className="mt-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700">{error}</p>}
+              <CustomerIdentityLink customer={customer} onUpdated={setCustomer} />
               <div className="mt-7 grid gap-3 sm:grid-cols-2">
                 <Link to="/track-order" className="min-h-12 flex items-center justify-center bg-[#563568] text-white text-sm hover:bg-[#6E4682] transition-colors">Track an Order</Link>
                 <button type="button" onClick={handleLogout} className="min-h-12 border border-[#D9B8A0] text-[#563568] text-sm hover:bg-[#FAF5FC]">Sign Out</button>
