@@ -22,8 +22,10 @@ for (const paymentMethod of ["cod", "online"]) {
     const { sql, values } = buildOrderInsert({ ...order, paymentMethod });
 
     assert.equal((sql.match(/\?/g) || []).length, values.length);
-    assert.equal(values.length, 13);
-    assert.deepEqual(values.slice(10), ["TEST250", 250, "test-token-hash"]);
+    assert.equal(values.length, 14);
+    assert.deepEqual(values.slice(10, 13), ["TEST250", 250, "test-token-hash"]);
+    assert.deepEqual(JSON.parse(values[13]), { source: "web_checkout" });
+    assert.match(sql, /public_token_hash, source_document, created_at, updated_at/);
     assert.match(sql, new RegExp(`'${paymentMethod}'`));
     assert.match(sql, paymentMethod === "cod" ? /'placed'/ : /'awaiting_payment'/);
   });
