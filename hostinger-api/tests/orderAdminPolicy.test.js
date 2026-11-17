@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   canShipOrder,
+  canCancelOrder,
   shouldRestoreStockOnCancellation
 } from "../orderAdminPolicy.js";
 
@@ -79,4 +80,16 @@ test("does not restore stock for an unpaid online pending order", () => {
     payment_method: "online",
     payment_status: "pending"
   }), false);
+});
+
+test("allows cancellation for all pre-shipment states used by customer and admin flows", () => {
+  for (const order_status of ["pending", "placed", "confirmed", "awaiting_payment", "processing"]) {
+    assert.equal(canCancelOrder({ order_status }), true);
+  }
+});
+
+test("blocks cancellation after shipment, delivery, or an existing cancellation", () => {
+  for (const order_status of ["shipped", "delivered", "cancelled", "needs_refund", "failed"]) {
+    assert.equal(canCancelOrder({ order_status }), false);
+  }
 });
