@@ -55,8 +55,8 @@ export const customerAuthService = {
     });
     return { customer: mapCustomer(result.customer), created: Boolean(result.created) };
   },
-  async requestPasswordRecovery(method: "email" | "phone", identifier: string): Promise<void> {
-    await request("password/forgot/request", { method: "POST", body: JSON.stringify({ method, identifier }) });
+  async requestPasswordRecovery(method: "email" | "phone", identifier: string): Promise<{ challengeId: string }> {
+    return request("password/forgot/request", { method: "POST", body: JSON.stringify({ method, identifier }) });
   },
   async verifyPasswordRecovery(challengeId: string, otp: string): Promise<string> {
     const result = await request<{ resetToken: string }>("password/forgot/verify", {
