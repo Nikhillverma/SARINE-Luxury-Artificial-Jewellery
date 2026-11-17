@@ -26,7 +26,7 @@ import ordersRouter from "./orders.js";
 import razorpayWebhooksRouter from "./razorpayWebhooks.js";
 import { publicMediaRouter, adminMediaRouter } from "./media.js";
 import { getProductVariants } from "./productVariantSchema.js";
-import { isAllowedAdminRequestOrigin } from "./adminOriginPolicy.js";
+import { isAllowedBrowserOrigin } from "./adminOriginPolicy.js";
 
 const app = express();
 
@@ -331,18 +331,20 @@ app.get("/api/products/:slug", async (req, res, next) => {
   }
 });
 
-function requireTrustedAdminOrigin(req, res, next) {
+function requireTrustedBrowserOrigin(req, res, next) {
   const origin = req.get("Origin");
-  if (!isAllowedAdminRequestOrigin(origin, allowedOrigins)) {
-    return res.status(403).json({ error: "Untrusted origin for administrative request." });
+  if (!isAllowedBrowserOrigin(origin, allowedOrigins)) {
+    return res.status(403).json({ error: "Untrusted origin for this request." });
   }
   return next();
 }
 
-// CORS controls which scripts may read responses; it does not stop cross-origin
-// form submissions. Validate browser origins before every cookie-authenticated
-// admin route, including login and media mutations.
-app.use("/api/admin", requireTrustedAdminOrigin);
+// CORS and explicit origin validation provide defence in depth for browser
+// requests that rely on cookies. Reject untrusted origins before any admin,
+// customer-account, or checkout/payment mutation route is reached.
+app.use("/api/admin", requireTrustedBrowserOrigin);
+app.use("/api/customer/auth", requireTrustedBrowserOrigin);
+app.use("/api/orders", requireTrustedBrowserOrigin);
 
 app.use("/api/marketing/coupons", publicCouponsRouter);
 app.use("/api/admin/marketing", adminMarketingRouter);
@@ -425,15 +427,15 @@ app.use("/api/admin/refunds", adminRefundsRouter);
 app.use("/api/orders", ordersRouter);
 
 // Legacy direct API aliases for existing storefront callers
-app.post("/api/create-order", (req, res, next) => {
+app.post("/api/create-order", requireTrustedBrowserOrigin, (req, res, next) => {
   req.url = "/create";
   ordersRouter(req, res, next);
 });
-app.post("/api/verify-payment", (req, res, next) => {
+app.post("/api/verify-payment", requireTrustedBrowserOrigin, (req, res, next) => {
   req.url = "/verify";
   ordersRouter(req, res, next);
 });
-app.get("/api/get-order", (req, res, next) => {
+app.get("/api/get-order", requireTrustedBrowserOrigin, (req, res, next) => {
   const orderNumber = req.query.orderNumber;
   if (!orderNumber) {
     return res.status(400).json({ error: "Missing orderNumber parameter." });
@@ -441,15 +443,15 @@ app.get("/api/get-order", (req, res, next) => {
   req.url = `/${encodeURIComponent(String(orderNumber).trim())}`;
   ordersRouter(req, res, next);
 });
-app.post("/api/track-order", (req, res, next) => {
+app.post("/api/track-order", requireTrustedBrowserOrigin, (req, res, next) => {
   req.url = "/track";
   ordersRouter(req, res, next);
 });
-app.get("/api/admin-list-orders", requireTrustedAdminOrigin, (req, res, next) => {
+app.get("/api/admin-list-orders", requireTrustedBrowserOrigin, (req, res, next) => {
   req.url = "/";
   adminOrdersRouter(req, res, next);
 });
-app.post("/api/admin-update-order", requireTrustedAdminOrigin, (req, res, next) => {
+app.post("/api/admin-update-order", requireTrustedBrowserOrigin, (req, res, next) => {
   req.url = "/update";
   adminOrdersRouter(req, res, next);
 });
