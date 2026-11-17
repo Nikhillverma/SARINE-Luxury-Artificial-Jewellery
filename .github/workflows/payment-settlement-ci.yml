@@ -39,4 +39,5 @@ jobs:
           node --check orders.js
           node --check paymentSettlement.js
           node --check razorpayWebhooks.js
+          node --check razorpayCapturedPayment.js
           node --check razorpayWebhookPolicy.js
