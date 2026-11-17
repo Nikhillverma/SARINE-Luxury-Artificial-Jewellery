@@ -285,3 +285,16 @@ test("additional captured payment is committed to manual refund review", async (
   assert.equal(calls.marked[0].status, "needs_review");
   assert.equal(calls.committed, 1);
 });
+
+
+test("duplicate gateway-order references are held for review instead of settling an arbitrary order", async () => {
+  const { calls, deps, connection } = setup();
+  connection.execute = async () => [[{ ...order }, { ...order, id: "another-order" }]];
+  const result = await processCapturedPaymentWebhook({ record, eventId: record.eventId, inserted: true }, deps);
+
+  assert.equal(result.body.needsReview, true);
+  assert.equal(result.body.reason, "duplicate_sarine_gateway_order_reference");
+  assert.equal(calls.settled, 0);
+  assert.equal(calls.marked[0].status, "needs_review");
+  assert.equal(calls.committed, 1);
+});
