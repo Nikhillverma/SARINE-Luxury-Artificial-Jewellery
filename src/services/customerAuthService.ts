@@ -67,6 +67,15 @@ export const customerAuthService = {
   async resetPassword(resetToken: string, password: string): Promise<void> {
     await request("password/forgot/reset", { method: "POST", body: JSON.stringify({ resetToken, password }) });
   },
+  async requestIdentityLink(method: "email" | "phone", identifier: string): Promise<{ challengeId?: string; alreadyLinked?: boolean }> {
+    return request("identity/link/request", { method: "POST", body: JSON.stringify({ method, identifier }) });
+  },
+  async verifyIdentityLink(challengeId: string, otp: string): Promise<CustomerIdentity> {
+    const result = await request<{ customer: CustomerRecord }>("identity/link/verify", {
+      method: "POST", body: JSON.stringify({ challengeId, otp })
+    });
+    return mapCustomer(result.customer);
+  },
   async loginWithGoogle(credential: string): Promise<CustomerIdentity> {
     const result = await request<AuthResult>("google", { method: "POST", body: JSON.stringify({ credential }) });
     return mapCustomer(result.customer);
