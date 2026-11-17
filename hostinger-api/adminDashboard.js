@@ -90,6 +90,7 @@ router.get("/", async (_req, res, next) => {
          FROM orders o
          LEFT JOIN (${INITIAL_ORDER_HISTORY}) AS initial_history
            ON initial_history.order_id COLLATE utf8mb4_unicode_ci = o.id COLLATE utf8mb4_unicode_ci
+         WHERE o.is_test = 0
          ORDER BY COALESCE(o.created_at, initial_history.initial_created_at) DESC, o.id DESC
          LIMIT 5`
       ),
