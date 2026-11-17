@@ -26,6 +26,7 @@ import ordersRouter from "./orders.js";
 import razorpayWebhooksRouter from "./razorpayWebhooks.js";
 import { publicMediaRouter, adminMediaRouter } from "./media.js";
 import { getProductVariants } from "./productVariantSchema.js";
+import { isAllowedAdminRequestOrigin } from "./adminOriginPolicy.js";
 
 const app = express();
 
@@ -330,6 +331,19 @@ app.get("/api/products/:slug", async (req, res, next) => {
   }
 });
 
+function requireTrustedAdminOrigin(req, res, next) {
+  const origin = req.get("Origin");
+  if (!isAllowedAdminRequestOrigin(origin, allowedOrigins)) {
+    return res.status(403).json({ error: "Untrusted origin for administrative request." });
+  }
+  return next();
+}
+
+// CORS controls which scripts may read responses; it does not stop cross-origin
+// form submissions. Validate browser origins before every cookie-authenticated
+// admin route, including login and media mutations.
+app.use("/api/admin", requireTrustedAdminOrigin);
+
 app.use("/api/marketing/coupons", publicCouponsRouter);
 app.use("/api/admin/marketing", adminMarketingRouter);
 
@@ -431,11 +445,11 @@ app.post("/api/track-order", (req, res, next) => {
   req.url = "/track";
   ordersRouter(req, res, next);
 });
-app.get("/api/admin-list-orders", (req, res, next) => {
+app.get("/api/admin-list-orders", requireTrustedAdminOrigin, (req, res, next) => {
   req.url = "/";
   adminOrdersRouter(req, res, next);
 });
-app.post("/api/admin-update-order", (req, res, next) => {
+app.post("/api/admin-update-order", requireTrustedAdminOrigin, (req, res, next) => {
   req.url = "/update";
   adminOrdersRouter(req, res, next);
 });
