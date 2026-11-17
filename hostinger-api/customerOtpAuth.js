@@ -30,8 +30,11 @@ function resolveIdentifier(method, value) {
   return "";
 }
 async function findCustomer(method, identifier, connection = pool) {
-  const column = method === "email" ? "email_normalized" : "phone_normalized";
-  const [rows] = await connection.execute(`SELECT id, name, email, phone, status FROM customers WHERE ${column} = ? LIMIT 1`, [identifier]);
+  const sql = method === "email"
+    ? "SELECT id, name, email, phone, status, google_sub FROM customers WHERE email_normalized = ? LIMIT 1"
+    : "SELECT id, name, email, phone, status, google_sub FROM customers WHERE phone_normalized = ? OR phone = ? OR phone = ? LIMIT 1";
+  const values = method === "email" ? [identifier] : [identifier, identifier, "91" + identifier];
+  const [rows] = await connection.execute(sql, values);
   return rows[0] || null;
 }
 async function createChallenge(method, identifier, purpose) {
@@ -108,6 +111,7 @@ router.post("/otp/verify", verifyLimiter, async (req, res, next) => {
       return res.status(400).json({ error: "The verification code is incorrect." });
     }
     let customer = await findCustomer(challenge.method, challenge.identifier, connection);
+    let created = false;
     if (customer && customer.status !== "active") {
       await connection.rollback();
       return res.status(403).json({ error: "This account is not currently available. Please contact SARINE support." });
@@ -120,19 +124,23 @@ router.post("/otp/verify", verifyLimiter, async (req, res, next) => {
       const id = crypto.randomUUID();
       const email = challenge.method === "email" ? challenge.identifier : null;
       const phone = challenge.method === "phone" ? challenge.identifier : null;
+      const salt = await bcrypt.genSalt(12);
+      const unusablePasswordHash = await bcrypt.hash(crypto.randomBytes(48).toString("hex"), salt);
       await connection.execute(
         `INSERT INTO customers
          (id, email, email_normalized, phone, phone_normalized, name, password_hash, password_salt, password_scheme, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NULL, 'active', UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
-        [id, email, email, phone, phone, name]
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, "bcrypt", "active", UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
+        [id, email, email, phone, phone, name, unusablePasswordHash, salt]
       );
       customer = { id, name, email: email || "", phone: phone || "", status: "active" };
+      created = true;
     }
+    if (challenge.method === "phone") await connection.execute("UPDATE customers SET phone_normalized = ? WHERE id = ? AND (phone_normalized IS NULL OR phone_normalized = \"\")", [challenge.identifier, customer.id]);
     await connection.execute("UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE id = ?", [challengeId]);
     await connection.execute("UPDATE customers SET last_login_at = UTC_TIMESTAMP(3) WHERE id = ?", [customer.id]);
     await connection.commit();
     await createSession(customer.id, res);
-    return res.json({ success: true, customer: safeCustomer(customer), created: !customer.email && !customer.phone ? true : false });
+    return res.json({ success: true, customer: safeCustomer(customer), created });
   } catch (error) {
     if (connection) await connection.rollback().catch(() => {});
     if (error?.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "This contact is already linked to another customer account. Please sign in using that account." });
