@@ -8,6 +8,7 @@ import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger
 import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
 import { validateVariantSelection, getVariantStockKey, formatVariantLabel } from "./productVariantPolicy.js";
 import { sortStockItems } from "./stockLockPolicy.js";
+import { isValidPublicOrderToken } from "./orderAccessPolicy.js";
 
 const router = Router();
 
@@ -57,6 +58,15 @@ const checkoutLimiter = rateLimit({
   standardHeaders: "draft-8",
   legacyHeaders: false,
   message: { error: "Too many checkout attempts. Please wait before trying again." }
+});
+
+// Order confirmation contains personal and delivery details; throttle token lookups.
+const orderLookupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 60,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Too many order lookup attempts. Please try again later." }
 });
 
 // POST /api/orders/create (and /api/create-order)
@@ -670,12 +680,13 @@ router.post("/verify", async (req, res, next) => {
 });
 
 // GET /api/orders/:orderNumber (and /api/get-order)
-router.get("/:orderNumber", async (req, res, next) => {
+router.get("/:orderNumber", orderLookupLimiter, async (req, res, next) => {
   try {
+    res.set("Cache-Control", "no-store, private");
     const orderNumber = String(req.params.orderNumber || req.query.orderNumber || "").trim();
     const publicToken = String(req.query.t || req.query.publicToken || "").trim();
 
-    if (!orderNumber || !publicToken) {
+    if (!orderNumber || !isValidPublicOrderToken(publicToken)) {
       return res.status(403).json({ error: "Unauthorized access to order." });
     }
 
