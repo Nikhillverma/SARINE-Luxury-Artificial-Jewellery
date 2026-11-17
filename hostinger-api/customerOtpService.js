@@ -30,6 +30,8 @@ export async function ensureCustomerOtpSchema() {
   if (!indexes.length) {
     await pool.query("CREATE UNIQUE INDEX uq_customers_phone_normalized ON customers (phone_normalized)");
   }
+  const [googleIndexes] = await pool.execute("SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND INDEX_NAME = 'uq_customers_google_sub'");
+  if (!googleIndexes.length) await pool.query("CREATE UNIQUE INDEX uq_customers_google_sub ON customers (google_sub)");
   await pool.query(`
     CREATE TABLE IF NOT EXISTS customer_auth_challenges (
       id CHAR(36) NOT NULL PRIMARY KEY,
