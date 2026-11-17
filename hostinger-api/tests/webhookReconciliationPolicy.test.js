@@ -37,3 +37,33 @@ test("requires a refund ledger match before calling a refund event reconciled", 
   assert.equal(classifyWebhookReconciliation({ eventType: "refund.processed", orderFound: true }), "refund_event_needs_ledger_match");
   assert.equal(classifyWebhookReconciliation({ eventType: "refund.processed", orderFound: true, refundRecordStatus: "processed" }), "refund_processed");
 });
+
+
+test("routes captures on cancelled, failed, or needs-refund orders to refund review", () => {
+  for (const orderStatus of ["cancelled", "failed", "needs_refund"]) {
+    assert.equal(classifyWebhookReconciliation({
+      eventType: "payment.captured",
+      orderFound: true,
+      amountMatches: true,
+      orderStatus,
+      orderPaymentStatus: "paid",
+      orderPaymentId: "pay_123",
+      gatewayPaymentId: "pay_123",
+      paymentLedgerFound: true
+    }), "refund_review_required");
+  }
+});
+
+test("does not display a webhook marked needs_review as a successful match", () => {
+  assert.equal(classifyWebhookReconciliation({
+    eventType: "payment.captured",
+    eventStatus: "needs_review",
+    orderFound: true,
+    amountMatches: true,
+    orderStatus: "confirmed",
+    orderPaymentStatus: "paid",
+    orderPaymentId: "pay_123",
+    gatewayPaymentId: "pay_123",
+    paymentLedgerFound: true
+  }), "manual_review");
+});
