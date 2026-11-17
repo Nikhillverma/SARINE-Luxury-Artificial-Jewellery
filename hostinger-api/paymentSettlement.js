@@ -18,14 +18,25 @@ export async function settleCapturedPayment(connection, {
   razorpay_order_id,
   razorpay_payment_id,
   paymentRecord
-}, onResult = value => value) {
+}, onResult = value => value, dependencies = {}) {
+  const {
+    recordInventoryMovement: writeInventoryMovement = recordInventoryMovement,
+    syncProductVariantStock: syncVariantStock = syncProductVariantStock,
+    recordVariantInventoryMovement: writeVariantInventoryMovement = recordVariantInventoryMovement,
+    formatVariantLabel: getVariantLabel = formatVariantLabel,
+    sortStockItems: sortItems = sortStockItems,
+    recordVerifiedPaymentEvent: writePaymentEvent = recordVerifiedPaymentEvent,
+    classifyCapturedPayment: classifyPayment = classifyCapturedPayment,
+    confirmCouponRedemption: confirmCoupon = confirmCouponRedemption,
+    releaseCouponRedemptionForCancelledOrder: releaseCoupon = releaseCouponRedemptionForCancelledOrder
+  } = dependencies;
     // Idempotent replay of the same captured payment is safe. A different
     // captured payment against an already-paid order is a second charge and
     // must be surfaced for refund review rather than silently accepted.
     if (order.payment_status === "paid") {
-      const captureDisposition = classifyCapturedPayment(order, razorpay_payment_id);
+      const captureDisposition = classifyPayment(order, razorpay_payment_id);
       const samePayment = captureDisposition === "same_payment_replay";
-      const paymentEvent = await recordVerifiedPaymentEvent(connection, {
+      const paymentEvent = await writePaymentEvent(connection, {
         orderId: order.id,
         orderNumber: cleanOrderNumber,
         gatewayOrderId: razorpay_order_id,
@@ -104,7 +115,7 @@ export async function settleCapturedPayment(connection, {
     }
 
     // Use the same deterministic parent-first lock order as checkout and cancellation.
-    const stockItems = sortStockItems([...aggregatedItems.values()]);
+    const stockItems = sortItems([...aggregatedItems.values()]);
     for (const item of stockItems) {
       const [products] = await connection.execute(
         `SELECT id, name, stock FROM products WHERE id = ? FOR UPDATE`,
@@ -129,7 +140,7 @@ export async function settleCapturedPayment(connection, {
           break;
         }
         item.variantSku = variantRows[0].sku || item.variantSku;
-        item.variantLabel = formatVariantLabel(variantRows[0].option1_name, variantRows[0].option1_value, variantRows[0].option2_name, variantRows[0].option2_value) || item.variantLabel;
+        item.variantLabel = getVariantLabel(variantRows[0].option1_name, variantRows[0].option1_value, variantRows[0].option2_name, variantRows[0].option2_value) || item.variantLabel;
         item.previousStock = Number(variantRows[0].stock || 0);
       } else {
         if (Number(product.stock || 0) < item.quantity) {
@@ -149,8 +160,8 @@ export async function settleCapturedPayment(connection, {
             "UPDATE product_variants SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?",
             [newStock, item.variantId]
           );
-          await syncProductVariantStock(connection, item.productId);
-          await recordVariantInventoryMovement(connection, {
+          await syncVariantStock(connection, item.productId);
+          await writeVariantInventoryMovement(connection, {
             variantId: item.variantId, productId: item.productId,
             productName: item.productName, variantSku: item.variantSku,
             variantLabel: item.variantLabel, previousStock: item.previousStock,
@@ -163,7 +174,7 @@ export async function settleCapturedPayment(connection, {
             `UPDATE products SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?`,
             [newStock, item.productId]
           );
-          await recordInventoryMovement(connection, {
+          await writeInventoryMovement(connection, {
             productId: item.productId, productName: item.productName,
             previousStock: item.previousStock, quantityDelta: -item.quantity,
             newStock, reason: `Online payment captured ${cleanOrderNumber}`,
@@ -185,8 +196,8 @@ export async function settleCapturedPayment(connection, {
          VALUES (?, ?, 'confirmed', 'Payment verified and captured', 'customer', UTC_TIMESTAMP(3))`,
         [order.id, order.order_status]
       );
-      await confirmCouponRedemption(connection, order.id);
-      await recordVerifiedPaymentEvent(connection, {
+      await confirmCoupon(connection, order.id);
+      await writePaymentEvent(connection, {
         orderId: order.id,
         orderNumber: cleanOrderNumber,
         gatewayOrderId: razorpay_order_id,
@@ -222,7 +233,7 @@ export async function settleCapturedPayment(connection, {
          VALUES (?, ?, 'needs_refund', 'Stock exhausted between order creation and payment authorization. Flagged for full refund.', 'system', UTC_TIMESTAMP(3))`,
         [order.id, order.order_status]
       );
-      await recordVerifiedPaymentEvent(connection, {
+      await writePaymentEvent(connection, {
         orderId: order.id,
         orderNumber: cleanOrderNumber,
         gatewayOrderId: razorpay_order_id,
@@ -235,7 +246,7 @@ export async function settleCapturedPayment(connection, {
       // A stock-conflict refund will not enter the normal cancellation action.
       // Release its coupon reservation in this same transaction.
       if (order.coupon_code) {
-        await releaseCouponRedemptionForCancelledOrder(connection, order.id);
+        await releaseCoupon(connection, order.id);
       }
 
       return onResult({
