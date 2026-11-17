@@ -228,7 +228,7 @@ router.post("/cancel", async (req, res, next) => {
     // as cancellation, matching the admin cancellation path.
     if (order.coupon_code) {
       await ensureMarketingSchema();
-      await releaseCouponRedemptionForCancelledOrder(connection, order.id);
+      await releaseCouponRedemptionForCancelledOrder(connection, order.order_number);
     }
     if (stockWasDecremented) {
       const [lines] = await connection.execute(
