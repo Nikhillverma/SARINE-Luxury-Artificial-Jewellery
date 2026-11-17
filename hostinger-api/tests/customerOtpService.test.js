@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createOtp, hashOtp, normalizePhone, safeOtpEqual, CUSTOMER_OTP_POLICY } from "../customerOtpService.js";
+import { createOtp, hashOtp, normalizePhone, safeOtpEqual, CUSTOMER_OTP_POLICY } from "../customerOtpPolicy.js";
 
 process.env.CUSTOMER_OTP_SECRET = "test-only-customer-otp-secret-at-least-32-characters";
 
