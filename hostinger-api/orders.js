@@ -16,6 +16,7 @@ import { buildOrderInsert } from "./orderInsertPolicy.js";
 import { matchesOrderRazorpayId, classifyCapturedPayment } from "./paymentValidation.js";
 import { ensurePaymentEventLogTable, recordVerifiedPaymentEvent } from "./paymentEventPolicy.js";
 import { ensureMarketingSchema, lockAndValidateCoupon, reserveCouponRedemption, confirmCouponRedemption, releaseCouponRedemptionForCancelledOrder } from "./marketingPolicy.js";
+import { settleCapturedPayment } from "./paymentSettlement.js";
 
 function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
