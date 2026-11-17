@@ -20,6 +20,25 @@ permissions:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: sarine-test
+          MARIADB_DATABASE: sarine_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: sarine_test
+      DB_USER: root
+      DB_PASSWORD: sarine-test
     defaults:
       run:
         working-directory: hostinger-api
