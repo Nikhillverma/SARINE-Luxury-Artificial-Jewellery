@@ -39,15 +39,17 @@ async function findCustomer(method, identifier, connection = pool) {
 }
 async function createChallenge(method, identifier, purpose) {
   const [recent] = await pool.execute(
-    "SELECT created_at FROM customer_auth_challenges WHERE identifier = ? AND purpose = ? ORDER BY created_at DESC LIMIT 1",
+    "SELECT COUNT(*) AS total, MAX(created_at) AS created_at FROM customer_auth_challenges WHERE identifier = ? AND purpose = ? AND created_at >= DATE_SUB(UTC_TIMESTAMP(3), INTERVAL 1 HOUR)",
     [identifier, purpose]
   );
-  if (recent.length) {
+  if (Number(recent[0]?.total) >= 5) return { cooldown: 3600 };
+  if (recent[0]?.created_at) {
     const elapsed = (Date.now() - new Date(recent[0].created_at).getTime()) / 1000;
     if (elapsed < CUSTOMER_OTP_POLICY.resendCooldownSeconds) {
       return { cooldown: Math.ceil(CUSTOMER_OTP_POLICY.resendCooldownSeconds - elapsed) };
     }
   }
+  await pool.execute("DELETE FROM customer_auth_challenges WHERE expires_at < DATE_SUB(UTC_TIMESTAMP(3), INTERVAL 7 DAY)");
   const otp = createOtp();
   const id = crypto.randomUUID();
   await pool.execute(
