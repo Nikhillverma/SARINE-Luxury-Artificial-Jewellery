@@ -36,6 +36,8 @@ test("MariaDB serializes simultaneous captures so shared settlement deducts stoc
         razorpay_amount_paise BIGINT NULL,
         razorpay_order_id VARCHAR(64) NOT NULL,
         razorpay_payment_id VARCHAR(64) NULL,
+        refund_needed TINYINT(1) NOT NULL DEFAULT 0,
+        refund_amount DECIMAL(10,2) NULL,
         updated_at DATETIME(3) NULL,
         UNIQUE KEY uq_test_order_number (order_number),
         KEY idx_orders_razorpay_order_id (razorpay_order_id)
@@ -203,6 +205,53 @@ test("MariaDB serializes simultaneous captures so shared settlement deducts stoc
     assert.equal(paymentEvents.size, 1);
     assert.equal(Number(movements[0].total), 1);
     assert.deepEqual(events.map(row => row.event_status), ["processed", "processed"]);
+
+    const cancelledPayment = {
+      id: "pay_late_cancelled_1",
+      order_id: "order_late_cancelled_1",
+      amount: 1000,
+      currency: "INR",
+      status: "captured"
+    };
+    await pool.execute(
+      `INSERT INTO orders
+       (id, order_number, payment_method, payment_status, order_status, total,
+        razorpay_amount_paise, razorpay_order_id)
+       VALUES ('order-db-cancelled', 'SAR-999992', 'online', 'pending', 'cancelled', 10.00, 1000, ?)`,
+      [cancelledPayment.order_id]
+    );
+    await pool.execute(
+      "INSERT INTO razorpay_webhook_events (event_id, event_status) VALUES ('evt_db_cancelled', 'received')"
+    );
+    const cancelledResult = await processCapturedPaymentWebhook({
+      record: {
+        eventType: "payment.captured",
+        eventId: "evt_db_cancelled",
+        gatewayOrderId: cancelledPayment.order_id,
+        gatewayPaymentId: cancelledPayment.id,
+        amountPaise: cancelledPayment.amount,
+        currency: "INR",
+        gatewayStatus: "captured"
+      },
+      eventId: "evt_db_cancelled",
+      inserted: true
+    }, {
+      ...dependencies,
+      getRazorpay: () => ({ payments: { fetch: async () => cancelledPayment } })
+    });
+    const [cancelledOrders] = await pool.execute(
+      "SELECT payment_status, order_status, refund_needed, refund_amount FROM orders WHERE id = 'order-db-cancelled'"
+    );
+    const [stockAfterLateCapture] = await pool.execute(
+      "SELECT stock FROM products WHERE id = 'prod-1'"
+    );
+    assert.equal(cancelledResult.status, 200);
+    assert.equal(cancelledResult.body.paymentSettlement, "needs_review");
+    assert.equal(cancelledOrders[0].payment_status, "paid");
+    assert.equal(cancelledOrders[0].order_status, "cancelled");
+    assert.equal(Number(cancelledOrders[0].refund_needed), 1);
+    assert.equal(Number(cancelledOrders[0].refund_amount), 10);
+    assert.equal(Number(stockAfterLateCapture[0].stock), 2);
   } finally {
     await pool.query("DROP TABLE IF EXISTS razorpay_webhook_events");
     await pool.query("DROP TABLE IF EXISTS order_status_history");
