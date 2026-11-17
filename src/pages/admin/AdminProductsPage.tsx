@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Link } from 'react-router-dom';
-import { adminProductService, categoryService, hostingerMediaService } from '../../services';
+import { adminProductService, hostingerMediaService } from '../../services';
+import { hostingerAdminCategoryService } from '../../services/hostinger/hostingerAdminCategoryService';
 import type { Product, JewelleryType, ProductStatus } from '../../types/product';
 import type { Category } from '../../types/category';
 import { JEWELLERY_TYPE_LABELS } from '../../types/product';
@@ -54,7 +55,7 @@ export const AdminProductsPage: React.FC = () => {
     try {
       const [items, cats] = await Promise.all([
         adminProductService.getProducts(),
-        categoryService.getCategories({ activeOnly: false })
+        hostingerAdminCategoryService.getCategories()
       ]);
       setProducts(items);
       setCategories(cats);
