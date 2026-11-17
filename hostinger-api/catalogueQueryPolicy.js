@@ -15,7 +15,7 @@ function readOptionalText(query, key, maxLength) {
 function readBoundedInteger(query, key, fallback, maximum) {
   const raw = query[key];
   if (raw === undefined) return { value: fallback, error: null };
-  if (typeof raw !== "string" || !/^\\d+$/.test(raw)) {
+  if (typeof raw !== "string" || !/^[0-9]+$/.test(raw)) {
     return { value: undefined, error: "Enter a valid " + key + " value." };
   }
   const value = Number(raw);
@@ -28,7 +28,7 @@ function readBoundedInteger(query, key, fallback, maximum) {
 function readOptionalPrice(query, key) {
   const raw = query[key];
   if (raw === undefined) return { value: undefined, error: null };
-  if (typeof raw !== "string" || !/^\\d+$/.test(raw)) {
+  if (typeof raw !== "string" || !/^[0-9]+$/.test(raw)) {
     return { value: undefined, error: "Enter a valid " + key + " price." };
   }
   const value = Number(raw);
