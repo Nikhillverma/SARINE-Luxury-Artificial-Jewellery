@@ -190,7 +190,7 @@ app.get("/api/products", async (req, res, next) => {
       values.push(String(collectionSlug));
     }
 
-    if (inStockOnly === "true") {
+    if (inStockOnly) {
       conditions.push("p.stock > 0");
     }
 
