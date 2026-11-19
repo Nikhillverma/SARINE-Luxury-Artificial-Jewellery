@@ -392,13 +392,13 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     <div className="sarine-home w-full bg-[#FBF8F5] text-[#302438] font-sans selection:bg-[#B69ACF]/30 selection:text-[#302438]" style={{ display: "flex", flexDirection: "column" }}>
       {/* =========================================================================
           3. HERO SLIDER
-          Fixed responsive height: h-[320px] sm:h-[380px] lg:h-[430px]
+          Fixed responsive height: h-[420px] md:h-[520px] lg:h-[600px]
           Stacked absolute slides with opacity transitions
           Every image: object-cover object-[70%_center] on #F0E6F4
           Text in centered container (max-w-[1280px]) with soft lavender gradient overlay
           Slide indicators bottom-left, arrow buttons bottom-right inside container
           ========================================================================= */}
-      <section style={{ order: 0 }} className="relative w-full h-[320px] sm:h-[380px] lg:h-[430px] overflow-hidden bg-[#F0E6F4] border-b border-[#E7DCEB]">
+      <section style={{ order: 0 }} className="relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[#F0E6F4] border-b border-[#E7DCEB]">
         {/* Stacked background slide images */}
         {heroSlides.map((slide, idx) => (
           <div
