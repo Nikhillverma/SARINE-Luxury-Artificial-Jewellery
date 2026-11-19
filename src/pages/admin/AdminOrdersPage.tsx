@@ -1003,7 +1003,7 @@ export const AdminOrdersPage: React.FC = () => {
                   </h3>
 
                   {!canMarkOrderAsShipped(selectedOrder) &&
-                    !['shipped', 'delivered', 'cancelled'].includes(selectedOrder.orderStatus) && (
+                    !['packed', 'shipped', 'out_for_delivery', 'delivered', 'cancelled'].includes(selectedOrder.orderStatus) && (
                       <p className="text-[11px] leading-relaxed text-[#6F6475] bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs p-3">
                         Shipment can be marked after an online payment is paid or a Cash on Delivery order is placed.
                         Orders flagged for refund cannot be shipped.
@@ -1144,7 +1144,8 @@ export const AdminOrdersPage: React.FC = () => {
                   )}
 
                   {/* 3. Cancel Order */}
-                  {selectedOrder.orderStatus !== 'shipped' &&
+                  {selectedOrder.orderStatus !== 'packed' &&
+                    selectedOrder.orderStatus !== 'shipped' &&
                     selectedOrder.orderStatus !== 'out_for_delivery' &&
                     selectedOrder.orderStatus !== 'delivered' &&
                     selectedOrder.orderStatus !== 'cancelled' && (
