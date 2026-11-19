@@ -23,7 +23,8 @@ const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, compact = false }) => {
   const [mode, setMode] = useState<AuthMode>("otp");
   const [method, setMethod] = useState<AuthMethod>("email");
-  const [methods, setMethods] = useState<{ email: boolean; phone: boolean }>({ email: false, phone: false });\n  const [googleEnabled, setGoogleEnabled] = useState(false);
+  const [methods, setMethods] = useState<{ email: boolean; phone: boolean }>({ email: false, phone: false });
+  const [googleEnabled, setGoogleEnabled] = useState(false);
   const [methodReasons, setMethodReasons] = useState<{ email: string; phone: string }>({ email: "Checking email availability…", phone: "Phone verification is not enabled yet." });
   const [identifier, setIdentifier] = useState("");
   const [name, setName] = useState("");
