@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin/AdminLayout';
+import { CustomerAuthMonitoring } from '../../components/admin/CustomerAuthMonitoring';
 import { checkoutSettingsService, type CheckoutConfig } from '../../services/hostinger/checkoutSettingsService';
 import { Save, RefreshCw, CheckCircle2, AlertCircle, Truck, ShieldCheck, LayoutTemplate } from 'lucide-react';
 
@@ -96,6 +97,8 @@ export const AdminSettingsPage: React.FC = () => {
             </div>
           </section>
         </form>
+
+        <CustomerAuthMonitoring />
 
         <section className="bg-white rounded-2xl border border-[#EADFF0] p-5 sm:p-6 space-y-3">
           <div className="flex items-center gap-2"><LayoutTemplate size={17} className="text-[#563568]"/><h2 className="font-serif text-lg">Storefront content</h2></div>
