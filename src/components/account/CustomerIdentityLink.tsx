@@ -1,11 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { customerAuthService } from "../../services/customerAuthService";
 import type { CustomerIdentity } from "../../types/customer";
 
 interface Props { customer: CustomerIdentity; onUpdated: (customer: CustomerIdentity) => void; }
 
 export const CustomerIdentityLink: React.FC<Props> = ({ customer, onUpdated }) => {
-  const availableMethods = (["email", "phone"] as const).filter(method => !customer[method]);
+  const [methodAvailability, setMethodAvailability] = useState<{ email: boolean; phone: boolean }>({ email: false, phone: false });
+  useEffect(() => {
+    let active = true;
+    customerAuthService.getMethods().then(result => {
+      if (active) setMethodAvailability({ email: Boolean(result.email?.enabled), phone: Boolean(result.phone?.enabled) });
+    }).catch(() => {
+      if (active) setMethodAvailability({ email: false, phone: false });
+    });
+    return () => { active = false; };
+  }, []);
+  const availableMethods = (["email", "phone"] as const).filter(method => !customer[method] && methodAvailability[method]);
   const [method, setMethod] = useState<"email" | "phone">(availableMethods[0] || "email");
   const [identifier, setIdentifier] = useState("");
   const [otp, setOtp] = useState("");
