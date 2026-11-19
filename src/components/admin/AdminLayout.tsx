@@ -187,7 +187,7 @@ interface NavItem {
       match: (p: string) => p.startsWith('/admin/marketing')
     },
     {
-      name: 'Festival Campaigns',
+      name: 'Campaigns & Promotions',
       path: '/admin/campaigns',
       icon: CalendarHeart,
       match: (p: string) => p.startsWith('/admin/campaigns')
