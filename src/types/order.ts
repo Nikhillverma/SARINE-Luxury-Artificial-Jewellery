@@ -58,6 +58,7 @@ export interface Order {
   shippingFee: number;
   discountAmount?: number;
   couponCode?: string;
+  promotion?: { id: string; name: string; discountPercent: number; discountAmount: number } | null;
   total: number;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
