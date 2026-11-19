@@ -90,7 +90,7 @@ export const ShopByOccasionManager: React.FC = () => {
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h2 className="font-semibold text-[#2C1838]">Shop by Occasion</h2>
-        <p className="text-xs text-gray-500 mt-1">Manage the Daily Wear, Festive, Wedding and Gifting cards shown on the homepage. Changes are saved to MariaDB.</p>
+        <p className="text-xs text-gray-500 mt-1">Add, upload, replace or remove occasion images. Choose files directly from your computer — no image URLs needed.</p>
       </div>
       <span className="text-xs rounded-full px-3 py-1 bg-purple-50 text-purple-700">{draft.filter(item => item.active).length} visible · {draft.length}/12 cards</span>
     </div>
@@ -104,18 +104,17 @@ export const ShopByOccasionManager: React.FC = () => {
             <div className="flex items-center gap-1">
               <button type="button" disabled={busy || index === 0} onClick={() => move(index, -1)} aria-label="Move occasion up" className="border rounded px-2 py-1 text-xs disabled:opacity-30">↑</button>
               <button type="button" disabled={busy || index === draft.length - 1} onClick={() => move(index, 1)} aria-label="Move occasion down" className="border rounded px-2 py-1 text-xs disabled:opacity-30">↓</button>
-              <button type="button" disabled={busy} onClick={() => remove(index)} className="border border-red-200 text-red-700 rounded px-2 py-1 text-xs">Remove</button>
+              <button type="button" disabled={busy} onClick={() => remove(index)} className="border border-red-200 text-red-700 rounded px-2 py-1 text-xs">Delete card</button>
             </div>
           </div>
           <div className="grid grid-cols-[104px_1fr] gap-3">
-            <img src={item.image} alt={item.title} className="w-full aspect-[4/5] rounded-lg object-cover bg-[#F7F0FA]" />
+            <img src={item.image || "/images/product-placeholder.png"} alt={item.title} onError={event => { event.currentTarget.src = "/images/product-placeholder.png"; }} className="w-full aspect-[4/5] rounded-lg object-cover bg-[#F7F0FA]" />
             <div className="space-y-2">
               <label className="block text-xs space-y-1"><span>Card title</span><input value={item.title} maxLength={80} onChange={e => update(index, { title: e.target.value })} className="w-full border rounded-lg p-2 text-sm" /></label>
               <label className="block text-xs space-y-1"><span>Short description</span><input value={item.subtitle} maxLength={180} onChange={e => update(index, { subtitle: e.target.value })} className="w-full border rounded-lg p-2 text-sm" /></label>
             </div>
           </div>
-          <label className="block text-xs space-y-1"><span>Image URL / site image path</span><input value={item.image} maxLength={2048} onChange={e => update(index, { image: e.target.value })} className="w-full border rounded-lg p-2 text-sm" /></label>
-          <label className="block text-xs space-y-1"><span>Upload image to Hostinger</span><input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e => { void upload(index, e.target.files?.[0]); e.currentTarget.value = ""; }} className="block w-full text-xs" /></label>
+          <div className="rounded-lg border border-dashed border-[#B69ACF] bg-[#F7F0FA] p-3 space-y-2"><label className="block text-sm font-medium text-[#563568]">Occasion image</label><p className="text-xs text-gray-600">Choose a JPEG, PNG or WebP image from your computer. It uploads to Hostinger automatically.</p><div className="flex flex-wrap items-center gap-2"><label className="inline-flex cursor-pointer items-center rounded-lg bg-[#563568] px-3 py-2 text-xs font-medium text-white"> {item.image ? "Replace image" : "Upload image"} <input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e => { void upload(index, e.target.files?.[0]); e.currentTarget.value = ""; }} className="sr-only" /></label><button type="button" disabled={busy || !item.image} onClick={() => update(index, { image: "/images/product-placeholder.png" })} className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs text-red-700 disabled:opacity-40">Remove image</button></div></div>
           <label className="block text-xs space-y-1"><span>Shop destination (internal site path)</span><input value={item.link} maxLength={500} onChange={e => update(index, { link: e.target.value })} placeholder="/shop?search=festive" className="w-full border rounded-lg p-2 text-sm" /></label>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={item.active} onChange={e => update(index, { active: e.target.checked })} /> Show this card on homepage</label>
         </article>)}
