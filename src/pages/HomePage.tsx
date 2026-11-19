@@ -311,21 +311,18 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   return (
     <div className="w-full bg-[#F7F0FA] text-[#302438] font-sans selection:bg-[#B69ACF]/30 selection:text-[#302438]" style={{ display: "flex", flexDirection: "column" }}>
       {festivalCampaign && (
-        <section className="relative isolate overflow-hidden min-h-[280px] md:min-h-[390px] flex items-center bg-[#32152F]">
-          <img src={festivalCampaign.imageUrl} alt={festivalCampaign.festival + " campaign"} className="absolute inset-0 -z-20 w-full h-full object-cover" />
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#260D25]/95 via-[#3B1236]/80 to-[#3B1236]/15" />
-          <div className="site-container w-full py-12 md:py-16">
-            <div className="max-w-2xl text-white">
-              <p className="text-[10px] md:text-xs tracking-[0.28em] uppercase text-[#E8C59A]">{festivalCampaign.eyebrow || festivalCampaign.festival}</p>
-              <h2 className="mt-3 font-serif text-3xl md:text-5xl leading-tight">{festivalCampaign.title}</h2>
-              {festivalCampaign.offerLabel && <p className="mt-3 font-serif text-3xl md:text-5xl text-[#F0C878]">{festivalCampaign.offerLabel}</p>}
-              {festivalCampaign.subtitle && <p className="mt-3 max-w-xl text-sm md:text-base text-white/90">{festivalCampaign.subtitle}</p>}
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                <a href={festivalCampaign.ctaLink} className="inline-flex items-center gap-2 rounded-full bg-[#E8C59A] px-6 py-3 text-sm font-semibold text-[#32152F] hover:bg-white transition-colors">{festivalCampaign.ctaText || "Shop now"} <ArrowRight size={15}/></a>
-                {festivalCampaign.couponCode && <span className="rounded-full border border-white/50 px-4 py-2 text-xs tracking-wider">Use code: {festivalCampaign.couponCode}</span>}
-              </div>
-            </div>
-          </div>
+        <section className="w-full overflow-hidden bg-[#32152F]">
+          <a
+            href={festivalCampaign.ctaLink}
+            aria-label={`${festivalCampaign.title} — ${festivalCampaign.ctaText || "Shop now"}`}
+            className="block w-full"
+          >
+            <img
+              src={festivalCampaign.imageUrl}
+              alt={`${festivalCampaign.festival}: ${festivalCampaign.title}`}
+              className="block h-auto w-full"
+            />
+          </a>
         </section>
       )}
       {/* =========================================================================
