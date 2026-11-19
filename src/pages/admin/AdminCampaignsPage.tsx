@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
 import { HostingerMediaService } from "../../services/hostinger/hostingerMediaService";
 import { festivalCampaignService, type FestivalCampaign } from "../../services/hostinger/festivalCampaignService";
-import { CalendarHeart, Plus, Save, Trash2, RefreshCw, Upload, Clock3, Percent, Image as ImageIcon } from "lucide-react";
+import { CalendarHeart, Plus, Save, Trash2, RefreshCw, Clock3, Percent, Image as ImageIcon } from "lucide-react";
 
 const mediaService = new HostingerMediaService();
 const festivals = ["Diwali", "Raksha Bandhan", "Navratri", "Dussehra", "Karwa Chauth", "Wedding Season", "Christmas", "New Year", "Valentine's Day", "Women's Day", "Eid", "Akshaya Tritiya", "Other"];
