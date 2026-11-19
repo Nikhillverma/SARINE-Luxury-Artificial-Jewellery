@@ -59,6 +59,28 @@ export function getProductImage(product?: Partial<Product> | null): string {
   return fallback;
 }
 
+function CampaignCountdown({ endsAt }: { endsAt: string }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const remaining = Math.max(0, new Date(endsAt).getTime() - now);
+  const days = Math.floor(remaining / 86400000);
+  const hours = Math.floor((remaining % 86400000) / 3600000);
+  const minutes = Math.floor((remaining % 3600000) / 60000);
+  const seconds = Math.floor((remaining % 60000) / 1000);
+  const parts = [days, hours, minutes, seconds];
+  return (
+    <div className="rounded-sm border border-white/50 bg-[#32152F]/85 px-4 py-2 text-center text-white shadow-lg backdrop-blur-sm">
+      <span className="block text-[9px] uppercase tracking-[0.22em] text-white/80">Offer ends in</span>
+      <span className="mt-1 flex items-center gap-2 font-mono text-sm sm:text-base font-semibold tabular-nums">
+        {parts.map((part, index) => <React.Fragment key={index}>{index > 0 && <span className="text-white/60">:</span>}<span>{String(part).padStart(2, "0")}</span></React.Fragment>)}
+      </span>
+    </div>
+  );
+}
+
 interface HomePageProps {
   includeAll: boolean;
 }
@@ -71,14 +93,14 @@ const defaultHomepageLayout: HomepageLayout = {
 
 export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const [homepageLayout, setHomepageLayout] = useState<HomepageLayout>(defaultHomepageLayout);
-  const [festivalCampaign, setFestivalCampaign] = useState<FestivalCampaign | null>(null);
+  const [festivalCampaigns, setFestivalCampaigns] = useState<FestivalCampaign[]>([]);
   const sectionConfig = (id: string) => homepageLayout.sections.find(section => section.id === id);
   const sectionVisible = (id: string) => sectionConfig(id)?.enabled ?? true;
   const sectionOrder = (id: string) => (sectionConfig(id)?.sortOrder ?? defaultHomepageLayout.sections.find(section => section.id === id)?.sortOrder ?? 0) + 1;
 
   useEffect(() => {
     let cancelled = false;
-    festivalCampaignService.getActive().then(campaign => { if (!cancelled) setFestivalCampaign(campaign); }).catch(error => console.warn('[HomePage] Festival campaign unavailable.', error));
+    festivalCampaignService.getActiveCampaigns().then(campaigns => { if (!cancelled) setFestivalCampaigns(campaigns); }).catch(error => console.warn('[HomePage] Festival campaigns unavailable.', error));
     return () => { cancelled = true; };
   }, []);
 
@@ -173,7 +195,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     }
   ];
 
-  const heroSlides = managedHeroSlides.length > 0 ? managedHeroSlides.map((banner, index) => ({
+  const baseHeroSlides = managedHeroSlides.length > 0 ? managedHeroSlides.map((banner, index) => ({
     id: banner.id || index,
     eyebrow: banner.tagline,
     heading: banner.title,
@@ -183,6 +205,20 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     categoriesLink: '#categories',
     ctaText: banner.ctaText
   })) : defaultHeroSlides;
+  const heroSlides = [
+    ...baseHeroSlides,
+    ...festivalCampaigns.map(campaign => ({
+      id: `campaign-${campaign.id}`,
+      eyebrow: campaign.eyebrow || campaign.offerLabel || campaign.festival,
+      heading: campaign.title,
+      paragraph: campaign.subtitle,
+      image: campaign.imageUrl,
+      shopLink: campaign.ctaLink,
+      categoriesLink: '#categories',
+      ctaText: campaign.ctaText,
+      campaign
+    }))
+  ];
   const slideCount = heroSlides.length;
 
   useEffect(() => {
@@ -310,21 +346,6 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   return (
     <div className="w-full bg-[#F7F0FA] text-[#302438] font-sans selection:bg-[#B69ACF]/30 selection:text-[#302438]" style={{ display: "flex", flexDirection: "column" }}>
-      {festivalCampaign && (
-        <section className="w-full overflow-hidden bg-[#32152F]">
-          <a
-            href={festivalCampaign.ctaLink}
-            aria-label={`${festivalCampaign.title} — ${festivalCampaign.ctaText || "Shop now"}`}
-            className="block w-full"
-          >
-            <img
-              src={festivalCampaign.imageUrl}
-              alt={`${festivalCampaign.festival}: ${festivalCampaign.title}`}
-              className="block h-auto w-full"
-            />
-          </a>
-        </section>
-      )}
       {/* =========================================================================
           3. HERO SLIDER
           Fixed responsive height: h-[420px] md:h-[520px] lg:h-[600px]
@@ -342,18 +363,24 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               activeSlide === idx ? 'opacity-100 z-0' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
-            <img
-              src={slide.image}
-              alt={slide.heading}
-              className="absolute inset-0 w-full h-full object-cover object-[70%_center] shadow-none"
-            />
+            {slide.campaign?.artworkOnly ? (
+              <Link to={slide.shopLink} aria-label={`${slide.campaign.title} — ${slide.campaign.ctaText || "Shop now"}`} className="absolute inset-0 block">
+                <img src={slide.image} alt={`${slide.campaign.festival}: ${slide.campaign.title}`} className="absolute inset-0 w-full h-full object-cover object-center shadow-none" />
+              </Link>
+            ) : (
+              <img
+                src={slide.image}
+                alt={slide.heading}
+                className="absolute inset-0 w-full h-full object-cover object-[70%_center] shadow-none"
+              />
+            )}
           </div>
         ))}
 
         {/* Centered content overlay container */}
         <div className="site-container h-full flex flex-col justify-between py-8 md:py-12 pointer-events-none relative z-10">
-          {/* Slide text in left half vertically centered */}
-          <div className="my-auto max-w-xl md:max-w-lg lg:max-w-xl pointer-events-auto">
+          {/* Campaign artwork can be a complete clickable creative; editable campaigns use the normal hero overlay. */}
+          {!currentHero.campaign?.artworkOnly && <div className="my-auto max-w-xl md:max-w-lg lg:max-w-xl pointer-events-auto">
             <span className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 sm:mb-3">
               {currentHero.eyebrow}
             </span>
@@ -378,7 +405,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 Explore Categories
               </a>
             </div>
-          </div>
+          </div>}
+
+          {/* Optional campaign countdown lives inside the hero slide, never in a separate page section. */}
+          {currentHero.campaign?.showCountdown && currentHero.campaign.endsAt && (
+            <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+              <CampaignCountdown endsAt={currentHero.campaign.endsAt} />
+            </div>
+          )}
 
           {/* Bottom row inside container: 01 02 03 left, arrows right */}
           <div className="flex items-center justify-between w-full pointer-events-auto pt-4">
