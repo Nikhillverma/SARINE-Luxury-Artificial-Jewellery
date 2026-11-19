@@ -10,7 +10,7 @@ type MonitoringData = {
   security: { last24Hours: Array<{ method: string; purpose: string; total: number; incorrectAttempts: number }>; expiredUnconsumedChallenges: number };
 };
 
-const API_BASE = (import.meta.env.VITE_HOSTINGER_API_BASE_URL || (import.meta.env.DEV ? "/api" : "https://lavender-goldfish-844589.hostingersite.com/api")).replace(/\/+$/, "");
+const API_BASE = (import.meta.env.VITE_HOSTINGER_API_BASE_URL || (import.meta.env.DEV ? "/api" : "https://lavender-goldfish-844589.hostingersite.com/api")).replace(/\\/+$/, "");
 
 async function getJson<T>(path: string): Promise<T> {
   const response = await fetch(`${API_BASE}/admin/customer-auth/${path}`, { credentials: "include", cache: "no-store" });
@@ -86,7 +86,7 @@ export const CustomerAuthMonitoring: React.FC = () => {
                 <tbody>{data.events.map(event => <tr key={event.id} className="border-b border-[#F5EFF7]">
                   <td className="py-2 pr-3 text-[#705E7B]">{event.createdAt ? new Date(event.createdAt).toLocaleString() : "—"}</td>
                   <td className="py-2 pr-3 text-[#302438]">{event.identifier_masked}</td>
-                  <td className="py-2 pr-3 text-[#705E7B]">{event.purpose === "password_reset" ? "Password recovery" : event.purpose === "link_identity" ? "Contact verification" : "Sign-in"}</td>
+                  <td className="py-2 pr-3 text-[#705E7B]">{event.purpose === "password_reset" ? "Password recovery" : event.purpose === "identity_link" ? "Contact verification" : "Sign-in"}</td>
                   <td className="py-2 pr-3 text-[#705E7B]">{event.provider}</td>
                   <td className="py-2"><span className={event.status === "sent" ? "text-emerald-700" : "text-red-700"}>{event.status === "sent" ? "Sent" : event.failure_code || "Failed"}</span></td>
                 </tr>)}</tbody>
