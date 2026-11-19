@@ -206,7 +206,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     ctaText: banner.ctaText
   })) : defaultHeroSlides;
   const heroSlides = [
-    ...baseHeroSlides,
+    ...baseHeroSlides.map(slide => ({ ...slide, campaign: undefined as FestivalCampaign | undefined })),
     ...festivalCampaigns.map(campaign => ({
       id: `campaign-${campaign.id}`,
       eyebrow: campaign.eyebrow || campaign.offerLabel || campaign.festival,
