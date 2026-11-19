@@ -44,7 +44,13 @@ export async function assertCustomerOtpSchema() {
     const [tables] = await pool.execute(
       "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('customer_auth_challenges', 'customer_auth_delivery_events', 'customer_password_resets')"
     );
-    const tableNames = new Set(tables.map((table) => table.TABLE_NAME));
+
+    const [challengeColumns] = await pool.execute(
+      "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customer_auth_challenges' AND COLUMN_NAME = 'customer_id'"
+    );
+    if (!challengeColumns.length) {
+      throw new Error("Customer authentication migration is incomplete: customer_auth_challenges.customer_id is missing.");
+    }    const tableNames = new Set(tables.map((table) => table.TABLE_NAME));
     for (const name of ["customer_auth_challenges", "customer_auth_delivery_events", "customer_password_resets"]) {
       if (!tableNames.has(name)) {
         throw new Error(`Customer authentication migration is incomplete: table ${name} is missing. No automatic database changes were attempted.`);
