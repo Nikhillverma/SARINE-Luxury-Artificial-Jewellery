@@ -321,7 +321,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               {festivalCampaign.offerLabel && <p className="mt-3 font-serif text-3xl md:text-5xl text-[#F0C878]">{festivalCampaign.offerLabel}</p>}
               {festivalCampaign.subtitle && <p className="mt-3 max-w-xl text-sm md:text-base text-white/90">{festivalCampaign.subtitle}</p>}
               <div className="mt-6 flex flex-wrap items-center gap-3">
-                <Link to={festivalCampaign.ctaLink} className="inline-flex items-center gap-2 rounded-full bg-[#E8C59A] px-6 py-3 text-sm font-semibold text-[#32152F] hover:bg-white transition-colors">{festivalCampaign.ctaText || "Shop now"} <ArrowRight size={15}/></Link>
+                <a href={festivalCampaign.ctaLink} className="inline-flex items-center gap-2 rounded-full bg-[#E8C59A] px-6 py-3 text-sm font-semibold text-[#32152F] hover:bg-white transition-colors">{festivalCampaign.ctaText || "Shop now"} <ArrowRight size={15}/></a>
                 {festivalCampaign.couponCode && <span className="rounded-full border border-white/50 px-4 py-2 text-xs tracking-wider">Use code: {festivalCampaign.couponCode}</span>}
               </div>
             </div>
