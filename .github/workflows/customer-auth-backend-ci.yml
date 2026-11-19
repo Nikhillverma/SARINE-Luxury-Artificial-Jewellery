@@ -27,5 +27,7 @@ jobs:
           cache-dependency-path: hostinger-api/package-lock.json
       - name: Install backend dependencies
         run: npm ci
+      - name: Check customer authentication route syntax
+        run: node --check customerOtpAuth.js && node --check customerGoogleAuth.js && node --check customerAuth.js && node --check adminCustomerAuth.js
       - name: Run backend test suite
         run: npm test
