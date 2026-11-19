@@ -22,7 +22,9 @@ const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
 export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, compact = false }) => {
   const [mode, setMode] = useState<AuthMode>("otp");
-  const [method, setMethod] = useState<AuthMethod>("phone");
+  const [method, setMethod] = useState<AuthMethod>("email");
+  const [methods, setMethods] = useState<{ email: boolean; phone: boolean }>({ email: false, phone: false });
+  const [methodReasons, setMethodReasons] = useState<{ email: string; phone: string }>({ email: "Checking email availability…", phone: "Phone verification is not enabled yet." });
   const [identifier, setIdentifier] = useState("");
   const [name, setName] = useState("");
   const [otp, setOtp] = useState("");
@@ -35,6 +37,18 @@ export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, co
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let active = true;
+    customerAuthService.getMethods().then(result => {
+      if (!active) return;
+      setMethods({ email: Boolean(result.email?.enabled), phone: Boolean(result.phone?.enabled) });
+      setMethodReasons({ email: result.email?.reason || "Email verification is not available yet.", phone: result.phone?.reason || "Phone verification is not available yet." });
+    }).catch(() => {
+      if (active) setMethodReasons({ email: "Unable to check email verification availability. Please use password sign-in.", phone: "Phone verification is not available yet." });
+    });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     if (!googleClientId || !googleButtonRef.current) return;
@@ -161,9 +175,10 @@ export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, co
       {mode === "otp" && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-2">
-            <button type="button" onClick={() => { setMethod("phone"); setOtpSent(false); clearFeedback(); }} className={`min-h-10 border text-xs ${method === "phone" ? "border-[#563568] bg-[#F7F0FA] text-[#563568]" : "border-[#E7DCEB] text-[#6F6475]"}`}>Mobile number</button>
-            <button type="button" onClick={() => { setMethod("email"); setOtpSent(false); clearFeedback(); }} className={`min-h-10 border text-xs ${method === "email" ? "border-[#563568] bg-[#F7F0FA] text-[#563568]" : "border-[#E7DCEB] text-[#6F6475]"}`}>Email address</button>
+            <button type="button" onClick={() => { setMethod("phone"); setOtpSent(false); clearFeedback(); }} disabled={!methods.phone} className={`min-h-10 border text-xs disabled:opacity-40 ${method === "phone" ? "border-[#563568] bg-[#F7F0FA] text-[#563568]" : "border-[#E7DCEB] text-[#6F6475]"}`}>Mobile · unavailable</button>
+            <button type="button" onClick={() => { setMethod("email"); setOtpSent(false); clearFeedback(); }} disabled={!methods.email} className={`min-h-10 border text-xs disabled:opacity-40 ${method === "email" ? "border-[#563568] bg-[#F7F0FA] text-[#563568]" : "border-[#E7DCEB] text-[#6F6475]"}`}>Email address</button>
           </div>
+          {!methods[method] && <p role="status" className="rounded-lg border border-[#E7DCEB] bg-[#F7F0FA] p-3 text-xs text-[#6F6475]">{methodReasons[method]} You can still use your existing email and password.</p>}
           {!otpSent ? (
             <>
               <label className={labelClass}>{method === "phone" ? "Mobile number" : "Email address"}
@@ -175,7 +190,7 @@ export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, co
               <label className={labelClass}>Full name <span className="text-[#A89BAE]">(for new customers)</span>
                 <input value={name} onChange={event => setName(event.target.value)} autoComplete="name" placeholder="Your full name" className={fieldClass} />
               </label>
-              <button type="button" disabled={busy || !identifier.trim()} onClick={sendOtp} className={buttonClass}>{busy ? "Sending code…" : "Send verification code"}</button>
+              <button type="button" disabled={busy || !identifier.trim() || !methods[method]} onClick={sendOtp} className={buttonClass}>{busy ? "Sending code…" : "Send verification code"}</button>
             </>
           ) : (
             <form onSubmit={verifyOtp} className="space-y-4">
@@ -215,13 +230,13 @@ export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, co
                 <h3 className="font-serif text-xl text-[#563568]">Recover your password</h3>
                 <p className="text-xs text-[#6F6475]">Choose the email or mobile number registered to your account.</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <button type="button" onClick={() => { setMethod("email"); clearFeedback(); }} className={`min-h-10 border text-xs ${method === "email" ? "border-[#563568] bg-[#F7F0FA] text-[#563568]" : "border-[#E7DCEB]"}`}>Email</button>
-                  <button type="button" onClick={() => { setMethod("phone"); clearFeedback(); }} className={`min-h-10 border text-xs ${method === "phone" ? "border-[#563568] bg-[#F7F0FA] text-[#563568]" : "border-[#E7DCEB]"}`}>Mobile</button>
+                  <button type="button" onClick={() => { setMethod("email"); clearFeedback(); }} disabled={!methods.email} className={`min-h-10 border text-xs disabled:opacity-40 ${method === "email" ? "border-[#563568] bg-[#F7F0FA] text-[#563568]" : "border-[#E7DCEB]"}`}>Email</button>
+                  <button type="button" onClick={() => { setMethod("phone"); clearFeedback(); }} disabled={!methods.phone} className={`min-h-10 border text-xs disabled:opacity-40 ${method === "phone" ? "border-[#563568] bg-[#F7F0FA] text-[#563568]" : "border-[#E7DCEB]"}`}>Mobile · unavailable</button>
                 </div>
                 <label className={labelClass}>{method === "email" ? "Email address" : "Mobile number"}
                   <input required value={identifier} onChange={event => setIdentifier(event.target.value)} className={fieldClass} />
                 </label>
-                <button type="submit" disabled={busy || !identifier.trim()} className={buttonClass}>{busy ? "Sending…" : "Send recovery code"}</button>
+                <button type="submit" disabled={busy || !identifier.trim() || !methods[method]} className={buttonClass}>{busy ? "Sending…" : "Send recovery code"}</button>
               </form>
             ) : (
               <form onSubmit={verifyOtp} className="space-y-4">
