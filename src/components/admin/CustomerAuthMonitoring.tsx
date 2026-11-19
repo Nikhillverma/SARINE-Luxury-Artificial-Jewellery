@@ -10,7 +10,7 @@ type MonitoringData = {
   security: { last24Hours: Array<{ method: string; purpose: string; total: number; incorrectAttempts: number }>; expiredUnconsumedChallenges: number };
 };
 
-const API_BASE = (import.meta.env.VITE_HOSTINGER_API_BASE_URL || (import.meta.env.DEV ? "/api" : "https://lavender-goldfish-844589.hostingersite.com/api")).replace(/\\/+$/, "");
+const API_BASE = (import.meta.env.VITE_HOSTINGER_API_BASE_URL || (import.meta.env.DEV ? "/api" : "https://lavender-goldfish-844589.hostingersite.com/api")).replace(/\/+$/, "");
 
 async function getJson<T>(path: string): Promise<T> {
   const response = await fetch(`${API_BASE}/admin/customer-auth/${path}`, { credentials: "include", cache: "no-store" });
