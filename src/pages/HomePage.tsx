@@ -66,23 +66,28 @@ function CampaignDestinationLink({ to, className, ariaLabel, children }: { to: s
   return <Link to={to} className={className} aria-label={ariaLabel}>{children}</Link>;
 }
 
-function CampaignCountdown({ endsAt }: { endsAt: string }) {
+function CampaignCountdownStrip({ campaign }: { campaign: FestivalCampaign }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
-  const remaining = Math.max(0, new Date(endsAt).getTime() - now);
+  const remaining = Math.max(0, new Date(campaign.endsAt || "").getTime() - now);
   const days = Math.floor(remaining / 86400000);
   const hours = Math.floor((remaining % 86400000) / 3600000);
   const minutes = Math.floor((remaining % 3600000) / 60000);
   const seconds = Math.floor((remaining % 60000) / 1000);
-  const parts = [days, hours, minutes, seconds];
+  const label = campaign.countdownLabel?.trim() || campaign.offerLabel?.trim() || campaign.title;
+  const background = campaign.countdownBackgroundColor || "#563568";
+  const textColor = campaign.countdownTextColor || "#FFFFFF";
+  const timerColor = campaign.countdownTimerColor || "#FFE08A";
   return (
-    <div className="rounded-sm border border-white/50 bg-[#32152F]/85 px-4 py-2 text-center text-white shadow-lg backdrop-blur-sm">
-      <span className="block text-[9px] uppercase tracking-[0.22em] text-white/80">Offer ends in</span>
-      <span className="mt-1 flex items-center gap-2 font-mono text-sm sm:text-base font-semibold tabular-nums">
-        {parts.map((part, index) => <React.Fragment key={index}>{index > 0 && <span className="text-white/60">:</span>}<span>{String(part).padStart(2, "0")}</span></React.Fragment>)}
+    <div className="inline-flex max-w-[calc(100vw-2rem)] items-center justify-center gap-2.5 sm:gap-3 rounded-full border border-white/35 px-3.5 sm:px-5 py-1.5 sm:py-2 text-[10px] sm:text-xs shadow-md backdrop-blur-md"
+      style={{ backgroundColor: `${background}CC`, color: textColor }}>
+      <span className="max-w-[42vw] truncate font-semibold uppercase tracking-[0.08em]">{label}</span>
+      <span aria-hidden="true" className="opacity-60">|</span>
+      <span className="whitespace-nowrap font-mono font-semibold tabular-nums" style={{ color: timerColor }}>
+        {String(days).padStart(2, "0")}d : {String(hours).padStart(2, "0")}h : {String(minutes).padStart(2, "0")}m : {String(seconds).padStart(2, "0")}s
       </span>
     </div>
   );
@@ -453,13 +458,6 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </div>
           </div>}
 
-          {/* Optional campaign countdown lives inside the hero slide, never in a separate page section. */}
-          {currentHero.campaign?.showCountdown && currentHero.campaign.endsAt && (
-            <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-              <CampaignCountdown endsAt={currentHero.campaign.endsAt} />
-            </div>
-          )}
-
           {/* Bottom row inside container: 01 02 03 left, arrows right */}
           <div className="flex items-center justify-between w-full pointer-events-auto pt-4">
             {/* 01 02 03 indicators */}
@@ -500,6 +498,18 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           </div>
         </div>
       </section>
+
+      {/* Compact campaign countdown: a small centred pill immediately below the hero. */}
+      {(() => {
+        const countdownCampaign = orderedCampaigns.find(campaign =>
+          campaign.showCountdown && campaign.endsAt && new Date(campaign.endsAt).getTime() > Date.now()
+        );
+        return countdownCampaign ? (
+          <div className="flex w-full justify-center px-4 py-1.5 sm:py-2" aria-label="Current campaign countdown">
+            <CampaignCountdownStrip campaign={countdownCampaign} />
+          </div>
+        ) : null;
+      })()}
 
       {/* =========================================================================
           SHOP BY CATEGORY
