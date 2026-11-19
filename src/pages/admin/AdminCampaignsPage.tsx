@@ -11,7 +11,8 @@ const blank = (): FestivalCampaign => ({
   eyebrow: "A SPECIAL SARINE OFFER", title: "", subtitle: "", imageUrl: "",
   ctaText: "Shop the Collection", ctaLink: "/shop", couponCode: "", offerLabel: "",
   startsAt: null, endsAt: null, active: false, showCountdown: false, artworkOnly: true,
-  storewideDiscountPercent: 0, sortOrder: 10, heroPlacement: "auto", heroDurationSeconds: 9, updatedAt: null
+  storewideDiscountPercent: 0, sortOrder: 10, heroPlacement: "auto", heroDurationSeconds: 9,
+  countdownLabel: "", countdownBackgroundColor: "#563568", countdownTextColor: "#FFFFFF", countdownTimerColor: "#FFE08A", updatedAt: null
 });
 function toLocalInput(value: string | null) {
   if (!value) return "";
@@ -126,7 +127,16 @@ export const AdminCampaignsPage: React.FC = () => {
 
       <section className="rounded-xl border border-[#EADFF0] p-4 space-y-3">
         <div className="flex items-center gap-2 font-semibold text-sm"><Clock3 size={16} className="text-[#563568]"/> Scheduling & visibility</div>
-        <label className="flex gap-2 items-center text-sm"><input type="checkbox" checked={draft.showCountdown} onChange={e => update("showCountdown", e.target.checked)}/> Show a live countdown inside this hero slide (requires an end date)</label>
+        <label className="flex gap-2 items-center text-sm"><input type="checkbox" checked={draft.showCountdown} onChange={e => update("showCountdown", e.target.checked)}/> Show the compact countdown pill just below the hero banner (requires an end date)</label>
+        {draft.showCountdown && <>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <label className="text-xs text-[#705E7B] sm:col-span-2">Countdown offer name<input value={draft.countdownLabel || ""} onChange={e => update("countdownLabel", e.target.value)} maxLength={70} placeholder={draft.offerLabel || "Diwali Sale · 10% OFF"} className="mt-1 w-full border rounded-lg p-2.5 text-sm"/><span className="block mt-1 text-[11px]">This is the text shown in the small pill. Leave blank to use the offer label or campaign headline.</span></label>
+            <label className="text-xs text-[#705E7B]">Pill background colour<input type="color" value={draft.countdownBackgroundColor || "#563568"} onChange={e => update("countdownBackgroundColor", e.target.value)} className="mt-1 block h-10 w-full rounded-lg border p-1"/></label>
+            <label className="text-xs text-[#705E7B]">Offer name colour<input type="color" value={draft.countdownTextColor || "#FFFFFF"} onChange={e => update("countdownTextColor", e.target.value)} className="mt-1 block h-10 w-full rounded-lg border p-1"/></label>
+            <label className="text-xs text-[#705E7B]">Timer colour<input type="color" value={draft.countdownTimerColor || "#FFE08A"} onChange={e => update("countdownTimerColor", e.target.value)} className="mt-1 block h-10 w-full rounded-lg border p-1"/></label>
+          </div>
+          <p className="text-xs text-[#705E7B]">The countdown appears centred immediately below the hero, with only a small gap. It disappears automatically when the campaign ends.</p>
+        </>}
         <label className="flex gap-2 items-center text-sm"><input type="checkbox" checked={draft.active} onChange={e => update("active", e.target.checked)}/> Enable campaign (it only appears during its scheduled dates)</label>
       </section>
 
