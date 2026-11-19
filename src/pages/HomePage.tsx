@@ -575,7 +575,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Manually selected and ordered in Storefront Studio. Automatic newest-product
           fallback remains in place until a manual collection has been published.
           ========================================================================= */}
-      <section style={{ order: sectionOrder("curated-favourites"), display: sectionVisible("curated-favourites") ? undefined : "none" }} className="py-12 sm:py-16 lg:py-20 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("curated-favourites"), display: sectionVisible("curated-favourites") && (loading || (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0) ? undefined : "none" }} className="py-12 sm:py-16 lg:py-20 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
           <div className="w-full text-center mb-8 sm:mb-10">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">THE SARINE EDIT</span>
