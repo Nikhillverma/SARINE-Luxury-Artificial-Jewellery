@@ -42,6 +42,7 @@ import { AdminInventoryPage } from './pages/admin/AdminInventoryPage';
 import { AdminStorefrontPage } from './pages/admin/AdminStorefrontPage';
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
 import { AdminMarketingPage } from './pages/admin/AdminMarketingPage';
+import { AdminCampaignsPage } from './pages/admin/AdminCampaignsPage';
 import {
   SustainabilityPage,
   BlogPage,
@@ -108,6 +109,7 @@ function MainAppShell() {
           <Route path="/admin/returns" element={<AdminReturnsPage />} />
           <Route path="/admin/reviews" element={<AdminReviewsPage />} />
           <Route path="/admin/marketing" element={<AdminMarketingPage />} />
+          <Route path="/admin/campaigns" element={<AdminCampaignsPage />} />
           <Route path="/admin/storefront" element={<AdminStorefrontPage />} />
           <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           <Route path="/admin/copilot" element={<Navigate to="/admin" replace />} />
