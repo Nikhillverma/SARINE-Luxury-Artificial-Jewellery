@@ -9,6 +9,20 @@ export function getCustomerOtpProvider(method) {
   return "unknown";
 }
 
+export function getCustomerOtpAvailability() {
+  const domain = String(process.env.MSG91_EMAIL_DOMAIN || "").trim().toLowerCase();
+  const from = String(process.env.MSG91_EMAIL_FROM || "").trim().toLowerCase();
+  const emailReady = process.env.MSG91_EMAIL_ENABLED === "true" &&
+    Boolean(process.env.MSG91_EMAIL_AUTH_KEY) && Boolean(domain) &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(from) && from.split("@")[1] === domain &&
+    Boolean(String(process.env.MSG91_EMAIL_TEMPLATE_ID || "global_otp").trim());
+  return {
+    email: { enabled: emailReady, provider: "MSG91", reason: emailReady ? null : "Email verification will be available after SARINE's sending domain is verified and email delivery is enabled." },
+    phone: { enabled: false, provider: "MSG91", reason: "Phone verification is not enabled yet; SMS route approval and cost confirmation are pending." },
+    google: { enabled: Boolean(process.env.GOOGLE_CLIENT_ID) }
+  };
+}
+
 let schemaReady;
 export async function ensureCustomerOtpSchema() {
   if (schemaReady) return schemaReady;
