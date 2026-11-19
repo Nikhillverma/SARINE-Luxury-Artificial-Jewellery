@@ -57,6 +57,7 @@ interface TrackedOrder {
   trackingNumber?: string;
   shippedAt?: string;
   deliveredAt?: string;
+  statusHistory?: Array<{ status: string; createdAt: string }>;
 }
 
 export const TrackOrderPage: React.FC = () => {
@@ -202,7 +203,7 @@ export const TrackOrderPage: React.FC = () => {
     );
   };
 
-  // Order status honest steps
+  // Five-stage fulfilment timeline. Dates come from the server's order_status_history.
   const renderOrderProgress = () => {
     if (!order) return null;
 
@@ -217,60 +218,43 @@ export const TrackOrderPage: React.FC = () => {
       );
     }
 
-    const hasShipped = Boolean(order.shippedAt || order.orderStatus === 'shipped' || order.orderStatus === 'delivered');
-    const hasDelivered = Boolean(order.deliveredAt || order.orderStatus === 'delivered');
+    const stages = [
+      { key: 'confirmed', label: 'Confirmed', icon: CheckCircle2 },
+      { key: 'packed', label: 'Packed', icon: Package },
+      { key: 'shipped', label: 'Shipped', icon: Truck },
+      { key: 'out_for_delivery', label: 'Out for delivery', icon: Truck },
+      { key: 'delivered', label: 'Delivered', icon: CheckCircle2 }
+    ];
+    const statusOrder = ['placed', 'confirmed', 'processing', 'packed', 'shipped', 'out_for_delivery', 'delivered'];
+    const currentIndex = Math.max(0, statusOrder.indexOf(order.orderStatus));
+    const history = order.statusHistory || [];
+    const latestFor = (key: string) => {
+      const entry = [...history].reverse().find(item => item.status === key);
+      return entry?.createdAt;
+    };
+    const hasShipped = ['shipped', 'out_for_delivery', 'delivered'].includes(order.orderStatus);
 
     return (
       <div className="space-y-4">
-        <div className="grid grid-cols-3 gap-2 text-center text-xs">
-          {/* Step 1: Placed / Confirmed */}
-          <div className="flex flex-col items-center">
-            <div className="w-8 h-8 rounded-full bg-[#563568] text-white flex items-center justify-center font-medium text-xs">
-              <CheckCircle2 size={16} />
-            </div>
-            <span className="mt-2 font-medium text-[#302438]">Placed & Confirmed</span>
-            <span className="text-[10px] text-[#6F6475]">{formatDate(order.createdAt)}</span>
-          </div>
-
-          {/* Step 2: Shipped */}
-          <div className="flex flex-col items-center">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center font-medium text-xs transition-colors ${
-                hasShipped ? 'bg-[#563568] text-white' : 'bg-[#E7DCEB] text-[#6F6475]'
-              }`}
-            >
-              <Truck size={16} />
-            </div>
-            <span className={`mt-2 font-medium ${hasShipped ? 'text-[#302438]' : 'text-[#6F6475]'}`}>
-              Shipped
-            </span>
-            {order.shippedAt && (
-              <span className="text-[10px] text-[#6F6475]">{formatDate(order.shippedAt)}</span>
-            )}
-          </div>
-
-          {/* Step 3: Delivered */}
-          <div className="flex flex-col items-center">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center font-medium text-xs transition-colors ${
-                hasDelivered ? 'bg-[#563568] text-white' : 'bg-[#E7DCEB] text-[#6F6475]'
-              }`}
-            >
-              <Package size={16} />
-            </div>
-            <span className={`mt-2 font-medium ${hasDelivered ? 'text-[#302438]' : 'text-[#6F6475]'}`}>
-              Delivered
-            </span>
-            {order.deliveredAt && (
-              <span className="text-[10px] text-[#6F6475]">{formatDate(order.deliveredAt)}</span>
-            )}
-          </div>
+        <div className="grid grid-cols-5 gap-1.5 text-center">
+          {stages.map((stage, index) => {
+            const done = currentIndex >= index;
+            const Icon = stage.icon;
+            const timestamp = latestFor(stage.key) || (stage.key === 'confirmed' ? order.createdAt : stage.key === 'shipped' ? order.shippedAt : stage.key === 'delivered' ? order.deliveredAt : undefined);
+            return (
+              <div key={stage.key} className="min-w-0 flex flex-col items-center">
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${done ? 'bg-[#563568] text-white' : 'bg-[#E7DCEB] text-[#6F6475]'}`}>
+                  <Icon size={15} />
+                </div>
+                <span className={`mt-2 text-[9px] sm:text-[10px] leading-tight font-medium ${done ? 'text-[#302438]' : 'text-[#6F6475]'}`}>{stage.label}</span>
+                {timestamp && done && <span className="mt-1 text-[8px] sm:text-[9px] text-[#6F6475] leading-tight">{formatDate(timestamp)}</span>}
+              </div>
+            );
+          })}
         </div>
-
-        {/* Dispatch notice if not yet shipped */}
         {!hasShipped && (
           <p className="text-center text-xs text-[#6F6475] font-sans pt-1">
-            We&apos;ll update this once your order is dispatched.
+            We&apos;ll update each stage as your order is prepared and dispatched.
           </p>
         )}
       </div>
