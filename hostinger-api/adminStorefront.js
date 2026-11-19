@@ -159,6 +159,57 @@ adminOnly.get("/announcement", async (_req, res, next) => {
   } catch (error) { next(error); }
 });
 
+
+
+// Shop by Occasion cards are editable in Storefront Studio and stored in MariaDB.
+const defaultOccasions = [
+  { id: "daily-wear", title: "Daily Wear", subtitle: "Effortless everyday minimalism", image: "/images/ananya-temple-coin-bracelet.jpg", link: "/shop?search=everyday", active: true, sortOrder: 0 },
+  { id: "festive", title: "Festive", subtitle: "Celebratory sparkle and classic motifs", image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=80", link: "/shop?search=festive", active: true, sortOrder: 1 },
+  { id: "wedding", title: "Wedding", subtitle: "Regal bridal sets & heritage chokers", image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=80", link: "/shop?search=wedding", active: true, sortOrder: 2 },
+  { id: "gifting", title: "Gifting", subtitle: "Precious tokens of affection", image: "/images/zoya-open-cuff-leaf-bangle.jpg", link: "/shop?category=bracelets", active: true, sortOrder: 3 }
+];
+function validateOccasions(input) {
+  if (!Array.isArray(input) || input.length > 12) throw new Error("Add up to 12 occasion cards.");
+  const ids = new Set();
+  return input.map((item, index) => {
+    const id = String(item?.id || "").trim();
+    const title = String(item?.title || "").trim();
+    const subtitle = String(item?.subtitle || "").trim();
+    const image = String(item?.image || "").trim();
+    const link = String(item?.link || "").trim();
+    if (!/^[a-z0-9][a-z0-9-]{0,59}$/.test(id) || ids.has(id)) throw new Error("Each occasion needs a unique, valid ID.");
+    ids.add(id);
+    if (!title || title.length > 80 || subtitle.length > 180) throw new Error("Enter an occasion title (maximum 80 characters) and description (maximum 180).");
+    if (!image || image.length > 2048 || (!image.startsWith("/") && !/^https:\/\//i.test(image))) throw new Error("Choose a valid site image path or HTTPS image URL.");
+    if (!link || link.length > 500 || !(link.startsWith("/") && !link.startsWith("//"))) throw new Error("Occasion links must be internal SARINE site paths.");
+    return { id, title, subtitle, image, link, active: item.active === true, sortOrder: index };
+  });
+}
+async function readOccasions() {
+  await ensureSchema();
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='shop_by_occasion' LIMIT 1");
+  if (!rows.length) return defaultOccasions;
+  try { return validateOccasions(JSON.parse(rows[0].setting_value)); } catch { return defaultOccasions; }
+}
+adminOnly.get("/occasions", async (_req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ occasions: await readOccasions() }); }
+  catch (error) { next(error); }
+});
+adminOnly.put("/occasions", async (req, res, next) => {
+  try {
+    let occasions;
+    try { occasions = validateOccasions(req.body?.occasions); }
+    catch (error) { return res.status(400).json({ error: error.message }); }
+    await ensureSchema();
+    await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('shop_by_occasion', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [JSON.stringify(occasions)]);
+    res.set("Cache-Control", "no-store").json({ success: true, occasions });
+  } catch (error) { next(error); }
+});
+publicRouter.get("/occasions", async (_req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ occasions: (await readOccasions()).filter(item => item.active).sort((a,b) => a.sortOrder-b.sortOrder) }); }
+  catch (error) { next(error); }
+});
+
 publicRouter.get("/banners", async (_req, res, next) => {
   try {
     await ensureSchema();
