@@ -32,6 +32,45 @@ function timingSafeCompare(a, b) {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
+async function ensureCampaignOrderSnapshotTable() {
+  await pool.execute(`CREATE TABLE IF NOT EXISTS order_promotions (
+    order_number VARCHAR(32) NOT NULL PRIMARY KEY,
+    campaign_id VARCHAR(64) NOT NULL,
+    campaign_name VARCHAR(100) NOT NULL,
+    discount_percent TINYINT UNSIGNED NOT NULL,
+    discount_amount INT NOT NULL DEFAULT 0,
+    created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    KEY idx_order_promotions_campaign (campaign_id, created_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+}
+async function getActiveStorewideCampaign(connection) {
+  const [rows] = await connection.execute(
+    "SELECT setting_value FROM storefront_settings WHERE setting_key = 'festival_campaigns' LIMIT 1 FOR UPDATE"
+  );
+  let campaigns = [];
+  try {
+    const parsed = typeof rows[0]?.setting_value === "string" ? JSON.parse(rows[0].setting_value) : rows[0]?.setting_value;
+    if (Array.isArray(parsed)) campaigns = parsed;
+  } catch {}
+  const now = Date.now();
+  return campaigns.filter(item => {
+    if (!item || item.active !== true) return false;
+    const percent = Number(item.storewideDiscountPercent);
+    if (!Number.isInteger(percent) || percent < 1 || percent > 75) return false;
+    const starts = item.startsAt ? new Date(item.startsAt).getTime() : 0;
+    const ends = item.endsAt ? new Date(item.endsAt).getTime() : Number.POSITIVE_INFINITY;
+    return Number.isFinite(starts) && (ends === Number.POSITIVE_INFINITY || Number.isFinite(ends)) && starts <= now && ends > now;
+  }).sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))[0] || null;
+}
+async function saveOrderCampaignSnapshot(connection, orderNumber, campaign, discountAmount) {
+  if (!campaign || !discountAmount) return;
+  await connection.execute(
+    `INSERT INTO order_promotions (order_number, campaign_id, campaign_name, discount_percent, discount_amount)
+     VALUES (?, ?, ?, ?, ?)`,
+    [orderNumber, String(campaign.id).slice(0, 64), String(campaign.name || campaign.title || "Storewide sale").slice(0, 100), Number(campaign.storewideDiscountPercent), discountAmount]
+  );
+}
+
 function getRazorpay() {
   const key_id = process.env.RAZORPAY_KEY_ID;
   const key_secret = process.env.RAZORPAY_KEY_SECRET;
@@ -137,6 +176,7 @@ router.post("/create", checkoutLimiter, async (req, res, next) => {
     }
 
     await ensureMarketingSchema();
+    await ensureCampaignOrderSnapshotTable();
     await ensureInventoryTable();
     await ensureProductVariantSchema();
     await ensurePaymentEventLogTable();
@@ -254,15 +294,28 @@ router.post("/create", checkoutLimiter, async (req, res, next) => {
 
     let coupon = null;
     let discountAmount = 0;
+    let appliedCampaign = null;
     try {
-      const validatedCoupon = await lockAndValidateCoupon(connection, couponCode, calculatedSubtotal, customerEmail);
-      coupon = validatedCoupon.coupon;
-      discountAmount = validatedCoupon.discountAmount;
-    } catch (couponError) {
+      appliedCampaign = await getActiveStorewideCampaign(connection);
+      if (appliedCampaign?.storewideDiscountPercent && String(couponCode || "").trim()) {
+        throw new Error("A storewide sale is already applied automatically. Coupon codes cannot be combined with this offer.");
+      }
+      if (appliedCampaign?.storewideDiscountPercent) {
+        const percent = Number(appliedCampaign.storewideDiscountPercent);
+        discountAmount = verifiedLines.reduce(
+          (sum, line) => sum + Math.floor(line.unitPrice * percent / 100) * line.quantity,
+          0
+        );
+      } else {
+        const validatedCoupon = await lockAndValidateCoupon(connection, couponCode, calculatedSubtotal, customerEmail);
+        coupon = validatedCoupon.coupon;
+        discountAmount = validatedCoupon.discountAmount;
+      }
+    } catch (promotionError) {
       await connection.rollback();
       connection.release();
       connection = null;
-      return res.status(400).json({ error: couponError.message || "Coupon could not be applied." });
+      return res.status(400).json({ error: promotionError.message || "Promotion could not be applied." });
     }
     const shippingFee = calculateShippingFee(calculatedSubtotal, checkoutConfig);
     const total = Math.max(0, calculatedSubtotal - discountAmount) + shippingFee;
@@ -367,7 +420,429 @@ router.post("/create", checkoutLimiter, async (req, res, next) => {
         discountAmount,
         publicTokenHash
       });
-      await connection.execute(orderInsert.sql, orderInsert.values);
+import { Router } from "express";
+import crypto from "node:crypto";
+import rateLimit from "express-rate-limit";
+import Razorpay from "razorpay";
+import { pool } from "./db.js";
+import { getAuthenticatedCustomer } from "./customerAuth.js";
+import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
+import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
+import { validateVariantSelection, getVariantStockKey, formatVariantLabel } from "./productVariantPolicy.js";
+import { sortStockItems } from "./stockLockPolicy.js";
+import { isValidPublicOrderToken } from "./orderAccessPolicy.js";
+
+const router = Router();
+
+import { calculateShippingFee, getCheckoutConfig } from "./checkoutPolicy.js";
+import { validateCheckoutItems } from "./checkoutRequestPolicy.js";
+import { buildOrderInsert } from "./orderInsertPolicy.js";
+import { matchesOrderRazorpayId } from "./paymentValidation.js";
+import { ensurePaymentEventLogTable } from "./paymentEventPolicy.js";
+import { ensureMarketingSchema, lockAndValidateCoupon, reserveCouponRedemption, confirmCouponRedemption, releaseCouponRedemptionForCancelledOrder } from "./marketingPolicy.js";
+import { settleCapturedPayment } from "./paymentSettlement.js";
+
+function hashToken(token) {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+function timingSafeCompare(a, b) {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  if (a.length === 0 || b.length === 0 || a.length !== b.length) return false;
+  const bufA = Buffer.from(a, "utf8");
+  const bufB = Buffer.from(b, "utf8");
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+async function ensureCampaignOrderSnapshotTable() {
+  await pool.execute(`CREATE TABLE IF NOT EXISTS order_promotions (
+    order_number VARCHAR(32) NOT NULL PRIMARY KEY,
+    campaign_id VARCHAR(64) NOT NULL,
+    campaign_name VARCHAR(100) NOT NULL,
+    discount_percent TINYINT UNSIGNED NOT NULL,
+    discount_amount INT NOT NULL DEFAULT 0,
+    created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    KEY idx_order_promotions_campaign (campaign_id, created_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+}
+async function getActiveStorewideCampaign(connection) {
+  const [rows] = await connection.execute(
+    "SELECT setting_value FROM storefront_settings WHERE setting_key = 'festival_campaigns' LIMIT 1 FOR UPDATE"
+  );
+  let campaigns = [];
+  try {
+    const parsed = typeof rows[0]?.setting_value === "string" ? JSON.parse(rows[0].setting_value) : rows[0]?.setting_value;
+    if (Array.isArray(parsed)) campaigns = parsed;
+  } catch {}
+  const now = Date.now();
+  return campaigns.filter(item => {
+    if (!item || item.active !== true) return false;
+    const percent = Number(item.storewideDiscountPercent);
+    if (!Number.isInteger(percent) || percent < 1 || percent > 75) return false;
+    const starts = item.startsAt ? new Date(item.startsAt).getTime() : 0;
+    const ends = item.endsAt ? new Date(item.endsAt).getTime() : Number.POSITIVE_INFINITY;
+    return Number.isFinite(starts) && (ends === Number.POSITIVE_INFINITY || Number.isFinite(ends)) && starts <= now && ends > now;
+  }).sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))[0] || null;
+}
+async function saveOrderCampaignSnapshot(connection, orderNumber, campaign, discountAmount) {
+  if (!campaign || !discountAmount) return;
+  await connection.execute(
+    `INSERT INTO order_promotions (order_number, campaign_id, campaign_name, discount_percent, discount_amount)
+     VALUES (?, ?, ?, ?, ?)`,
+    [orderNumber, String(campaign.id).slice(0, 64), String(campaign.name || campaign.title || "Storewide sale").slice(0, 100), Number(campaign.storewideDiscountPercent), discountAmount]
+  );
+}
+
+function getRazorpay() {
+  const key_id = process.env.RAZORPAY_KEY_ID;
+  const key_secret = process.env.RAZORPAY_KEY_SECRET;
+  if (!key_id || !key_secret) {
+    throw new Error(
+      "Razorpay credentials are not configured on the server. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET."
+    );
+  }
+  return new Razorpay({ key_id, key_secret });
+}
+
+// Rate limiter for public order tracking
+const trackingLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 15,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Too many tracking attempts. Please try again later." }
+});
+
+// Protect the payment gateway and order database from automated checkout bursts.
+const checkoutLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Too many checkout attempts. Please wait before trying again." }
+});
+
+// Order confirmation contains personal and delivery details; throttle token lookups.
+const orderLookupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 60,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Too many order lookup attempts. Please try again later." }
+});
+
+// POST /api/orders/create (and /api/create-order)
+router.post("/create", checkoutLimiter, async (req, res, next) => {
+  let connection;
+  try {
+    const { items, customer, shippingAddress, paymentMethod, couponCode } = req.body || {};
+    const authenticatedCustomer = await getAuthenticatedCustomer(req);
+
+    // 1. Validate customer details. When signed in, identity fields come only from the session.
+    const submittedCustomerName = String(customer?.name || "").trim();
+    const submittedCustomerEmail = String(customer?.email || "").trim().toLowerCase();
+    const customerId = authenticatedCustomer?.id || null;
+    const customerName = authenticatedCustomer?.name || submittedCustomerName;
+    const customerEmail = authenticatedCustomer?.email || submittedCustomerEmail;
+    if (customerName.length < 2 || customerName.length > 120) {
+      return res.status(400).json({ error: "Please enter a valid customer name." });
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!customerEmail || !emailRegex.test(customerEmail)) {
+      return res.status(400).json({ error: "Please enter a valid email address." });
+    }
+    const cleanCustomerPhone = String(customer?.phone || authenticatedCustomer?.phone || "").replace(/\D/g, "");
+    if (!/^[6-9]\d{9}$/.test(cleanCustomerPhone)) {
+      return res.status(400).json({
+        error: "Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9."
+      });
+    }
+
+    // 2. Validate shipping address
+    if (!shippingAddress?.fullName || String(shippingAddress.fullName).trim().length < 2) {
+      return res.status(400).json({ error: "Please enter a recipient full name." });
+    }
+    const cleanShippingPhone = String(shippingAddress.phone || "").replace(/\D/g, "");
+    if (!/^[6-9]\d{9}$/.test(cleanShippingPhone)) {
+      return res.status(400).json({ error: "Please enter a valid recipient 10-digit mobile number." });
+    }
+    if (!shippingAddress.line1 || String(shippingAddress.line1).trim().length < 3) {
+      return res.status(400).json({ error: "Please enter street address / house details." });
+    }
+    if (!shippingAddress.city || String(shippingAddress.city).trim().length < 2) {
+      return res.status(400).json({ error: "Please enter delivery city." });
+    }
+    if (!shippingAddress.state || String(shippingAddress.state).trim().length < 2) {
+      return res.status(400).json({ error: "Please select your state." });
+    }
+    const cleanPincode = String(shippingAddress.pincode || "").trim();
+    if (!/^[1-9][0-9]{5}$/.test(cleanPincode)) {
+      return res.status(400).json({ error: "Please enter a valid 6-digit postal PIN code." });
+    }
+
+    // 3. Validate payment method
+    if (paymentMethod !== "online" && paymentMethod !== "cod") {
+      return res.status(400).json({ error: "Invalid payment method." });
+    }
+    const checkoutConfig = await getCheckoutConfig();
+    if (paymentMethod === "cod" && !checkoutConfig.codEnabled) {
+      return res.status(400).json({
+        error: "Cash on Delivery is currently unavailable. Please choose online payment."
+      });
+    }
+
+    // 4. Validate items array
+    const checkoutItemsError = validateCheckoutItems(items);
+    if (checkoutItemsError) {
+      return res.status(400).json({ error: checkoutItemsError });
+    }
+
+    await ensureMarketingSchema();
+    await ensureCampaignOrderSnapshotTable();
+    await ensureInventoryTable();
+    await ensureProductVariantSchema();
+    await ensurePaymentEventLogTable();
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    // 5. Authoritative price and stock check in MariaDB
+    const verifiedLines = [];
+    const reservedStockByProduct = new Map();
+    let calculatedSubtotal = 0;
+    const checkoutItems = sortStockItems(items.map((item, sourceLine) => ({ ...item, sourceLine })));
+    for (const itm of checkoutItems) {
+      const [pRows] = await connection.execute(
+        `SELECT id, name, price, stock, status, images
+         FROM products
+         WHERE id = ?
+         FOR UPDATE`,
+        [itm.productId]
+      );
+      if (!pRows.length) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        return res.status(400).json({ error: "One or more items in your bag could not be found." });
+      }
+      const p = pRows[0];
+      if (p.status !== "active") {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        return res.status(400).json({ error: `"${p.name || 'Selected item'}" is no longer active in our collection.` });
+      }
+
+      const [activeVariants] = await connection.execute(
+        "SELECT id FROM product_variants WHERE product_id = ? AND status = 'active' LIMIT 1",
+        [p.id]
+      );
+      let variant = null;
+      const selectionError = validateVariantSelection(activeVariants.length > 0, itm.variantId);
+      if (selectionError) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        return res.status(400).json({ error: `${selectionError.replace("product option", `option for "${p.name}"`)}` });
+      }
+      if (activeVariants.length) {
+        if (!itm.variantId || typeof itm.variantId !== "string") {
+          await connection.rollback();
+          connection.release();
+          connection = null;
+          return res.status(400).json({ error: `Please choose an available option for "${p.name}".` });
+        }
+        const [variantRows] = await connection.execute(
+          "SELECT * FROM product_variants WHERE id = ? AND product_id = ? AND status = 'active' LIMIT 1 FOR UPDATE",
+          [itm.variantId, p.id]
+        );
+        if (!variantRows.length) {
+          await connection.rollback();
+          connection.release();
+          connection = null;
+          return res.status(400).json({ error: `The selected option for "${p.name}" is no longer available. Please refresh your bag.` });
+        }
+        variant = variantRows[0];
+      } else if (itm.variantId) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        return res.status(400).json({ error: `The selected option for "${p.name}" is no longer available. Please refresh your bag.` });
+      }
+
+      const stockKey = getVariantStockKey(p.id, variant?.id);
+      const availableStock = Number(variant ? variant.stock : p.stock) || 0;
+      const reservation = reservedStockByProduct.get(stockKey) || {
+        productId: p.id,
+        variantId: variant?.id || null,
+        variantSku: variant?.sku || null,
+        variantLabel: variant ? formatVariantLabel(variant.option1_name, variant.option1_value, variant.option2_name, variant.option2_value) : "",
+        previousStock: availableStock,
+        quantity: 0
+      };
+      const remainingStock = reservation.previousStock - reservation.quantity;
+      if (Number(itm.quantity) > remainingStock) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        return res.status(400).json({
+          error: `Only ${Math.max(0, remainingStock)} ${remainingStock === 1 ? 'piece is' : 'pieces are'} available for "${p.name}"${variant ? ` (${reservation.variantLabel})` : ""}.`
+        });
+      }
+      reservation.quantity += Number(itm.quantity);
+      reservedStockByProduct.set(stockKey, reservation);
+      const unitPrice = Math.round(Number(variant?.price ?? p.price) || 0);
+      calculatedSubtotal += unitPrice * Number(itm.quantity);
+      let images = [];
+      try { images = typeof p.images === "string" ? JSON.parse(p.images) : (p.images || []); } catch {}
+      const variantOptions = variant ? {
+        [variant.option1_name]: variant.option1_value,
+        ...(variant.option2_name && variant.option2_value ? { [variant.option2_name]: variant.option2_value } : {})
+      } : null;
+      verifiedLines.push({
+        productId: p.id,
+        variantId: variant?.id || null,
+        variantSku: variant?.sku || null,
+        variantLabel: reservation.variantLabel || null,
+        variantOptions,
+        name: p.name,
+        unitPrice,
+        quantity: Number(itm.quantity),
+        previousStock: availableStock,
+        image: Array.isArray(images) && images[0] ? String(images[0]) : "",
+        sku: variant?.sku || null,
+        sourceLine: itm.sourceLine
+      });
+    }
+
+    let coupon = null;
+    let discountAmount = 0;
+    let appliedCampaign = null;
+    try {
+      appliedCampaign = await getActiveStorewideCampaign(connection);
+      if (appliedCampaign?.storewideDiscountPercent && String(couponCode || "").trim()) {
+        throw new Error("A storewide sale is already applied automatically. Coupon codes cannot be combined with this offer.");
+      }
+      if (appliedCampaign?.storewideDiscountPercent) {
+        const percent = Number(appliedCampaign.storewideDiscountPercent);
+        discountAmount = verifiedLines.reduce(
+          (sum, line) => sum + Math.floor(line.unitPrice * percent / 100) * line.quantity,
+          0
+        );
+      } else {
+        const validatedCoupon = await lockAndValidateCoupon(connection, couponCode, calculatedSubtotal, customerEmail);
+        coupon = validatedCoupon.coupon;
+        discountAmount = validatedCoupon.discountAmount;
+      }
+    } catch (promotionError) {
+      await connection.rollback();
+      connection.release();
+      connection = null;
+      return res.status(400).json({ error: promotionError.message || "Promotion could not be applied." });
+    }
+    const shippingFee = calculateShippingFee(calculatedSubtotal, checkoutConfig);
+    const total = Math.max(0, calculatedSubtotal - discountAmount) + shippingFee;
+
+    // 6. Concurrency-safe counter allocation
+    await connection.execute(
+      `INSERT INTO counters (counter_key, counter_value, updated_at)
+       VALUES ('orders', 0, UTC_TIMESTAMP(3))
+       ON DUPLICATE KEY UPDATE counter_key = counter_key`
+    );
+
+    const [counterRows] = await connection.execute(
+      `SELECT counter_value FROM counters WHERE counter_key = 'orders' FOR UPDATE`
+    );
+
+    const [maxOrderRows] = await connection.execute(
+      `SELECT COALESCE(MAX(CAST(SUBSTRING(order_number, 5) AS UNSIGNED)), 0) AS max_order_seq
+       FROM orders
+       WHERE order_number LIKE 'SAR-%'`
+    );
+
+    const currentCounterSeq = Number(counterRows[0]?.counter_value || 0);
+    const maxExistingSeq = Number(maxOrderRows[0]?.max_order_seq || 0);
+    const currentCeiling = Math.max(currentCounterSeq, maxExistingSeq, 124);
+    let allocatedSeq = currentCeiling + 1;
+    let candidateOrderNumber = `SAR-${String(allocatedSeq).padStart(6, '0')}`;
+
+    while (true) {
+      const [existing] = await connection.execute(
+        `SELECT id FROM orders WHERE order_number = ? FOR UPDATE`,
+        [candidateOrderNumber]
+      );
+      if (!existing.length) break;
+      allocatedSeq += 1;
+      candidateOrderNumber = `SAR-${String(allocatedSeq).padStart(6, '0')}`;
+    }
+
+    await connection.execute(
+      `UPDATE counters SET counter_value = ?, updated_at = UTC_TIMESTAMP(3) WHERE counter_key = 'orders'`,
+      [allocatedSeq]
+    );
+
+    const orderNumber = candidateOrderNumber;
+    const publicToken = crypto.randomBytes(32).toString("hex");
+    const publicTokenHash = hashToken(publicToken);
+
+    const serializedShippingAddress = JSON.stringify({
+      fullName: String(shippingAddress.fullName).trim(),
+      phone: cleanShippingPhone,
+      line1: String(shippingAddress.line1).trim(),
+      line2: shippingAddress.line2 ? String(shippingAddress.line2).trim() : "",
+      city: String(shippingAddress.city).trim(),
+      state: String(shippingAddress.state).trim(),
+      pincode: cleanPincode
+    });
+
+    // 7. Insert Order record and items based on paymentMethod
+    if (paymentMethod === "cod") {
+      // Deduct each distinct product once and record the movement in this transaction.
+      for (const reservation of sortStockItems([...reservedStockByProduct.values()])) {
+        const newStock = reservation.previousStock - reservation.quantity;
+        const productLine = verifiedLines.find(line => line.productId === reservation.productId && line.variantId === reservation.variantId);
+        if (reservation.variantId) {
+          await connection.execute(
+            "UPDATE product_variants SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?",
+            [newStock, reservation.variantId]
+          );
+          await syncProductVariantStock(connection, reservation.productId);
+          await recordVariantInventoryMovement(connection, {
+            variantId: reservation.variantId, productId: reservation.productId,
+            productName: productLine?.name || "Product", variantSku: reservation.variantSku,
+            variantLabel: reservation.variantLabel, previousStock: reservation.previousStock,
+            quantityDelta: -reservation.quantity, newStock, reason: `COD order placed ${orderNumber}`,
+            adminName: "Customer checkout", adminEmail: "system@sarine.local"
+          });
+        } else {
+          await connection.execute(
+            "UPDATE products SET stock = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?",
+            [newStock, reservation.productId]
+          );
+          await recordInventoryMovement(connection, {
+            productId: reservation.productId, productName: productLine?.name || "Product",
+            previousStock: reservation.previousStock, quantityDelta: -reservation.quantity,
+            newStock, reason: `COD order placed ${orderNumber}`,
+            actorName: "Customer checkout", actorEmail: "system@sarine.local"
+          });
+        }
+      }
+
+      const orderInsert = buildOrderInsert({
+        paymentMethod,
+        orderNumber,
+        customerId,
+        customerName: String(customerName).trim(),
+        customerEmail: String(customerEmail).trim().toLowerCase(),
+        customerPhone: cleanCustomerPhone,
+        shippingAddress: serializedShippingAddress,
+        subtotal: calculatedSubtotal,
+        shippingFee,
+        total,
+        couponCode: coupon?.code || null,
+        discountAmount,
+        publicTokenHash
+      });
+
 
       for (const line of verifiedLines) {
         await connection.execute(
@@ -397,6 +872,7 @@ router.post("/create", checkoutLimiter, async (req, res, next) => {
         shippingFee,
         discountAmount,
         couponCode: coupon?.code || null,
+        promotion: appliedCampaign ? { id: appliedCampaign.id, name: appliedCampaign.name || appliedCampaign.title, discountPercent: Number(appliedCampaign.storewideDiscountPercent), discountAmount } : null,
         total
       });
     } else {
@@ -417,6 +893,7 @@ router.post("/create", checkoutLimiter, async (req, res, next) => {
         publicTokenHash
       });
       await connection.execute(orderInsert.sql, orderInsert.values);
+      await saveOrderCampaignSnapshot(connection, orderNumber, appliedCampaign, discountAmount);
 
       for (const line of verifiedLines) {
         await connection.execute(
@@ -505,6 +982,7 @@ router.post("/create", checkoutLimiter, async (req, res, next) => {
         shippingFee,
         discountAmount,
         couponCode: coupon?.code || null,
+        promotion: appliedCampaign ? { id: appliedCampaign.id, name: appliedCampaign.name || appliedCampaign.title, discountPercent: Number(appliedCampaign.storewideDiscountPercent), discountAmount } : null,
         total
       });
     }
