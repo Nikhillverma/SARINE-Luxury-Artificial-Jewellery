@@ -28,14 +28,22 @@ export async function ensureCustomerOtpSchema() {
   if (schemaReady) return schemaReady;
   schemaReady = (async () => {
   const [columns] = await pool.execute(
-    "SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND COLUMN_NAME IN ('email', 'email_normalized', 'phone', 'phone_normalized', 'google_sub')"
+    "SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, CHARACTER_SET_NAME, COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND COLUMN_NAME IN ('id', 'email', 'email_normalized', 'phone', 'phone_normalized', 'google_sub')"
   );
   const byName = new Map(columns.map((column) => [column.COLUMN_NAME, column]));
+  for (const required of ["id", "email", "email_normalized", "phone"]) {
+    if (!byName.has(required)) {
+      throw new Error(`Customer authentication schema is missing customers.${required}; migration stopped without changing customer data.`);
+    }
+  }
   for (const name of ["email", "email_normalized"]) {
     const column = byName.get(name);
-    if (column && column.IS_NULLABLE !== "YES") {
+    if (column.IS_NULLABLE !== "YES") {
       const safeType = String(column.COLUMN_TYPE).replace(/[^a-zA-Z0-9(), ']/g, "");
-      await pool.query(`ALTER TABLE customers MODIFY COLUMN \`${name}\` ${safeType} NULL`);
+      const charset = column.CHARACTER_SET_NAME && /^[A-Za-z0-9_]+$/.test(column.CHARACTER_SET_NAME) ? ` CHARACTER SET ${column.CHARACTER_SET_NAME}` : "";
+      const collation = column.COLLATION_NAME && /^[A-Za-z0-9_]+$/.test(column.COLLATION_NAME) ? ` COLLATE ${column.COLLATION_NAME}` : "";
+      if (!safeType) throw new Error(`Unsupported customers.${name} column definition; migration stopped.`);
+      await pool.query(`ALTER TABLE customers MODIFY COLUMN \`${name}\` ${safeType}${charset}${collation} NULL`);
     }
   }
   if (!byName.has("phone_normalized")) {
@@ -48,10 +56,16 @@ export async function ensureCustomerOtpSchema() {
     "SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND INDEX_NAME = 'uq_customers_phone_normalized'"
   );
   if (!indexes.length) {
+    const [duplicates] = await pool.execute("SELECT COUNT(*) AS total FROM (SELECT phone_normalized FROM customers WHERE phone_normalized IS NOT NULL AND phone_normalized <> '' GROUP BY phone_normalized HAVING COUNT(*) > 1) AS duplicate_phone_values");
+    if (Number(duplicates[0]?.total) > 0) throw new Error("Duplicate customer phone_normalized values exist; unique index was not created. Review the read-only customer-auth preflight.");
     await pool.query("CREATE UNIQUE INDEX uq_customers_phone_normalized ON customers (phone_normalized)");
   }
   const [googleIndexes] = await pool.execute("SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND INDEX_NAME = 'uq_customers_google_sub'");
-  if (!googleIndexes.length) await pool.query("CREATE UNIQUE INDEX uq_customers_google_sub ON customers (google_sub)");
+  if (!googleIndexes.length) {
+    const [duplicates] = await pool.execute("SELECT COUNT(*) AS total FROM (SELECT google_sub FROM customers WHERE google_sub IS NOT NULL AND google_sub <> '' GROUP BY google_sub HAVING COUNT(*) > 1) AS duplicate_google_values");
+    if (Number(duplicates[0]?.total) > 0) throw new Error("Duplicate customer Google subject values exist; unique index was not created. Review existing Google identity links.");
+    await pool.query("CREATE UNIQUE INDEX uq_customers_google_sub ON customers (google_sub)");
+  }
   await pool.query(`
     CREATE TABLE IF NOT EXISTS customer_auth_challenges (
       id CHAR(36) NOT NULL PRIMARY KEY,
