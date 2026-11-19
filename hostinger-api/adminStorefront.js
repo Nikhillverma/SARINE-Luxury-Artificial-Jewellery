@@ -276,6 +276,10 @@ function normalizeCampaigns(value) {
     sortOrder: Math.max(0, Math.min(99, Math.floor(Number(item.sortOrder) || 0))),
     heroPlacement: ["first", "normal"].includes(item.heroPlacement) ? item.heroPlacement : "auto",
     heroDurationSeconds: Math.max(5, Math.min(20, Math.floor(Number(item.heroDurationSeconds) || 9))),
+    countdownLabel: String(item.countdownLabel || "").trim().slice(0, 70),
+    countdownBackgroundColor: /^#[0-9a-f]{6}$/i.test(String(item.countdownBackgroundColor || "")) ? String(item.countdownBackgroundColor) : "#563568",
+    countdownTextColor: /^#[0-9a-f]{6}$/i.test(String(item.countdownTextColor || "")) ? String(item.countdownTextColor) : "#FFFFFF",
+    countdownTimerColor: /^#[0-9a-f]{6}$/i.test(String(item.countdownTimerColor || "")) ? String(item.countdownTimerColor) : "#FFE08A",
     updatedAt: item.updatedAt || null
   }));
 }
