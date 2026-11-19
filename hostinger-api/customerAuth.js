@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import { pool } from "./db.js";
 import { shouldUseSecureSessionCookie } from "./sessionCookiePolicy.js";
 import { normalizeCustomerEmail } from "./customerValidation.js";
+import { normalizePhone } from "./customerOtpPolicy.js";
 import { canCancelOrder, shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
@@ -513,14 +514,15 @@ router.patch("/profile", async (req, res, next) => {
     const customer = await getAuthenticatedCustomer(req);
     if (!customer) return res.status(401).json({ error: "Please sign in again." });
     const name = String(req.body?.name || "").trim();
-    const phone = String(req.body?.phone || "").replace(/\D/g, "");
     if (name.length < 2 || name.length > 120) return res.status(400).json({ error: "Enter a valid full name." });
-    if (phone && !/^[6-9]\d{9}$/.test(phone)) return res.status(400).json({ error: "Enter a valid 10-digit Indian mobile number." });
+    if (req.body?.phone !== undefined && normalizePhone(req.body.phone) !== normalizePhone(customer.phone)) {
+      return res.status(409).json({ error: "Mobile numbers must be verified before they can be changed. Use the verified contact-linking flow in your SARINE account." });
+    }
     await pool.execute(
-      "UPDATE customers SET name = ?, phone = ?, updated_at = CURRENT_TIMESTAMP(3) WHERE id = ?",
-      [name, phone || null, customer.id]
+      "UPDATE customers SET name = ?, updated_at = CURRENT_TIMESTAMP(3) WHERE id = ?",
+      [name, customer.id]
     );
-    return res.json({ success: true, customer: { ...safeCustomer(customer), name, phone } });
+    return res.json({ success: true, customer: { ...safeCustomer(customer), name } });
   } catch (error) { return next(error); }
 });
 
