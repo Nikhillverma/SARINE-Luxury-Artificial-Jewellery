@@ -5,7 +5,7 @@
  * Layout Discipline:
  * - Desktop centered container: `mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10`
  * - Consistent vertical rhythm: 64-96px desktop, 40-56px mobile
- * - Hero banner: fixed responsive height h-[420px] md:h-[520px] lg:h-[600px],
+ * - Hero banner: fixed responsive height h-[360px] sm:h-[420px] lg:h-[520px],
  *   stacked absolute slides with opacity transitions, object-[70%_center],
  *   soft beige gradient overlay, centered container controls, no blank space underneath.
  */
@@ -389,7 +389,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const currentHero = heroSlides[activeSlide] || heroSlides[0];
 
   return (
-    <div className="w-full bg-[#F7F0FA] text-[#302438] font-sans selection:bg-[#B69ACF]/30 selection:text-[#302438]" style={{ display: "flex", flexDirection: "column" }}>
+    <div className="sarine-home w-full bg-[#FBF8F5] text-[#302438] font-sans selection:bg-[#B69ACF]/30 selection:text-[#302438]" style={{ display: "flex", flexDirection: "column" }}>
       {/* =========================================================================
           3. HERO SLIDER
           Fixed responsive height: h-[420px] md:h-[520px] lg:h-[600px]
@@ -518,16 +518,16 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Heading row: flex items-end justify-between mb-6
           Grid: grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6
           Category images: aspect-[3/2] object-cover
-          Consistent vertical spacing: py-12 sm:py-16 lg:py-20
+          Consistent vertical spacing: py-8 sm:py-10 lg:py-12
           ========================================================================= */}
-      <section id="categories" style={{ order: sectionOrder("categories"), display: sectionVisible("categories") ? undefined : "none" }} className="w-full py-12 sm:py-16 lg:py-20">
+      <section id="categories" style={{ order: sectionOrder("categories"), display: sectionVisible("categories") ? undefined : "none" }} className="w-full py-8 sm:py-10 lg:py-20">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
-          <div className="w-full text-center mb-8 sm:mb-10">
+          <div className="w-full text-center mb-5 sm:mb-7">
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
               Shop by Category
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
+            <p className="mt-2 text-sm text-[#746B75] font-sans leading-relaxed max-w-xl mx-auto">
               Explore our handcrafted collections curated for celebrations and everyday elegance.
             </p>
             <div className="mt-3">
@@ -580,7 +580,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 newest products (sorted by createdAt descending, else the last 4 in the list),
           same product card as Best Sellers, "View All" linking to /shop?sort=newest
           ========================================================================= */}
-      <section style={{ order: sectionOrder("new-arrivals"), display: sectionVisible("new-arrivals") ? undefined : "none" }} className="py-12 sm:py-16 lg:py-20 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("new-arrivals"), display: sectionVisible("new-arrivals") ? undefined : "none" }} className="py-8 sm:py-10 lg:py-12 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-8 sm:mb-10">
@@ -928,8 +928,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         <section style={{ order: sectionOrder("editorial"), display: sectionVisible("editorial") ? undefined : "none" }} className="relative overflow-hidden bg-[#EBDFF2] border-b border-[#E7DCEB]">
           <img src={editorial.imageUrl || HOMEPAGE_IMAGES.editorialBanner} alt={editorial.title} className="absolute inset-0 w-full h-full object-cover object-center" />
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#F0E6F4]/75 to-[#F0E6F4]/95 sm:via-[#F0E6F4]/80 sm:to-[#F0E6F4]/95" />
-          <div className="site-container min-h-[320px] sm:min-h-[380px] lg:min-h-[420px] flex items-center justify-end relative z-10">
-            <div className="w-full sm:w-2/3 lg:w-1/2 py-10 sm:py-14 text-left">
+          <div className="site-container min-h-[260px] sm:min-h-[320px] lg:min-h-[360px] flex items-center justify-end relative z-10">
+            <div className="w-full sm:w-2/3 lg:w-1/2 py-8 sm:py-10 text-left">
               <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">{editorial.eyebrow}</span>
               <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal leading-tight">{editorial.title}</h2>
               <p className="mt-3 text-xs sm:text-sm text-[#6F6475] leading-relaxed max-w-md font-sans">{editorial.description}</p>
@@ -942,7 +942,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           8. JEWELLERY CARE & PRESERVATION GUIDE
           ========================================================================= */}
-      <section style={{ order: 100 }} className="py-14 sm:py-20 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: 100 }} className="py-9 sm:py-12 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
           <div className="max-w-[720px] mx-auto text-center mb-10">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
@@ -995,7 +995,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           9. STAY IN TOUCH
           ========================================================================= */}
-      <section style={{ order: 101 }} className="py-14 sm:py-20 lg:py-24 bg-[#F7F0FA]">
+      <section style={{ order: 101 }} className="py-9 sm:py-12 lg:py-14 bg-[#F7F0FA]">
         <div className="site-container">
           <div className="max-w-[620px] mx-auto text-center">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">

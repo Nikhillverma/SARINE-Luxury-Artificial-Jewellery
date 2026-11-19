@@ -88,3 +88,65 @@
     justify-content: center;
   }
 }
+
+
+/* SARINE homepage: tighter editorial rhythm and refined typography */
+.sarine-home {
+  --sarine-heading-font: "Playfair Display", Georgia, serif;
+  --sarine-body-font: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #fbf8f5;
+  font-family: var(--sarine-body-font);
+}
+.sarine-home .font-serif,
+.sarine-home h1,
+.sarine-home h2,
+.sarine-home h3,
+.sarine-home h4 {
+  font-family: var(--sarine-heading-font);
+  letter-spacing: -0.025em;
+}
+.sarine-home .font-sans,
+.sarine-home p,
+.sarine-home a,
+.sarine-home button,
+.sarine-home span {
+  font-family: var(--sarine-body-font);
+}
+.sarine-home > section:not(:first-child) {
+  scroll-margin-top: 5rem;
+}
+.sarine-home .site-container {
+  max-width: 1360px;
+}
+.sarine-home .product-grid {
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .sarine-home .product-grid { gap: 20px; }
+}
+@media (min-width: 1024px) {
+  .sarine-home .product-grid { gap: 24px; }
+}
+.sarine-home .category-grid {
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .sarine-home .category-grid { gap: 18px; }
+}
+.sarine-home .product-grid > article {
+  border-color: #eee7e3;
+  border-radius: 3px;
+  padding: 6px;
+  box-shadow: none;
+}
+.sarine-home .product-grid > article:hover {
+  box-shadow: 0 12px 28px rgba(48, 36, 56, .08);
+}
+.sarine-home section h2 {
+  line-height: 1.12;
+}
+@media (max-width: 767px) {
+  .sarine-home .site-container { padding-left: 14px; padding-right: 14px; }
+  .sarine-home .product-grid { gap: 10px; }
+  .sarine-home .product-grid > article { padding: 5px; }
+}
