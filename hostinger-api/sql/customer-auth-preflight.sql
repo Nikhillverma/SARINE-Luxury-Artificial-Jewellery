@@ -12,7 +12,7 @@ SELECT
   COLLATION_NAME,
   EXTRA
 FROM information_schema.COLUMNS
-WHERE TABLE_SCHEMA = DATABASE()
+WHERE TABLE_SCHEMA = 'u517551008_sarine_db'
   AND TABLE_NAME IN ('customers', 'customer_sessions', 'orders')
 ORDER BY TABLE_NAME, ORDINAL_POSITION;
 
@@ -22,7 +22,7 @@ SELECT
   NON_UNIQUE,
   GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX SEPARATOR ', ') AS indexed_columns
 FROM information_schema.STATISTICS
-WHERE TABLE_SCHEMA = DATABASE()
+WHERE TABLE_SCHEMA = 'u517551008_sarine_db'
   AND TABLE_NAME IN ('customers', 'customer_sessions')
 GROUP BY TABLE_NAME, INDEX_NAME, NON_UNIQUE
 ORDER BY TABLE_NAME, INDEX_NAME;
@@ -33,13 +33,13 @@ SELECT
   SUM(email IS NULL OR email = '') AS customers_without_email,
   SUM(email_normalized IS NULL OR email_normalized = '') AS customers_without_normalized_email,
   SUM(phone IS NULL OR phone = '') AS customers_without_phone
-FROM customers;
+FROM `u517551008_sarine_db`.customers;
 
 -- If phone_normalized already exists, this reports duplicate non-empty values.
 -- If it does not exist, run the columns query above first; this query will then
 -- need to be skipped until that column has been added.
 SELECT phone_normalized, COUNT(*) AS duplicate_count
-FROM customers
+FROM `u517551008_sarine_db`.customers
 WHERE phone_normalized IS NOT NULL AND phone_normalized <> ''
 GROUP BY phone_normalized
 HAVING COUNT(*) > 1;
@@ -47,13 +47,13 @@ HAVING COUNT(*) > 1;
 -- Detect duplicate Google subject links before adding a unique index.
 -- If google_sub does not exist yet, skip this query until the column is added.
 SELECT google_sub, COUNT(*) AS duplicate_count
-FROM customers
+FROM `u517551008_sarine_db`.customers
 WHERE google_sub IS NOT NULL AND google_sub <> ''
 GROUP BY google_sub
 HAVING COUNT(*) > 1;
 
 -- Confirm customer IDs referenced by existing sessions have matching customers.
 SELECT COUNT(*) AS orphan_customer_sessions
-FROM customer_sessions s
-LEFT JOIN customers c ON c.id = s.customer_id
+FROM `u517551008_sarine_db`.customer_sessions s
+LEFT JOIN `u517551008_sarine_db`.customers c ON c.id = s.customer_id
 WHERE c.id IS NULL;
