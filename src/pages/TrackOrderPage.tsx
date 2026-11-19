@@ -225,8 +225,10 @@ export const TrackOrderPage: React.FC = () => {
       { key: 'out_for_delivery', label: 'Out for delivery', icon: Truck },
       { key: 'delivered', label: 'Delivered', icon: CheckCircle2 }
     ];
-    const statusOrder = ['placed', 'confirmed', 'processing', 'packed', 'shipped', 'out_for_delivery', 'delivered'];
-    const currentIndex = Math.max(0, statusOrder.indexOf(order.orderStatus));
+    const stageIndex: Record<string, number> = {
+      placed: 0, confirmed: 0, processing: 0, packed: 1, shipped: 2, out_for_delivery: 3, delivered: 4
+    };
+    const currentIndex = stageIndex[order.orderStatus] ?? 0;
     const history = order.statusHistory || [];
     const latestFor = (key: string) => {
       const entry = [...history].reverse().find(item => item.status === key);
