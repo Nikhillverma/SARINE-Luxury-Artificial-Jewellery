@@ -81,6 +81,7 @@ function CampaignCountdownStrip({ campaign }: { campaign: FestivalCampaign }) {
   const background = campaign.countdownBackgroundColor || "#563568";
   const textColor = campaign.countdownTextColor || "#FFFFFF";
   const timerColor = campaign.countdownTimerColor || "#FFE08A";
+  if (remaining <= 0) return null;
   return (
     <div className="inline-flex max-w-[calc(100vw-2rem)] items-center justify-center gap-2.5 sm:gap-3 rounded-full border border-white/35 px-3.5 sm:px-5 py-1.5 sm:py-2 text-[10px] sm:text-xs shadow-md backdrop-blur-md"
       style={{ backgroundColor: `${background}CC`, color: textColor }}>
