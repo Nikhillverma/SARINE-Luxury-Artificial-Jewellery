@@ -75,23 +75,9 @@ CREATE TABLE IF NOT EXISTS customer_password_resets (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Post-migration verification (read-only).
-SELECT
-  TABLE_NAME, COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE
-FROM information_schema.COLUMNS
-WHERE TABLE_SCHEMA = DATABASE()
-  AND (
-    (TABLE_NAME = 'customers' AND COLUMN_NAME IN
-      ('id', 'email', 'email_normalized', 'phone', 'phone_normalized', 'google_sub'))
-    OR TABLE_NAME IN
-      ('customer_auth_challenges', 'customer_auth_delivery_events', 'customer_password_resets')
-  )
-ORDER BY TABLE_NAME, ORDINAL_POSITION;
-
-SELECT TABLE_NAME, INDEX_NAME, NON_UNIQUE,
-       GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX SEPARATOR ', ') AS indexed_columns
-FROM information_schema.STATISTICS
-WHERE TABLE_SCHEMA = DATABASE()
-  AND TABLE_NAME IN ('customers', 'customer_auth_challenges',
-                     'customer_auth_delivery_events', 'customer_password_resets')
-GROUP BY TABLE_NAME, INDEX_NAME, NON_UNIQUE
-ORDER BY TABLE_NAME, INDEX_NAME;
+-- Use database-local SHOW statements; no information_schema access is required.
+SHOW COLUMNS FROM customers;
+SHOW COLUMNS FROM customer_auth_challenges;
+SHOW TABLES LIKE 'customer_auth%';
+SHOW TABLES LIKE 'customer_password_resets';
+SHOW INDEX FROM customers;
