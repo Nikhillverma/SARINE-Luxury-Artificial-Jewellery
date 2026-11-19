@@ -73,7 +73,7 @@ function maskIdentifier(method, identifier) {
   return "******" + identifier.slice(-2);
 }
 
-async function createChallenge(method, identifier, purpose) {
+async function createChallenge(method, identifier, purpose, customerId = null) {
   const connection = await pool.getConnection();
   let lockAcquired = false;
   let challenge;
@@ -107,7 +107,7 @@ async function createChallenge(method, identifier, purpose) {
     const otp = createOtp();
     const id = crypto.randomUUID();
     await connection.execute("UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE identifier = ? AND purpose = ? AND consumed_at IS NULL", [identifier, purpose]);
-    await connection.execute("INSERT INTO customer_auth_challenges (id, identifier, method, purpose, otp_hash, expires_at) VALUES (?, ?, ?, ?, ?, DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 5 MINUTE))", [id, identifier, method, purpose, hashOtp(id, otp)]);
+    await connection.execute("INSERT INTO customer_auth_challenges (id, identifier, customer_id, method, purpose, otp_hash, expires_at) VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 5 MINUTE))", [id, identifier, customerId, method, purpose, hashOtp(id, otp)]);
     await connection.commit();
     challenge = { id, otp };
   } catch (error) {
@@ -330,12 +330,12 @@ router.post("/identity/link/request", requestLimiter, async (req, res, next) => 
     );
     if (!rows.length) return res.status(403).json({ error: "This customer account is not currently available." });
     const row = rows[0];
-    const currentValue = method === "email" ? row.email_normalized : row.phone_normalized;
+    const currentValue = method === "email" ? (row.email_normalized || normalizeCustomerEmail(row.email)) : (row.phone_normalized || normalizePhone(row.phone));
     if (currentValue && currentValue !== identifier) {
       return res.status(409).json({ error: "This account already has a different verified contact method. Contact SARINE support to change it safely." });
     }
     if (currentValue === identifier) return res.json({ alreadyLinked: true });
-    const result = await createChallenge(method, identifier, "identity_link");
+    const result = await createChallenge(method, identifier, "identity_link", current.id);
     if (result.cooldown) return res.status(429).json({ error: "Please wait before requesting another verification code.", retryAfterSeconds: result.cooldown });
     return res.json({ success: true, challengeId: result.challengeId, expiresInSeconds: 300, resendAfterSeconds: CUSTOMER_OTP_POLICY.resendCooldownSeconds });
   } catch (error) { return next(error); }
@@ -361,6 +361,10 @@ router.post("/identity/link/verify", verifyLimiter, async (req, res, next) => {
       [challengeId]
     );
     const challenge = challenges[0];
+    if (challenge && challenge.customer_id !== current.id) {
+      await connection.rollback();
+      return res.status(403).json({ error: "This verification code belongs to a different customer session." });
+    }
     if (!challenge || Number(challenge.attempts) >= CUSTOMER_OTP_POLICY.maxAttempts || !safeOtpEqual(challenge.otp_hash, hashOtp(challengeId, otp))) {
       if (challenge) {
         const nextAttempts = Number(challenge.attempts) + 1;
@@ -382,7 +386,7 @@ router.post("/identity/link/verify", verifyLimiter, async (req, res, next) => {
       return res.status(403).json({ error: "This customer account is not currently available." });
     }
     if (challenge.method === "email") {
-      if (customer.email_normalized && customer.email_normalized !== challenge.identifier) {
+      if ((customer.email_normalized || normalizeCustomerEmail(customer.email)) && (customer.email_normalized || normalizeCustomerEmail(customer.email)) !== challenge.identifier) {
         await connection.rollback();
         return res.status(409).json({ error: "This account already has a different email address. Contact SARINE support to change it safely." });
       }
@@ -399,7 +403,7 @@ router.post("/identity/link/verify", verifyLimiter, async (req, res, next) => {
         [challenge.identifier, challenge.identifier, customer.id]
       );
     } else if (challenge.method === "phone") {
-      if (customer.phone_normalized && customer.phone_normalized !== challenge.identifier) {
+      if ((customer.phone_normalized || normalizePhone(customer.phone)) && (customer.phone_normalized || normalizePhone(customer.phone)) !== challenge.identifier) {
         await connection.rollback();
         return res.status(409).json({ error: "This account already has a different mobile number. Contact SARINE support to change it safely." });
       }
