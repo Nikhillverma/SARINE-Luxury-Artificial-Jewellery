@@ -1178,6 +1178,7 @@ router.get("/:orderNumber", orderLookupLimiter, async (req, res, next) => {
       return res.status(403).json({ error: "Unauthorized access to order." });
     }
 
+    await ensureCampaignOrderSnapshotTable();
     await ensureProductVariantSchema();
     const [itemRows] = await pool.execute(
       `SELECT id, product_id, product_name, sku, unit_price, quantity, image, source_line,
@@ -1187,6 +1188,16 @@ router.get("/:orderNumber", orderLookupLimiter, async (req, res, next) => {
        ORDER BY source_line ASC, id ASC`,
       [order.id]
     );
+    const [promotionRows] = await pool.execute(
+      "SELECT campaign_id, campaign_name, discount_percent, discount_amount FROM order_promotions WHERE order_number = ? LIMIT 1",
+      [order.order_number]
+    );
+    const savedPromotion = promotionRows[0] ? {
+      id: promotionRows[0].campaign_id,
+      name: promotionRows[0].campaign_name,
+      discountPercent: Number(promotionRows[0].discount_percent),
+      discountAmount: Number(promotionRows[0].discount_amount)
+    } : null;
 
     let parsedAddress = {};
     try {
@@ -1217,6 +1228,8 @@ router.get("/:orderNumber", orderLookupLimiter, async (req, res, next) => {
         variantOptions: typeof row.variant_options === "string" ? JSON.parse(row.variant_options) : (row.variant_options || undefined)
       })),
       subtotal: Number(order.subtotal),
+      promotion: savedPromotion,
+      discountAmount: Number(order.discount_amount || 0),
       shippingFee: Number(order.shipping_fee),
       total: Number(order.total),
       paymentMethod: order.payment_method,
@@ -1289,6 +1302,7 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
       return res.status(404).json({ error: GENERIC_NOT_FOUND });
     }
 
+    await ensureCampaignOrderSnapshotTable();
     await ensureProductVariantSchema();
     const [items] = await pool.execute(
       `SELECT product_name, quantity, image, unit_price, variant_sku, variant_label, variant_options
@@ -1296,6 +1310,16 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
        WHERE order_id = ?`,
       [order.id]
     );
+    const [promotionRows] = await pool.execute(
+      "SELECT campaign_id, campaign_name, discount_percent, discount_amount FROM order_promotions WHERE order_number = ? LIMIT 1",
+      [order.order_number]
+    );
+    const savedPromotion = promotionRows[0] ? {
+      id: promotionRows[0].campaign_id,
+      name: promotionRows[0].campaign_name,
+      discountPercent: Number(promotionRows[0].discount_percent),
+      discountAmount: Number(promotionRows[0].discount_amount)
+    } : null;
 
     const itemCount = items.reduce((sum, itm) => sum + Number(itm.quantity || 0), 0);
     const lines = items.map(itm => ({
@@ -1317,6 +1341,7 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
       shippingFee: Number(order.shipping_fee || 0),
       couponCode: order.coupon_code || undefined,
       discountAmount: Number(order.discount_amount || 0),
+      promotion: savedPromotion,
       total: Number(order.total || 0),
       razorpayPaymentId: order.payment_status === "paid" ? (order.razorpay_payment_id || undefined) : undefined,
       shippingAddress: {
