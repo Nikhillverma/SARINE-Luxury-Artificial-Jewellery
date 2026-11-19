@@ -110,7 +110,7 @@ export const ShopByOccasionManager: React.FC = () => {
           <div className="grid grid-cols-[104px_1fr] gap-3">
             <img src={item.image} alt={item.title} className="w-full aspect-[4/5] rounded-lg object-cover bg-[#F7F0FA]" />
             <div className="space-y-2">
-              <label className="block text-xs space-y-1"><span>Card title</span><input value={item.title} maxLength={80} onChange={e => update(index, { title: e.target.value, id: makeId(e.target.value) })} className="w-full border rounded-lg p-2 text-sm" /></label>
+              <label className="block text-xs space-y-1"><span>Card title</span><input value={item.title} maxLength={80} onChange={e => update(index, { title: e.target.value })} className="w-full border rounded-lg p-2 text-sm" /></label>
               <label className="block text-xs space-y-1"><span>Short description</span><input value={item.subtitle} maxLength={180} onChange={e => update(index, { subtitle: e.target.value })} className="w-full border rounded-lg p-2 text-sm" /></label>
             </div>
           </div>
