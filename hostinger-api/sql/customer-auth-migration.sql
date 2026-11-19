@@ -45,6 +45,9 @@ CREATE TABLE IF NOT EXISTS customer_auth_challenges (
   INDEX idx_customer_auth_challenge_expiry (expires_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Also make reruns safe if the challenge table was created by an earlier draft.
+ALTER TABLE customer_auth_challenges
+  ADD COLUMN IF NOT EXISTS customer_id VARCHAR(191) NULL AFTER identifier;
 CREATE TABLE IF NOT EXISTS customer_auth_delivery_events (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   challenge_id CHAR(36) NULL,
