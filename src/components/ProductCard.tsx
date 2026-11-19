@@ -26,7 +26,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const campaignDiscount = Math.max(0, Math.min(75, storewideDiscountPercent));
   const campaignPrice = Math.max(0, product.price - Math.floor(product.price * campaignDiscount / 100));
 
-  const primaryImage = product.images[0] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80';
+  const primaryImage = product.images[0] || '/images/category-bracelets.jpg';
   const secondaryImage = product.images[1];
 
   const handleWishlistClick = (e: React.MouseEvent) => {
