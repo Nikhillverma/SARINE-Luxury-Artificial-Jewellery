@@ -208,6 +208,7 @@ router.post("/otp/verify", verifyLimiter, async (req, res, next) => {
       customer = { id, name, email: email || "", phone: phone || "", status: "active" };
       created = true;
     }
+    if (challenge.method === "email") await connection.execute("UPDATE customers SET email_verified_at = COALESCE(email_verified_at, UTC_TIMESTAMP(3)) WHERE id = ?", [customer.id]);
     if (challenge.method === "phone") await connection.execute("UPDATE customers SET phone_normalized = ? WHERE id = ? AND (phone_normalized IS NULL OR phone_normalized = ?)", [challenge.identifier, customer.id, ""]);
     await connection.execute("UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE id = ?", [challengeId]);
     await connection.execute("UPDATE customers SET last_login_at = UTC_TIMESTAMP(3) WHERE id = ?", [customer.id]);
