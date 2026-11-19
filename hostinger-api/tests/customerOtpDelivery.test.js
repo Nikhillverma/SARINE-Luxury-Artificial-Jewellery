@@ -8,7 +8,7 @@ process.env.DB_PASSWORD = "test-only-not-a-real-password";
 process.env.CUSTOMER_OTP_SECRET = "test-only-customer-otp-secret-at-least-32-characters";
 process.env.MSG91_EMAIL_ENABLED = "false";
 
-const { deliverCustomerOtp, getCustomerOtpProvider } = await import("../customerOtpService.js");
+const { deliverCustomerOtp, getCustomerOtpProvider, getCustomerOtpAvailability } = await import("../customerOtpService.js");
 
 test("MSG91 email delivery is disabled by default and never calls the provider", async () => {
   const originalFetch = globalThis.fetch;
@@ -95,5 +95,41 @@ test("phone OTP remains disabled and never calls an unapproved provider", async 
     );
   } finally {
     globalThis.fetch = originalFetch;
+  }
+});
+
+
+test("public OTP availability only enables email after explicit enablement and sender-domain match", () => {
+  const previous = {
+    enabled: process.env.MSG91_EMAIL_ENABLED,
+    key: process.env.MSG91_EMAIL_AUTH_KEY,
+    domain: process.env.MSG91_EMAIL_DOMAIN,
+    from: process.env.MSG91_EMAIL_FROM,
+    template: process.env.MSG91_EMAIL_TEMPLATE_ID
+  };
+  try {
+    process.env.MSG91_EMAIL_ENABLED = "false";
+    process.env.MSG91_EMAIL_AUTH_KEY = "test-key";
+    process.env.MSG91_EMAIL_DOMAIN = "mail.sarine.example";
+    process.env.MSG91_EMAIL_FROM = "no-reply@mail.sarine.example";
+    process.env.MSG91_EMAIL_TEMPLATE_ID = "global_otp";
+    assert.equal(getCustomerOtpAvailability().email.enabled, false);
+
+    process.env.MSG91_EMAIL_ENABLED = "true";
+    assert.equal(getCustomerOtpAvailability().email.enabled, true);
+    process.env.MSG91_EMAIL_FROM = "no-reply@temporary.hostingersite.com";
+    assert.equal(getCustomerOtpAvailability().email.enabled, false);
+    assert.equal(getCustomerOtpAvailability().phone.enabled, false);
+  } finally {
+    for (const [key, value] of Object.entries({
+      MSG91_EMAIL_ENABLED: previous.enabled,
+      MSG91_EMAIL_AUTH_KEY: previous.key,
+      MSG91_EMAIL_DOMAIN: previous.domain,
+      MSG91_EMAIL_FROM: previous.from,
+      MSG91_EMAIL_TEMPLATE_ID: previous.template
+    })) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   }
 });
