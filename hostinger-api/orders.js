@@ -897,6 +897,18 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
        WHERE order_id = ?`,
       [order.id]
     );
+    const [statusHistoryRows] = await pool.execute(
+      `SELECT new_status, created_at
+       FROM order_status_history
+       WHERE order_id = ?
+         AND new_status IN ('placed', 'confirmed', 'processing', 'packed', 'shipped', 'out_for_delivery', 'delivered')
+       ORDER BY created_at ASC, id ASC`,
+      [order.id]
+    );
+    const statusHistory = statusHistoryRows.map(row => ({
+      status: row.new_status,
+      createdAt: row.created_at
+    }));
     const [promotionRows] = await pool.execute(
       "SELECT campaign_id, campaign_name, discount_percent, discount_amount FROM order_promotions WHERE order_number = ? LIMIT 1",
       [order.order_number]
@@ -937,6 +949,7 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
         pincode: parsedAddress.pincode || ""
       },
       createdAt: order.created_at,
+      statusHistory,
       shippedAt: order.shipped_at || undefined,
       deliveredAt: order.delivered_at || undefined,
       estimatedDelivery: order.estimated_delivery || undefined,
