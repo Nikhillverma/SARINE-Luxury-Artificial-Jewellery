@@ -27,7 +27,7 @@ let schemaReady;
 export async function assertCustomerOtpSchema() {
   if (schemaReady) return schemaReady;
   schemaReady = (async () => {
-    // Use database-local SHOW statements instead of information_schema.
+    // Use database-local SHOW statements instead of system metadata views.
     // Some managed-hosting database users cannot read system metadata schemas
     // even when they have full privileges on their application database.
     const [customerColumns] = await pool.query("SHOW COLUMNS FROM customers");
