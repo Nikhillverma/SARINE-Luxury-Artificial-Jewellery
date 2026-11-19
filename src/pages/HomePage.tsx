@@ -228,6 +228,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const slideCount = heroSlides.length;
 
   useEffect(() => {
+    setActiveSlide(current => Math.min(current, Math.max(slideCount - 1, 0)));
+  }, [slideCount]);
+
+  useEffect(() => {
     let cancelled = false;
     hostingerStorefrontService.getPublicEditorial()
       .then(result => { if (!cancelled && result.editorial) setEditorial(result.editorial); else if (!cancelled && result.editorial === null) setEditorial(current => ({ ...current, active: false })); })
@@ -348,7 +352,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   const reviewCounts: number[] = [12, 8, 10, 15, 9, 14, 11, 7];
 
-  const currentHero = heroSlides[activeSlide];
+  const currentHero = heroSlides[activeSlide] || heroSlides[0];
 
   return (
     <div className="w-full bg-[#F7F0FA] text-[#302438] font-sans selection:bg-[#B69ACF]/30 selection:text-[#302438]" style={{ display: "flex", flexDirection: "column" }}>
