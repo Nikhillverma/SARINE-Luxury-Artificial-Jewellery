@@ -12,7 +12,7 @@ const router = Router();
 // Enforce admin session authentication across all admin order routes
 router.use(requireAdminAuth);
 
-const ALLOWED_ACTIONS = ["mark_shipped", "mark_delivered", "cancel", "add_note"];
+const ALLOWED_ACTIONS = ["mark_packed", "mark_shipped", "mark_out_for_delivery", "mark_delivered", "cancel", "add_note"];
 
 let hasAdminNoteColumnCache = null;
 async function checkAdminNoteColumn(conn) {
@@ -348,7 +348,35 @@ router.post("/update", async (req, res, next) => {
       });
     }
 
-    // 2. Action: mark_shipped
+    // 2. Action: mark_packed — first physical fulfilment milestone.
+    if (action === "mark_packed") {
+      if (order.refund_needed || order.order_status === "needs_refund" || !canShipOrder(order)) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        return res.status(400).json({ error: "This order cannot be packed until payment is confirmed or COD is placed. Orders flagged for refund cannot be packed." });
+      }
+      if (!["placed", "confirmed", "processing"].includes(order.order_status)) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        return res.status(400).json({ error: "Only confirmed, unfulfilled orders can be marked packed." });
+      }
+      await connection.execute(
+        "UPDATE orders SET order_status = 'packed', updated_at = UTC_TIMESTAMP(3) WHERE id = ?",
+        [order.id]
+      );
+      await connection.execute(
+        "INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at) VALUES (?, ?, 'packed', 'Order packed and ready for dispatch', ?, UTC_TIMESTAMP(3))",
+        [order.id, order.order_status, adminEmail]
+      );
+      await connection.commit();
+      connection.release();
+      connection = null;
+      return res.json({ success: true, orderNumber: cleanOrderNumber, action: "mark_packed", orderStatus: "packed", updatedAt: nowIso });
+    }
+
+    // 3. Action: mark_shipped — only after packing is recorded.
     if (action === "mark_shipped") {
       if (order.refund_needed || order.order_status === "needs_refund") {
         await connection.rollback();
@@ -359,13 +387,11 @@ router.post("/update", async (req, res, next) => {
         });
       }
 
-      if (!canShipOrder(order)) {
+      if (order.order_status !== "packed") {
         await connection.rollback();
         connection.release();
         connection = null;
-        return res.status(400).json({
-          error: "This order is not in a shippable state. Confirm payment or verify Cash on Delivery before shipping."
-        });
+        return res.status(400).json({ error: "Mark the order as packed before dispatching it." });
       }
 
       const updateFields = ["order_status = 'shipped'", "shipped_at = UTC_TIMESTAMP(3)", "updated_at = UTC_TIMESTAMP(3)"];
@@ -419,14 +445,36 @@ router.post("/update", async (req, res, next) => {
       });
     }
 
-    // 3. Action: mark_delivered
+    // 4. Action: mark_out_for_delivery — courier has the parcel for final delivery.
+    if (action === "mark_out_for_delivery") {
+      if (!["shipped", "out_for_delivery"].includes(order.order_status)) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        return res.status(400).json({ error: "Only shipped orders can be marked out for delivery." });
+      }
+      await connection.execute(
+        "UPDATE orders SET order_status = 'out_for_delivery', updated_at = UTC_TIMESTAMP(3) WHERE id = ?",
+        [order.id]
+      );
+      await connection.execute(
+        "INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at) VALUES (?, 'shipped', 'out_for_delivery', 'Courier marked parcel out for delivery', ?, UTC_TIMESTAMP(3))",
+        [order.id, adminEmail]
+      );
+      await connection.commit();
+      connection.release();
+      connection = null;
+      return res.json({ success: true, orderNumber: cleanOrderNumber, action: "mark_out_for_delivery", orderStatus: "out_for_delivery", updatedAt: nowIso });
+    }
+
+    // 5. Action: mark_delivered
     if (action === "mark_delivered") {
       if (order.order_status !== "shipped") {
         await connection.rollback();
         connection.release();
         connection = null;
         return res.status(400).json({
-          error: `Cannot mark as delivered: Order is currently "${order.order_status}". Orders must be marked "shipped" first.`
+          error: `Cannot mark as delivered: Order is currently "${order.order_status}". Orders must be shipped or out for delivery first.`
         });
       }
 
@@ -446,8 +494,8 @@ router.post("/update", async (req, res, next) => {
 
       await connection.execute(
         `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
-         VALUES (?, 'shipped', 'delivered', ?, ?, UTC_TIMESTAMP(3))`,
-        [order.id, order.payment_method === "cod" ? "Delivered and COD collected" : "Delivered to recipient", adminEmail]
+         VALUES (?, ?, 'delivered', ?, ?, UTC_TIMESTAMP(3))`,
+        [order.id, order.order_status, order.payment_method === "cod" ? "Delivered and COD collected" : "Delivered to recipient", adminEmail]
       );
 
       await connection.commit();
@@ -468,7 +516,7 @@ router.post("/update", async (req, res, next) => {
     if (action === "cancel") {
       const currentStatus = order.order_status;
 
-      if (currentStatus === "shipped" || currentStatus === "delivered") {
+      if (["packed", "shipped", "out_for_delivery", "delivered"].includes(currentStatus)) {
         await connection.rollback();
         connection.release();
         connection = null;
