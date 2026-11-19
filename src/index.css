@@ -145,9 +145,6 @@
 .sarine-home section h2 {
   line-height: 1.12;
 }
-.sarine-home section .text-\\[10px\\] {
-  letter-spacing: .18em;
-}
 @media (max-width: 767px) {
   .sarine-home .site-container { padding-left: 14px; padding-right: 14px; }
   .sarine-home .product-grid { gap: 10px; }
