@@ -274,6 +274,8 @@ function normalizeCampaigns(value) {
     artworkOnly: item.artworkOnly !== false,
     storewideDiscountPercent: Math.max(0, Math.min(75, Math.floor(Number(item.storewideDiscountPercent) || 0))),
     sortOrder: Math.max(0, Math.min(99, Math.floor(Number(item.sortOrder) || 0))),
+    heroPlacement: ["first", "normal"].includes(item.heroPlacement) ? item.heroPlacement : "auto",
+    heroDurationSeconds: Math.max(5, Math.min(20, Math.floor(Number(item.heroDurationSeconds) || 9))),
     updatedAt: item.updatedAt || null
   }));
 }
