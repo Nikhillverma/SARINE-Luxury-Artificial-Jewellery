@@ -140,6 +140,8 @@ router.post("/otp/request", requestLimiter, async (req, res, next) => {
     const method = String(req.body?.method || "").toLowerCase();
     const identifier = resolveIdentifier(method, req.body?.identifier);
     if (!identifier) return res.status(400).json({ error: method === "phone" ? "Enter a valid 10-digit Indian mobile number." : "Enter a valid email address." });
+    const availability = getCustomerOtpAvailability()[method];
+    if (!availability?.enabled) return res.status(503).json({ error: availability?.reason || "This verification method is not available yet." });
     const result = await createChallenge(method, identifier, "login");
     if (result.cooldown) return res.status(429).json({ error: `Please wait ${result.cooldown} seconds before requesting another code.`, retryAfterSeconds: result.cooldown });
     return res.json({ success: true, challengeId: result.challengeId, expiresInSeconds: 300, resendAfterSeconds: CUSTOMER_OTP_POLICY.resendCooldownSeconds });
@@ -222,6 +224,8 @@ router.post("/password/forgot/request", requestLimiter, async (req, res, next) =
     const method = String(req.body?.method || "").toLowerCase();
     const identifier = resolveIdentifier(method, req.body?.identifier);
     if (!identifier) return res.status(400).json({ error: "Enter a valid registered email address or mobile number." });
+    const availability = getCustomerOtpAvailability()[method];
+    if (!availability?.enabled) return res.status(503).json({ error: availability?.reason || "This recovery method is not available yet." });
     const customer = await findCustomer(method, identifier);
     let challengeId = crypto.randomUUID();
     if (customer?.status === "active") {
@@ -298,6 +302,133 @@ router.post("/password/forgot/reset", requestLimiter, async (req, res, next) => 
     return res.json({ success: true, message: "Your password has been updated. Please sign in again." });
   } catch (error) {
     if (connection) await connection.rollback().catch(() => {});
+    return next(error);
+  } finally { connection?.release(); }
+});
+
+
+router.post("/identity/link/request", requestLimiter, async (req, res, next) => {
+  try {
+    res.set("Cache-Control", "no-store");
+    await assertCustomerOtpSchema();
+    const current = await getSessionCustomer(req);
+    if (!current) return res.status(401).json({ error: "Please sign in before linking another contact method." });
+    const method = String(req.body?.method || "").toLowerCase();
+    const identifier = resolveIdentifier(method, req.body?.identifier);
+    if (!identifier) return res.status(400).json({ error: method === "phone" ? "Enter a valid 10-digit Indian mobile number." : "Enter a valid email address." });
+    const availability = getCustomerOtpAvailability()[method];
+    if (!availability?.enabled) return res.status(503).json({ error: availability?.reason || "This verification method is not available yet." });
+
+    const existing = await findCustomer(method, identifier);
+    if (existing?.ambiguous) return res.status(409).json({ error: "We could not safely match this contact to one customer account." });
+    if (existing && existing.id !== current.id) {
+      return res.status(409).json({ error: "This contact is already linked to another SARINE customer account." });
+    }
+    const [rows] = await pool.execute(
+      "SELECT email, email_normalized, phone, phone_normalized FROM customers WHERE id = ? AND status = 'active' LIMIT 1",
+      [current.id]
+    );
+    if (!rows.length) return res.status(403).json({ error: "This customer account is not currently available." });
+    const row = rows[0];
+    const currentValue = method === "email" ? row.email_normalized : row.phone_normalized;
+    if (currentValue && currentValue !== identifier) {
+      return res.status(409).json({ error: "This account already has a different verified contact method. Contact SARINE support to change it safely." });
+    }
+    if (currentValue === identifier) return res.json({ alreadyLinked: true });
+    const result = await createChallenge(method, identifier, "identity_link");
+    if (result.cooldown) return res.status(429).json({ error: "Please wait before requesting another verification code.", retryAfterSeconds: result.cooldown });
+    return res.json({ success: true, challengeId: result.challengeId, expiresInSeconds: 300, resendAfterSeconds: CUSTOMER_OTP_POLICY.resendCooldownSeconds });
+  } catch (error) { return next(error); }
+});
+
+router.post("/identity/link/verify", verifyLimiter, async (req, res, next) => {
+  let connection;
+  try {
+    res.set("Cache-Control", "no-store");
+    await assertCustomerOtpSchema();
+    const challengeId = String(req.body?.challengeId || "");
+    const otp = String(req.body?.otp || "");
+    if (!/^[0-9a-f-]{36}$/i.test(challengeId) || !/^\\d{6}$/.test(otp)) return res.status(400).json({ error: "Enter the six-digit verification code." });
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const current = await getSessionCustomer(req, connection);
+    if (!current) {
+      await connection.rollback();
+      return res.status(401).json({ error: "Please sign in again before linking a contact method." });
+    }
+    const [challenges] = await connection.execute(
+      "SELECT * FROM customer_auth_challenges WHERE id = ? AND purpose = 'identity_link' AND consumed_at IS NULL AND expires_at > UTC_TIMESTAMP(3) FOR UPDATE",
+      [challengeId]
+    );
+    const challenge = challenges[0];
+    if (!challenge || Number(challenge.attempts) >= CUSTOMER_OTP_POLICY.maxAttempts || !safeOtpEqual(challenge.otp_hash, hashOtp(challengeId, otp))) {
+      if (challenge) {
+        const nextAttempts = Number(challenge.attempts) + 1;
+        await connection.execute(
+          "UPDATE customer_auth_challenges SET attempts = ?, consumed_at = CASE WHEN ? >= ? THEN UTC_TIMESTAMP(3) ELSE consumed_at END WHERE id = ?",
+          [nextAttempts, nextAttempts, CUSTOMER_OTP_POLICY.maxAttempts, challengeId]
+        );
+      }
+      await connection.commit();
+      return res.status(400).json({ error: "The verification code is invalid or expired. Request a new one." });
+    }
+    const [customerRows] = await connection.execute(
+      "SELECT id, name, email, email_normalized, phone, phone_normalized, status FROM customers WHERE id = ? FOR UPDATE",
+      [current.id]
+    );
+    const customer = customerRows[0];
+    if (!customer || customer.status !== "active") {
+      await connection.rollback();
+      return res.status(403).json({ error: "This customer account is not currently available." });
+    }
+    if (challenge.method === "email") {
+      if (customer.email_normalized && customer.email_normalized !== challenge.identifier) {
+        await connection.rollback();
+        return res.status(409).json({ error: "This account already has a different email address. Contact SARINE support to change it safely." });
+      }
+      const [owners] = await connection.execute(
+        "SELECT id FROM customers WHERE email_normalized = ? AND id <> ? LIMIT 1",
+        [challenge.identifier, customer.id]
+      );
+      if (owners.length) {
+        await connection.rollback();
+        return res.status(409).json({ error: "This email address is already linked to another SARINE account." });
+      }
+      await connection.execute(
+        "UPDATE customers SET email = ?, email_normalized = ?, email_verified_at = UTC_TIMESTAMP(3), updated_at = UTC_TIMESTAMP(3) WHERE id = ?",
+        [challenge.identifier, challenge.identifier, customer.id]
+      );
+    } else if (challenge.method === "phone") {
+      if (customer.phone_normalized && customer.phone_normalized !== challenge.identifier) {
+        await connection.rollback();
+        return res.status(409).json({ error: "This account already has a different mobile number. Contact SARINE support to change it safely." });
+      }
+      const [owners] = await connection.execute(
+        "SELECT id FROM customers WHERE phone_normalized = ? AND id <> ? LIMIT 1",
+        [challenge.identifier, customer.id]
+      );
+      if (owners.length) {
+        await connection.rollback();
+        return res.status(409).json({ error: "This mobile number is already linked to another SARINE account." });
+      }
+      await connection.execute(
+        "UPDATE customers SET phone = ?, phone_normalized = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?",
+        [challenge.identifier, challenge.identifier, customer.id]
+      );
+    } else {
+      await connection.rollback();
+      return res.status(400).json({ error: "Unsupported contact method." });
+    }
+    await connection.execute("UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE id = ?", [challengeId]);
+    await connection.commit();
+    const [updatedRows] = await pool.execute(
+      "SELECT id, name, email, phone FROM customers WHERE id = ? LIMIT 1",
+      [customer.id]
+    );
+    return res.json({ success: true, customer: safeCustomer(updatedRows[0]) });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    if (error?.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "This contact is already linked to another SARINE customer account." });
     return next(error);
   } finally { connection?.release(); }
 });
