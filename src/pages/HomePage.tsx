@@ -218,21 +218,41 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     categoriesLink: '#categories',
     ctaText: banner.ctaText
   })) : defaultHeroSlides;
+  // Campaigns with a storewide offer are automatically featured first.
+  // Admins can also force a campaign to the first slide or keep it in normal rotation.
+  const orderedCampaigns = [...festivalCampaigns].sort((a, b) => {
+    const rank = (campaign: FestivalCampaign) => campaign.heroPlacement === "first" ? 0
+      : campaign.heroPlacement === "normal" ? 2
+      : campaign.storewideDiscountPercent > 0 ? 0 : 1;
+    return rank(a) - rank(b) || (a.sortOrder - b.sortOrder);
+  });
+  const campaignSlides = orderedCampaigns.map(campaign => ({
+    id: `campaign-${campaign.id}`,
+    eyebrow: campaign.eyebrow || campaign.offerLabel || campaign.festival,
+    heading: campaign.title,
+    paragraph: campaign.subtitle,
+    image: campaign.imageUrl,
+    shopLink: campaign.ctaLink,
+    categoriesLink: '#categories',
+    ctaText: campaign.ctaText,
+    campaign
+  }));
+  const firstCampaignIndex = campaignSlides.findIndex(slide =>
+    slide.campaign.heroPlacement === "first" ||
+    (slide.campaign.heroPlacement !== "normal" && slide.campaign.storewideDiscountPercent > 0)
+  );
   const heroSlides = [
     ...baseHeroSlides.map(slide => ({ ...slide, campaign: undefined as FestivalCampaign | undefined })),
-    ...festivalCampaigns.map(campaign => ({
-      id: `campaign-${campaign.id}`,
-      eyebrow: campaign.eyebrow || campaign.offerLabel || campaign.festival,
-      heading: campaign.title,
-      paragraph: campaign.subtitle,
-      image: campaign.imageUrl,
-      shopLink: campaign.ctaLink,
-      categoriesLink: '#categories',
-      ctaText: campaign.ctaText,
-      campaign
-    }))
+    ...campaignSlides
   ];
+  if (firstCampaignIndex >= 0) {
+    const [featuredCampaign] = heroSlides.splice(baseHeroSlides.length + firstCampaignIndex, 1);
+    heroSlides.unshift(featuredCampaign);
+  }
   const slideCount = heroSlides.length;
+  const activeSlideDuration = heroSlides[activeSlide]?.campaign
+    ? Math.max(5, Math.min(20, Number(heroSlides[activeSlide].campaign?.heroDurationSeconds) || 9)) * 1000
+    : 5000;
 
   useEffect(() => {
     setActiveSlide(current => Math.min(current, Math.max(slideCount - 1, 0)));
@@ -315,14 +335,15 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     };
   }, [includeAll]);
 
-  // 2. Hero Slider Auto-advance every 5 seconds
+  // Regular slides use 5 seconds; campaign slides use their admin-configured hold time.
+  // The timer restarts on every slide change so a featured offer gets its full viewing time.
   useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % Math.max(slideCount, 1));
-    }, 5000);
-
-    return () => clearInterval(timer);
-  }, [slideCount]);
+    if (slideCount <= 1) return;
+    const timer = window.setTimeout(() => {
+      setActiveSlide(prev => (prev + 1) % slideCount);
+    }, activeSlideDuration);
+    return () => window.clearTimeout(timer);
+  }, [activeSlide, activeSlideDuration, slideCount]);
 
   const prevSlide = () => {
     setActiveSlide((prev) => (prev - 1 + slideCount) % slideCount);
@@ -394,6 +415,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           </div>
         ))}
 
+        {/* Persistent offer badge: remains visible even when campaign artwork includes its own copy. */}
+        {currentHero.campaign?.offerLabel && (
+          <div className="absolute top-6 left-4 sm:left-8 lg:left-[max(2rem,calc((100vw-1200px)/2))] z-20 pointer-events-none">
+            <span className="inline-flex items-center rounded-full border border-white/60 bg-[#563568]/95 px-4 py-2 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-white shadow-lg backdrop-blur-sm">
+              {currentHero.campaign.offerLabel}
+            </span>
+          </div>
+        )}
         {/* Centered content overlay container */}
         <div className="site-container h-full flex flex-col justify-between py-8 md:py-12 pointer-events-none relative z-10">
           {/* Campaign artwork can be a complete clickable creative; editable campaigns use the normal hero overlay. */}
