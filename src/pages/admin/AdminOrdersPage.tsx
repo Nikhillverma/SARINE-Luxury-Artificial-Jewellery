@@ -1137,6 +1137,7 @@ export const AdminOrdersPage: React.FC = () => {
 
                   {/* 3. Cancel Order */}
                   {selectedOrder.orderStatus !== 'shipped' &&
+                    selectedOrder.orderStatus !== 'out_for_delivery' &&
                     selectedOrder.orderStatus !== 'delivered' &&
                     selectedOrder.orderStatus !== 'cancelled' && (
                       <div>
