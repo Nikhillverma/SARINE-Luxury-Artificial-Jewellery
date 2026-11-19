@@ -516,9 +516,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
             </div>
 
             {/* Size Guide Trigger (for rings/bracelets) */}
-            {(product.jewelleryType === 'ring' || product.jewelleryType === 'bracelet') && (
+            {(product.jewelleryType === 'ring' || product.jewelleryType === 'bracelet' || product.jewelleryType === 'necklace' || product.jewelleryType === 'anklet' || product.jewelleryType === 'earrings' || product.jewelleryType === 'set') && (
               <div className="pt-2 flex items-center justify-between text-xs">
-                <span className="text-[#6F6475]">Standard Indian Atelier Fit</span>
+                <span className="text-[#6F6475]">Find your best fit</span>
                 <button
                   type="button"
                   onClick={() => setIsSizeGuideOpen(true)}
