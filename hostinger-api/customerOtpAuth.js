@@ -5,7 +5,7 @@ import rateLimit from "express-rate-limit";
 import { pool } from "./db.js";
 import { shouldUseSecureSessionCookie } from "./sessionCookiePolicy.js";
 import { normalizeCustomerEmail } from "./customerValidation.js";
-import { normalizePhone, createOtp, hashOtp, safeOtpEqual, ensureCustomerOtpSchema, deliverCustomerOtp, getCustomerOtpProvider, getCustomerOtpAvailability, CUSTOMER_OTP_POLICY } from "./customerOtpService.js";
+import { normalizePhone, createOtp, hashOtp, safeOtpEqual, assertCustomerOtpSchema, deliverCustomerOtp, getCustomerOtpProvider, getCustomerOtpAvailability, CUSTOMER_OTP_POLICY } from "./customerOtpService.js";
 
 const router = Router();
 const COOKIE_NAME = "sarine_customer_session";
@@ -118,7 +118,7 @@ async function createChallenge(method, identifier, purpose) {
 router.post("/otp/request", requestLimiter, async (req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
-    await ensureCustomerOtpSchema();
+    await assertCustomerOtpSchema();
     const method = String(req.body?.method || "").toLowerCase();
     const identifier = resolveIdentifier(method, req.body?.identifier);
     if (!identifier) return res.status(400).json({ error: method === "phone" ? "Enter a valid 10-digit Indian mobile number." : "Enter a valid email address." });
@@ -132,7 +132,7 @@ router.post("/otp/verify", verifyLimiter, async (req, res, next) => {
   let connection;
   try {
     res.set("Cache-Control", "no-store");
-    await ensureCustomerOtpSchema();
+    await assertCustomerOtpSchema();
     const challengeId = String(req.body?.challengeId || "");
     const otp = String(req.body?.otp || "");
     const name = String(req.body?.name || "").trim();
@@ -200,7 +200,7 @@ router.post("/otp/verify", verifyLimiter, async (req, res, next) => {
 router.post("/password/forgot/request", requestLimiter, async (req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
-    await ensureCustomerOtpSchema();
+    await assertCustomerOtpSchema();
     const method = String(req.body?.method || "").toLowerCase();
     const identifier = resolveIdentifier(method, req.body?.identifier);
     if (!identifier) return res.status(400).json({ error: "Enter a valid registered email address or mobile number." });
@@ -218,7 +218,7 @@ router.post("/password/forgot/verify", verifyLimiter, async (req, res, next) => 
   let connection;
   try {
     res.set("Cache-Control", "no-store");
-    await ensureCustomerOtpSchema();
+    await assertCustomerOtpSchema();
     const challengeId = String(req.body?.challengeId || "");
     const otp = String(req.body?.otp || "");
     if (!/^[0-9a-f-]{36}$/i.test(challengeId) || !/^\d{6}$/.test(otp)) return res.status(400).json({ error: "Enter the six-digit verification code." });
@@ -255,7 +255,7 @@ router.post("/password/forgot/reset", requestLimiter, async (req, res, next) => 
   let connection;
   try {
     res.set("Cache-Control", "no-store");
-    await ensureCustomerOtpSchema();
+    await assertCustomerOtpSchema();
     const token = String(req.body?.resetToken || "");
     const password = String(req.body?.password || "");
     if (!/^[a-f0-9]{64}$/i.test(token) || password.length < 8 || password.length > 128) return res.status(400).json({ error: "Use a valid recovery link and a password of at least 8 characters." });
