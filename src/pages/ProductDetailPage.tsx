@@ -54,7 +54,7 @@ const RECENTLY_VIEWED_KEY = 'sarine_recently_viewed_v1';
 export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll }) => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { addItem, openDrawer } = useCart();
+  const { addItem, openDrawer, storewideDiscountPercent } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -326,6 +326,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
   const discountPercent = currentCompareAtPrice && currentCompareAtPrice > currentPrice
     ? Math.floor(((currentCompareAtPrice - currentPrice) / currentCompareAtPrice) * 100)
     : null;
+  const campaignDiscount = Math.max(0, Math.min(75, storewideDiscountPercent));
+  const campaignPrice = Math.max(0, currentPrice - Math.floor(currentPrice * campaignDiscount / 100));
   const wishlisted = isInWishlist(product.id);
 
   return (
@@ -342,7 +344,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
           offers: {
             '@type': 'Offer',
             priceCurrency: 'INR',
-            price: currentPrice,
+            price: campaignPrice,
             availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
           }
         })}
@@ -421,11 +423,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               </button>
 
               {/* Discount Tag */}
-              {discountPercent && (
-                <div className="absolute top-3 left-3 bg-[#563568] text-white text-[11px] font-sans font-medium px-2.5 py-1 rounded-xs">
-                  {discountPercent}% OFF
-                </div>
-              )}
+              {campaignDiscount > 0 && <div className="absolute top-3 left-3 bg-[#A43E55] text-white text-[11px] font-sans font-semibold px-2.5 py-1 rounded-xs">{campaignDiscount}% SALE OFF</div>}
+              {discountPercent && <div className={campaignDiscount > 0 ? "absolute top-11 left-3 bg-[#563568] text-white text-[11px] font-sans font-medium px-2.5 py-1 rounded-xs" : "absolute top-3 left-3 bg-[#563568] text-white text-[11px] font-sans font-medium px-2.5 py-1 rounded-xs"}>{discountPercent}% OFF</div>}
             </div>
           </div>
 
@@ -492,18 +491,16 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               {/* Pricing Display */}
               <div className="mt-4 pt-4 border-t border-[#E7DCEB] flex items-baseline gap-3">
                 <span className="font-serif text-3xl font-medium text-[#302438]">
-                  {formatInr(currentPrice)}
+                  {formatInr(campaignPrice)}
                 </span>
+                {campaignDiscount > 0 && <span className="text-sm text-[#6F6475] line-through font-sans">{formatInr(currentPrice)}</span>}
                 {currentCompareAtPrice && (
                   <span className="text-sm text-[#6F6475] line-through font-sans">
                     {formatInr(currentCompareAtPrice)}
                   </span>
                 )}
-                {discountPercent && (
-                  <span className="text-xs text-[#563568] font-medium bg-[#F7F0FA] px-2 py-0.5 rounded-xs border border-[#E7DCEB]">
-                    Save {formatInr(currentCompareAtPrice! - currentPrice)}
-                  </span>
-                )}
+                {campaignDiscount > 0 && <span className="text-xs text-[#A43E55] font-medium bg-[#FDF1F3] px-2 py-0.5 rounded-xs border border-[#F2D7DD]">Save {formatInr(currentPrice - campaignPrice)} in sale</span>}
+                {discountPercent && <span className="text-xs text-[#563568] font-medium bg-[#F7F0FA] px-2 py-0.5 rounded-xs border border-[#E7DCEB]">Save {formatInr(currentCompareAtPrice! - currentPrice)}</span>}
               </div>
               <p className="text-[11px] text-[#6F6475] mt-1">Inclusive of all taxes & complimentary delivery</p>
             </div>
