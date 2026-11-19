@@ -32,7 +32,7 @@ async function fetchActiveCampaigns(): Promise<FestivalCampaign[]> {
   const campaigns = Array.isArray(data.campaigns) ? data.campaigns : data.campaign ? [data.campaign] : [];
   return campaigns.map(item => ({
     ...item,
-    campaignType: item.campaignType === "sale" ? "sale" : "festival",
+    campaignType: (item.campaignType === "sale" ? "sale" : "festival") as FestivalCampaign["campaignType"],
     showCountdown: item.showCountdown === true,
     artworkOnly: item.artworkOnly !== false,
     storewideDiscountPercent: Math.max(0, Math.min(75, Number(item.storewideDiscountPercent) || 0)),
