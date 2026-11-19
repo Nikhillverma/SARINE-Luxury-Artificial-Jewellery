@@ -392,13 +392,13 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     <div className="sarine-home w-full bg-[#FBF8F5] text-[#302438] font-sans selection:bg-[#B69ACF]/30 selection:text-[#302438]" style={{ display: "flex", flexDirection: "column" }}>
       {/* =========================================================================
           3. HERO SLIDER
-          Fixed responsive height: h-[340px] sm:h-[400px] lg:h-[460px]
+          Fixed responsive height: h-[320px] sm:h-[380px] lg:h-[430px]
           Stacked absolute slides with opacity transitions
           Every image: object-cover object-[70%_center] on #F0E6F4
           Text in centered container (max-w-[1280px]) with soft lavender gradient overlay
           Slide indicators bottom-left, arrow buttons bottom-right inside container
           ========================================================================= */}
-      <section style={{ order: 0 }} className="relative w-full h-[340px] sm:h-[400px] lg:h-[460px] overflow-hidden bg-[#F0E6F4] border-b border-[#E7DCEB]">
+      <section style={{ order: 0 }} className="relative w-full h-[320px] sm:h-[380px] lg:h-[430px] overflow-hidden bg-[#F0E6F4] border-b border-[#E7DCEB]">
         {/* Stacked background slide images */}
         {heroSlides.map((slide, idx) => (
           <div
@@ -439,7 +439,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <h1 className="font-serif text-3xl sm:text-4xl lg:text-[46px] leading-[1.16] text-[#302438] font-normal tracking-tight">
               {currentHero.heading}
             </h1>
-            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-[#6F6475] leading-relaxed max-w-md font-sans">
+            <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-[#6F6475] leading-relaxed max-w-md font-sans">
               {currentHero.paragraph}
             </p>
             <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-3">
@@ -518,12 +518,12 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Heading row: flex items-end justify-between mb-6
           Grid: grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6
           Category images: aspect-[3/2] object-cover
-          Consistent vertical spacing: py-8 sm:py-10 lg:py-12
+          Consistent vertical spacing: py-6 sm:py-8 lg:py-10
           ========================================================================= */}
-      <section id="categories" style={{ order: sectionOrder("categories"), display: sectionVisible("categories") ? undefined : "none" }} className="w-full py-7 sm:py-9 lg:py-12">
+      <section id="categories" style={{ order: sectionOrder("categories"), display: sectionVisible("categories") ? undefined : "none" }} className="w-full py-6 sm:py-7 lg:py-10">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
-          <div className="w-full text-center mb-5 sm:mb-7">
+          <div className="w-full text-center mb-4 sm:mb-4">
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
               Shop by Category
             </h2>
@@ -580,10 +580,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 newest products (sorted by createdAt descending, else the last 4 in the list),
           same product card as Best Sellers, "View All" linking to /shop?sort=newest
           ========================================================================= */}
-      <section style={{ order: sectionOrder("new-arrivals"), display: sectionVisible("new-arrivals") ? undefined : "none" }} className="py-8 sm:py-10 lg:py-12 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("new-arrivals"), display: sectionVisible("new-arrivals") ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
-          <div className="w-full text-center mb-5 sm:mb-6">
+          <div className="w-full text-center mb-4 sm:mb-4">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
               JUST ARRIVED
             </span>
@@ -636,12 +636,12 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Scrolling track INSIDE container: gap-4 lg:gap-6 snap-x snap-mandatory
           Card widths: w-[calc((100%-1rem)/2)] md:w-[calc((100%-3rem)/3)] lg:w-[calc((100%-6rem)/5)]
           Arrows: absolute inside relative wrapper, never pushing or overflowing
-          Consistent vertical spacing: py-8 sm:py-10 lg:py-12
+          Consistent vertical spacing: py-6 sm:py-8 lg:py-10
           ========================================================================= */}
-      <section style={{ order: sectionOrder("best-sellers"), display: sectionVisible("best-sellers") ? undefined : "none" }} className="py-8 sm:py-10 lg:py-12 border-t border-[#E7DCEB] bg-[#F7F0FA]">
+      <section style={{ order: sectionOrder("best-sellers"), display: sectionVisible("best-sellers") ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E7DCEB] bg-[#F7F0FA]">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
-          <div className="w-full text-center mb-5 sm:mb-6">
+          <div className="w-full text-center mb-4 sm:mb-4">
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
               Best Sellers
             </h2>
@@ -689,9 +689,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Manually selected and ordered in Storefront Studio. Automatic newest-product
           fallback remains in place until a manual collection has been published.
           ========================================================================= */}
-      <section style={{ order: sectionOrder("curated-favourites"), display: sectionVisible("curated-favourites") && (loading || (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0) ? undefined : "none" }} className="py-8 sm:py-10 lg:py-12 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("curated-favourites"), display: sectionVisible("curated-favourites") && (loading || (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
-          <div className="w-full text-center mb-5 sm:mb-6">
+          <div className="w-full text-center mb-4 sm:mb-4">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">THE SARINE EDIT</span>
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">Curated Favourites</h2>
             <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
@@ -724,9 +724,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 cards: Daily Wear, Festive, Wedding, Gifting
           Using existing product images, linking to /shop with filter queries
           ========================================================================= */}
-      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") && occasions.some(item => item.active) ? undefined : "none" }} className="py-8 sm:py-10 lg:py-12 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") && occasions.some(item => item.active) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
-          <div className="w-full text-center mb-5 sm:mb-6">
+          <div className="w-full text-center mb-4 sm:mb-4">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
               CURATED OCCASIONS
             </span>
@@ -776,9 +776,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 pill buttons: Under ₹999, ₹1,000 to ₹1,999, ₹2,000 and above, All pieces
           Linking to /shop with price presets
           ========================================================================= */}
-      <section style={{ order: sectionOrder("price"), display: sectionVisible("price") ? undefined : "none" }} className="py-8 sm:py-10 border-t border-[#E7DCEB] bg-[#F7F0FA]">
+      <section style={{ order: sectionOrder("price"), display: sectionVisible("price") ? undefined : "none" }} className="py-6 sm:py-8 border-t border-[#E7DCEB] bg-[#F7F0FA]">
         <div className="site-container">
-          <div className="w-full text-center mb-5">
+          <div className="w-full text-center mb-4">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
               PRICE CURATION
             </span>
@@ -823,11 +823,11 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           OUR STORY
           Background #F0E6F4 edge-to-edge
           Centered container mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10
-          Consistent vertical spacing: py-8 sm:py-10 lg:py-12
+          Consistent vertical spacing: py-6 sm:py-8 lg:py-10
           ========================================================================= */}
-      <section style={{ order: sectionOrder("our-story"), display: sectionVisible("our-story") ? undefined : "none" }} className="bg-[#F0E6F4] border-y border-[#E7DCEB] py-8 sm:py-10 lg:py-12">
+      <section style={{ order: sectionOrder("our-story"), display: sectionVisible("our-story") ? undefined : "none" }} className="bg-[#F0E6F4] border-y border-[#E7DCEB] py-6 sm:py-8 lg:py-10">
         <div className="site-container">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center">
             {/* Left: Large Jewellery Photo */}
             <div className="lg:col-span-5">
               <div className="aspect-[4/3] sm:aspect-[1/1] bg-[#EBDFF2] overflow-hidden rounded-xs border border-[#E7DCEB]">
@@ -928,8 +928,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         <section style={{ order: sectionOrder("editorial"), display: sectionVisible("editorial") ? undefined : "none" }} className="relative overflow-hidden bg-[#EBDFF2] border-b border-[#E7DCEB]">
           <img src={editorial.imageUrl || HOMEPAGE_IMAGES.editorialBanner} alt={editorial.title} className="absolute inset-0 w-full h-full object-cover object-center" />
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#F0E6F4]/75 to-[#F0E6F4]/95 sm:via-[#F0E6F4]/80 sm:to-[#F0E6F4]/95" />
-          <div className="site-container min-h-[220px] sm:min-h-[260px] lg:min-h-[300px] flex items-center justify-end relative z-10">
-            <div className="w-full sm:w-2/3 lg:w-1/2 py-6 sm:py-8 text-left">
+          <div className="site-container min-h-[200px] sm:min-h-[235px] lg:min-h-[270px] flex items-center justify-end relative z-10">
+            <div className="w-full sm:w-2/3 lg:w-1/2 py-5 sm:py-6 text-left">
               <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">{editorial.eyebrow}</span>
               <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal leading-tight">{editorial.title}</h2>
               <p className="mt-3 text-xs sm:text-sm text-[#6F6475] leading-relaxed max-w-md font-sans">{editorial.description}</p>
@@ -942,7 +942,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           8. JEWELLERY CARE & PRESERVATION GUIDE
           ========================================================================= */}
-      <section style={{ order: 100 }} className="py-9 sm:py-12 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: 100 }} className="py-7 sm:py-9 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
           <div className="max-w-[720px] mx-auto text-center mb-6">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
@@ -995,7 +995,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           9. STAY IN TOUCH
           ========================================================================= */}
-      <section style={{ order: 101 }} className="py-9 sm:py-12 lg:py-14 bg-[#F7F0FA]">
+      <section style={{ order: 101 }} className="py-7 sm:py-9 lg:py-11 bg-[#F7F0FA]">
         <div className="site-container">
           <div className="max-w-[620px] mx-auto text-center">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
