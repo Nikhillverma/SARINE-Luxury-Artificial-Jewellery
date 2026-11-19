@@ -198,7 +198,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
     const dateOptions: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
     const dateStr = `${minDate.toLocaleDateString('en-IN', dateOptions)} - ${maxDate.toLocaleDateString('en-IN', dateOptions)}`;
 
-    setPincodeResult(`Delivery available to ${clean} by ${dateStr}. Complimentary Express Shipping.`);
+    setPincodeResult(`Estimated delivery window for PIN code ${clean}: ${dateStr}. Courier serviceability and final delivery promise are confirmed at checkout.`);
   };
 
   const handleAddToCart = () => {
