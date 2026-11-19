@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
-import { ensureCustomerOtpSchema } from "./customerOtpService.js";
+import { ensureCustomerOtpSchema, getCustomerOtpAvailability } from "./customerOtpService.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -11,15 +11,7 @@ router.get("/status", async (_req, res, next) => {
     res.set("Cache-Control", "no-store");
     return res.json({
       emailOtp: {
-        provider: "MSG91",
-        enabled: process.env.MSG91_EMAIL_ENABLED === "true",
-        configured: Boolean(
-          process.env.MSG91_EMAIL_ENABLED === "true" &&
-          process.env.MSG91_EMAIL_AUTH_KEY &&
-          process.env.MSG91_EMAIL_DOMAIN &&
-          process.env.MSG91_EMAIL_FROM &&
-          process.env.MSG91_EMAIL_TEMPLATE_ID
-        ),
+        ...getCustomerOtpAvailability().email,
         template: process.env.MSG91_EMAIL_TEMPLATE_ID || "global_otp"
       },
       phoneOtp: {
