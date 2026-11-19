@@ -424,7 +424,7 @@ router.put("/:id", async (req, res, next) => {
        data.compare_at_price, data.cost_price, data.images, data.category_id,
        data.collection_slugs, data.jewellery_type, data.stock, data.status, data.tags,
        data.base_metal, data.plating_finish, data.stone_type, data.closure_type,
-       data.care_instructions, req.params.id]
+       data.care_instructions, data.product_video_url, req.params.id]
     );
     const [rows] = await pool.execute("SELECT * FROM products WHERE id = ? LIMIT 1", [req.params.id]);
     res.json({ success: true, product: mapProduct(rows[0]) });
