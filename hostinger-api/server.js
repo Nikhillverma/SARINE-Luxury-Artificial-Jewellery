@@ -33,6 +33,7 @@ import { isAllowedBrowserOrigin } from "./adminOriginPolicy.js";
 import { mapPublicProduct } from "./publicProductMapper.js";
 import { parseCatalogueQuery } from "./catalogueQueryPolicy.js";
 import { ensureProductVideoColumn } from "./productVideoSchema.js";
+import { ensureOrderStatusSchema } from "./orderStatusSchema.js";
 
 const app = express();
 
@@ -415,6 +416,7 @@ async function startServer() {
   // Finish the one-time pre-launch order classification before accepting requests.
   await markExistingOrdersAsPrelaunchTests();
   await ensureProductVideoColumn();
+  await ensureOrderStatusSchema();
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`SARINE Hostinger API listening on port ${PORT}`);
   });
