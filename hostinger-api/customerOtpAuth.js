@@ -348,7 +348,7 @@ router.post("/identity/link/verify", verifyLimiter, async (req, res, next) => {
     await assertCustomerOtpSchema();
     const challengeId = String(req.body?.challengeId || "");
     const otp = String(req.body?.otp || "");
-    if (!/^[0-9a-f-]{36}$/i.test(challengeId) || !/^\\d{6}$/.test(otp)) return res.status(400).json({ error: "Enter the six-digit verification code." });
+    if (!/^[0-9a-f-]{36}$/i.test(challengeId) || !/^\d{6}$/.test(otp)) return res.status(400).json({ error: "Enter the six-digit verification code." });
     connection = await pool.getConnection();
     await connection.beginTransaction();
     const current = await getSessionCustomer(req, connection);
