@@ -48,11 +48,12 @@ export const CartDrawer: React.FC = () => {
   });
   const [couponError, setCouponError] = useState<string | null>(null);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
-  const activeCoupon = appliedCoupon && appliedCoupon.subtotal === subtotal ? appliedCoupon : null;
+  const activeCoupon = !storewideDiscountPercent && appliedCoupon && appliedCoupon.subtotal === subtotal ? appliedCoupon : null;
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
     setCouponError(null);
+    if (storewideDiscountPercent > 0) { setCouponError('A storewide sale is already applied automatically. Coupon codes cannot be combined with this offer.'); return; }
     const code = couponInput.trim().toUpperCase();
     if (!code) {
       setCouponError('Enter a coupon code.');
@@ -111,7 +112,7 @@ export const CartDrawer: React.FC = () => {
     removeItem(item.productId, item.variantId);
   };
 
-  const currentDiscount = activeCoupon ? activeCoupon.discount : 0;
+  const currentDiscount = promotionDiscount + (activeCoupon ? activeCoupon.discount : 0);
   const shippingFee = calculateShippingFee(subtotal, checkoutConfig);
   const finalTotal = Math.max(0, subtotal - currentDiscount) + shippingFee;
 
@@ -253,7 +254,7 @@ export const CartDrawer: React.FC = () => {
                       </div>
 
                       <p className="text-xs text-[#6F6475] mt-0.5">
-                        {formatInr(item.unitPrice)} each
+                        {storewideDiscountPercent > 0 ? <><span className="text-[#A43E55] font-semibold">{formatInr(item.discountedUnitPrice)}</span><span className="ml-1 text-[#6F6475] line-through">{formatInr(item.unitPrice)}</span></> : formatInr(item.unitPrice)} each
                       </p>
                       {item.variant && <p className="text-[11px] text-[#563568] mt-1">{item.variant.label} · SKU: {item.variant.sku}</p>}
                     </div>
@@ -296,7 +297,7 @@ export const CartDrawer: React.FC = () => {
 
                       <div className="text-right">
                         <span className="text-sm font-medium text-[#302438]">
-                          {formatInr(item.lineTotal)}
+                          {formatInr(storewideDiscountPercent > 0 ? item.discountedLineTotal : item.lineTotal)}
                         </span>
                       </div>
                     </div>
@@ -332,13 +333,14 @@ export const CartDrawer: React.FC = () => {
                   type="text"
                   value={couponInput}
                   onChange={(e) => setCouponInput(e.target.value)}
-                  placeholder={activeCoupon ? "Enter a different coupon code" : "Enter coupon code"}
+                  placeholder={storewideDiscountPercent > 0 ? "Coupon unavailable during storewide sale" : activeCoupon ? "Enter a different coupon code" : "Enter coupon code"}
                   aria-label="Coupon code"
+                  disabled={storewideDiscountPercent > 0}
                   className="flex-1 min-w-0 px-3 py-1.5 bg-white border border-[#E7DCEB] rounded-xs text-xs uppercase focus:outline-none focus:border-[#563568]"
                 />
                 <button
                   type="submit"
-                  disabled={isApplyingCoupon}
+                  disabled={isApplyingCoupon || storewideDiscountPercent > 0}
                   className="px-3 py-1.5 bg-white border border-[#563568] text-[#563568] hover:bg-[#563568] hover:text-white text-xs font-medium rounded-xs transition-colors cursor-pointer disabled:opacity-60"
                 >
                   {isApplyingCoupon ? "Checking..." : activeCoupon ? "Replace" : "Apply"}
@@ -353,9 +355,15 @@ export const CartDrawer: React.FC = () => {
                 <span>Subtotal</span>
                 <span className="font-medium text-[#302438]">{formatInr(subtotal)}</span>
               </div>
+              {promotionDiscount > 0 && (
+                <div className="flex items-baseline justify-between text-emerald-700">
+                  <span>{storewideCampaign?.offerLabel || (storewideDiscountPercent + "% Storewide Sale")}</span>
+                  <span>-{formatInr(promotionDiscount)}</span>
+                </div>
+              )}
               {activeCoupon && (
                 <div className="flex items-baseline justify-between text-emerald-700">
-                  <span>Promotional Discount</span>
+                  <span>Coupon Discount</span>
                   <span>-{formatInr(activeCoupon.discount)}</span>
                 </div>
               )}
