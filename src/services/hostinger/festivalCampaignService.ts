@@ -30,6 +30,20 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export const festivalCampaignService = {
   list: async () => (await request<{campaigns: FestivalCampaign[]}>("/admin/storefront/campaigns")).campaigns,
   save: async (campaigns: FestivalCampaign[]) => (await request<{campaigns: FestivalCampaign[]}>("/admin/storefront/campaigns", { method: "PUT", body: JSON.stringify({campaigns}) })).campaigns,
-  getActiveCampaigns: async () => (await request<{campaigns: FestivalCampaign[]}>("/storefront/campaign")).campaigns,
-  getActive: async () => (await request<{campaign: FestivalCampaign | null}>("/storefront/campaign")).campaign
+  getActiveCampaigns: async () => {
+    const data = await request<{ campaigns?: FestivalCampaign[]; campaign?: FestivalCampaign | null }>("/storefront/campaign");
+    const campaigns = Array.isArray(data.campaigns) ? data.campaigns : data.campaign ? [data.campaign] : [];
+    return campaigns.map(item => ({
+      ...item,
+      campaignType: item.campaignType === "sale" ? "sale" as const : "festival" as const,
+      showCountdown: item.showCountdown === true,
+      artworkOnly: item.artworkOnly !== false,
+      storewideDiscountPercent: Math.max(0, Math.min(75, Number(item.storewideDiscountPercent) || 0)),
+      sortOrder: Number(item.sortOrder) || 0
+    }));
+  },
+  getActive: async () => {
+    const campaigns = await festivalCampaignService.getActiveCampaigns();
+    return campaigns[0] || null;
+  }
 };
