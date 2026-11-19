@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
-import { hostingerMediaService } from "../../services/hostinger/hostingerMediaService";
+import { HostingerMediaService } from "../../services/hostinger/hostingerMediaService";
+const mediaService = new HostingerMediaService();
 import { festivalCampaignService, type FestivalCampaign } from "../../services/hostinger/festivalCampaignService";
 import { CalendarHeart, Plus, Save, Trash2, Upload, RefreshCw } from "lucide-react";
 
@@ -14,7 +15,7 @@ export const AdminCampaignsPage: React.FC = () => {
  const save=async(e:React.FormEvent)=>{e.preventDefault();setSaving(true);setError("");setNotice("");try{const next=editing?items.map(x=>x.id===draft.id?draft:x):[...items,draft];setItems(await festivalCampaignService.save(next));setNotice("Campaign saved to Hostinger MariaDB.");setDraft(blank());setEditing(false)}catch(e){setError(e instanceof Error?e.message:"Could not save campaign.")}finally{setSaving(false)}};
  const edit=(item:FestivalCampaign)=>{setDraft({...item});setEditing(true);setNotice("");setError("")};
  const remove=async(id:string)=>{if(!window.confirm("Delete this campaign?"))return;try{setItems(await festivalCampaignService.save(items.filter(x=>x.id!==id)));setNotice("Campaign deleted.")}catch(e){setError(e instanceof Error?e.message:"Could not delete campaign.")}};
- const upload=async(file?:File)=>{if(!file)return;setUploading(true);setError("");try{const url=await hostingerMediaService.uploadImage(file);update("imageUrl",url);setNotice("Campaign artwork uploaded. Save the campaign to keep it.")}catch(e){setError(e instanceof Error?e.message:"Image upload failed.")}finally{setUploading(false)}};
+ const upload=async(file?:File)=>{if(!file)return;setUploading(true);setError("");try{const url=await mediaService.uploadImage(file);update("imageUrl",url);setNotice("Campaign artwork uploaded. Save the campaign to keep it.")}catch(e){setError(e instanceof Error?e.message:"Image upload failed.")}finally{setUploading(false)}};
  return <AdminLayout><div className="space-y-6">
  <div className="flex flex-wrap justify-between gap-3 items-center"><div><h1 className="font-serif text-3xl text-[#2C1838]">Festival Campaigns</h1><p className="text-sm text-[#705E7B] mt-1">Schedule seasonal homepage campaigns for Diwali, Raksha Bandhan and more.</p></div><button onClick={()=>{setDraft(blank());setEditing(false);setError("");}} className="bg-[#563568] text-white rounded-xl px-4 py-2.5 text-sm inline-flex gap-2 items-center"><Plus size={16}/> New campaign</button></div>
  {notice&&<div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800">{notice}</div>}{error&&<div role="alert" className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-700">{error}</div>}
