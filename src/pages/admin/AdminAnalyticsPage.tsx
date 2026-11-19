@@ -122,7 +122,7 @@ export const AdminAnalyticsPage: React.FC = () => {
         <section className="bg-white border border-[#EDE4F0] rounded-xl p-5">
           <div className="mb-4"><h2 className="font-serif text-lg text-[#302438]">Daily Revenue Trend</h2><p className="text-[11px] text-[#8B7598]">Net paid revenue by calendar day (IST)</p></div>
           {report.daily.length ? <div className="space-y-3">{report.daily.map(day=><div key={day.date} className="grid grid-cols-[76px_1fr_100px] items-center gap-3 text-[11px]">
-            <span className="text-[#817487]">{day.date.slice(5)}</span><div className="h-3 rounded-full bg-[#F3ECF6] overflow-hidden"><div className="h-full rounded-full bg-[#80609A]" style={{width:`${Math.max(day.revenue ? 1 : 0, day.revenue/maxRevenue*100)}%`}}/></div><span className="text-right text-[#514657]">{formatInr(day.revenue)}</span>
+            <span className="text-[#817487]">{new Date(day.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", timeZone: "UTC" })}</span><div className="h-3 rounded-full bg-[#F3ECF6] overflow-hidden"><div className="h-full rounded-full bg-[#80609A]" style={{width:`${Math.max(day.revenue ? 1 : 0, day.revenue/maxRevenue*100)}%`}}/></div><span className="text-right text-[#514657]">{formatInr(day.revenue)}</span>
           </div>)}</div> : <p className="text-xs text-[#8B7598] py-6 text-center">No orders in this date range.</p>}
         </section>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
