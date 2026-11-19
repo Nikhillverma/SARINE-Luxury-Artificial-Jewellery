@@ -12,18 +12,18 @@ const serviceSource = await readFile(new URL("../customerOtpService.js", import.
 const authSource = await readFile(new URL("../customerOtpAuth.js", import.meta.url), "utf8");
 
 test("customer authentication schema checks are read-only and avoid system metadata schemas", () => {
-  assert.match(serviceSource, /export async function assertCustomerOtpSchema/);
-  assert.doesNotMatch(serviceSource, /\\b(?:ALTER\\s+TABLE|CREATE\\s+TABLE|CREATE\\s+(?:UNIQUE\\s+)?INDEX|DROP\\s+TABLE)\\b/i);
-  assert.doesNotMatch(serviceSource, /information_schema/i);
-  assert.match(serviceSource, /SHOW COLUMNS FROM customers/i);
-  assert.match(serviceSource, /SHOW TABLES LIKE/i);
-  assert.match(serviceSource, /SHOW INDEX FROM customers/i);
-  assert.match(serviceSource, /Number\\(entry\\.Non_unique\\) === 0/);
+  assert.ok(serviceSource.includes("export async function assertCustomerOtpSchema"));
+  assert.ok(!/\\b(?:ALTER\\s+TABLE|CREATE\\s+TABLE|CREATE\\s+(?:UNIQUE\\s+)?INDEX|DROP\\s+TABLE)\\b/i.test(serviceSource));
+  assert.ok(!serviceSource.includes("information_schema"));
+  assert.ok(serviceSource.includes("SHOW COLUMNS FROM customers"));
+  assert.ok(serviceSource.includes("SHOW TABLES LIKE"));
+  assert.ok(serviceSource.includes("SHOW INDEX FROM customers"));
+  assert.ok(serviceSource.includes("Number(index.Non_unique) === 0"));
 });
 
 test("OTP and identity-link routes require the explicit schema assertion", () => {
-  assert.match(authSource, /await assertCustomerOtpSchema\\(\\)/);
-  assert.match(authSource, /router\\.post\\("\\/identity\\/link\\/request"/);
-  assert.match(authSource, /router\\.post\\("\\/identity\\/link\\/verify"/);
-  assert.match(authSource, /customer_id !== current\\.id/);
+  assert.ok(authSource.includes("await assertCustomerOtpSchema()"));
+  assert.ok(authSource.includes('router.post("/identity/link/request"'));
+  assert.ok(authSource.includes('router.post("/identity/link/verify"'));
+  assert.ok(authSource.includes("challenge.customer_id !== current.id"));
 });
