@@ -861,7 +861,7 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
     const [rows] = await pool.execute(
       `SELECT id, order_number, customer_phone, shipping_address, order_status,
               payment_method, payment_status, subtotal, shipping_fee, total,
-              razorpay_payment_id, created_at, shipped_at, delivered_at,
+              coupon_code, discount_amount, razorpay_payment_id, created_at, shipped_at, delivered_at,
               estimated_delivery, courier_name, tracking_number, tracking_url
        FROM orders
        WHERE order_number = ?
