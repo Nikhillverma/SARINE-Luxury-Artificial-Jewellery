@@ -816,6 +816,7 @@ router.get("/:orderNumber", orderLookupLimiter, async (req, res, next) => {
       subtotal: Number(order.subtotal),
       promotion: savedPromotion,
       discountAmount: Number(order.discount_amount || 0),
+      couponCode: order.coupon_code || undefined,
       shippingFee: Number(order.shipping_fee),
       total: Number(order.total),
       paymentMethod: order.payment_method,
