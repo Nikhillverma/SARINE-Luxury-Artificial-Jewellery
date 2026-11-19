@@ -19,7 +19,7 @@ test("customer authentication schema checks are read-only and avoid system metad
   assert.ok(serviceSource.includes("SHOW COLUMNS FROM customers"));
   assert.ok(serviceSource.includes("SHOW TABLES LIKE"));
   assert.ok(serviceSource.includes("SHOW INDEX FROM customers"));
-  assert.ok(serviceSource.includes("Number(index.Non_unique) === 0"));
+  assert.ok(serviceSource.includes("Number(entry.Non_unique) === 0"));
 });
 
 test("OTP and identity-link routes require the explicit schema assertion", () => {
