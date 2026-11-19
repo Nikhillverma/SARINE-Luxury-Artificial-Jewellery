@@ -84,26 +84,16 @@ test("MSG91 refuses a sender address outside the configured verified domain", as
   }
 });
 
-test("Fast2SMS receives the backend-generated OTP for its configured OTP template", async () => {
+test("phone OTP remains disabled and never calls an unapproved provider", async () => {
   const originalFetch = globalThis.fetch;
-  let request;
-  globalThis.fetch = async (url, options) => {
-    request = { url: String(url), options, body: JSON.parse(options.body) };
-    return { ok: true, status: 200, json: async () => ({ return: true, status_code: 200 }) };
-  };
+  globalThis.fetch = async () => { throw new Error("fetch must not be called while phone OTP is disabled"); };
   try {
-    process.env.FAST2SMS_API_KEY = "test-fast2sms-key";
-    process.env.FAST2SMS_OTP_ID = "test-template-id";
-    await deliverCustomerOtp("phone", "9876543210", "654321", "login");
-    assert.equal(request.url, "https://www.fast2sms.com/dev/otp/send");
-    assert.equal(request.options.headers.Authorization, "test-fast2sms-key");
-    assert.equal(request.body.mobile, "9876543210");
-    assert.equal(request.body.otp_id, "test-template-id");
-    assert.equal(request.body.otp, "654321");
-    assert.equal(request.body.otp_expiry, 5);
+    assert.equal(getCustomerOtpProvider("phone"), "MSG91");
+    await assert.rejects(
+      deliverCustomerOtp("phone", "9876543210", "654321", "login"),
+      /MSG91 phone OTP delivery is not enabled/
+    );
   } finally {
     globalThis.fetch = originalFetch;
-    delete process.env.FAST2SMS_API_KEY;
-    delete process.env.FAST2SMS_OTP_ID;
   }
 });
