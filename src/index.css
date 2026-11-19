@@ -150,3 +150,32 @@
   .sarine-home .product-grid { gap: 10px; }
   .sarine-home .product-grid > article { padding: 5px; }
 }
+
+
+/* Homepage spacing refinement: preserve the hero's exact height and typography. */
+.sarine-home > section:not(:first-child) {
+  padding-top: 14px !important;
+  padding-bottom: 14px !important;
+}
+.sarine-home > section:first-child {
+  /* Intentionally untouched: hero dimensions remain controlled by its existing classes. */
+}
+.sarine-home > section:not(:first-child) .w-full.text-center.mb-4 {
+  margin-bottom: 8px !important;
+}
+.sarine-home .product-grid {
+  row-gap: 14px;
+}
+@media (min-width: 768px) {
+  .sarine-home .product-grid {
+    row-gap: 18px;
+  }
+}
+.sarine-home .category-grid {
+  row-gap: 10px;
+}
+@media (min-width: 768px) {
+  .sarine-home .category-grid {
+    row-gap: 14px;
+  }
+}
