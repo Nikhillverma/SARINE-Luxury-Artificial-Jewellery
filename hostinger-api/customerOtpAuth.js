@@ -5,13 +5,18 @@ import rateLimit from "express-rate-limit";
 import { pool } from "./db.js";
 import { shouldUseSecureSessionCookie } from "./sessionCookiePolicy.js";
 import { normalizeCustomerEmail } from "./customerValidation.js";
-import { normalizePhone, createOtp, hashOtp, safeOtpEqual, ensureCustomerOtpSchema, deliverCustomerOtp, getCustomerOtpProvider, CUSTOMER_OTP_POLICY } from "./customerOtpService.js";
+import { normalizePhone, createOtp, hashOtp, safeOtpEqual, ensureCustomerOtpSchema, deliverCustomerOtp, getCustomerOtpProvider, getCustomerOtpAvailability, CUSTOMER_OTP_POLICY } from "./customerOtpService.js";
 
 const router = Router();
 const COOKIE_NAME = "sarine_customer_session";
 const SESSION_DAYS = 30;
 const requestLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 5, standardHeaders: "draft-8", legacyHeaders: false });
 const verifyLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 15, standardHeaders: "draft-8", legacyHeaders: false });
+
+router.get("/methods", (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  return res.json(getCustomerOtpAvailability());
+});
 
 function hashToken(token) { return crypto.createHash("sha256").update(token).digest("hex"); }
 function setSessionCookie(res, token) {
