@@ -13,8 +13,9 @@ const authSource = await readFile(new URL("../customerOtpAuth.js", import.meta.u
 
 test("customer authentication schema checks are read-only and avoid system metadata schemas", () => {
   assert.ok(serviceSource.includes("export async function assertCustomerOtpSchema"));
-  assert.ok(!/\\b(?:ALTER\\s+TABLE|CREATE\\s+TABLE|CREATE\\s+(?:UNIQUE\\s+)?INDEX|DROP\\s+TABLE)\\b/i.test(serviceSource));
-  assert.ok(!serviceSource.includes("information_schema"));
+  for (const forbidden of ["ALTER TABLE", "CREATE TABLE", "CREATE INDEX", "DROP TABLE", "information_schema"]) {
+    assert.ok(!serviceSource.toLowerCase().includes(forbidden.toLowerCase()), `unexpected schema operation or metadata reference: ${forbidden}`);
+  }
   assert.ok(serviceSource.includes("SHOW COLUMNS FROM customers"));
   assert.ok(serviceSource.includes("SHOW TABLES LIKE"));
   assert.ok(serviceSource.includes("SHOW INDEX FROM customers"));
