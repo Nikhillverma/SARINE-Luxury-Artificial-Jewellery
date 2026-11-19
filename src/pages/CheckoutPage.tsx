@@ -121,7 +121,7 @@ export const CheckoutPage: React.FC = () => {
   const [pincode, setPincode] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('online');
   const { config: checkoutConfig, loading: checkoutConfigLoading } = useCheckoutConfig();
-  const [appliedCoupon] = useState<{ code: string; discount: number; subtotal: number } | null>(() => {
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; subtotal: number } | null>(() => {
     try {
       const saved = localStorage.getItem('sarine_applied_coupon');
       const parsed = saved ? JSON.parse(saved) : null;
@@ -131,6 +131,13 @@ export const CheckoutPage: React.FC = () => {
     } catch { return null; }
   });
   const activeCoupon = !storewideDiscountPercent && appliedCoupon && appliedCoupon.subtotal === subtotal ? appliedCoupon : null;
+
+  useEffect(() => {
+    if (storewideDiscountPercent > 0) {
+      setAppliedCoupon(null);
+      localStorage.removeItem('sarine_applied_coupon');
+    }
+  }, [storewideDiscountPercent]);
 
   useEffect(() => {
     if (!checkoutConfig.codEnabled && paymentMethod === 'cod') setPaymentMethod('online');
