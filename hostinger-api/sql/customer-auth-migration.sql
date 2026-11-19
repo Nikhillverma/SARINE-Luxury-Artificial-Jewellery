@@ -32,6 +32,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_customers_google_sub
 CREATE TABLE IF NOT EXISTS customer_auth_challenges (
   id CHAR(36) NOT NULL,
   identifier VARCHAR(254) NOT NULL,
+  customer_id VARCHAR(191) NULL,
   method VARCHAR(10) NOT NULL,
   purpose VARCHAR(24) NOT NULL,
   otp_hash CHAR(64) NOT NULL,
