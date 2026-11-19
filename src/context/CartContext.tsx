@@ -10,6 +10,7 @@ import React, {
 import { Product, ProductVariant } from '../types/product';
 import { CartLine, CartItem } from '../types/cart';
 import { productService } from '../services';
+import { festivalCampaignService, type FestivalCampaign } from '../services/hostinger/festivalCampaignService';
 
 const STORAGE_KEY = 'sarine_cart_lines_v1';
 const lineKey = (productId: string, variantId?: string) => `${productId}::${variantId || 'default'}`;
@@ -137,6 +138,9 @@ interface CartContextValue {
   isHydrating: boolean;
   isDrawerOpen: boolean;
   availabilityNotice: string | null;
+  storewideCampaign: FestivalCampaign | null;
+  storewideDiscountPercent: number;
+  promotionDiscount: number;
   addItem: (product: Product, quantity?: number, variant?: ProductVariant) => void;
   removeItem: (productId: string, variantId?: string) => void;
   updateQuantity: (productId: string, quantity: number, variantId?: string) => void;
@@ -149,6 +153,7 @@ interface CartContextValue {
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [storewideCampaign, setStorewideCampaign] = useState<FestivalCampaign | null>(null);
   const [state, dispatch] = useReducer(cartReducer, {
     lines: loadStoredLines(),
     productsByLineKey: {},
@@ -156,6 +161,18 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isDrawerOpen: false,
     availabilityNotice: null
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    festivalCampaignService.getActiveCampaigns()
+      .then(campaigns => {
+        if (cancelled) return;
+        const promotion = campaigns.find(item => Number(item.storewideDiscountPercent) > 0) || null;
+        setStorewideCampaign(promotion);
+      })
+      .catch(error => console.warn('[CartContext] Active campaign unavailable; using regular prices.', error));
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -211,23 +228,32 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!product) return null;
     const variant = product.variants?.find(item => item.id === line.variantId);
     const unitPrice = variant?.price ?? product.price;
+    const percent = Math.max(0, Math.min(75, Number(storewideCampaign?.storewideDiscountPercent) || 0));
+    const perUnitDiscount = Math.floor(unitPrice * percent / 100);
+    const discountedUnitPrice = Math.max(0, unitPrice - perUnitDiscount);
+    const promotionLineDiscount = perUnitDiscount * line.quantity;
     return {
       productId: line.productId,
       ...(variant ? { variantId: variant.id, variant } : {}),
       product,
       quantity: line.quantity,
       unitPrice,
-      lineTotal: unitPrice * line.quantity
+      lineTotal: unitPrice * line.quantity,
+      discountedUnitPrice,
+      discountedLineTotal: discountedUnitPrice * line.quantity,
+      promotionLineDiscount
     };
-  }).filter((item): item is CartItem => item !== null), [state.lines, state.productsByLineKey]);
+  }).filter((item): item is CartItem => item !== null), [state.lines, state.productsByLineKey, storewideCampaign]);
 
   const itemCount = useMemo(() => state.lines.reduce((sum, line) => sum + line.quantity, 0), [state.lines]);
   const subtotal = useMemo(() => hydratedItems.reduce((sum, item) => sum + item.lineTotal, 0), [hydratedItems]);
+  const promotionDiscount = useMemo(() => hydratedItems.reduce((sum, item) => sum + item.promotionLineDiscount, 0), [hydratedItems]);
+  const storewideDiscountPercent = Math.max(0, Math.min(75, Number(storewideCampaign?.storewideDiscountPercent) || 0));
   const value = useMemo<CartContextValue>(() => ({
-    items: hydratedItems, itemCount, subtotal, isHydrating: state.isHydrating,
+    items: hydratedItems, itemCount, subtotal, promotionDiscount, storewideCampaign, storewideDiscountPercent, isHydrating: state.isHydrating,
     isDrawerOpen: state.isDrawerOpen, availabilityNotice: state.availabilityNotice,
     addItem, removeItem, updateQuantity, clearCart, openDrawer, closeDrawer, dismissNotice
-  }), [hydratedItems, itemCount, subtotal, state.isHydrating, state.isDrawerOpen, state.availabilityNotice, addItem, removeItem, updateQuantity, clearCart, openDrawer, closeDrawer, dismissNotice]);
+  }), [hydratedItems, itemCount, subtotal, promotionDiscount, storewideCampaign, storewideDiscountPercent, state.isHydrating, state.isDrawerOpen, state.availabilityNotice, addItem, removeItem, updateQuantity, clearCart, openDrawer, closeDrawer, dismissNotice]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
