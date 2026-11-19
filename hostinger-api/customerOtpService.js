@@ -3,6 +3,12 @@ import { pool } from "./db.js";
 import { CUSTOMER_OTP_POLICY, normalizePhone, createOtp, hashOtp, safeOtpEqual } from "./customerOtpPolicy.js";
 export { CUSTOMER_OTP_POLICY, normalizePhone, createOtp, hashOtp, safeOtpEqual };
 
+export function getCustomerOtpProvider(method) {
+  if (method === "email") return "Brevo";
+  if (method === "phone") return "Fast2SMS";
+  return "unknown";
+}
+
 let schemaReady;
 export async function ensureCustomerOtpSchema() {
   if (schemaReady) return schemaReady;
@@ -76,59 +82,66 @@ export async function ensureCustomerOtpSchema() {
   return schemaReady;
 }
 
+function getBrevoSender() {
+  const email = String(process.env.SARINE_EMAIL_FROM || "").trim();
+  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+    throw new Error("A verified SARINE_EMAIL_FROM address is required for email OTP delivery.");
+  }
+  return { name: "SARINE", email };
+}
+
 async function sendEmail(to, otp, purpose) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.SARINE_EMAIL_FROM;
-  if (!apiKey || !from) throw new Error("Email OTP delivery is not configured.");
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) throw new Error("Brevo email OTP delivery is not configured.");
   const subject = purpose === "password_reset" ? "Reset your SARINE password" : "Your SARINE verification code";
-  const action = purpose === "password_reset" ? "reset your password" : "sign in to your SARINE account";
-  const response = await fetch("https://api.resend.com/emails", {
+  const action = purpose === "password_reset" ? "reset your SARINE password" : "sign in to your SARINE account";
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
+    signal: AbortSignal.timeout(8000),
     body: JSON.stringify({
-      from,
-      to: [to],
+      sender: getBrevoSender(),
+      to: [{ email: to }],
       subject,
-      html: `<div style="font-family:Arial,sans-serif;color:#302438;max-width:520px;margin:auto;padding:28px"><h1 style="color:#563568;letter-spacing:5px;font-weight:400">SARINE</h1><p>Your verification code to ${action} is:</p><p style="font-size:32px;letter-spacing:8px;font-weight:700;color:#563568">${otp}</p><p>This code expires in 5 minutes. Never share it with anyone.</p><p style="color:#8A7B90;font-size:12px">If you did not request this code, you can safely ignore this email.</p></div>`
+      htmlContent: `<div style="font-family:Arial,sans-serif;color:#302438;max-width:520px;margin:auto;padding:28px"><h1 style="color:#563568;letter-spacing:5px;font-weight:400">SARINE</h1><p>Your verification code to ${action} is:</p><p style="font-size:32px;letter-spacing:8px;font-weight:700;color:#563568">${otp}</p><p>This code expires in 5 minutes. Never share it with anyone.</p><p style="color:#8A7B90;font-size:12px">If you did not request this code, you can safely ignore this email.</p></div>`
     })
   });
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
-    throw new Error(`Email delivery failed (${response.status}): ${detail.slice(0, 300)}`);
+    throw new Error(`Brevo email delivery failed (${response.status}): ${detail.slice(0, 200)}`);
   }
 }
 
 async function sendSms(phone, otp) {
-  const authKey = process.env.MSG91_AUTH_KEY;
-  const templateId = process.env.MSG91_TEMPLATE_ID;
-  if (!authKey || !templateId) throw new Error("SMS OTP delivery is not configured.");
-  const url = new URL("https://control.msg91.com/api/v5/otp");
-  url.searchParams.set("template_id", templateId);
-  url.searchParams.set("mobile", `91${phone}`);
-  url.searchParams.set("authkey", authKey);
-  const response = await fetch(url, {
+  const apiKey = process.env.FAST2SMS_API_KEY;
+  const otpId = process.env.FAST2SMS_OTP_ID;
+  if (!apiKey || !otpId) throw new Error("Fast2SMS phone OTP delivery is not configured.");
+  const response = await fetch("https://www.fast2sms.com/dev/otp/send", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ otp, otp_expiry: "5", realTimeResponse: "1" })
+    headers: { Authorization: apiKey, "Content-Type": "application/json", Accept: "application/json" },
+    signal: AbortSignal.timeout(8000),
+    body: JSON.stringify({
+      mobile: phone,
+      otp_id: otpId,
+      otp_length: 6,
+      otp_expiry: 5,
+      otp: String(otp)
+    })
   });
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    throw new Error(`SMS delivery failed (${response.status}): ${detail.slice(0, 300)}`);
-  }
   const result = await response.json().catch(() => ({}));
-  if (result?.type === "error" || result?.status === "error") {
-    throw new Error("SMS provider rejected the OTP request.");
+  if (!response.ok || result?.return !== true) {
+    throw new Error("Fast2SMS rejected the phone OTP request.");
   }
 }
 
 export async function deliverCustomerOtp(method, identifier, otp, purpose) {
-  if (method === "email") return sendEmail(identifier, otp, purpose);
-  if (method === "phone") return sendSms(identifier, otp);
+  if (method === "email") {
+    await sendEmail(identifier, otp, purpose);
+    return "Brevo";
+  }
+  if (method === "phone") {
+    await sendSms(identifier, otp);
+    return "Fast2SMS";
+  }
   throw new Error("Unsupported OTP delivery method.");
 }
-
-export const CUSTOMER_OTP_POLICY = Object.freeze({
-  ttlMinutes: OTP_TTL_MINUTES,
-  resendCooldownSeconds: RESEND_COOLDOWN_SECONDS,
-  maxAttempts: MAX_ATTEMPTS
-});
