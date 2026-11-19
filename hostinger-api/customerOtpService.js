@@ -13,7 +13,7 @@ export function getCustomerOtpAvailability() {
   const domain = String(process.env.MSG91_EMAIL_DOMAIN || "").trim().toLowerCase();
   const from = String(process.env.MSG91_EMAIL_FROM || "").trim().toLowerCase();
   const emailReady = process.env.MSG91_EMAIL_ENABLED === "true" &&
-    Boolean(process.env.MSG91_EMAIL_AUTH_KEY) && Boolean(domain) &&
+    Boolean(String(process.env.MSG91_EMAIL_AUTH_KEY || "").trim()) && Boolean(domain) &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(from) && from.split("@")[1] === domain &&
     Boolean(String(process.env.MSG91_EMAIL_TEMPLATE_ID || "global_otp").trim());
   return {
