@@ -20,6 +20,16 @@ export interface CuratedFavouritesConfig {
   configured: boolean;
 }
 
+export interface OccasionCard {
+  id: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  link: string;
+  active: boolean;
+  sortOrder: number;
+}
+
 export interface StorefrontBanner {
   id: string;
   tagline: string;
@@ -57,6 +67,9 @@ export const hostingerStorefrontService = {
     request<{ success: boolean; draft: HomepageLayout }>("/admin/homepage-layout/draft", { method: "PUT", body: JSON.stringify(layout) }),
   publishHomepageLayout: () =>
     request<{ success: boolean; published: HomepageLayout }>("/admin/homepage-layout/publish", { method: "POST" }),
+  getOccasions: () => request<{ occasions: OccasionCard[] }>("/admin/storefront/occasions"),
+  getPublicOccasions: () => request<{ occasions: OccasionCard[] }>("/storefront/occasions"),
+  saveOccasions: (occasions: OccasionCard[]) => request<{ success: boolean; occasions: OccasionCard[] }>("/admin/storefront/occasions", { method: "PUT", body: JSON.stringify({ occasions }) }),
   getBanners: () => request<{ banners: StorefrontBanner[] }>("/admin/storefront/banners"),
   getPublicBanners: () => request<{ banners: StorefrontBanner[] }>("/storefront/banners"),
   createBanner: (banner: Omit<StorefrontBanner, "id" | "sortOrder">) =>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
 import { HomepageSectionManager } from "../../components/admin/HomepageSectionManager";
 import { CuratedFavouritesManager } from "../../components/admin/CuratedFavouritesManager";
+import { ShopByOccasionManager } from "../../components/admin/ShopByOccasionManager";
 import { hostingerMediaService } from "../../services";
 import { hostingerStorefrontService, type StorefrontBanner, type EditorialContent, type ProductReview } from "../../services/hostinger/hostingerStorefrontService";
 
@@ -153,10 +154,11 @@ export const AdminStorefrontPage: React.FC = () => {
   return <AdminLayout>
     <div className="space-y-6 max-w-6xl">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <div><h1 className="font-serif text-3xl text-[#2C1838]">Storefront Studio</h1><p className="text-sm text-[#705E7B] mt-1">Manage homepage hero banners and announcement publishing.</p></div>
+        <div><h1 className="font-serif text-3xl text-[#2C1838]">Storefront Studio</h1><p className="text-sm text-[#705E7B] mt-1">Manage homepage sections, occasion cards, banners, editorial content and announcements.</p></div>
         <a href="/" target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg border text-sm">Preview storefront</a>
       </header>
       <HomepageSectionManager />
+      <ShopByOccasionManager />
       <CuratedFavouritesManager />
       {error && <div role="alert" className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>}
       {message && <div role="status" className="p-3 rounded-lg bg-green-50 text-green-800 text-sm">{message}</div>}
