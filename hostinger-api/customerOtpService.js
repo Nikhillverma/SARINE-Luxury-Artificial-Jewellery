@@ -50,7 +50,8 @@ export async function assertCustomerOtpSchema() {
     );
     if (!challengeColumns.length) {
       throw new Error("Customer authentication migration is incomplete: customer_auth_challenges.customer_id is missing.");
-    }    const tableNames = new Set(tables.map((table) => table.TABLE_NAME));
+    }
+    const tableNames = new Set(tables.map((table) => table.TABLE_NAME));
     for (const name of ["customer_auth_challenges", "customer_auth_delivery_events", "customer_password_resets"]) {
       if (!tableNames.has(name)) {
         throw new Error(`Customer authentication migration is incomplete: table ${name} is missing. No automatic database changes were attempted.`);
