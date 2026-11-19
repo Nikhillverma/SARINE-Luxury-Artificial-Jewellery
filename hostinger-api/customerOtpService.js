@@ -4,7 +4,7 @@ import { CUSTOMER_OTP_POLICY, normalizePhone, createOtp, hashOtp, safeOtpEqual }
 export { CUSTOMER_OTP_POLICY, normalizePhone, createOtp, hashOtp, safeOtpEqual };
 
 export function getCustomerOtpProvider(method) {
-  if (method === "email") return "Brevo";
+  if (method === "email") return "MSG91";
   if (method === "phone") return "Fast2SMS";
   return "unknown";
 }
@@ -82,36 +82,62 @@ export async function ensureCustomerOtpSchema() {
   return schemaReady;
 }
 
-function getBrevoSender() {
-  const email = String(process.env.SARINE_EMAIL_FROM || "").trim();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw new Error("A verified SARINE_EMAIL_FROM address is required for email OTP delivery.");
+function getMsg91EmailConfig() {
+  const enabled = process.env.MSG91_EMAIL_ENABLED === "true";
+  if (!enabled) {
+    throw new Error("MSG91 email OTP delivery is disabled until the SARINE sending domain is verified and explicitly enabled.");
   }
-  return { name: "SARINE", email };
+
+  const authKey = String(process.env.MSG91_EMAIL_AUTH_KEY || "").trim();
+  const domain = String(process.env.MSG91_EMAIL_DOMAIN || "").trim().toLowerCase();
+  const from = String(process.env.MSG91_EMAIL_FROM || "").trim().toLowerCase();
+  const fromName = String(process.env.MSG91_EMAIL_FROM_NAME || "SARINE").trim();
+  const templateId = String(process.env.MSG91_EMAIL_TEMPLATE_ID || "global_otp").trim();
+
+  if (!authKey) throw new Error("MSG91 email OTP delivery is not configured.");
+  if (!domain || !from || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(from)) {
+    throw new Error("A verified SARINE MSG91 sending domain and sender address are required.");
+  }
+  if (from.split("@")[1] !== domain) {
+    throw new Error("MSG91 sender address must use the verified sending domain.");
+  }
+  if (!templateId) throw new Error("MSG91 email template is not configured.");
+
+  return { authKey, domain, from, fromName, templateId };
 }
 
-async function sendEmail(to, otp, purpose) {
-  const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) throw new Error("Brevo email OTP delivery is not configured.");
-  const subject = purpose === "password_reset" ? "Reset your SARINE password" : "Your SARINE verification code";
-  const action = purpose === "password_reset" ? "reset your SARINE password" : "sign in to your SARINE account";
-  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+async function sendEmail(to, otp) {
+  const config = getMsg91EmailConfig();
+  const response = await fetch("https://control.msg91.com/api/v5/email/send", {
     method: "POST",
-    headers: { "api-key": apiKey, "Content-Type": "application/json", Accept: "application/json" },
+    headers: {
+      authkey: config.authKey,
+      accept: "application/json",
+      "content-type": "application/json"
+    },
     signal: AbortSignal.timeout(8000),
     body: JSON.stringify({
-      sender: getBrevoSender(),
-      to: [{ email: to }],
-      subject,
-      htmlContent: `<div style="font-family:Arial,sans-serif;color:#302438;max-width:520px;margin:auto;padding:28px"><h1 style="color:#563568;letter-spacing:5px;font-weight:400">SARINE</h1><p>Your verification code to ${action} is:</p><p style="font-size:32px;letter-spacing:8px;font-weight:700;color:#563568">${otp}</p><p>This code expires in 5 minutes. Never share it with anyone.</p><p style="color:#8A7B90;font-size:12px">If you did not request this code, you can safely ignore this email.</p></div>`
+      recipients: [{
+        to: [{ email: to }],
+        variables: {
+          company_name: "SARINE",
+          otp: String(otp)
+        }
+      }],
+      from: {
+        name: config.fromName,
+        email: config.from
+      },
+      domain: config.domain,
+      template_id: config.templateId
     })
   });
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    throw new Error(`Brevo email delivery failed (${response.status}): ${detail.slice(0, 200)}`);
+
+  const result = await response.json().catch(() => null);
+  if (!response.ok || result?.status !== "success" || result?.hasError === true) {
+    throw new Error("MSG91 email delivery request was rejected.");
   }
 }
-
 async function sendSms(phone, otp) {
   const apiKey = process.env.FAST2SMS_API_KEY;
   const otpId = process.env.FAST2SMS_OTP_ID;
