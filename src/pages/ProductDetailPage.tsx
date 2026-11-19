@@ -478,18 +478,16 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               )}
 
               {/* Customer Rating snippet */}
-              <div className="flex items-center gap-2 mt-2.5 text-xs text-[#6F6475]">
-                <div className="flex items-center text-[#D9B8A0]">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={14} className="fill-[#D9B8A0]" />
-                  ))}
+              {reviewCount > 0 && (
+                <div className="flex items-center gap-2 mt-2.5 text-xs text-[#6F6475]" aria-label={`Customer rating ${reviewAverage.toFixed(1)} out of 5`}>
+                  <div className="flex items-center text-[#D9B8A0]" aria-hidden="true">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} size={14} className="fill-[#D9B8A0]" />
+                    ))}
+                  </div>
+                  <span className="font-medium text-[#302438]">{reviewAverage.toFixed(1)}/5</span>
                 </div>
-                <span className="font-medium text-[#302438]">{reviewCount ? reviewAverage.toFixed(1) : "—"}</span>
-                <span>·</span>
-                <a href="#reviews" className="hover:text-[#563568] underline underline-offset-2">
-                  {reviewCount} Approved Reviews
-                </a>
-              </div>
+              )}
 
               {/* Pricing Display */}
               <div className="mt-4 pt-4 border-t border-[#E7DCEB] flex items-baseline gap-3">
