@@ -5,7 +5,7 @@ export { CUSTOMER_OTP_POLICY, normalizePhone, createOtp, hashOtp, safeOtpEqual }
 
 export function getCustomerOtpProvider(method) {
   if (method === "email") return "MSG91";
-  if (method === "phone") return "Fast2SMS";
+  if (method === "phone") return "MSG91";
   return "unknown";
 }
 
@@ -138,27 +138,7 @@ async function sendEmail(to, otp) {
     throw new Error("MSG91 email delivery request was rejected.");
   }
 }
-async function sendSms(phone, otp) {
-  const apiKey = process.env.FAST2SMS_API_KEY;
-  const otpId = process.env.FAST2SMS_OTP_ID;
-  if (!apiKey || !otpId) throw new Error("Fast2SMS phone OTP delivery is not configured.");
-  const response = await fetch("https://www.fast2sms.com/dev/otp/send", {
-    method: "POST",
-    headers: { Authorization: apiKey, "Content-Type": "application/json", Accept: "application/json" },
-    signal: AbortSignal.timeout(8000),
-    body: JSON.stringify({
-      mobile: phone,
-      otp_id: otpId,
-      otp_length: 6,
-      otp_expiry: 5,
-      otp: String(otp)
-    })
-  });
-  const result = await response.json().catch(() => ({}));
-  if (!response.ok || result?.return !== true) {
-    throw new Error("Fast2SMS rejected the phone OTP request.");
-  }
-}
+
 
 export async function deliverCustomerOtp(method, identifier, otp, purpose) {
   if (method === "email") {
