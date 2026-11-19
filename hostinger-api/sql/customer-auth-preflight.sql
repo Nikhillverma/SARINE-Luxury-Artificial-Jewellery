@@ -35,22 +35,11 @@ SELECT
   SUM(phone IS NULL OR phone = '') AS customers_without_phone
 FROM `u517551008_sarine_db`.customers;
 
--- If phone_normalized already exists, this reports duplicate non-empty values.
--- If it does not exist, run the columns query above first; this query will then
--- need to be skipped until that column has been added.
-SELECT phone_normalized, COUNT(*) AS duplicate_count
-FROM `u517551008_sarine_db`.customers
-WHERE phone_normalized IS NOT NULL AND phone_normalized <> ''
-GROUP BY phone_normalized
-HAVING COUNT(*) > 1;
-
--- Detect duplicate Google subject links before adding a unique index.
--- If google_sub does not exist yet, skip this query until the column is added.
-SELECT google_sub, COUNT(*) AS duplicate_count
-FROM `u517551008_sarine_db`.customers
-WHERE google_sub IS NOT NULL AND google_sub <> ''
-GROUP BY google_sub
-HAVING COUNT(*) > 1;
+-- phone_normalized and google_sub do not exist in the inspected live schema.
+-- Do not query them before migration. The migration adds both as NULL columns,
+-- so there are no pre-existing normalized values to collide with unique indexes.
+-- If running this preflight on another environment where either column already
+-- exists, inspect duplicates before applying the unique indexes.
 
 -- Confirm customer IDs referenced by existing sessions have matching customers.
 SELECT COUNT(*) AS orphan_customer_sessions
