@@ -53,6 +53,14 @@ export const BagPage: React.FC = () => {
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const activeCoupon = !storewideDiscountPercent && appliedCoupon && appliedCoupon.subtotal === subtotal ? appliedCoupon : null;
 
+  useEffect(() => {
+    if (storewideDiscountPercent > 0) {
+      setAppliedCoupon(null);
+      localStorage.removeItem('sarine_applied_coupon');
+      setCouponError(null);
+    }
+  }, [storewideDiscountPercent]);
+
   // Gifting state
   const [isGift, setIsGift] = useState(false);
   const [giftNote, setGiftNote] = useState('');
