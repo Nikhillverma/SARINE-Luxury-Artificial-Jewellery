@@ -146,8 +146,7 @@ export async function deliverCustomerOtp(method, identifier, otp, purpose) {
     return "MSG91";
   }
   if (method === "phone") {
-    await sendSms(identifier, otp);
-    return "Fast2SMS";
+    throw new Error("MSG91 phone OTP delivery is not enabled. Configure and approve the MSG91 SMS route before enabling customer phone login.");
   }
   throw new Error("Unsupported OTP delivery method.");
 }
