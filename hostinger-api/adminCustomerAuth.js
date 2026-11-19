@@ -12,6 +12,7 @@ router.get("/status", async (_req, res, next) => {
     return res.json({
       emailOtp: {
         ...getCustomerOtpAvailability().email,
+        configured: getCustomerOtpAvailability().email.enabled,
         template: process.env.MSG91_EMAIL_TEMPLATE_ID || "global_otp"
       },
       phoneOtp: {
