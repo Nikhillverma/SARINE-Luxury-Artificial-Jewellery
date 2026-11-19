@@ -84,7 +84,7 @@ export async function ensureCustomerOtpSchema() {
 
 function getBrevoSender() {
   const email = String(process.env.SARINE_EMAIL_FROM || "").trim();
-  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw new Error("A verified SARINE_EMAIL_FROM address is required for email OTP delivery.");
   }
   return { name: "SARINE", email };
