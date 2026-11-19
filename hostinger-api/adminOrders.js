@@ -469,7 +469,7 @@ router.post("/update", async (req, res, next) => {
 
     // 5. Action: mark_delivered
     if (action === "mark_delivered") {
-      if (order.order_status !== "shipped") {
+      if (!["shipped", "out_for_delivery"].includes(order.order_status)) {
         await connection.rollback();
         connection.release();
         connection = null;
