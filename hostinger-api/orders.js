@@ -32,6 +32,52 @@ function timingSafeCompare(a, b) {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
+let campaignOrderSnapshotSchemaPromise;
+async function ensureCampaignOrderSnapshotTable() {
+  if (!campaignOrderSnapshotSchemaPromise) {
+    campaignOrderSnapshotSchemaPromise = pool.execute(`CREATE TABLE IF NOT EXISTS order_promotions (
+      order_number VARCHAR(32) NOT NULL PRIMARY KEY,
+      campaign_id VARCHAR(64) NOT NULL,
+      campaign_name VARCHAR(100) NOT NULL,
+      discount_percent TINYINT UNSIGNED NOT NULL,
+      discount_amount INT NOT NULL DEFAULT 0,
+      created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+      KEY idx_order_promotions_campaign (campaign_id, created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`).catch(error => {
+      campaignOrderSnapshotSchemaPromise = null;
+      throw error;
+    });
+  }
+  await campaignOrderSnapshotSchemaPromise;
+}
+async function getActiveStorewideCampaign(connection) {
+  const [rows] = await connection.execute(
+    "SELECT setting_value FROM storefront_settings WHERE setting_key = 'festival_campaigns' LIMIT 1 FOR UPDATE"
+  );
+  let campaigns = [];
+  try {
+    const parsed = typeof rows[0]?.setting_value === "string" ? JSON.parse(rows[0].setting_value) : rows[0]?.setting_value;
+    if (Array.isArray(parsed)) campaigns = parsed;
+  } catch {}
+  const now = Date.now();
+  return campaigns.filter(item => {
+    if (!item || item.active !== true) return false;
+    const percent = Number(item.storewideDiscountPercent);
+    if (!Number.isInteger(percent) || percent < 1 || percent > 75) return false;
+    const starts = item.startsAt ? new Date(item.startsAt).getTime() : 0;
+    const ends = item.endsAt ? new Date(item.endsAt).getTime() : Number.POSITIVE_INFINITY;
+    return Number.isFinite(starts) && (ends === Number.POSITIVE_INFINITY || Number.isFinite(ends)) && starts <= now && ends > now;
+  }).sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))[0] || null;
+}
+async function saveOrderCampaignSnapshot(connection, orderNumber, campaign, discountAmount) {
+  if (!campaign || !discountAmount) return;
+  await connection.execute(
+    `INSERT INTO order_promotions (order_number, campaign_id, campaign_name, discount_percent, discount_amount)
+     VALUES (?, ?, ?, ?, ?)`,
+    [orderNumber, String(campaign.id).slice(0, 64), String(campaign.name || campaign.title || "Storewide sale").slice(0, 100), Number(campaign.storewideDiscountPercent), discountAmount]
+  );
+}
+
 function getRazorpay() {
   const key_id = process.env.RAZORPAY_KEY_ID;
   const key_secret = process.env.RAZORPAY_KEY_SECRET;
@@ -137,6 +183,7 @@ router.post("/create", checkoutLimiter, async (req, res, next) => {
     }
 
     await ensureMarketingSchema();
+    await ensureCampaignOrderSnapshotTable();
     await ensureInventoryTable();
     await ensureProductVariantSchema();
     await ensurePaymentEventLogTable();
@@ -254,15 +301,28 @@ router.post("/create", checkoutLimiter, async (req, res, next) => {
 
     let coupon = null;
     let discountAmount = 0;
+    let appliedCampaign = null;
     try {
-      const validatedCoupon = await lockAndValidateCoupon(connection, couponCode, calculatedSubtotal, customerEmail);
-      coupon = validatedCoupon.coupon;
-      discountAmount = validatedCoupon.discountAmount;
-    } catch (couponError) {
+      appliedCampaign = await getActiveStorewideCampaign(connection);
+      if (appliedCampaign?.storewideDiscountPercent && String(couponCode || "").trim()) {
+        throw new Error("A storewide sale is already applied automatically. Coupon codes cannot be combined with this offer.");
+      }
+      if (appliedCampaign?.storewideDiscountPercent) {
+        const percent = Number(appliedCampaign.storewideDiscountPercent);
+        discountAmount = verifiedLines.reduce(
+          (sum, line) => sum + Math.floor(line.unitPrice * percent / 100) * line.quantity,
+          0
+        );
+      } else {
+        const validatedCoupon = await lockAndValidateCoupon(connection, couponCode, calculatedSubtotal, customerEmail);
+        coupon = validatedCoupon.coupon;
+        discountAmount = validatedCoupon.discountAmount;
+      }
+    } catch (promotionError) {
       await connection.rollback();
       connection.release();
       connection = null;
-      return res.status(400).json({ error: couponError.message || "Coupon could not be applied." });
+      return res.status(400).json({ error: promotionError.message || "Promotion could not be applied." });
     }
     const shippingFee = calculateShippingFee(calculatedSubtotal, checkoutConfig);
     const total = Math.max(0, calculatedSubtotal - discountAmount) + shippingFee;
@@ -368,6 +428,7 @@ router.post("/create", checkoutLimiter, async (req, res, next) => {
         publicTokenHash
       });
       await connection.execute(orderInsert.sql, orderInsert.values);
+      await saveOrderCampaignSnapshot(connection, orderNumber, appliedCampaign, discountAmount);
 
       for (const line of verifiedLines) {
         await connection.execute(
@@ -397,6 +458,7 @@ router.post("/create", checkoutLimiter, async (req, res, next) => {
         shippingFee,
         discountAmount,
         couponCode: coupon?.code || null,
+        promotion: appliedCampaign ? { id: appliedCampaign.id, name: appliedCampaign.name || appliedCampaign.title, discountPercent: Number(appliedCampaign.storewideDiscountPercent), discountAmount } : null,
         total
       });
     } else {
@@ -417,6 +479,7 @@ router.post("/create", checkoutLimiter, async (req, res, next) => {
         publicTokenHash
       });
       await connection.execute(orderInsert.sql, orderInsert.values);
+      await saveOrderCampaignSnapshot(connection, orderNumber, appliedCampaign, discountAmount);
 
       for (const line of verifiedLines) {
         await connection.execute(
@@ -505,6 +568,7 @@ router.post("/create", checkoutLimiter, async (req, res, next) => {
         shippingFee,
         discountAmount,
         couponCode: coupon?.code || null,
+        promotion: appliedCampaign ? { id: appliedCampaign.id, name: appliedCampaign.name || appliedCampaign.title, discountPercent: Number(appliedCampaign.storewideDiscountPercent), discountAmount } : null,
         total
       });
     }
@@ -700,6 +764,7 @@ router.get("/:orderNumber", orderLookupLimiter, async (req, res, next) => {
       return res.status(403).json({ error: "Unauthorized access to order." });
     }
 
+    await ensureCampaignOrderSnapshotTable();
     await ensureProductVariantSchema();
     const [itemRows] = await pool.execute(
       `SELECT id, product_id, product_name, sku, unit_price, quantity, image, source_line,
@@ -709,6 +774,16 @@ router.get("/:orderNumber", orderLookupLimiter, async (req, res, next) => {
        ORDER BY source_line ASC, id ASC`,
       [order.id]
     );
+    const [promotionRows] = await pool.execute(
+      "SELECT campaign_id, campaign_name, discount_percent, discount_amount FROM order_promotions WHERE order_number = ? LIMIT 1",
+      [order.order_number]
+    );
+    const savedPromotion = promotionRows[0] ? {
+      id: promotionRows[0].campaign_id,
+      name: promotionRows[0].campaign_name,
+      discountPercent: Number(promotionRows[0].discount_percent),
+      discountAmount: Number(promotionRows[0].discount_amount)
+    } : null;
 
     let parsedAddress = {};
     try {
@@ -739,6 +814,9 @@ router.get("/:orderNumber", orderLookupLimiter, async (req, res, next) => {
         variantOptions: typeof row.variant_options === "string" ? JSON.parse(row.variant_options) : (row.variant_options || undefined)
       })),
       subtotal: Number(order.subtotal),
+      promotion: savedPromotion,
+      discountAmount: Number(order.discount_amount || 0),
+      couponCode: order.coupon_code || undefined,
       shippingFee: Number(order.shipping_fee),
       total: Number(order.total),
       paymentMethod: order.payment_method,
@@ -784,7 +862,7 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
     const [rows] = await pool.execute(
       `SELECT id, order_number, customer_phone, shipping_address, order_status,
               payment_method, payment_status, subtotal, shipping_fee, total,
-              razorpay_payment_id, created_at, shipped_at, delivered_at,
+              coupon_code, discount_amount, razorpay_payment_id, created_at, shipped_at, delivered_at,
               estimated_delivery, courier_name, tracking_number, tracking_url
        FROM orders
        WHERE order_number = ?
@@ -811,6 +889,7 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
       return res.status(404).json({ error: GENERIC_NOT_FOUND });
     }
 
+    await ensureCampaignOrderSnapshotTable();
     await ensureProductVariantSchema();
     const [items] = await pool.execute(
       `SELECT product_name, quantity, image, unit_price, variant_sku, variant_label, variant_options
@@ -818,6 +897,16 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
        WHERE order_id = ?`,
       [order.id]
     );
+    const [promotionRows] = await pool.execute(
+      "SELECT campaign_id, campaign_name, discount_percent, discount_amount FROM order_promotions WHERE order_number = ? LIMIT 1",
+      [order.order_number]
+    );
+    const savedPromotion = promotionRows[0] ? {
+      id: promotionRows[0].campaign_id,
+      name: promotionRows[0].campaign_name,
+      discountPercent: Number(promotionRows[0].discount_percent),
+      discountAmount: Number(promotionRows[0].discount_amount)
+    } : null;
 
     const itemCount = items.reduce((sum, itm) => sum + Number(itm.quantity || 0), 0);
     const lines = items.map(itm => ({
@@ -839,6 +928,7 @@ router.post("/track", trackingLimiter, async (req, res, next) => {
       shippingFee: Number(order.shipping_fee || 0),
       couponCode: order.coupon_code || undefined,
       discountAmount: Number(order.discount_amount || 0),
+      promotion: savedPromotion,
       total: Number(order.total || 0),
       razorpayPaymentId: order.payment_status === "paid" ? (order.razorpay_payment_id || undefined) : undefined,
       shippingAddress: {
