@@ -165,15 +165,19 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     let cancelled = false;
-    festivalCampaignService.getActiveCampaigns()
-      .then(campaigns => {
-        if (cancelled) return;
-        const promotion = campaigns.find(item => Number(item.storewideDiscountPercent) > 0) || null;
-        setStorewideCampaign(promotion);
-      })
-      .catch(error => console.warn('[CartContext] Active campaign unavailable; using regular prices.', error))
-      .finally(() => { if (!cancelled) setPromotionLoading(false); });
-    return () => { cancelled = true; };
+    const refreshPromotion = () => {
+      festivalCampaignService.getActiveCampaigns()
+        .then(campaigns => {
+          if (cancelled) return;
+          const promotion = campaigns.find(item => Number(item.storewideDiscountPercent) > 0) || null;
+          setStorewideCampaign(promotion);
+        })
+        .catch(error => console.warn('[CartContext] Active campaign unavailable; using the last known price.', error))
+        .finally(() => { if (!cancelled) setPromotionLoading(false); });
+    };
+    refreshPromotion();
+    const timer = window.setInterval(refreshPromotion, 60000);
+    return () => { cancelled = true; window.clearInterval(timer); };
   }, []);
 
   useEffect(() => {
