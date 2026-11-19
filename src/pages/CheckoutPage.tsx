@@ -90,7 +90,7 @@ function loadRazorpayCheckoutScript(): Promise<boolean> {
 
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
-  const { items, subtotal, clearCart, isHydrating } = useCart();
+  const { items, subtotal, clearCart, isHydrating, storewideDiscountPercent, storewideCampaign, promotionDiscount } = useCart();
 
   // State and ref to track if an order is being placed or was placed successfully
   const [orderPlaced, setOrderPlaced] = useState(false);
@@ -130,7 +130,7 @@ export const CheckoutPage: React.FC = () => {
         : null;
     } catch { return null; }
   });
-  const activeCoupon = appliedCoupon && appliedCoupon.subtotal === subtotal ? appliedCoupon : null;
+  const activeCoupon = !storewideDiscountPercent && appliedCoupon && appliedCoupon.subtotal === subtotal ? appliedCoupon : null;
 
   useEffect(() => {
     if (!checkoutConfig.codEnabled && paymentMethod === 'cod') setPaymentMethod('online');
@@ -142,7 +142,7 @@ export const CheckoutPage: React.FC = () => {
 
   // Computed shipping and total
   const shippingFee = calculateShippingFee(subtotal, checkoutConfig);
-  const discountAmount = activeCoupon?.discount || 0;
+  const discountAmount = promotionDiscount + (activeCoupon?.discount || 0);
   const total = Math.max(0, subtotal - discountAmount) + shippingFee;
 
   // Validation function
@@ -739,11 +739,11 @@ export const CheckoutPage: React.FC = () => {
                     </p>
                     <p className="text-[11px] text-[#6F6475] font-sans">
                       {item.variant && <span className="block text-[#563568]">{item.variant.label} · SKU: {item.variant.sku}</span>}
-                      Qty: {item.quantity} × {formatInr(item.unitPrice)}
+                      Qty: {item.quantity} × {formatInr(storewideDiscountPercent > 0 ? item.discountedUnitPrice : item.unitPrice)}
                     </p>
                   </div>
                   <div className="text-right text-xs font-semibold text-[#302438]">
-                    {formatInr(item.lineTotal)}
+                    {formatInr(storewideDiscountPercent > 0 ? item.discountedLineTotal : item.lineTotal)}
                   </div>
                 </div>
               ))}
@@ -759,10 +759,16 @@ export const CheckoutPage: React.FC = () => {
                 <span>Standard Delivery (India)</span>
                 <span>{shippingFee === 0 ? 'Complimentary' : formatInr(shippingFee)}</span>
               </div>
+              {promotionDiscount > 0 && (
+                <div className="flex justify-between text-emerald-700">
+                  <span>{storewideCampaign?.offerLabel || (storewideDiscountPercent + "% Storewide Sale")}</span>
+                  <span>-{formatInr(promotionDiscount)}</span>
+                </div>
+              )}
               {activeCoupon && (
                 <div className="flex justify-between text-emerald-700">
                   <span>Coupon ({activeCoupon.code})</span>
-                  <span>-{formatInr(discountAmount)}</span>
+                  <span>-{formatInr(activeCoupon.discount)}</span>
                 </div>
               )}
               <div className="flex justify-between text-[#302438] font-semibold text-base pt-2 border-t border-[#E7DCEB]">
