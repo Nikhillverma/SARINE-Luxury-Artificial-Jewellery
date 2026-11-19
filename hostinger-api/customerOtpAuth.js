@@ -5,7 +5,7 @@ import rateLimit from "express-rate-limit";
 import { pool } from "./db.js";
 import { shouldUseSecureSessionCookie } from "./sessionCookiePolicy.js";
 import { normalizeCustomerEmail } from "./customerValidation.js";
-import { normalizePhone, createOtp, hashOtp, safeOtpEqual, ensureCustomerOtpSchema, deliverCustomerOtp, CUSTOMER_OTP_POLICY } from "./customerOtpService.js";
+import { normalizePhone, createOtp, hashOtp, safeOtpEqual, ensureCustomerOtpSchema, deliverCustomerOtp, getCustomerOtpProvider, CUSTOMER_OTP_POLICY } from "./customerOtpService.js";
 
 const router = Router();
 const COOKIE_NAME = "sarine_customer_session";
@@ -91,18 +91,19 @@ async function createChallenge(method, identifier, purpose) {
     "INSERT INTO customer_auth_challenges (id, identifier, method, purpose, otp_hash, expires_at) VALUES (?, ?, ?, ?, ?, DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 5 MINUTE))",
     [id, identifier, method, purpose, hashOtp(id, otp)]
   );
+  const provider = getCustomerOtpProvider(method);
   try {
     await deliverCustomerOtp(method, identifier, otp, purpose);
     await pool.execute(
       "INSERT INTO customer_auth_delivery_events (challenge_id, method, purpose, provider, identifier_masked, status) VALUES (?, ?, ?, ?, ?, 'sent')",
-      [id, method, purpose, method === "email" ? "resend" : "msg91", maskIdentifier(method, identifier)]
+      [id, method, purpose, provider, maskIdentifier(method, identifier)]
     );
   } catch (error) {
     await pool.execute("UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE id = ?", [id]);
     const failureCode = String(error?.message || "").includes("not configured") ? "provider_not_configured" : "provider_delivery_failed";
     await pool.execute(
       "INSERT INTO customer_auth_delivery_events (challenge_id, method, purpose, provider, identifier_masked, status, failure_code) VALUES (?, ?, ?, ?, ?, 'failed', ?)",
-      [id, method, purpose, method === "email" ? "resend" : "msg91", maskIdentifier(method, identifier), failureCode]
+      [id, method, purpose, provider, maskIdentifier(method, identifier), failureCode]
     );
     throw error;
   }
