@@ -100,8 +100,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   useEffect(() => {
     let cancelled = false;
-    festivalCampaignService.getActiveCampaigns().then(campaigns => { if (!cancelled) setFestivalCampaigns(campaigns); }).catch(error => console.warn('[HomePage] Festival campaigns unavailable.', error));
-    return () => { cancelled = true; };
+    const refreshCampaigns = () => {
+      festivalCampaignService.getActiveCampaigns()
+        .then(campaigns => { if (!cancelled) setFestivalCampaigns(campaigns); })
+        .catch(error => console.warn('[HomePage] Festival campaigns unavailable.', error));
+    };
+    refreshCampaigns();
+    const timer = window.setInterval(refreshCampaigns, 60000);
+    return () => { cancelled = true; window.clearInterval(timer); };
   }, []);
 
   useEffect(() => {
