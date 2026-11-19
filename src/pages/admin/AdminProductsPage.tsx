@@ -187,6 +187,9 @@ export const AdminProductsPage: React.FC = () => {
           !Number.isInteger(stock) || stock < 0 || !form.categoryId) {
         throw new Error('Enter a product name, valid price, non-negative whole stock count and category.');
       }
+      if (form.productVideoUrl.trim() && (!/^https:\/\//i.test(form.productVideoUrl.trim()) || !/\.(mp4|webm)(\?|#|$)/i.test(form.productVideoUrl.trim()))) {
+        throw new Error('Use a secure HTTPS MP4 or WebM video URL.');
+      }
       const baseSlug = slugify(form.name);
       if (!baseSlug) throw new Error('Please enter a valid product title.');
       const payload = {
@@ -444,6 +447,10 @@ export const AdminProductsPage: React.FC = () => {
                   <label className="block">Stones & embellishments<input maxLength={160} value={form.stoneType} onChange={e => setForm({ ...form, stoneType: e.target.value })} placeholder="e.g. American diamonds, pearls" className="mt-1 w-full min-h-10 px-3 bg-white border border-[#E7DCEB] rounded-lg"/></label>
                   <label className="block">Closure / fastening<input maxLength={120} value={form.closureType} onChange={e => setForm({ ...form, closureType: e.target.value })} placeholder="e.g. Push-back, lobster clasp" className="mt-1 w-full min-h-10 px-3 bg-white border border-[#E7DCEB] rounded-lg"/></label>
                 </div>
+                <label className="block">Product video URL (optional)
+                  <input type="url" value={form.productVideoUrl} onChange={e => setForm({ ...form, productVideoUrl: e.target.value })} placeholder="https://your-hostinger-storage.com/product-demo.mp4" className="mt-1 w-full min-h-10 px-3 bg-white border border-[#E7DCEB] rounded-lg"/>
+                  <span className="text-[10px] text-[#806B8D]">Paste a secure HTTPS link to an MP4 or WebM video uploaded to Hostinger storage.</span>
+                </label>
                 <label className="block">Care instructions <textarea rows={4} value={form.careInstructions} onChange={e => setForm({ ...form, careInstructions: e.target.value })} placeholder={"Store in a dry pouch\\nAvoid perfume and water\\nWipe gently after wear"} className="mt-1 w-full p-3 bg-white border border-[#E7DCEB] rounded-lg"/><span className="text-[10px] text-[#806B8D]">Enter one instruction per line (max 20).</span></label>
               </section>
               <div className="flex justify-end gap-2 pt-3 border-t border-[#E7DCEB]">
