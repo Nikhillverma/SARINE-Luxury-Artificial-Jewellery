@@ -248,6 +248,60 @@ publicRouter.get("/announcement", async (_req, res, next) => {
   } catch (error) { next(error); }
 });
 
+
+const campaignDefaults = [];
+function normalizeCampaigns(value) {
+  let parsed = [];
+  try { parsed = typeof value === "string" ? JSON.parse(value) : value; } catch {}
+  if (!Array.isArray(parsed)) return campaignDefaults;
+  return parsed.filter(item => item && typeof item.id === "string").slice(0, 30).map(item => ({
+    id: item.id, name: String(item.name || "").slice(0, 100),
+    festival: String(item.festival || "").slice(0, 60),
+    eyebrow: String(item.eyebrow || "").slice(0, 100),
+    title: String(item.title || "").slice(0, 180),
+    subtitle: String(item.subtitle || "").slice(0, 400),
+    imageUrl: String(item.imageUrl || "").slice(0, 2048),
+    ctaText: String(item.ctaText || "Shop now").slice(0, 80),
+    ctaLink: String(item.ctaLink || "/shop").slice(0, 500),
+    couponCode: String(item.couponCode || "").toUpperCase().slice(0, 40),
+    offerLabel: String(item.offerLabel || "").slice(0, 80),
+    startsAt: item.startsAt || null, endsAt: item.endsAt || null,
+    active: item.active === true, updatedAt: item.updatedAt || null
+  }));
+}
+async function readCampaigns() {
+  await ensureSchema();
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='festival_campaigns' LIMIT 1");
+  return normalizeCampaigns(rows[0]?.setting_value);
+}
+adminOnly.get("/campaigns", async (_req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ campaigns: await readCampaigns() }); }
+  catch (error) { next(error); }
+});
+adminOnly.put("/campaigns", async (req, res, next) => {
+  try {
+    const campaigns = normalizeCampaigns(req.body?.campaigns);
+    if (Array.isArray(req.body?.campaigns) && req.body.campaigns.length > 30) return res.status(400).json({ error: "You can manage up to 30 campaigns." });
+    for (const item of campaigns) {
+      if (!item.name || !item.title || !item.festival) return res.status(400).json({ error: "Each campaign needs a name, festival and headline." });
+      if (!item.imageUrl || (!item.imageUrl.startsWith("/") && !/^https:\/\//i.test(item.imageUrl))) return res.status(400).json({ error: "Each campaign needs a valid site image path or HTTPS image URL." });
+      if (!(item.ctaLink.startsWith("/") && !item.ctaLink.startsWith("//")) && !/^https:\/\//i.test(item.ctaLink)) return res.status(400).json({ error: "Campaign destinations must be internal paths or HTTPS URLs." });
+      if (item.startsAt && item.endsAt && new Date(item.startsAt) >= new Date(item.endsAt)) return res.status(400).json({ error: "Campaign end date must be after its start date." });
+    }
+    const saved = campaigns.map(item => ({ ...item, updatedAt: new Date().toISOString() }));
+    await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('festival_campaigns', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [JSON.stringify(saved)]);
+    res.set("Cache-Control", "no-store").json({ success: true, campaigns: saved });
+  } catch (error) { next(error); }
+});
+publicRouter.get("/campaign", async (_req, res, next) => {
+  try {
+    const now = Date.now();
+    const campaigns = await readCampaigns();
+    const campaign = campaigns.filter(item => item.active && (!item.startsAt || new Date(item.startsAt).getTime() <= now) && (!item.endsAt || new Date(item.endsAt).getTime() > now)).sort((a,b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime())[0] || null;
+    res.set("Cache-Control", "no-store").json({ campaign });
+  } catch (error) { next(error); }
+});
+
 admin.use("/", adminOnly);
 export { publicRouter as publicStorefrontRouter };
 export default admin;
