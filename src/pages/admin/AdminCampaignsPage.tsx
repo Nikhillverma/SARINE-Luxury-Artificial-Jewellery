@@ -11,7 +11,7 @@ const blank = (): FestivalCampaign => ({
   eyebrow: "A SPECIAL SARINE OFFER", title: "", subtitle: "", imageUrl: "",
   ctaText: "Shop the Collection", ctaLink: "/shop", couponCode: "", offerLabel: "",
   startsAt: null, endsAt: null, active: false, showCountdown: false, artworkOnly: true,
-  storewideDiscountPercent: 0, sortOrder: 10, updatedAt: null
+  storewideDiscountPercent: 0, sortOrder: 10, heroPlacement: "auto", heroDurationSeconds: 9, updatedAt: null
 });
 function toLocalInput(value: string | null) {
   if (!value) return "";
@@ -95,7 +95,9 @@ export const AdminCampaignsPage: React.FC = () => {
         <label className="text-xs text-[#705E7B]">Festival / occasion<select value={draft.festival} onChange={e => update("festival", e.target.value)} className="mt-1 w-full border rounded-lg p-2.5 text-sm">{festivals.map(value => <option key={value}>{value}</option>)}</select></label>
         <label className="text-xs text-[#705E7B]">Offer label<input value={draft.offerLabel} onChange={e => update("offerLabel", e.target.value)} placeholder="10% SALE OFF" maxLength={80} className="mt-1 w-full border rounded-lg p-2.5 text-sm"/></label>
         <label className="text-xs text-[#705E7B]">Eyebrow<input value={draft.eyebrow} onChange={e => update("eyebrow", e.target.value)} maxLength={100} className="mt-1 w-full border rounded-lg p-2.5 text-sm"/></label>
-        <label className="text-xs text-[#705E7B]">Slide priority (lower appears first)<input type="number" min={0} max={99} value={draft.sortOrder} onChange={e => update("sortOrder", Number(e.target.value))} className="mt-1 w-full border rounded-lg p-2.5 text-sm"/></label>
+        <label className="text-xs text-[#705E7B]">Campaign order (lower appears first)<input type="number" min={0} max={99} value={draft.sortOrder} onChange={e => update("sortOrder", Number(e.target.value))} className="mt-1 w-full border rounded-lg p-2.5 text-sm"/></label>
+        <label className="text-xs text-[#705E7B]">First-slide placement<select value={draft.heroPlacement || "auto"} onChange={e => update("heroPlacement", e.target.value as FestivalCampaign["heroPlacement"])} className="mt-1 w-full border rounded-lg p-2.5 text-sm"><option value="auto">Automatic — feature live storewide offers first</option><option value="first">Manually feature this campaign first</option><option value="normal">Keep in normal carousel rotation</option></select></label>
+        <label className="text-xs text-[#705E7B]">Campaign slide display time (seconds)<input type="number" min={5} max={20} step={1} value={draft.heroDurationSeconds || 9} onChange={e => update("heroDurationSeconds", Math.max(5, Math.min(20, Number(e.target.value) || 9)))} className="mt-1 w-full border rounded-lg p-2.5 text-sm"/><span className="block mt-1 text-[11px]">Regular slides stay at 5 seconds. Choose 5–20 seconds for this offer.</span></label>
         <label className="text-xs text-[#705E7B] lg:col-span-2">Main headline<input required value={draft.title} onChange={e => update("title", e.target.value)} maxLength={180} placeholder="Celebrate the Season in Sparkle" className="mt-1 w-full border rounded-lg p-2.5 text-sm"/></label>
         <label className="text-xs text-[#705E7B] lg:col-span-3">Description<textarea value={draft.subtitle} onChange={e => update("subtitle", e.target.value)} maxLength={400} rows={2} className="mt-1 w-full border rounded-lg p-2.5 text-sm"/></label>
         <label className="text-xs text-[#705E7B]">Button label<input value={draft.ctaText} onChange={e => update("ctaText", e.target.value)} maxLength={80} className="mt-1 w-full border rounded-lg p-2.5 text-sm"/></label>
@@ -132,7 +134,7 @@ export const AdminCampaignsPage: React.FC = () => {
     </form>
 
     <section className="bg-white border rounded-2xl overflow-hidden">
-      <div className="p-4 border-b flex justify-between items-center"><div><h2 className="font-semibold">Campaign library</h2><p className="text-xs text-[#705E7B] mt-1">Enabled campaigns automatically join the existing homepage hero carousel during their dates.</p></div><button onClick={() => void load()} className="text-xs inline-flex gap-1 items-center"><RefreshCw size={13}/> Refresh</button></div>
+      <div className="p-4 border-b flex justify-between items-center"><div><h2 className="font-semibold">Campaign library</h2><p className="text-xs text-[#705E7B] mt-1">Enabled campaigns join the existing homepage hero carousel during their dates. Live storewide offers can be prioritised automatically, or you can manually feature a campaign first.</p></div><button onClick={() => void load()} className="text-xs inline-flex gap-1 items-center"><RefreshCw size={13}/> Refresh</button></div>
       {loading ? <p className="p-8 text-center text-sm">Loading campaigns…</p> : items.length === 0 ? <p className="p-8 text-center text-sm text-gray-500">No campaigns created yet.</p> : <div className="divide-y">{items.map(item => <div key={item.id} className="p-4 flex flex-wrap gap-3 items-center">
         <div className="w-24 h-16 bg-[#F7F0FA] rounded-lg overflow-hidden">{item.imageUrl && <img src={item.imageUrl} alt="" className="w-full h-full object-cover"/>}</div>
         <div className="min-w-0 flex-1"><p className="font-semibold text-sm">{item.name} · {item.campaignType === "sale" ? "Sale" : item.festival}</p><p className="text-xs text-gray-500">{item.title}</p><p className="text-xs mt-1">{item.offerLabel || "Hero campaign"} {item.storewideDiscountPercent > 0 && <strong className="text-emerald-700">· {item.storewideDiscountPercent}% storewide</strong>} {item.showCountdown && "· Countdown"} {item.couponCode && "· " + item.couponCode}</p></div>

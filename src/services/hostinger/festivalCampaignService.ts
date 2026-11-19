@@ -18,6 +18,8 @@ export interface FestivalCampaign {
   artworkOnly: boolean;
   storewideDiscountPercent: number;
   sortOrder: number;
+  heroPlacement: "auto" | "first" | "normal";
+  heroDurationSeconds: number;
   updatedAt: string | null;
 }
 const API_BASE = (import.meta.env.VITE_HOSTINGER_API_BASE_URL || (import.meta.env.DEV ? "/api" : "https://lavender-goldfish-844589.hostingersite.com/api")).replace(/\/+$/, "");
@@ -36,7 +38,9 @@ async function fetchActiveCampaigns(): Promise<FestivalCampaign[]> {
     showCountdown: item.showCountdown === true,
     artworkOnly: item.artworkOnly !== false,
     storewideDiscountPercent: Math.max(0, Math.min(75, Number(item.storewideDiscountPercent) || 0)),
-    sortOrder: Number(item.sortOrder) || 0
+    sortOrder: Number(item.sortOrder) || 0,
+    heroPlacement: item.heroPlacement === "first" || item.heroPlacement === "normal" ? item.heroPlacement : "auto",
+    heroDurationSeconds: Math.max(5, Math.min(20, Number(item.heroDurationSeconds) || 9))
   }));
 }
 export const festivalCampaignService = {
