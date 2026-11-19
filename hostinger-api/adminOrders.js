@@ -447,7 +447,7 @@ router.post("/update", async (req, res, next) => {
 
     // 4. Action: mark_out_for_delivery — courier has the parcel for final delivery.
     if (action === "mark_out_for_delivery") {
-      if (!["shipped", "out_for_delivery"].includes(order.order_status)) {
+      if (order.order_status !== "shipped") {
         await connection.rollback();
         connection.release();
         connection = null;
