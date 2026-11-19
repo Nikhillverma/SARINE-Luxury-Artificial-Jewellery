@@ -516,7 +516,7 @@ router.post("/update", async (req, res, next) => {
     if (action === "cancel") {
       const currentStatus = order.order_status;
 
-      if (["packed", "shipped", "out_for_delivery", "delivered"].includes(currentStatus)) {
+      if (["shipped", "out_for_delivery", "delivered"].includes(currentStatus)) {
         await connection.rollback();
         connection.release();
         connection = null;
