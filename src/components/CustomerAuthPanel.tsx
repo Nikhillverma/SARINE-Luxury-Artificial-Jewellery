@@ -43,7 +43,8 @@ export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, co
     let active = true;
     customerAuthService.getMethods().then(result => {
       if (!active) return;
-      setMethods({ email: Boolean(result.email?.enabled), phone: Boolean(result.phone?.enabled) });\n      setGoogleEnabled(Boolean(result.google?.enabled));
+      setMethods({ email: Boolean(result.email?.enabled), phone: Boolean(result.phone?.enabled) });
+      setGoogleEnabled(Boolean(result.google?.enabled));
       setMethodReasons({ email: result.email?.reason || "Email verification is not available yet.", phone: result.phone?.reason || "Phone verification is not available yet." });
     }).catch(() => {
       if (active) setMethodReasons({ email: "Unable to check email verification availability. Please use password sign-in.", phone: "Phone verification is not available yet." });
