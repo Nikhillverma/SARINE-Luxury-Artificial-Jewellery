@@ -59,6 +59,13 @@ export function getProductImage(product?: Partial<Product> | null): string {
   return fallback;
 }
 
+function CampaignDestinationLink({ to, className, ariaLabel, children }: { to: string; className?: string; ariaLabel?: string; children: React.ReactNode }) {
+  if (/^https:\/\//i.test(to)) {
+    return <a href={to} className={className} aria-label={ariaLabel}>{children}</a>;
+  }
+  return <Link to={to} className={className} aria-label={ariaLabel}>{children}</Link>;
+}
+
 function CampaignCountdown({ endsAt }: { endsAt: string }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -374,9 +381,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             }`}
           >
             {slide.campaign?.artworkOnly ? (
-              <Link to={slide.shopLink} aria-label={`${slide.campaign.title} — ${slide.campaign.ctaText || "Shop now"}`} className="absolute inset-0 block">
+              <CampaignDestinationLink to={slide.shopLink} ariaLabel={`${slide.campaign.title} — ${slide.campaign.ctaText || "Shop now"}`} className="absolute inset-0 block">
                 <img src={slide.image} alt={`${slide.campaign.festival}: ${slide.campaign.title}`} className="absolute inset-0 w-full h-full object-cover object-center shadow-none" />
-              </Link>
+              </CampaignDestinationLink>
             ) : (
               <img
                 src={slide.image}
@@ -401,13 +408,13 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               {currentHero.paragraph}
             </p>
             <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-3">
-              <Link
+              <CampaignDestinationLink
                 to={currentHero.shopLink}
                 className="px-6 sm:px-7 py-3 bg-[#563568] text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[#A184BD] transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"
               >
                 <span>{currentHero.ctaText}</span>
                 <ArrowRight size={13} />
-              </Link>
+              </CampaignDestinationLink>
               <a
                 href="#categories"
                 className="px-6 sm:px-7 py-3 bg-transparent border border-[#563568] text-[#563568] text-xs sm:text-[13px] font-sans font-medium hover:bg-[#EBDFF2] hover:text-[#563568] transition-colors rounded-xs"
