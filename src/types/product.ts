@@ -74,6 +74,8 @@ export interface Product {
   stoneType?: string;
   closureType?: string;
   careInstructions?: string[];
+  /** Optional HTTPS MP4/WebM product demonstration video. */
+  productVideoUrl?: string;
   /** Active purchasable size/colour combinations, if this design uses variants. */
   variants?: ProductVariant[];
 }
