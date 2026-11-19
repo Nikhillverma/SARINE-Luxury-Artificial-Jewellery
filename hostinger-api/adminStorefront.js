@@ -169,7 +169,7 @@ const defaultOccasions = [
   { id: "gifting", title: "Gifting", subtitle: "Precious tokens of affection", image: "/images/zoya-open-cuff-leaf-bangle.jpg", link: "/shop?category=bracelets", active: true, sortOrder: 3 }
 ];
 function validateOccasions(input) {
-  if (!Array.isArray(input) || input.length > 12) throw new Error("Add between 1 and 12 occasion cards.");
+  if (!Array.isArray(input) || input.length > 12) throw new Error("Add up to 12 occasion cards.");
   const ids = new Set();
   return input.map((item, index) => {
     const id = String(item?.id || "").trim();
@@ -177,7 +177,7 @@ function validateOccasions(input) {
     const subtitle = String(item?.subtitle || "").trim();
     const image = String(item?.image || "").trim();
     const link = String(item?.link || "").trim();
-    if (!/^[a-z0-9][a-z0-9-]{1,59}$/.test(id) || ids.has(id)) throw new Error("Each occasion needs a unique, valid ID.");
+    if (!/^[a-z0-9][a-z0-9-]{0,59}$/.test(id) || ids.has(id)) throw new Error("Each occasion needs a unique, valid ID.");
     ids.add(id);
     if (!title || title.length > 80 || subtitle.length > 180) throw new Error("Enter an occasion title (maximum 80 characters) and description (maximum 180).");
     if (!image || image.length > 2048 || (!image.startsWith("/") && !/^https:\/\//i.test(image))) throw new Error("Choose a valid site image path or HTTPS image URL.");
