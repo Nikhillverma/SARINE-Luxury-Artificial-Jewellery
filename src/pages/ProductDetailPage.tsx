@@ -198,7 +198,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
     const dateOptions: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
     const dateStr = `${minDate.toLocaleDateString('en-IN', dateOptions)} - ${maxDate.toLocaleDateString('en-IN', dateOptions)}`;
 
-    setPincodeResult(`Delivery available to ${clean} by ${dateStr}. Complimentary Express Shipping.`);
+    setPincodeResult(`Estimated delivery window for PIN code ${clean}: ${dateStr}. Courier serviceability and final delivery promise are confirmed at checkout.`);
   };
 
   const handleAddToCart = () => {
@@ -428,6 +428,16 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
             </div>
           </div>
 
+          {product.productVideoUrl && (
+            <div className="mt-4 overflow-hidden rounded-xl border border-[#E7DCEB] bg-white">
+              <div className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-[#563568]">See the details in motion</div>
+              <video controls playsInline preload="metadata" className="max-h-[520px] w-full bg-[#F7F0FA] object-contain" aria-label={`Product video for ${product.name}`}>
+                <source src={product.productVideoUrl} />
+                Your browser does not support this product video.
+              </video>
+            </div>
+          )}
+
           {/* Right Column: Contiguous Purchase & Details Module (5 cols) */}
           <div className="lg:col-span-5 bg-white p-6 sm:p-8 border border-[#E7DCEB] rounded-xs shadow-xs space-y-6">
             <div>
@@ -506,9 +516,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
             </div>
 
             {/* Size Guide Trigger (for rings/bracelets) */}
-            {(product.jewelleryType === 'ring' || product.jewelleryType === 'bracelet') && (
+            {(product.jewelleryType === 'ring' || product.jewelleryType === 'bracelet' || product.jewelleryType === 'necklace' || product.jewelleryType === 'anklet' || product.jewelleryType === 'earrings' || product.jewelleryType === 'set') && (
               <div className="pt-2 flex items-center justify-between text-xs">
-                <span className="text-[#6F6475]">Standard Indian Atelier Fit</span>
+                <span className="text-[#6F6475]">Find your best fit</span>
                 <button
                   type="button"
                   onClick={() => setIsSizeGuideOpen(true)}
