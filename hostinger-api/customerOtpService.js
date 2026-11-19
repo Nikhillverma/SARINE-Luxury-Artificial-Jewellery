@@ -24,88 +24,41 @@ export function getCustomerOtpAvailability() {
 }
 
 let schemaReady;
-export async function ensureCustomerOtpSchema() {
+export async function assertCustomerOtpSchema() {
   if (schemaReady) return schemaReady;
   schemaReady = (async () => {
-  const [columns] = await pool.execute(
-    "SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, CHARACTER_SET_NAME, COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND COLUMN_NAME IN ('id', 'email', 'email_normalized', 'phone', 'phone_normalized', 'google_sub')"
-  );
-  const byName = new Map(columns.map((column) => [column.COLUMN_NAME, column]));
-  for (const required of ["id", "email", "email_normalized", "phone"]) {
-    if (!byName.has(required)) {
-      throw new Error(`Customer authentication schema is missing customers.${required}; migration stopped without changing customer data.`);
+    const [columns] = await pool.execute(
+      "SELECT COLUMN_NAME, IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND COLUMN_NAME IN ('id', 'email', 'email_normalized', 'phone', 'phone_normalized', 'google_sub')"
+    );
+    const byName = new Map(columns.map((column) => [column.COLUMN_NAME, column]));
+    for (const required of ["id", "email", "email_normalized", "phone", "phone_normalized", "google_sub"]) {
+      if (!byName.has(required)) {
+        throw new Error(`Customer authentication migration is incomplete: customers.${required} is missing. No automatic database changes were attempted.`);
+      }
     }
-  }
-  for (const name of ["email", "email_normalized"]) {
-    const column = byName.get(name);
-    if (column.IS_NULLABLE !== "YES") {
-      const safeType = String(column.COLUMN_TYPE).replace(/[^a-zA-Z0-9(), ']/g, "");
-      const charset = column.CHARACTER_SET_NAME && /^[A-Za-z0-9_]+$/.test(column.CHARACTER_SET_NAME) ? ` CHARACTER SET ${column.CHARACTER_SET_NAME}` : "";
-      const collation = column.COLLATION_NAME && /^[A-Za-z0-9_]+$/.test(column.COLLATION_NAME) ? ` COLLATE ${column.COLLATION_NAME}` : "";
-      if (!safeType) throw new Error(`Unsupported customers.${name} column definition; migration stopped.`);
-      await pool.query(`ALTER TABLE customers MODIFY COLUMN \`${name}\` ${safeType}${charset}${collation} NULL`);
+    for (const name of ["email", "email_normalized"]) {
+      if (byName.get(name).IS_NULLABLE !== "YES") {
+        throw new Error(`Customer authentication migration is incomplete: customers.${name} must allow NULL for phone-only accounts.`);
+      }
     }
-  }
-  if (!byName.has("phone_normalized")) {
-    await pool.query("ALTER TABLE customers ADD COLUMN phone_normalized VARCHAR(20) NULL");
-  }
-  if (!byName.has("google_sub")) {
-    await pool.query("ALTER TABLE customers ADD COLUMN google_sub VARCHAR(255) NULL");
-  }
-  const [indexes] = await pool.execute(
-    "SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND INDEX_NAME = 'uq_customers_phone_normalized'"
-  );
-  if (!indexes.length) {
-    const [duplicates] = await pool.execute("SELECT COUNT(*) AS total FROM (SELECT phone_normalized FROM customers WHERE phone_normalized IS NOT NULL AND phone_normalized <> '' GROUP BY phone_normalized HAVING COUNT(*) > 1) AS duplicate_phone_values");
-    if (Number(duplicates[0]?.total) > 0) throw new Error("Duplicate customer phone_normalized values exist; unique index was not created. Review the read-only customer-auth preflight.");
-    await pool.query("CREATE UNIQUE INDEX uq_customers_phone_normalized ON customers (phone_normalized)");
-  }
-  const [googleIndexes] = await pool.execute("SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND INDEX_NAME = 'uq_customers_google_sub'");
-  if (!googleIndexes.length) {
-    const [duplicates] = await pool.execute("SELECT COUNT(*) AS total FROM (SELECT google_sub FROM customers WHERE google_sub IS NOT NULL AND google_sub <> '' GROUP BY google_sub HAVING COUNT(*) > 1) AS duplicate_google_values");
-    if (Number(duplicates[0]?.total) > 0) throw new Error("Duplicate customer Google subject values exist; unique index was not created. Review existing Google identity links.");
-    await pool.query("CREATE UNIQUE INDEX uq_customers_google_sub ON customers (google_sub)");
-  }
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS customer_auth_challenges (
-      id CHAR(36) NOT NULL PRIMARY KEY,
-      identifier VARCHAR(254) NOT NULL,
-      method VARCHAR(10) NOT NULL,
-      purpose VARCHAR(24) NOT NULL,
-      otp_hash CHAR(64) NOT NULL,
-      attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
-      expires_at DATETIME(3) NOT NULL,
-      consumed_at DATETIME(3) NULL,
-      created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-      INDEX idx_customer_auth_challenge_lookup (identifier, purpose, created_at),
-      INDEX idx_customer_auth_challenge_expiry (expires_at)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-  `);
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS customer_auth_delivery_events (
-      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-      challenge_id CHAR(36) NULL,
-      method VARCHAR(10) NOT NULL,
-      purpose VARCHAR(24) NOT NULL,
-      provider VARCHAR(20) NOT NULL,
-      identifier_masked VARCHAR(254) NOT NULL,
-      status VARCHAR(12) NOT NULL,
-      failure_code VARCHAR(40) NULL,
-      created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-      INDEX idx_customer_auth_delivery_recent (created_at, status),
-      INDEX idx_customer_auth_delivery_method (method, created_at)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-  `);
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS customer_password_resets (
-      token_hash CHAR(64) NOT NULL PRIMARY KEY,
-      customer_id CHAR(36) NOT NULL,
-      expires_at DATETIME(3) NOT NULL,
-      used_at DATETIME(3) NULL,
-      created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-      INDEX idx_customer_password_reset_customer (customer_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-  `);
+    const [tables] = await pool.execute(
+      "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('customer_auth_challenges', 'customer_auth_delivery_events', 'customer_password_resets')"
+    );
+    const tableNames = new Set(tables.map((table) => table.TABLE_NAME));
+    for (const name of ["customer_auth_challenges", "customer_auth_delivery_events", "customer_password_resets"]) {
+      if (!tableNames.has(name)) {
+        throw new Error(`Customer authentication migration is incomplete: table ${name} is missing. No automatic database changes were attempted.`);
+      }
+    }
+    const [indexes] = await pool.execute(
+      "SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND INDEX_NAME IN ('uq_customers_phone_normalized', 'uq_customers_google_sub')"
+    );
+    const indexNames = new Set(indexes.map((index) => index.INDEX_NAME));
+    for (const name of ["uq_customers_phone_normalized", "uq_customers_google_sub"]) {
+      if (!indexNames.has(name)) {
+        throw new Error(`Customer authentication migration is incomplete: unique index ${name} is missing.`);
+      }
+    }
   })().catch((error) => { schemaReady = null; throw error; });
   return schemaReady;
 }
