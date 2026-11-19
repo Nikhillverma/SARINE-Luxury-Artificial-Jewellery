@@ -31,6 +31,7 @@ import {
   ChevronRight,
   PlusCircle,
   Tag,
+  CalendarHeart,
   UploadCloud,
   FileText,
   LogOut,
@@ -184,6 +185,12 @@ interface NavItem {
       path: '/admin/marketing',
       icon: Tag,
       match: (p: string) => p.startsWith('/admin/marketing')
+    },
+    {
+      name: 'Festival Campaigns',
+      path: '/admin/campaigns',
+      icon: CalendarHeart,
+      match: (p: string) => p.startsWith('/admin/campaigns')
     },
     {
       name: 'Storefront Studio',
