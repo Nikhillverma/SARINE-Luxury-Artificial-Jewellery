@@ -11,6 +11,7 @@ import { Product, isInStock, JEWELLERY_TYPE_LABELS, getDiscountPercent } from '.
 import { formatInr } from '../utils/currency';
 import { useWishlist } from '../context/WishlistContext';
 import { Heart } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 
 interface ProductCardProps {
   product: Product;
@@ -19,8 +20,11 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const inStock = isInStock(product);
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const { storewideDiscountPercent } = useCart();
   const wishlisted = isInWishlist(product.id);
   const discountPercent = getDiscountPercent(product);
+  const campaignDiscount = Math.max(0, Math.min(75, storewideDiscountPercent));
+  const campaignPrice = Math.max(0, product.price - Math.floor(product.price * campaignDiscount / 100));
 
   const primaryImage = product.images[0] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80';
   const secondaryImage = product.images[1];
@@ -81,11 +85,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         )}
 
-        {discountPercent && inStock && (
-          <div className="absolute top-2.5 left-2.5 z-10">
-            <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#563568] text-white font-sans font-medium rounded-xs">
-              {discountPercent}% OFF
-            </span>
+        {(campaignDiscount > 0 || discountPercent) && inStock && (
+          <div className="absolute top-2.5 left-2.5 z-10 flex flex-col items-start gap-1">
+            {campaignDiscount > 0 && <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#A43E55] text-white font-sans font-semibold rounded-xs">{campaignDiscount}% SALE OFF</span>}
+            {discountPercent && <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#563568] text-white font-sans font-medium rounded-xs">{discountPercent}% OFF</span>}
           </div>
         )}
 
@@ -123,13 +126,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Price Row */}
         <div className="mt-1.5 flex items-baseline gap-2.5">
-          <span className="text-[#302438] font-medium text-sm font-sans tracking-tight">
-            {formatInr(product.price)}
-          </span>
-          {product.compareAtPrice && (
-            <span className="text-[#6F6475] line-through text-xs font-sans">
-              {formatInr(product.compareAtPrice)}
-            </span>
+          {campaignDiscount > 0 ? (
+            <>
+              <span className="text-[#A43E55] font-semibold text-sm font-sans tracking-tight">{formatInr(campaignPrice)}</span>
+              <span className="text-[#6F6475] line-through text-xs font-sans">{formatInr(product.price)}</span>
+            </>
+          ) : (
+            <>
+              <span className="text-[#302438] font-medium text-sm font-sans tracking-tight">{formatInr(product.price)}</span>
+              {product.compareAtPrice && <span className="text-[#6F6475] line-through text-xs font-sans">{formatInr(product.compareAtPrice)}</span>}
+            </>
           )}
         </div>
       </div>

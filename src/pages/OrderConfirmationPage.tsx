@@ -300,6 +300,12 @@ export const OrderConfirmationPage: React.FC = () => {
                 <span>Items Subtotal</span>
                 <span>{formatInr(order.subtotal)}</span>
               </div>
+              {!!order.discountAmount && order.discountAmount > 0 && (
+                <div className="flex justify-between text-emerald-700">
+                  <span>{order.promotion?.name || (order.couponCode ? "Coupon (" + order.couponCode + ")" : "Promotion discount")}</span>
+                  <span>-{formatInr(order.discountAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-[#6F6475]">
                 <span>Standard Delivery (India)</span>
                 <span>{order.shippingFee === 0 ? 'Complimentary' : formatInr(order.shippingFee)}</span>

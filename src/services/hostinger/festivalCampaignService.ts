@@ -2,6 +2,7 @@ export interface FestivalCampaign {
   id: string;
   name: string;
   festival: string;
+  campaignType: "festival" | "sale";
   eyebrow: string;
   title: string;
   subtitle: string;
@@ -13,6 +14,10 @@ export interface FestivalCampaign {
   startsAt: string | null;
   endsAt: string | null;
   active: boolean;
+  showCountdown: boolean;
+  artworkOnly: boolean;
+  storewideDiscountPercent: number;
+  sortOrder: number;
   updatedAt: string | null;
 }
 const API_BASE = (import.meta.env.VITE_HOSTINGER_API_BASE_URL || (import.meta.env.DEV ? "/api" : "https://lavender-goldfish-844589.hostingersite.com/api")).replace(/\/+$/, "");
@@ -22,8 +27,21 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!response.ok) throw new Error(data.error || "Campaign request failed.");
   return data as T;
 }
+async function fetchActiveCampaigns(): Promise<FestivalCampaign[]> {
+  const data = await request<{ campaigns?: FestivalCampaign[]; campaign?: FestivalCampaign | null }>("/storefront/campaign");
+  const campaigns = Array.isArray(data.campaigns) ? data.campaigns : data.campaign ? [data.campaign] : [];
+  return campaigns.map(item => ({
+    ...item,
+    campaignType: (item.campaignType === "sale" ? "sale" : "festival") as FestivalCampaign["campaignType"],
+    showCountdown: item.showCountdown === true,
+    artworkOnly: item.artworkOnly !== false,
+    storewideDiscountPercent: Math.max(0, Math.min(75, Number(item.storewideDiscountPercent) || 0)),
+    sortOrder: Number(item.sortOrder) || 0
+  }));
+}
 export const festivalCampaignService = {
   list: async () => (await request<{campaigns: FestivalCampaign[]}>("/admin/storefront/campaigns")).campaigns,
   save: async (campaigns: FestivalCampaign[]) => (await request<{campaigns: FestivalCampaign[]}>("/admin/storefront/campaigns", { method: "PUT", body: JSON.stringify({campaigns}) })).campaigns,
-  getActive: async () => (await request<{campaign: FestivalCampaign | null}>("/storefront/campaign")).campaign
+  getActiveCampaigns: fetchActiveCampaigns,
+  getActive: async () => (await fetchActiveCampaigns())[0] || null
 };

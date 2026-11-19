@@ -5,7 +5,7 @@
  * and seamless checkout progression.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -23,6 +23,9 @@ export const BagPage: React.FC = () => {
     items,
     itemCount,
     subtotal,
+    storewideDiscountPercent,
+    storewideCampaign,
+    promotionDiscount,
     updateQuantity,
     removeItem,
     clearCart,
@@ -48,7 +51,15 @@ export const BagPage: React.FC = () => {
   });
   const [couponError, setCouponError] = useState<string | null>(null);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
-  const activeCoupon = appliedCoupon && appliedCoupon.subtotal === subtotal ? appliedCoupon : null;
+  const activeCoupon = !storewideDiscountPercent && appliedCoupon && appliedCoupon.subtotal === subtotal ? appliedCoupon : null;
+
+  useEffect(() => {
+    if (storewideDiscountPercent > 0) {
+      setAppliedCoupon(null);
+      localStorage.removeItem('sarine_applied_coupon');
+      setCouponError(null);
+    }
+  }, [storewideDiscountPercent]);
 
   // Gifting state
   const [isGift, setIsGift] = useState(false);
@@ -57,6 +68,7 @@ export const BagPage: React.FC = () => {
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
     setCouponError(null);
+    if (storewideDiscountPercent > 0) { setCouponError('A storewide sale is already applied automatically. Coupon codes cannot be combined with this offer.'); return; }
     const code = couponInput.trim().toUpperCase();
     if (!code) {
       setCouponError("Enter a coupon code.");
@@ -90,7 +102,7 @@ export const BagPage: React.FC = () => {
     removeItem(item.productId, item.variantId);
   };
 
-  const currentDiscount = activeCoupon ? activeCoupon.discount : 0;
+  const currentDiscount = promotionDiscount + (activeCoupon ? activeCoupon.discount : 0);
   const shippingFee = calculateShippingFee(subtotal, checkoutConfig);
   const finalTotal = Math.max(0, subtotal - currentDiscount) + shippingFee;
 
@@ -249,7 +261,7 @@ export const BagPage: React.FC = () => {
                           {/* Unit Price (2 cols) */}
                           <div className="sm:col-span-2 text-left sm:text-center text-xs sm:text-sm font-sans text-[#302438]">
                             <span className="sm:hidden text-[#6F6475] mr-2">Price:</span>
-                            {formatInr(item.unitPrice)}
+                            {storewideDiscountPercent > 0 ? <><span className="text-[#A43E55] font-semibold">{formatInr(item.discountedUnitPrice)}</span><span className="ml-1 text-[#6F6475] line-through">{formatInr(item.unitPrice)}</span></> : formatInr(item.unitPrice)}
                           </div>
 
                           {/* Quantity Stepper (2 cols) */}
@@ -287,7 +299,7 @@ export const BagPage: React.FC = () => {
                             <span className="sm:hidden text-xs text-[#6F6475] font-sans font-normal mr-2">
                               Total:
                             </span>
-                            {formatInr(item.lineTotal)}
+                            {formatInr(storewideDiscountPercent > 0 ? item.discountedLineTotal : item.lineTotal)}
                           </div>
                         </div>
                       );
@@ -377,13 +389,14 @@ export const BagPage: React.FC = () => {
                         type="text"
                         value={couponInput}
                         onChange={(e) => setCouponInput(e.target.value)}
-                        placeholder={activeCoupon ? "Enter a different coupon code" : "Enter coupon code"}
+                        placeholder={storewideDiscountPercent > 0 ? "Coupon unavailable during storewide sale" : activeCoupon ? "Enter a different coupon code" : "Enter coupon code"}
                         aria-label="Coupon code"
+                        disabled={storewideDiscountPercent > 0}
                         className="flex-1 min-w-0 p-2 bg-[#F7F0FA] border border-[#E7DCEB] text-xs uppercase rounded-xs focus:outline-none focus:border-[#563568]"
                       />
                       <button
                         type="submit"
-                        disabled={isApplyingCoupon}
+                        disabled={isApplyingCoupon || storewideDiscountPercent > 0}
                         className="px-3.5 py-2 bg-[#563568] text-white text-xs font-medium rounded-xs hover:bg-[#A184BD] transition-colors cursor-pointer disabled:opacity-60"
                       >
                         {isApplyingCoupon ? 'Checking...' : activeCoupon ? 'Replace' : 'Apply'}
@@ -399,6 +412,12 @@ export const BagPage: React.FC = () => {
                       <span className="text-[#302438] font-medium">{formatInr(subtotal)}</span>
                     </div>
 
+                    {promotionDiscount > 0 && (
+                      <div className="flex items-baseline justify-between text-emerald-700">
+                        <span>{storewideCampaign?.offerLabel || (storewideDiscountPercent + "% Storewide Sale")}</span>
+                        <span>-{formatInr(promotionDiscount)}</span>
+                      </div>
+                    )}
                     {activeCoupon && (
                       <div className="flex items-baseline justify-between text-emerald-700">
                         <span>Coupon Discount</span>
