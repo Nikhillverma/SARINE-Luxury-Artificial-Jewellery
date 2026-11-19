@@ -422,6 +422,14 @@ export const AdminOrdersPage: React.FC = () => {
             Placed
           </span>
         );
+      case 'packed':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-xs text-[11px] font-medium bg-[#F0E6F4] text-[#563568]">Packed</span>
+        );
+      case 'out_for_delivery':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-xs text-[11px] font-medium bg-[#E0F2FE] text-[#0369A1]">Out for delivery</span>
+        );
       case 'shipped':
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded-xs text-[11px] font-medium bg-[#E0F2FE] text-[#0369A1]">
