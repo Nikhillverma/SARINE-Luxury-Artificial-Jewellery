@@ -30,6 +30,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const customerAuthService = {
+  async getMethods(): Promise<{ email: { enabled: boolean; provider: string; reason: string | null }; phone: { enabled: boolean; provider: string; reason: string | null }; google: { enabled: boolean } }> {
+    return request("methods");
+  },
   async getSession(): Promise<CustomerIdentity | null> {
     try {
       const result = await request<{ authenticated: boolean; customer?: CustomerRecord }>("session");
