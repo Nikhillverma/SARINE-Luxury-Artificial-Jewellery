@@ -7,6 +7,7 @@ import { validateBulkProductRequest } from "./bulkProductPolicy.js";
 import { normalizeStringList, validateProductFields } from "./productPolicy.js";
 import { ensureProductVariantSchema, mapVariant, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
 import { isValidVariantSku, formatVariantLabel } from "./productVariantPolicy.js";
+import { ensureProductVideoColumn } from "./productVideoSchema.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -43,6 +44,7 @@ function mapProduct(row) {
     stoneType: row.stone_type || "",
     closureType: row.closure_type || "",
     careInstructions: parseJson(row.care_instructions, []),
+    productVideoUrl: row.product_video_url || "",
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -60,6 +62,10 @@ function validateProduct(body, partial = false) {
   if (body.status !== undefined && !STATUSES.has(body.status)) errors.push("Status must be active, draft or archived.");
   for (const field of ["images", "collectionSlugs", "tags", "careInstructions"]) {
     if (body[field] !== undefined && !Array.isArray(body[field])) errors.push(field + " must be an array.");
+  }
+  if (body.productVideoUrl !== undefined) {
+    if (typeof body.productVideoUrl !== "string" || body.productVideoUrl.length > 2048) errors.push("Product video URL must be text of 2048 characters or fewer.");
+    else if (body.productVideoUrl.trim() && !/^https:\/\//i.test(body.productVideoUrl.trim())) errors.push("Product video URL must use HTTPS.");
   }
   return errors;
 }
@@ -86,7 +92,8 @@ function valuesFromBody(body, existing = {}) {
     plating_finish: get("platingFinish"),
     stone_type: get("stoneType"),
     closure_type: get("closureType"),
-    care_instructions: JSON.stringify(normalizeStringList(get("careInstructions", [])))
+    care_instructions: JSON.stringify(normalizeStringList(get("careInstructions", []))),
+    product_video_url: get("productVideoUrl", "") || null
   };
 }
 
@@ -138,6 +145,7 @@ router.get("/", async (req, res, next) => {
 router.post("/", async (req, res, next) => {
   let connection;
   try {
+    await ensureProductVideoColumn();
     const body = req.body || {};
     const errors = validateProduct(body);
     if (errors.length) return res.status(400).json({ error: errors.join(" ") });
@@ -152,12 +160,12 @@ router.post("/", async (req, res, next) => {
       `INSERT INTO products
        (id, slug, name, description, short_description, price, compare_at_price, cost_price,
         images, category_id, collection_slugs, jewellery_type, stock, status, tags,
-        base_metal, plating_finish, stone_type, closure_type, care_instructions, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))`,
+        base_metal, plating_finish, stone_type, closure_type, care_instructions, product_video_url, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))`,
       [id, data.slug, data.name, data.description, data.short_description, data.price,
        data.compare_at_price, data.cost_price, data.images, data.category_id,
        data.collection_slugs, data.jewellery_type, data.stock, data.status, data.tags,
-       data.base_metal, data.plating_finish, data.stone_type, data.closure_type, data.care_instructions]
+       data.base_metal, data.plating_finish, data.stone_type, data.closure_type, data.care_instructions, data.product_video_url]
     );
 
     if (data.stock > 0) {
@@ -389,6 +397,7 @@ router.put("/:id/variants", async (req, res, next) => {
 
 router.put("/:id", async (req, res, next) => {
   try {
+    await ensureProductVideoColumn();
     const body = req.body || {};
     const errors = validateProduct(body, true);
     if (errors.length) return res.status(400).json({ error: errors.join(" ") });
@@ -409,13 +418,13 @@ router.put("/:id", async (req, res, next) => {
       `UPDATE products SET slug=?, name=?, description=?, short_description=?, price=?,
        compare_at_price=?, cost_price=?, images=?, category_id=?, collection_slugs=?,
        jewellery_type=?, stock=?, status=?, tags=?, base_metal=?, plating_finish=?,
-       stone_type=?, closure_type=?, care_instructions=?, updated_at=CURRENT_TIMESTAMP(3)
+       stone_type=?, closure_type=?, care_instructions=?, product_video_url=?, updated_at=CURRENT_TIMESTAMP(3)
        WHERE id=?`,
       [data.slug, data.name, data.description, data.short_description, data.price,
        data.compare_at_price, data.cost_price, data.images, data.category_id,
        data.collection_slugs, data.jewellery_type, data.stock, data.status, data.tags,
        data.base_metal, data.plating_finish, data.stone_type, data.closure_type,
-       data.care_instructions, req.params.id]
+       data.care_instructions, data.product_video_url, req.params.id]
     );
     const [rows] = await pool.execute("SELECT * FROM products WHERE id = ? LIMIT 1", [req.params.id]);
     res.json({ success: true, product: mapProduct(rows[0]) });
