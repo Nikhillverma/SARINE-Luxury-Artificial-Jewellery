@@ -27,42 +27,46 @@ let schemaReady;
 export async function assertCustomerOtpSchema() {
   if (schemaReady) return schemaReady;
   schemaReady = (async () => {
-    const [columns] = await pool.execute(
-      "SELECT COLUMN_NAME, IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND COLUMN_NAME IN ('id', 'email', 'email_normalized', 'phone', 'phone_normalized', 'google_sub')"
-    );
-    const byName = new Map(columns.map((column) => [column.COLUMN_NAME, column]));
+    // Use database-local SHOW statements instead of information_schema.
+    // Some managed-hosting database users cannot read system metadata schemas
+    // even when they have full privileges on their application database.
+    const [customerColumns] = await pool.query("SHOW COLUMNS FROM customers");
+    const customerByName = new Map(customerColumns.map((column) => [column.Field, column]));
     for (const required of ["id", "email", "email_normalized", "phone", "phone_normalized", "google_sub"]) {
-      if (!byName.has(required)) {
+      if (!customerByName.has(required)) {
         throw new Error(`Customer authentication migration is incomplete: customers.${required} is missing. No automatic database changes were attempted.`);
       }
     }
     for (const name of ["email", "email_normalized"]) {
-      if (byName.get(name).IS_NULLABLE !== "YES") {
+      if (customerByName.get(name).Null !== "YES") {
         throw new Error(`Customer authentication migration is incomplete: customers.${name} must allow NULL for phone-only accounts.`);
       }
     }
-    const [tables] = await pool.execute(
-      "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('customer_auth_challenges', 'customer_auth_delivery_events', 'customer_password_resets')"
-    );
 
-    const [challengeColumns] = await pool.execute(
-      "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customer_auth_challenges' AND COLUMN_NAME = 'customer_id'"
+    const requiredTables = [
+      "customer_auth_challenges",
+      "customer_auth_delivery_events",
+      "customer_password_resets"
+    ];
+    for (const tableName of requiredTables) {
+      const [tables] = await pool.query(`SHOW TABLES LIKE '${tableName}'`);
+      if (!tables.length) {
+        throw new Error(`Customer authentication migration is incomplete: table ${tableName} is missing. No automatic database changes were attempted.`);
+      }
+    }
+
+    const [challengeColumns] = await pool.query(
+      "SHOW COLUMNS FROM customer_auth_challenges LIKE 'customer_id'"
     );
     if (!challengeColumns.length) {
       throw new Error("Customer authentication migration is incomplete: customer_auth_challenges.customer_id is missing.");
     }
-    const tableNames = new Set(tables.map((table) => table.TABLE_NAME));
-    for (const name of ["customer_auth_challenges", "customer_auth_delivery_events", "customer_password_resets"]) {
-      if (!tableNames.has(name)) {
-        throw new Error(`Customer authentication migration is incomplete: table ${name} is missing. No automatic database changes were attempted.`);
-      }
-    }
-    const [indexes] = await pool.execute(
-      "SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND INDEX_NAME IN ('uq_customers_phone_normalized', 'uq_customers_google_sub')"
-    );
-    const indexNames = new Set(indexes.map((index) => index.INDEX_NAME));
-    for (const name of ["uq_customers_phone_normalized", "uq_customers_google_sub"]) {
-      if (!indexNames.has(name)) {
+
+    const [indexes] = await pool.query("SHOW INDEX FROM customers");
+    const requiredUniqueIndexes = ["uq_customers_phone_normalized", "uq_customers_google_sub"];
+    for (const name of requiredUniqueIndexes) {
+      const index = indexes.find((entry) => entry.Key_name === name && Number(entry.Non_unique) === 0);
+      if (!index) {
         throw new Error(`Customer authentication migration is incomplete: unique index ${name} is missing.`);
       }
     }
