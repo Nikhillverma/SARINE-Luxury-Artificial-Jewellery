@@ -38,6 +38,9 @@ interface TrackedOrder {
   createdAt: string;
   lines: TrackedOrderLine[];
   subtotal: number;
+  discountAmount?: number;
+  promotion?: { id: string; name: string; discountPercent: number; discountAmount: number } | null;
+  couponCode?: string;
   shippingFee: number;
   total: number;
   paymentMethod: string;
@@ -493,6 +496,12 @@ export const TrackOrderPage: React.FC = () => {
                   <span>Subtotal</span>
                   <span className="tabular-nums text-[#302438]">{formatInr(order.subtotal)}</span>
                 </div>
+                {!!order.discountAmount && order.discountAmount > 0 && (
+                  <div className="flex justify-between text-emerald-700">
+                    <span>{order.promotion?.name || (order.couponCode ? "Coupon (" + order.couponCode + ")" : "Promotion discount")}</span>
+                    <span>-{formatInr(order.discountAmount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Shipping across India</span>
                   <span className="tabular-nums text-[#302438]">
