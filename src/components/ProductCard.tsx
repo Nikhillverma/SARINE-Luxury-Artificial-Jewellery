@@ -42,6 +42,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <Link to={`/product/${product.slug}`} className="block w-full h-full">
           <img
             src={primaryImage}
+            onError={(event) => { if (!event.currentTarget.src.endsWith("/images/category-bracelets.jpg")) event.currentTarget.src = "/images/category-bracelets.jpg"; }}
             alt={product.name}
             loading="lazy"
             referrerPolicy="no-referrer"
@@ -54,6 +55,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {secondaryImage && (
             <img
               src={secondaryImage}
+              onError={(event) => { event.currentTarget.style.display = "none"; }}
               alt={`${product.name} detail`}
               loading="lazy"
               referrerPolicy="no-referrer"
