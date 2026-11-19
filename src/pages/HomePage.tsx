@@ -115,7 +115,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   useEffect(() => {
     let cancelled = false;
     hostingerStorefrontService.getPublicOccasions()
-      .then(result => { if (!cancelled && result.occasions?.length) setOccasions(result.occasions); })
+      .then(result => { if (!cancelled && Array.isArray(result.occasions)) setOccasions(result.occasions); })
       .catch(error => console.warn("[HomePage] Published occasion cards unavailable; using defaults.", error));
     return () => { cancelled = true; };
   }, []);
@@ -610,7 +610,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 cards: Daily Wear, Festive, Wedding, Gifting
           Using existing product images, linking to /shop with filter queries
           ========================================================================= */}
-      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") ? undefined : "none" }} className="py-12 sm:py-16 lg:py-20 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") && occasions.some(item => item.active) ? undefined : "none" }} className="py-12 sm:py-16 lg:py-20 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
           <div className="w-full text-center mb-8 sm:mb-10">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
