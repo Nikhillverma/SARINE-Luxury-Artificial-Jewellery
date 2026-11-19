@@ -10,8 +10,8 @@ router.get("/status", async (_req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
     return res.json({
-      emailOtp: { provider: "Resend", configured: Boolean(process.env.RESEND_API_KEY && process.env.SARINE_EMAIL_FROM) },
-      phoneOtp: { provider: "MSG91", configured: Boolean(process.env.MSG91_AUTH_KEY && process.env.MSG91_TEMPLATE_ID) },
+      emailOtp: { provider: "Brevo", configured: Boolean(process.env.BREVO_API_KEY && process.env.SARINE_EMAIL_FROM) },
+      phoneOtp: { provider: "Fast2SMS", configured: Boolean(process.env.FAST2SMS_API_KEY && process.env.FAST2SMS_OTP_ID) },
       google: { provider: "Google Identity Services", configured: Boolean(process.env.GOOGLE_CLIENT_ID) },
       otpSecurity: { secretConfigured: Boolean(process.env.CUSTOMER_OTP_SECRET && process.env.CUSTOMER_OTP_SECRET.length >= 32) }
     });
