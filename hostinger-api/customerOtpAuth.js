@@ -74,45 +74,63 @@ function maskIdentifier(method, identifier) {
 }
 
 async function createChallenge(method, identifier, purpose) {
-  const [recent] = await pool.execute(
-    "SELECT COUNT(*) AS total, MAX(created_at) AS created_at FROM customer_auth_challenges WHERE identifier = ? AND purpose = ? AND created_at >= DATE_SUB(UTC_TIMESTAMP(3), INTERVAL 1 HOUR)",
-    [identifier, purpose]
-  );
-  if (Number(recent[0]?.total) >= 5) return { cooldown: 3600 };
-  if (recent[0]?.created_at) {
-    const elapsed = (Date.now() - new Date(recent[0].created_at).getTime()) / 1000;
-    if (elapsed < CUSTOMER_OTP_POLICY.resendCooldownSeconds) {
-      return { cooldown: Math.ceil(CUSTOMER_OTP_POLICY.resendCooldownSeconds - elapsed) };
+  const connection = await pool.getConnection();
+  let lockAcquired = false;
+  let challenge;
+  try {
+    // A per-identifier advisory lock prevents concurrent requests bypassing
+    // the resend cooldown or creating multiple simultaneously valid codes.
+    const [locks] = await connection.execute(
+      "SELECT GET_LOCK(SHA2(CONCAT(?, ':', ?), 256), 5) AS acquired",
+      [identifier, purpose]
+    );
+    lockAcquired = Number(locks[0]?.acquired) === 1;
+    if (!lockAcquired) throw new Error("OTP request is busy. Please try again shortly.");
+
+    await connection.beginTransaction();
+    const [recent] = await connection.execute(
+      "SELECT COUNT(*) AS total, MAX(created_at) AS created_at FROM customer_auth_challenges WHERE identifier = ? AND purpose = ? AND created_at >= DATE_SUB(UTC_TIMESTAMP(3), INTERVAL 1 HOUR)",
+      [identifier, purpose]
+    );
+    if (Number(recent[0]?.total) >= 5) {
+      await connection.rollback();
+      return { cooldown: 3600 };
     }
+    if (recent[0]?.created_at) {
+      const elapsed = (Date.now() - new Date(recent[0].created_at).getTime()) / 1000;
+      if (elapsed < CUSTOMER_OTP_POLICY.resendCooldownSeconds) {
+        await connection.rollback();
+        return { cooldown: Math.ceil(CUSTOMER_OTP_POLICY.resendCooldownSeconds - elapsed) };
+      }
+    }
+    await connection.execute("DELETE FROM customer_auth_challenges WHERE expires_at < DATE_SUB(UTC_TIMESTAMP(3), INTERVAL 7 DAY)");
+    const otp = createOtp();
+    const id = crypto.randomUUID();
+    await connection.execute("UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE identifier = ? AND purpose = ? AND consumed_at IS NULL", [identifier, purpose]);
+    await connection.execute("INSERT INTO customer_auth_challenges (id, identifier, method, purpose, otp_hash, expires_at) VALUES (?, ?, ?, ?, ?, DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 5 MINUTE))", [id, identifier, method, purpose, hashOtp(id, otp)]);
+    await connection.commit();
+    challenge = { id, otp };
+  } catch (error) {
+    await connection.rollback().catch(() => {});
+    throw error;
+  } finally {
+    if (lockAcquired) {
+      await connection.execute("SELECT RELEASE_LOCK(SHA2(CONCAT(?, ':', ?), 256))", [identifier, purpose]).catch(() => {});
+    }
+    connection.release();
   }
-  await pool.execute("DELETE FROM customer_auth_challenges WHERE expires_at < DATE_SUB(UTC_TIMESTAMP(3), INTERVAL 7 DAY)");
-  const otp = createOtp();
-  const id = crypto.randomUUID();
-  await pool.execute(
-    "UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE identifier = ? AND purpose = ? AND consumed_at IS NULL",
-    [identifier, purpose]
-  );
-  await pool.execute(
-    "INSERT INTO customer_auth_challenges (id, identifier, method, purpose, otp_hash, expires_at) VALUES (?, ?, ?, ?, ?, DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 5 MINUTE))",
-    [id, identifier, method, purpose, hashOtp(id, otp)]
-  );
   const provider = getCustomerOtpProvider(method);
   try {
-    await deliverCustomerOtp(method, identifier, otp, purpose);
-    await pool.execute(
-      "INSERT INTO customer_auth_delivery_events (challenge_id, method, purpose, provider, identifier_masked, status) VALUES (?, ?, ?, ?, ?, 'sent')",
-      [id, method, purpose, provider, maskIdentifier(method, identifier)]
-    );
+    await deliverCustomerOtp(method, identifier, challenge.otp, purpose);
+    await pool.execute("INSERT INTO customer_auth_delivery_events (challenge_id, method, purpose, provider, identifier_masked, status) VALUES (?, ?, ?, ?, ?, 'sent')", [challenge.id, method, purpose, provider, maskIdentifier(method, identifier)]);
   } catch (error) {
-    await pool.execute("UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE id = ?", [id]);
-    const failureCode = String(error?.message || "").includes("not configured") ? "provider_not_configured" : "provider_delivery_failed";
-    await pool.execute(
-      "INSERT INTO customer_auth_delivery_events (challenge_id, method, purpose, provider, identifier_masked, status, failure_code) VALUES (?, ?, ?, ?, ?, 'failed', ?)",
-      [id, method, purpose, provider, maskIdentifier(method, identifier), failureCode]
-    );
+    await pool.execute("UPDATE customer_auth_challenges SET consumed_at = UTC_TIMESTAMP(3) WHERE id = ?", [challenge.id]);
+    const message = String(error?.message || "");
+    const failureCode = message.includes("not configured") || message.includes("disabled") ? "provider_not_configured" : "provider_delivery_failed";
+    await pool.execute("INSERT INTO customer_auth_delivery_events (challenge_id, method, purpose, provider, identifier_masked, status, failure_code) VALUES (?, ?, ?, ?, ?, 'failed', ?)", [challenge.id, method, purpose, provider, maskIdentifier(method, identifier), failureCode]);
     throw error;
   }
-  return { sent: true, challengeId: id };
+  return { sent: true, challengeId: challenge.id };
 }
 
 router.post("/otp/request", requestLimiter, async (req, res, next) => {
@@ -230,7 +248,10 @@ router.post("/password/forgot/verify", verifyLimiter, async (req, res, next) => 
     );
     const challenge = rows[0];
     if (!challenge || Number(challenge.attempts) >= CUSTOMER_OTP_POLICY.maxAttempts || !safeOtpEqual(challenge.otp_hash, hashOtp(challengeId, otp))) {
-      if (challenge) await connection.execute("UPDATE customer_auth_challenges SET attempts = attempts + 1 WHERE id = ?", [challengeId]);
+      if (challenge) {
+        const nextAttempts = Number(challenge.attempts) + 1;
+        await connection.execute("UPDATE customer_auth_challenges SET attempts = ?, consumed_at = CASE WHEN ? >= ? THEN UTC_TIMESTAMP(3) ELSE consumed_at END WHERE id = ?", [nextAttempts, nextAttempts, CUSTOMER_OTP_POLICY.maxAttempts, challengeId]);
+      }
       await connection.commit();
       return res.status(400).json({ error: "The verification code is invalid or expired. Request a new one." });
     }
@@ -270,7 +291,8 @@ router.post("/password/forgot/reset", requestLimiter, async (req, res, next) => 
     }
     const customerId = rows[0].customer_id;
     await connection.execute("UPDATE customers SET password_hash = ?, password_salt = ?, password_scheme = 'bcrypt', updated_at = UTC_TIMESTAMP(3) WHERE id = ?", [passwordHash, salt, customerId]);
-    await connection.execute("UPDATE customer_password_resets SET used_at = UTC_TIMESTAMP(3) WHERE token_hash = ?", [hashToken(token)]);
+    // A successful reset invalidates every outstanding reset token for this account.
+    await connection.execute("UPDATE customer_password_resets SET used_at = UTC_TIMESTAMP(3) WHERE customer_id = ? AND used_at IS NULL", [customerId]);
     await connection.execute("DELETE FROM customer_sessions WHERE customer_id = ?", [customerId]);
     await connection.commit();
     return res.json({ success: true, message: "Your password has been updated. Please sign in again." });
