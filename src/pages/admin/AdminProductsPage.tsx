@@ -15,7 +15,7 @@ import { Plus, Search, Edit2, Copy, Archive, X, RefreshCw, Upload, Trash2, Chevr
 const EMPTY_FORM = {
   name: '', price: '', compareAtPrice: '', costPrice: '', stock: '0', categoryId: '',
   jewelleryType: 'necklace' as JewelleryType, shortDescription: '', description: '',
-  tags: '', collectionSlugs: '', baseMetal: '', platingFinish: '', stoneType: '', closureType: '', careInstructions: '',
+  tags: '', collectionSlugs: '', baseMetal: '', platingFinish: '', stoneType: '', closureType: '', careInstructions: '', productVideoUrl: '',
   imageUrls: [] as string[], status: 'draft' as ProductStatus
 };
 
@@ -124,6 +124,7 @@ export const AdminProductsPage: React.FC = () => {
       stoneType: product.stoneType || '',
       closureType: product.closureType || '',
       careInstructions: (product.careInstructions || []).join(String.fromCharCode(10)),
+      productVideoUrl: product.productVideoUrl || '',
       imageUrls: product.images || [],
       status: product.status
     });
@@ -207,8 +208,10 @@ export const AdminProductsPage: React.FC = () => {
         platingFinish: form.platingFinish.trim(),
         stoneType: form.stoneType.trim(),
         closureType: form.closureType.trim(),
-        careInstructions: splitLines(form.careInstructions)
+        careInstructions: splitLines(form.careInstructions),
+        productVideoUrl: form.productVideoUrl.trim()
       };
+      if (form.productVideoUrl.trim() && (!/^https:\/\//i.test(form.productVideoUrl.trim()) || !/\.(mp4|webm)(\?|#|$)/i.test(form.productVideoUrl.trim()))) throw new Error('Use a secure HTTPS MP4 or WebM video URL.');
       if (form.costPrice.trim() && (!Number.isFinite(Number(form.costPrice)) || Number(form.costPrice) < 0)) {
         throw new Error('Enter a valid cost price.');
       }
@@ -267,7 +270,8 @@ export const AdminProductsPage: React.FC = () => {
         ...(product.platingFinish ? { platingFinish: product.platingFinish } : {}),
         ...(product.stoneType ? { stoneType: product.stoneType } : {}),
         ...(product.closureType ? { closureType: product.closureType } : {}),
-        careInstructions: product.careInstructions || []
+        careInstructions: product.careInstructions || [],
+        productVideoUrl: product.productVideoUrl || ''
       });
       setNotice('A draft copy was saved to Hostinger.');
       await load();
