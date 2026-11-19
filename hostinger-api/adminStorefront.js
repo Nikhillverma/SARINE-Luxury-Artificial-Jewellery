@@ -255,8 +255,10 @@ function normalizeCampaigns(value) {
   try { parsed = typeof value === "string" ? JSON.parse(value) : value; } catch {}
   if (!Array.isArray(parsed)) return campaignDefaults;
   return parsed.filter(item => item && typeof item.id === "string").slice(0, 30).map(item => ({
-    id: item.id, name: String(item.name || "").slice(0, 100),
-    festival: String(item.festival || "").slice(0, 60),
+    id: item.id,
+    name: String(item.name || "").slice(0, 100),
+    festival: String(item.festival || "Other").slice(0, 60),
+    campaignType: item.campaignType === "sale" ? "sale" : "festival",
     eyebrow: String(item.eyebrow || "").slice(0, 100),
     title: String(item.title || "").slice(0, 180),
     subtitle: String(item.subtitle || "").slice(0, 400),
@@ -265,14 +267,29 @@ function normalizeCampaigns(value) {
     ctaLink: String(item.ctaLink || "/shop").slice(0, 500),
     couponCode: String(item.couponCode || "").toUpperCase().slice(0, 40),
     offerLabel: String(item.offerLabel || "").slice(0, 80),
-    startsAt: item.startsAt || null, endsAt: item.endsAt || null,
-    active: item.active === true, updatedAt: item.updatedAt || null
+    startsAt: item.startsAt || null,
+    endsAt: item.endsAt || null,
+    active: item.active === true,
+    showCountdown: item.showCountdown === true,
+    artworkOnly: item.artworkOnly !== false,
+    storewideDiscountPercent: Math.max(0, Math.min(75, Math.floor(Number(item.storewideDiscountPercent) || 0))),
+    sortOrder: Math.max(0, Math.min(99, Math.floor(Number(item.sortOrder) || 0))),
+    updatedAt: item.updatedAt || null
   }));
 }
 async function readCampaigns() {
   await ensureSchema();
   const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='festival_campaigns' LIMIT 1");
   return normalizeCampaigns(rows[0]?.setting_value);
+}
+function isCampaignLive(item, now = Date.now()) {
+  const starts = item.startsAt ? new Date(item.startsAt).getTime() : 0;
+  const ends = item.endsAt ? new Date(item.endsAt).getTime() : Number.POSITIVE_INFINITY;
+  return item.active && Number.isFinite(starts) && (ends === Number.POSITIVE_INFINITY || Number.isFinite(ends)) && starts <= now && ends > now;
+}
+function getLiveCampaigns(campaigns, now = Date.now()) {
+  return campaigns.filter(item => isCampaignLive(item, now))
+    .sort((a, b) => a.sortOrder - b.sortOrder || new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime());
 }
 adminOnly.get("/campaigns", async (_req, res, next) => {
   try { res.set("Cache-Control", "no-store").json({ campaigns: await readCampaigns() }); }
@@ -283,10 +300,25 @@ adminOnly.put("/campaigns", async (req, res, next) => {
     const campaigns = normalizeCampaigns(req.body?.campaigns);
     if (Array.isArray(req.body?.campaigns) && req.body.campaigns.length > 30) return res.status(400).json({ error: "You can manage up to 30 campaigns." });
     for (const item of campaigns) {
-      if (!item.name || !item.title || !item.festival) return res.status(400).json({ error: "Each campaign needs a name, festival and headline." });
+      if (!item.name || !item.title || !item.festival) return res.status(400).json({ error: "Each campaign needs a name, type and headline." });
       if (!item.imageUrl || (!item.imageUrl.startsWith("/") && !/^https:\/\//i.test(item.imageUrl))) return res.status(400).json({ error: "Each campaign needs a valid site image path or HTTPS image URL." });
       if (!(item.ctaLink.startsWith("/") && !item.ctaLink.startsWith("//")) && !/^https:\/\//i.test(item.ctaLink)) return res.status(400).json({ error: "Campaign destinations must be internal paths or HTTPS URLs." });
+      if (item.startsAt && !Number.isFinite(new Date(item.startsAt).getTime())) return res.status(400).json({ error: "Enter a valid campaign start date." });
+      if (item.endsAt && !Number.isFinite(new Date(item.endsAt).getTime())) return res.status(400).json({ error: "Enter a valid campaign end date." });
       if (item.startsAt && item.endsAt && new Date(item.startsAt) >= new Date(item.endsAt)) return res.status(400).json({ error: "Campaign end date must be after its start date." });
+      if (item.storewideDiscountPercent < 0 || item.storewideDiscountPercent > 75) return res.status(400).json({ error: "Storewide discounts must be between 1% and 75%, or 0 for no automatic discount." });
+      if (item.showCountdown && !item.endsAt) return res.status(400).json({ error: "Add an end date before enabling the countdown timer." });
+    }
+    const discountCampaigns = campaigns.filter(item => item.active && item.storewideDiscountPercent > 0);
+    for (let i = 0; i < discountCampaigns.length; i += 1) {
+      for (let j = i + 1; j < discountCampaigns.length; j += 1) {
+        const a = discountCampaigns[i], b = discountCampaigns[j];
+        const aStart = a.startsAt ? new Date(a.startsAt).getTime() : Number.NEGATIVE_INFINITY;
+        const aEnd = a.endsAt ? new Date(a.endsAt).getTime() : Number.POSITIVE_INFINITY;
+        const bStart = b.startsAt ? new Date(b.startsAt).getTime() : Number.NEGATIVE_INFINITY;
+        const bEnd = b.endsAt ? new Date(b.endsAt).getTime() : Number.POSITIVE_INFINITY;
+        if (aStart < bEnd && bStart < aEnd) return res.status(400).json({ error: "Two enabled storewide discounts overlap. Schedule them for separate time windows to avoid stacking." });
+      }
     }
     const saved = campaigns.map(item => ({ ...item, updatedAt: new Date().toISOString() }));
     await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('festival_campaigns', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [JSON.stringify(saved)]);
@@ -295,10 +327,8 @@ adminOnly.put("/campaigns", async (req, res, next) => {
 });
 publicRouter.get("/campaign", async (_req, res, next) => {
   try {
-    const now = Date.now();
-    const campaigns = await readCampaigns();
-    const campaign = campaigns.filter(item => item.active && (!item.startsAt || new Date(item.startsAt).getTime() <= now) && (!item.endsAt || new Date(item.endsAt).getTime() > now)).sort((a,b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime())[0] || null;
-    res.set("Cache-Control", "no-store").json({ campaign });
+    const campaigns = getLiveCampaigns(await readCampaigns());
+    res.set("Cache-Control", "no-store").json({ campaigns, campaign: campaigns[0] || null });
   } catch (error) { next(error); }
 });
 
