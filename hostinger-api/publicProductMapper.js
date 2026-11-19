@@ -30,6 +30,7 @@ export function mapPublicProduct(row) {
     stoneType: row.stone_type || undefined,
     closureType: row.closure_type || undefined,
     careInstructions: parseJson(row.care_instructions),
+    productVideoUrl: row.product_video_url || undefined,
     variants: [],
     createdAt: row.created_at
   };
