@@ -95,7 +95,7 @@ function getMsg91EmailConfig() {
   const templateId = String(process.env.MSG91_EMAIL_TEMPLATE_ID || "global_otp").trim();
 
   if (!authKey) throw new Error("MSG91 email OTP delivery is not configured.");
-  if (!domain || !from || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(from)) {
+  if (!domain || !from || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(from)) {
     throw new Error("A verified SARINE MSG91 sending domain and sender address are required.");
   }
   if (from.split("@")[1] !== domain) {
@@ -162,8 +162,8 @@ async function sendSms(phone, otp) {
 
 export async function deliverCustomerOtp(method, identifier, otp, purpose) {
   if (method === "email") {
-    await sendEmail(identifier, otp, purpose);
-    return "Brevo";
+    await sendEmail(identifier, otp);
+    return "MSG91";
   }
   if (method === "phone") {
     await sendSms(identifier, otp);
