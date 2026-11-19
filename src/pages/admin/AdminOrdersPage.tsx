@@ -1102,7 +1102,7 @@ export const AdminOrdersPage: React.FC = () => {
                     )}
 
                   {/* Mark as Out for Delivery */}
-                  {['shipped', 'out_for_delivery'].includes(selectedOrder.orderStatus) && (
+                  {selectedOrder.orderStatus === 'shipped' && (
                     <button
                       type="button"
                       disabled={actionLoading}
@@ -1115,7 +1115,7 @@ export const AdminOrdersPage: React.FC = () => {
                   )}
 
                   {/* 2. Mark as Delivered */}
-                  {selectedOrder.orderStatus === 'shipped' && (
+                  {['shipped', 'out_for_delivery'].includes(selectedOrder.orderStatus) && (
                     <button
                       type="button"
                       disabled={actionLoading}
