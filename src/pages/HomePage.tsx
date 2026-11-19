@@ -17,6 +17,7 @@ import { Product } from '../types/product';
 import { Category } from '../types/category';
 import { ProductCard } from '../components/ProductCard';
 import { formatInr } from '../utils/currency';
+import { festivalCampaignService, type FestivalCampaign } from '../services/hostinger/festivalCampaignService';
 import { hostingerStorefrontService, type EditorialContent, type HomepageLayout } from '../services/hostinger/hostingerStorefrontService';
 import {
   ArrowRight,
@@ -70,9 +71,16 @@ const defaultHomepageLayout: HomepageLayout = {
 
 export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const [homepageLayout, setHomepageLayout] = useState<HomepageLayout>(defaultHomepageLayout);
+  const [festivalCampaign, setFestivalCampaign] = useState<FestivalCampaign | null>(null);
   const sectionConfig = (id: string) => homepageLayout.sections.find(section => section.id === id);
   const sectionVisible = (id: string) => sectionConfig(id)?.enabled ?? true;
   const sectionOrder = (id: string) => (sectionConfig(id)?.sortOrder ?? defaultHomepageLayout.sections.find(section => section.id === id)?.sortOrder ?? 0) + 1;
+
+  useEffect(() => {
+    let cancelled = false;
+    festivalCampaignService.getActive().then(campaign => { if (!cancelled) setFestivalCampaign(campaign); }).catch(error => console.warn('[HomePage] Festival campaign unavailable.', error));
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -302,6 +310,24 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   return (
     <div className="w-full bg-[#F7F0FA] text-[#302438] font-sans selection:bg-[#B69ACF]/30 selection:text-[#302438]" style={{ display: "flex", flexDirection: "column" }}>
+      {festivalCampaign && (
+        <section className="relative isolate overflow-hidden min-h-[280px] md:min-h-[390px] flex items-center bg-[#32152F]">
+          <img src={festivalCampaign.imageUrl} alt={festivalCampaign.festival + " campaign"} className="absolute inset-0 -z-20 w-full h-full object-cover" />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#260D25]/95 via-[#3B1236]/80 to-[#3B1236]/15" />
+          <div className="site-container w-full py-12 md:py-16">
+            <div className="max-w-2xl text-white">
+              <p className="text-[10px] md:text-xs tracking-[0.28em] uppercase text-[#E8C59A]">{festivalCampaign.eyebrow || festivalCampaign.festival}</p>
+              <h2 className="mt-3 font-serif text-3xl md:text-5xl leading-tight">{festivalCampaign.title}</h2>
+              {festivalCampaign.offerLabel && <p className="mt-3 font-serif text-3xl md:text-5xl text-[#F0C878]">{festivalCampaign.offerLabel}</p>}
+              {festivalCampaign.subtitle && <p className="mt-3 max-w-xl text-sm md:text-base text-white/90">{festivalCampaign.subtitle}</p>}
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <Link to={festivalCampaign.ctaLink} className="inline-flex items-center gap-2 rounded-full bg-[#E8C59A] px-6 py-3 text-sm font-semibold text-[#32152F] hover:bg-white transition-colors">{festivalCampaign.ctaText || "Shop now"} <ArrowRight size={15}/></Link>
+                {festivalCampaign.couponCode && <span className="rounded-full border border-white/50 px-4 py-2 text-xs tracking-wider">Use code: {festivalCampaign.couponCode}</span>}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
       {/* =========================================================================
           3. HERO SLIDER
           Fixed responsive height: h-[420px] md:h-[520px] lg:h-[600px]
