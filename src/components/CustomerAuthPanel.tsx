@@ -23,7 +23,7 @@ const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, compact = false }) => {
   const [mode, setMode] = useState<AuthMode>("otp");
   const [method, setMethod] = useState<AuthMethod>("email");
-  const [methods, setMethods] = useState<{ email: boolean; phone: boolean }>({ email: false, phone: false });
+  const [methods, setMethods] = useState<{ email: boolean; phone: boolean }>({ email: false, phone: false });\n  const [googleEnabled, setGoogleEnabled] = useState(false);
   const [methodReasons, setMethodReasons] = useState<{ email: string; phone: string }>({ email: "Checking email availability…", phone: "Phone verification is not enabled yet." });
   const [identifier, setIdentifier] = useState("");
   const [name, setName] = useState("");
@@ -42,7 +42,7 @@ export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, co
     let active = true;
     customerAuthService.getMethods().then(result => {
       if (!active) return;
-      setMethods({ email: Boolean(result.email?.enabled), phone: Boolean(result.phone?.enabled) });
+      setMethods({ email: Boolean(result.email?.enabled), phone: Boolean(result.phone?.enabled) });\n      setGoogleEnabled(Boolean(result.google?.enabled));
       setMethodReasons({ email: result.email?.reason || "Email verification is not available yet.", phone: result.phone?.reason || "Phone verification is not available yet." });
     }).catch(() => {
       if (active) setMethodReasons({ email: "Unable to check email verification availability. Please use password sign-in.", phone: "Phone verification is not available yet." });
@@ -260,7 +260,7 @@ export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, co
         </div>
       )}
 
-      {googleClientId && mode !== "forgot" && (
+      {googleClientId && googleEnabled && mode !== "forgot" && (
         <div className="mt-5">
           <div className="flex items-center gap-3 mb-4"><span className="h-px bg-[#E7DCEB] flex-1" /><span className="text-[10px] tracking-widest text-[#A89BAE]">OR</span><span className="h-px bg-[#E7DCEB] flex-1" /></div>
           <div ref={googleButtonRef} className="flex justify-center min-h-10" />
