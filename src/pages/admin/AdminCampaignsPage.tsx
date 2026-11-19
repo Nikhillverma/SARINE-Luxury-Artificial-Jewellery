@@ -20,6 +20,13 @@ function toLocalInput(value: string | null) {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
   return local.toISOString().slice(0, 16);
 }
+function getCampaignStatus(item: FestivalCampaign) {
+  if (!item.active) return "Paused";
+  const now = Date.now();
+  if (item.startsAt && new Date(item.startsAt).getTime() > now) return "Scheduled";
+  if (item.endsAt && new Date(item.endsAt).getTime() <= now) return "Expired";
+  return "Live";
+}
 function fromLocalInput(value: string) {
   if (!value) return null;
   const date = new Date(value);
@@ -93,7 +100,7 @@ export const AdminCampaignsPage: React.FC = () => {
         <label className="text-xs text-[#705E7B] lg:col-span-3">Description<textarea value={draft.subtitle} onChange={e => update("subtitle", e.target.value)} maxLength={400} rows={2} className="mt-1 w-full border rounded-lg p-2.5 text-sm"/></label>
         <label className="text-xs text-[#705E7B]">Button label<input value={draft.ctaText} onChange={e => update("ctaText", e.target.value)} maxLength={80} className="mt-1 w-full border rounded-lg p-2.5 text-sm"/></label>
         <label className="text-xs text-[#705E7B]">Button destination<input value={draft.ctaLink} onChange={e => update("ctaLink", e.target.value)} placeholder="/shop?search=festive" className="mt-1 w-full border rounded-lg p-2.5 text-sm"/></label>
-        <label className="text-xs text-[#705E7B]">Coupon code (optional)<input value={draft.couponCode} onChange={e => update("couponCode", e.target.value.toUpperCase())} maxLength={40} placeholder="DIWALI20" className="mt-1 w-full border rounded-lg p-2.5 text-sm uppercase"/></label>
+        <label className="text-xs text-[#705E7B]">Coupon code (manage separately in Marketing & Coupons)<input value={draft.couponCode} onChange={e => update("couponCode", e.target.value.toUpperCase())} maxLength={40} placeholder="DIWALI20" className="mt-1 w-full border rounded-lg p-2.5 text-sm uppercase"/></label>
         <label className="text-xs text-[#705E7B]">Starts at (India local time)<input type="datetime-local" value={toLocalInput(draft.startsAt)} onChange={e => update("startsAt", fromLocalInput(e.target.value))} className="mt-1 w-full border rounded-lg p-2.5 text-sm"/></label>
         <label className="text-xs text-[#705E7B]">Ends at (India local time)<input type="datetime-local" value={toLocalInput(draft.endsAt)} onChange={e => update("endsAt", fromLocalInput(e.target.value))} className="mt-1 w-full border rounded-lg p-2.5 text-sm"/></label>
       </div>
@@ -129,7 +136,7 @@ export const AdminCampaignsPage: React.FC = () => {
       {loading ? <p className="p-8 text-center text-sm">Loading campaigns…</p> : items.length === 0 ? <p className="p-8 text-center text-sm text-gray-500">No campaigns created yet.</p> : <div className="divide-y">{items.map(item => <div key={item.id} className="p-4 flex flex-wrap gap-3 items-center">
         <div className="w-24 h-16 bg-[#F7F0FA] rounded-lg overflow-hidden">{item.imageUrl && <img src={item.imageUrl} alt="" className="w-full h-full object-cover"/>}</div>
         <div className="min-w-0 flex-1"><p className="font-semibold text-sm">{item.name} · {item.campaignType === "sale" ? "Sale" : item.festival}</p><p className="text-xs text-gray-500">{item.title}</p><p className="text-xs mt-1">{item.offerLabel || "Hero campaign"} {item.storewideDiscountPercent > 0 && <strong className="text-emerald-700">· {item.storewideDiscountPercent}% storewide</strong>} {item.showCountdown && "· Countdown"} {item.couponCode && "· " + item.couponCode}</p></div>
-        <span className={item.active ? "text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full text-xs" : "text-amber-700 bg-amber-50 px-2 py-1 rounded-full text-xs"}>{item.active ? "Enabled" : "Paused"}</span>
+        <span className={getCampaignStatus(item) === "Live" ? "text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full text-xs" : "text-amber-700 bg-amber-50 px-2 py-1 rounded-full text-xs"}>{getCampaignStatus(item)}</span>
         <button onClick={() => edit(item)} className="border rounded-lg px-3 py-2 text-xs">Edit</button><button onClick={() => void remove(item.id)} className="border rounded-lg px-3 py-2 text-xs text-red-600"><Trash2 size={14}/></button>
       </div>)}</div>}
     </section>
