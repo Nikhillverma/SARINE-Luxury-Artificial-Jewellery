@@ -13,14 +13,14 @@ const authSource = await readFile(new URL("../customerOtpAuth.js", import.meta.u
 
 test("customer authentication schema checks are read-only", () => {
   assert.match(serviceSource, /export async function assertCustomerOtpSchema/);
-  assert.doesNotMatch(serviceSource, /\\b(?:ALTER\\s+TABLE|CREATE\\s+TABLE|CREATE\\s+(?:UNIQUE\\s+)?INDEX|DROP\\s+TABLE)\\b/i);
-  assert.match(serviceSource, /information_schema\\.COLUMNS/);
-  assert.match(serviceSource, /information_schema\\.TABLES/);
+  assert.doesNotMatch(serviceSource, /\b(?:ALTER\s+TABLE|CREATE\s+TABLE|CREATE\s+(?:UNIQUE\s+)?INDEX|DROP\s+TABLE)\b/i);
+  assert.match(serviceSource, /information_schema\.COLUMNS/);
+  assert.match(serviceSource, /information_schema\.TABLES/);
 });
 
 test("OTP and identity-link routes require the explicit schema assertion", () => {
-  assert.match(authSource, /await assertCustomerOtpSchema\\(\\)/);
-  assert.match(authSource, /router\\.post\\("\/identity\/link\/request"/);
-  assert.match(authSource, /router\\.post\\("\/identity\/link\/verify"/);
-  assert.match(authSource, /customer_id !== current\\.id/);
+  assert.match(authSource, /await assertCustomerOtpSchema\(\)/);
+  assert.match(authSource, /router\.post\("\/identity\/link\/request"/);
+  assert.match(authSource, /router\.post\("\/identity\/link\/verify"/);
+  assert.match(authSource, /customer_id !== current\.id/);
 });
