@@ -18,4 +18,7 @@ export interface CartItem {
   quantity: number;
   unitPrice: number;
   lineTotal: number;
+  discountedUnitPrice: number;
+  discountedLineTotal: number;
+  promotionLineDiscount: number;
 }
