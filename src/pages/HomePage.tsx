@@ -105,33 +105,20 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<boolean>(false);
 
-  // Occasions curation
-  const occasions = [
-    {
-      title: 'Daily Wear',
-      subtitle: 'Effortless everyday minimalism',
-      image: '/images/ananya-temple-coin-bracelet.jpg',
-      link: '/shop?search=everyday'
-    },
-    {
-      title: 'Festive',
-      subtitle: 'Celebratory sparkle and classic motifs',
-      image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=80',
-      link: '/shop?search=festive'
-    },
-    {
-      title: 'Wedding',
-      subtitle: 'Regal bridal sets & heritage chokers',
-      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=80',
-      link: '/shop?search=wedding'
-    },
-    {
-      title: 'Gifting',
-      subtitle: 'Precious tokens of affection',
-      image: '/images/zoya-open-cuff-leaf-bangle.jpg',
-      link: '/shop?category=bracelets'
-    }
-  ];
+  const [occasions, setOccasions] = useState([
+    { id: "daily-wear", title: "Daily Wear", subtitle: "Effortless everyday minimalism", image: "/images/ananya-temple-coin-bracelet.jpg", link: "/shop?search=everyday", active: true, sortOrder: 0 },
+    { id: "festive", title: "Festive", subtitle: "Celebratory sparkle and classic motifs", image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=80", link: "/shop?search=festive", active: true, sortOrder: 1 },
+    { id: "wedding", title: "Wedding", subtitle: "Regal bridal sets & heritage chokers", image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=80", link: "/shop?search=wedding", active: true, sortOrder: 2 },
+    { id: "gifting", title: "Gifting", subtitle: "Precious tokens of affection", image: "/images/zoya-open-cuff-leaf-bangle.jpg", link: "/shop?category=bracelets", active: true, sortOrder: 3 }
+  ]);
+
+  useEffect(() => {
+    let cancelled = false;
+    hostingerStorefrontService.getPublicOccasions()
+      .then(result => { if (!cancelled && result.occasions?.length) setOccasions(result.occasions); })
+      .catch(error => console.warn("[HomePage] Published occasion cards unavailable; using defaults.", error));
+    return () => { cancelled = true; };
+  }, []);
 
   // Hero Slider State
   const [activeSlide, setActiveSlide] = useState<number>(0);
@@ -638,7 +625,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {occasions.map((item) => (
+            {occasions.filter(item => item.active).map((item) => (
               <Link
                 key={item.title}
                 to={item.link}
