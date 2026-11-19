@@ -5,7 +5,7 @@ import rateLimit from "express-rate-limit";
 import { pool } from "./db.js";
 import { shouldUseSecureSessionCookie } from "./sessionCookiePolicy.js";
 import { normalizeCustomerEmail } from "./customerValidation.js";
-import { ensureCustomerOtpSchema } from "./customerOtpService.js";
+import { assertCustomerOtpSchema } from "./customerOtpService.js";
 
 const router = Router();
 const googleLoginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 8, standardHeaders: "draft-8", legacyHeaders: false });
@@ -31,7 +31,7 @@ router.post("/google", googleLoginLimiter, async (req, res, next) => {
   let connection;
   try {
     res.set("Cache-Control", "no-store");
-    await ensureCustomerOtpSchema();
+    await assertCustomerOtpSchema();
     const credential = String(req.body?.credential || "");
     const clientId = process.env.GOOGLE_CLIENT_ID;
     if (!clientId || !credential || credential.length > 10000) {
