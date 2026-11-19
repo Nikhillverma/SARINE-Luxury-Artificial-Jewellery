@@ -20,6 +20,10 @@ export interface FestivalCampaign {
   sortOrder: number;
   heroPlacement: "auto" | "first" | "normal";
   heroDurationSeconds: number;
+  countdownLabel: string;
+  countdownBackgroundColor: string;
+  countdownTextColor: string;
+  countdownTimerColor: string;
   updatedAt: string | null;
 }
 const API_BASE = (import.meta.env.VITE_HOSTINGER_API_BASE_URL || (import.meta.env.DEV ? "/api" : "https://lavender-goldfish-844589.hostingersite.com/api")).replace(/\/+$/, "");
@@ -40,7 +44,11 @@ async function fetchActiveCampaigns(): Promise<FestivalCampaign[]> {
     storewideDiscountPercent: Math.max(0, Math.min(75, Number(item.storewideDiscountPercent) || 0)),
     sortOrder: Number(item.sortOrder) || 0,
     heroPlacement: item.heroPlacement === "first" || item.heroPlacement === "normal" ? item.heroPlacement : "auto",
-    heroDurationSeconds: Math.max(5, Math.min(20, Number(item.heroDurationSeconds) || 9))
+    heroDurationSeconds: Math.max(5, Math.min(20, Number(item.heroDurationSeconds) || 9)),
+    countdownLabel: String(item.countdownLabel || ""),
+    countdownBackgroundColor: /^#[0-9a-f]{6}$/i.test(item.countdownBackgroundColor || "") ? item.countdownBackgroundColor : "#563568",
+    countdownTextColor: /^#[0-9a-f]{6}$/i.test(item.countdownTextColor || "") ? item.countdownTextColor : "#FFFFFF",
+    countdownTimerColor: /^#[0-9a-f]{6}$/i.test(item.countdownTimerColor || "") ? item.countdownTimerColor : "#FFE08A"
   }));
 }
 export const festivalCampaignService = {
