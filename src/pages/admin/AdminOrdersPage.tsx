@@ -304,12 +304,16 @@ export const AdminOrdersPage: React.FC = () => {
 
       // Update local state
       const updatedOrderData: Partial<AdminOrder> = {};
-      if (action === 'mark_shipped') {
+      if (action === 'mark_packed') {
+        updatedOrderData.orderStatus = 'packed';
+      } else if (action === 'mark_shipped') {
         updatedOrderData.orderStatus = 'shipped';
         updatedOrderData.shippedAt = data.shippedAt;
         if (extraPayload.courierName) updatedOrderData.courierName = extraPayload.courierName;
         if (extraPayload.trackingNumber) updatedOrderData.trackingNumber = extraPayload.trackingNumber;
         if (extraPayload.trackingUrl) updatedOrderData.trackingUrl = extraPayload.trackingUrl;
+      } else if (action === 'mark_out_for_delivery') {
+        updatedOrderData.orderStatus = 'out_for_delivery';
       } else if (action === 'mark_delivered') {
         updatedOrderData.orderStatus = 'delivered';
         updatedOrderData.deliveredAt = data.deliveredAt;
@@ -998,8 +1002,21 @@ export const AdminOrdersPage: React.FC = () => {
                       </p>
                     )}
 
-                  {/* 1. Mark as Shipped Form */}
+                  {/* Mark as Packed — first fulfilment milestone */}
                   {canMarkOrderAsShipped(selectedOrder) && (
+                    <button
+                      type="button"
+                      disabled={actionLoading}
+                      onClick={() => handleUpdateOrder('mark_packed')}
+                      className="w-full py-2.5 bg-[#563568] text-white text-xs font-medium uppercase tracking-wider hover:bg-[#A184BD] transition-colors rounded-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      <Package size={14} />
+                      <span>{actionLoading ? 'Updating...' : 'Mark as Packed'}</span>
+                    </button>
+                  )}
+
+                  {/* 1. Mark as Shipped Form */}
+                  {selectedOrder.orderStatus === 'packed' && (
                       <div className="space-y-2">
                         {!showShipForm ? (
                           <button
@@ -1083,6 +1100,19 @@ export const AdminOrdersPage: React.FC = () => {
                         )}
                       </div>
                     )}
+
+                  {/* Mark as Out for Delivery */}
+                  {['shipped', 'out_for_delivery'].includes(selectedOrder.orderStatus) && (
+                    <button
+                      type="button"
+                      disabled={actionLoading}
+                      onClick={() => handleUpdateOrder('mark_out_for_delivery')}
+                      className="w-full py-2.5 bg-[#80609A] text-white text-xs font-medium uppercase tracking-wider hover:bg-[#563568] rounded-xs transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      <Truck size={14} className="inline mr-2" />
+                      {actionLoading ? 'Updating...' : 'Mark as Out for Delivery'}
+                    </button>
+                  )}
 
                   {/* 2. Mark as Delivered */}
                   {selectedOrder.orderStatus === 'shipped' && (
