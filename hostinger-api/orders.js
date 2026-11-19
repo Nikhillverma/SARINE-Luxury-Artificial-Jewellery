@@ -32,16 +32,23 @@ function timingSafeCompare(a, b) {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
+let campaignOrderSnapshotSchemaPromise;
 async function ensureCampaignOrderSnapshotTable() {
-  await pool.execute(`CREATE TABLE IF NOT EXISTS order_promotions (
-    order_number VARCHAR(32) NOT NULL PRIMARY KEY,
-    campaign_id VARCHAR(64) NOT NULL,
-    campaign_name VARCHAR(100) NOT NULL,
-    discount_percent TINYINT UNSIGNED NOT NULL,
-    discount_amount INT NOT NULL DEFAULT 0,
-    created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    KEY idx_order_promotions_campaign (campaign_id, created_at)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+  if (!campaignOrderSnapshotSchemaPromise) {
+    campaignOrderSnapshotSchemaPromise = pool.execute(`CREATE TABLE IF NOT EXISTS order_promotions (
+      order_number VARCHAR(32) NOT NULL PRIMARY KEY,
+      campaign_id VARCHAR(64) NOT NULL,
+      campaign_name VARCHAR(100) NOT NULL,
+      discount_percent TINYINT UNSIGNED NOT NULL,
+      discount_amount INT NOT NULL DEFAULT 0,
+      created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+      KEY idx_order_promotions_campaign (campaign_id, created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`).catch(error => {
+      campaignOrderSnapshotSchemaPromise = null;
+      throw error;
+    });
+  }
+  await campaignOrderSnapshotSchemaPromise;
 }
 async function getActiveStorewideCampaign(connection) {
   const [rows] = await connection.execute(
