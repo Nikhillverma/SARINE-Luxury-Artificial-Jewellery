@@ -215,10 +215,10 @@
 .sarine-home > section:not(:first-child) {
   border-color: rgba(72, 32, 72, .12);
 }
-.sarine-home > section:nth-of-type(odd) {
+.sarine-home > section:not(:first-child):nth-of-type(odd) {
   background-color: var(--sarine-ivory-light);
 }
-.sarine-home > section:nth-of-type(even) {
+.sarine-home > section:not(:first-child):nth-of-type(even) {
   background-color: #FBF1F1;
 }
 .sarine-home > section h2 {
@@ -295,7 +295,7 @@
   .sarine-home .category-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 @media (min-width: 1024px) {
-  .sarine-home .category-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px; }
+  .sarine-home .category-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 }
 
 /* Product cards: boutique-style image window, fine borders and plum pricing. */
@@ -364,7 +364,7 @@
 }
 
 /* The story area receives a more editorial blush/ivory treatment. */
-.sarine-home > section:has(.lg\\:grid-cols-12) {
+.sarine-home > section:has(img[alt="SARINE Craftsmanship and Jewellery Details"]) {
   background: linear-gradient(115deg, #F1DCDD 0%, #FBF2EF 54%, #F8F0E8 100%);
 }
 .sarine-home > section:has(.lg\\:grid-cols-12) img {
