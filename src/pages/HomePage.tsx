@@ -100,7 +100,7 @@ interface HomePageProps {
 
 const defaultHomepageLayout: HomepageLayout = {
   version: 1,
-  sections: ["categories", "new-arrivals", "best-sellers", "curated-favourites", "occasions", "price", "our-story", "editorial"]
+  sections: ["hero", "categories", "new-arrivals", "best-sellers", "curated-favourites", "occasions", "price", "our-story", "editorial", "care-guide", "stay-in-touch"]
     .map((id, sortOrder) => ({ id, enabled: true, sortOrder }))
 };
 
@@ -174,7 +174,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const [managedHeroSlides, setManagedHeroSlides] = useState<Array<{id:string; tagline:string; title:string; subtitle:string; ctaText:string; ctaLink:string; imageUrl:string}>>([]);
   const [editorial, setEditorial] = useState<EditorialContent>({ eyebrow: 'EDITORIAL COLLECTION', title: 'The Art of Everyday Elegance', description: 'A curated collection that blends classic beauty with modern sensibilities.', ctaText: 'Explore the Collection', ctaLink: '/shop', imageUrl: HOMEPAGE_IMAGES.editorialBanner, active: true });
 
-  // Best Sellers Carousel Scroll Reference
+  // Independent horizontal scroll track for the category carousel.
+  const categoryCarouselRef = useRef<HTMLDivElement>(null);
+
+  // Existing Best Sellers carousel scroll reference.
   const carouselRef = useRef<HTMLDivElement>(null);
 
   // Wishlist State (Local interactive set)
@@ -359,6 +362,16 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     setActiveSlide((prev) => (prev + 1) % Math.max(slideCount, 1));
   };
 
+  // Category carousel controls: move almost one full viewport per click.
+  const scrollCategories = (direction: 'left' | 'right') => {
+    const track = categoryCarouselRef.current;
+    if (!track) return;
+    track.scrollBy({
+      left: direction === 'left' ? -Math.max(track.clientWidth * 0.85, 260) : Math.max(track.clientWidth * 0.85, 260),
+      behavior: 'smooth'
+    });
+  };
+
   // 3. Best Sellers Carousel Controls
   const scrollCarousel = (direction: 'left' | 'right') => {
     if (carouselRef.current) {
@@ -398,7 +411,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Text in centered container (max-w-[1280px]) with soft lavender gradient overlay
           Slide indicators bottom-left, arrow buttons bottom-right inside container
           ========================================================================= */}
-      <section style={{ order: 0 }} className="relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[#F0E6F4] border-b border-[#E7DCEB]">
+      <section style={{ order: sectionOrder("hero"), display: sectionVisible("hero") ? undefined : "none" }} className="relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[#F0E6F4] border-b border-[#E7DCEB]">
         {/* Stacked background slide images */}
         {heroSlides.map((slide, idx) => (
           <div
@@ -506,71 +519,77 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           campaign.showCountdown && campaign.endsAt && new Date(campaign.endsAt).getTime() > Date.now()
         );
         return countdownCampaign ? (
-          <div className="flex w-full justify-center px-4 py-1.5 sm:py-2" aria-label="Current campaign countdown">
+          <div style={{ order: sectionOrder("hero") + 0.5 }} className="flex w-full justify-center px-4 py-1.5 sm:py-2" aria-label="Current campaign countdown">
             <CampaignCountdownStrip campaign={countdownCampaign} />
           </div>
         ) : null;
       })()}
 
       {/* =========================================================================
-          SHOP BY CATEGORY
-          Shared container: mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10
-          Heading row: flex items-end justify-between mb-6
-          Grid: grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6
-          Category images: aspect-[3/2] object-cover
-          Consistent vertical spacing: py-6 sm:py-8 lg:py-10
+          SHOP BY CATEGORY — RESPONSIVE HORIZONTAL CAROUSEL
           ========================================================================= */}
       <section id="categories" style={{ order: sectionOrder("categories"), display: sectionVisible("categories") ? undefined : "none" }} className="w-full py-6 sm:py-7 lg:py-10">
         <div className="site-container">
-          {/* Centered Full-Width Section Header Block */}
-          <div className="w-full text-center mb-4 sm:mb-4">
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
-              Shop by Category
-            </h2>
-            <p className="mt-2 text-sm text-[#746B75] font-sans leading-relaxed max-w-xl mx-auto">
-              Explore our handcrafted collections curated for celebrations and everyday elegance.
-            </p>
-            <div className="mt-3">
-              <Link
-                to="/shop"
-                className="text-xs sm:text-[13px] text-[#302438] hover:text-[#563568] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
-              >
-                <span>View All Categories</span>
-                <ArrowRight size={13} />
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div className="min-w-0">
+              <span className="mb-1 block text-[10px] font-medium uppercase tracking-[0.22em] text-[#8A7892]">DISCOVER SARINE</span>
+              <h2 className="font-serif text-2xl font-normal text-[#302438] sm:text-3xl lg:text-4xl">Shop by Category</h2>
+              <p className="mt-2 max-w-xl text-xs leading-relaxed text-[#746B75] sm:text-sm">
+                Explore our collections, curated for celebrations and everyday elegance.
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Link to="/shop" className="hidden items-center gap-1 text-xs font-medium text-[#563568] transition-colors hover:text-[#8A6AA0] sm:inline-flex">
+                View all <ArrowRight size={13} />
               </Link>
+              <button type="button" onClick={() => scrollCategories('left')} aria-label="Scroll categories left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
+                <ChevronLeft size={17} />
+              </button>
+              <button type="button" onClick={() => scrollCategories('right')} aria-label="Scroll categories right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
+                <ChevronRight size={17} />
+              </button>
             </div>
           </div>
 
-          {/* 5 Category Cards using plain CSS .category-grid */}
-          <div className="category-grid">
-            {categories.map((cat) => (
+          {categories.length > 0 ? (
+            <div
+              ref={categoryCarouselRef}
+              className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:gap-5"
+              aria-label="Jewellery categories"
+            >
+              {categories.map((cat) => (
                 <Link
                   key={cat.id}
-                  to={`/shop?category=${cat.slug}`}
-                  className="group flex flex-col items-center text-center w-full"
+                  to={`/shop?category=${encodeURIComponent(cat.slug)}`}
+                  className="group w-[72%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-[23%] xl:w-[19%]"
                 >
-                  {/* Landscape image wrapper: aspect-[3/2] */}
-                  <div className="aspect-[3/2] w-full overflow-hidden bg-[#F0E6F4] border border-[#E7DCEB] rounded-xs relative group-hover:border-[#B69ACF] transition-colors">
+                  <div className="relative aspect-[4/5] overflow-hidden rounded-sm border border-[#E7DCEB] bg-[#F0E6F4] transition-colors group-hover:border-[#B69ACF]">
                     <img
                       src={cat.image}
                       alt={cat.name}
+                      loading="lazy"
                       referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
+                      className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                     />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#24162D]/75 via-[#24162D]/15 to-transparent px-4 pb-4 pt-12">
+                      <h3 className="font-serif text-lg font-medium text-white sm:text-xl">{cat.name}</h3>
+                      <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-[0.16em] text-white/90">
+                        Shop collection <ArrowRight size={11} />
+                      </span>
+                    </div>
                   </div>
-
-                {/* Title & Link */}
-                <div className="pt-3 text-center flex flex-col items-center">
-                  <h3 className="text-sm sm:text-base font-normal text-[#302438] font-sans text-center group-hover:text-[#563568] transition-colors">
-                    {cat.name}
-                  </h3>
-                  <span className="text-xs text-[#6F6475] group-hover:text-[#563568] transition-colors inline-flex items-center justify-center gap-1 mt-0.5 font-sans">
-                    <span>Shop Now</span>
-                    <ArrowRight size={11} />
-                  </span>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-lg border border-dashed border-[#E7DCEB] px-4 py-8 text-center text-sm text-[#746B75]">
+              {loading ? "Loading categories…" : "Our jewellery collections will appear here soon."}
+            </p>
+          )}
+          <div className="mt-1 text-center sm:hidden">
+            <Link to="/shop" className="inline-flex items-center gap-1 text-xs font-medium text-[#563568]">
+              View all categories <ArrowRight size={13} />
+            </Link>
           </div>
         </div>
       </section>
@@ -942,7 +961,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           8. JEWELLERY CARE & PRESERVATION GUIDE
           ========================================================================= */}
-      <section style={{ order: 100 }} className="py-7 sm:py-9 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("care-guide"), display: sectionVisible("care-guide") ? undefined : "none" }} className="py-7 sm:py-9 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
           <div className="max-w-[720px] mx-auto text-center mb-6">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
@@ -995,7 +1014,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           9. STAY IN TOUCH
           ========================================================================= */}
-      <section style={{ order: 101 }} className="py-7 sm:py-9 lg:py-11 bg-[#F7F0FA]">
+      <section style={{ order: sectionOrder("stay-in-touch"), display: sectionVisible("stay-in-touch") ? undefined : "none" }} className="py-7 sm:py-9 lg:py-11 bg-[#F7F0FA]">
         <div className="site-container">
           <div className="max-w-[620px] mx-auto text-center">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
