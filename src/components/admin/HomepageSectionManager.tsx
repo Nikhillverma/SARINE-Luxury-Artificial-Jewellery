@@ -109,7 +109,7 @@ export const HomepageSectionManager: React.FC = () => {
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h2 className="font-semibold text-[#2C1838]">Carousel Features</h2>
-        <p className="text-xs text-gray-500 mt-1">Manage every homepage feature in one place. Reorder sections, control visibility, save a draft, then publish when ready. Category artwork and category names stay connected to Categories Management.</p>
+        <p className="text-xs text-gray-500 mt-1">Control the complete homepage here: reorder every section, show or hide it, save a draft, and publish. Customers can swipe or drag each horizontal carousel with a finger or mouse, or use the on-screen arrow buttons. Category names and artwork stay connected to Categories Management.</p>
       </div>
       <span className={isPublished ? "text-xs rounded-full px-3 py-1 bg-green-50 text-green-700" : "text-xs rounded-full px-3 py-1 bg-amber-50 text-amber-700"}>
         {isPublished ? "Published version" : "Unpublished changes"}
