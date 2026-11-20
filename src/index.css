@@ -376,11 +376,37 @@
 .sarine-home > section:has(img[alt="SARINE Craftsmanship and Jewellery Details"]) {
   background: linear-gradient(115deg, #F1DCDD 0%, #FBF2EF 54%, #F8F0E8 100%);
 }
+/* Collection grids adapt to the number of currently published products.
+   auto-fit expands remaining cards when products are unpublished or removed. */
+.sarine-home .product-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+}
 @media (min-width: 768px) {
-  .sarine-home .product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .sarine-home .product-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  }
 }
 @media (min-width: 1024px) {
-  .sarine-home .product-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .sarine-home .product-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  }
+}
+
+/* Occasion tiles use the same fill-and-reflow behaviour as categories. */
+.sarine-home .occasion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+@media (max-width: 639px) {
+  .sarine-home .occasion-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr));
+    gap: 12px;
+  }
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+  .sarine-home .occasion-grid { gap: 16px; }
 }
 @media (max-width: 639px) {
   .sarine-home .site-container { padding-left: 13px; padding-right: 13px; }
