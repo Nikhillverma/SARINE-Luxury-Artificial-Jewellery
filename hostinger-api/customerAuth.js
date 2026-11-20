@@ -105,7 +105,13 @@ router.get("/orders", async (req, res, next) => {
               payment_status, order_status, courier_name, tracking_number,
               tracking_url, shipped_at, delivered_at, cancelled_at,
               cancellation_reason, refund_needed, refund_amount, return_status,
-              return_reason, return_notes, created_at
+              return_reason, return_notes, created_at,
+              (SELECT r.status FROM returns r WHERE r.order_id = orders.id
+               ORDER BY r.created_at DESC, r.id DESC LIMIT 1) AS account_return_status,
+              (SELECT r.reason FROM returns r WHERE r.order_id = orders.id
+               ORDER BY r.created_at DESC, r.id DESC LIMIT 1) AS account_return_reason,
+              (SELECT r.notes FROM returns r WHERE r.order_id = orders.id
+               ORDER BY r.created_at DESC, r.id DESC LIMIT 1) AS account_return_notes
        FROM orders WHERE customer_id = ?
        ORDER BY created_at DESC, id DESC LIMIT 100`,
       [customer.id]
@@ -176,9 +182,9 @@ router.get("/orders", async (req, res, next) => {
         cancellationReason: row.cancellation_reason || undefined,
         refundNeeded: Boolean(row.refund_needed),
         refundAmount: Number(row.refund_amount) || 0,
-        returnStatus: row.return_status || 'none',
-        returnReason: row.return_reason || undefined,
-        returnNotes: row.return_notes || undefined
+        returnStatus: row.account_return_status || row.return_status || 'none',
+        returnReason: row.account_return_reason || row.return_reason || undefined,
+        returnNotes: row.account_return_notes || row.return_notes || undefined
       };
     }) });
   } catch (error) { return next(error); }
