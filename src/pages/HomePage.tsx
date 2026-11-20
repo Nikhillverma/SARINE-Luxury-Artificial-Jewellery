@@ -186,9 +186,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     const value = sectionConfig(id)?.cardsPerView;
     return Number.isInteger(value) ? Math.min(6, Math.max(2, value as number)) : fallback;
   };
-  const desktopCardStyle = (id: string, gap = 20, fallback = 4): React.CSSProperties => ({
+  const desktopCardStyle = (id: string, gap = 20, fallback = 5): React.CSSProperties => ({
     ["--desktop-card-basis" as string]: `calc((100% - ${gap * (cardsPerView(id, fallback) - 1)}px) / ${cardsPerView(id, fallback)})`
-  });
+  } as React.CSSProperties);
 
   // Wishlist State (Local interactive set)
   const [wishlist, setWishlist] = useState<Set<string>>(new Set());
@@ -768,7 +768,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </div>
           ) : (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0 ? (
             <div ref={curatedCarouselRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5" aria-label="Curated Favourites products">
-              {(hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).slice(0, 12).map(product => <div key={product.id} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" style={desktopCardStyle("curated-favourites", 20, 4)}><ProductCard product={product} /></div>)}
+              {(hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).slice(0, 12).map(product => <div key={product.id} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" style={desktopCardStyle("curated-favourites", 20, 5)}><ProductCard product={product} /></div>)}
             </div>
           ) : (
             <p className="col-span-full py-8 text-center text-xs text-[#6F6475]">
@@ -803,7 +803,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           </div>
           <div ref={occasionsCarouselRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5" aria-label="Shop by Occasion cards">
             {occasions.filter(item => item.active).map((item) => (
-              <Link key={item.id} to={item.link} className="group flex w-[72%] shrink-0 snap-start flex-col items-center text-center sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" style={desktopCardStyle("occasions", 20, 4)}>
+              <Link key={item.id} to={item.link} className="group flex w-[72%] shrink-0 snap-start flex-col items-center text-center sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" style={desktopCardStyle("occasions", 20, 5)}>
                 <div className="aspect-[4/5] w-full overflow-hidden bg-[#F0E6F4] border border-[#E7DCEB] rounded-xs relative group-hover:border-[#B69ACF] transition-colors">
                   <img src={item.image} alt={item.title} loading="lazy" referrerPolicy="no-referrer" className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out" />
                 </div>
