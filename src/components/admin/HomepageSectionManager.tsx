@@ -15,10 +15,12 @@ const sectionLabels: Record<string, { title: string; description: string }> = {
   "stay-in-touch": { title: "Stay in Touch", description: "The final customer-care and contact invitation section." }
 };
 
+const adjustableCarousels = new Set(["categories", "new-arrivals", "best-sellers", "curated-favourites", "occasions"]);
+
 const defaultLayout: HomepageLayout = {
   version: 1,
   sections: ["hero", ...Object.keys(sectionLabels).filter(id => id !== "hero")]
-    .map((id, sortOrder) => ({ id, enabled: true, sortOrder }))
+    .map((id, sortOrder) => ({ id, enabled: true, sortOrder, ...(adjustableCarousels.has(id) ? { carouselEnabled: true, cardsPerView: 5 } : {}) }))
 };
 
 function mergeKnownSections(layout: HomepageLayout): HomepageLayout {
@@ -33,7 +35,9 @@ function mergeKnownSections(layout: HomepageLayout): HomepageLayout {
     }));
   return {
     version: 1,
-    sections: [...existing, ...additions]
+    sections: [...existing.map(section => adjustableCarousels.has(section.id)
+      ? { ...section, carouselEnabled: section.carouselEnabled !== false, cardsPerView: section.cardsPerView ?? 5 }
+      : section), ...additions]
   };
 }
 
@@ -85,7 +89,9 @@ export const HomepageSectionManager: React.FC = () => {
     updateSections(ordered.map(section => section.id === id ? { ...section, cardsPerView } : section));
   };
 
-  const adjustableCarousels = new Set(["categories", "new-arrivals", "best-sellers", "curated-favourites", "occasions"]);
+  const updateCarouselEnabled = (id: string, carouselEnabled: boolean) => {
+    updateSections(ordered.map(section => section.id === id ? { ...section, carouselEnabled } : section));
+  };
 
   const save = async () => {
     setBusy(true); setError(""); setMessage("");
@@ -115,7 +121,7 @@ export const HomepageSectionManager: React.FC = () => {
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h2 className="font-semibold text-[#2C1838]">Carousel Features</h2>
-        <p className="text-xs text-gray-500 mt-1">Control every homepage section here: reorder it, show or hide it, and adjust desktop cards per view for each carousel. Customers can swipe with a finger, drag with a mouse/trackpad, or tap the arrow controls. Save a draft, then publish your changes.</p>
+        <p className="text-xs text-gray-500 mt-1">Control every homepage section here: reorder it, show or hide it, switch each carousel on or off, and choose 2–8 desktop cards per view. Save a draft, then publish your changes.</p>
       </div>
       <span className={isPublished ? "text-xs rounded-full px-3 py-1 bg-green-50 text-green-700" : "text-xs rounded-full px-3 py-1 bg-amber-50 text-amber-700"}>
         {isPublished ? "Published version" : "Unpublished changes"}
@@ -136,12 +142,19 @@ export const HomepageSectionManager: React.FC = () => {
             <p className="text-xs text-gray-500">{info.description}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            {adjustableCarousels.has(section.id) && <label className="flex items-center gap-2 text-xs text-gray-600">
-              Desktop cards
-              <select aria-label={`Desktop cards for ${info.title}`} value={section.cardsPerView ?? 5} disabled={busy} onChange={event => updateCardsPerView(section.id, Number(event.target.value))} className="rounded-lg border border-[#E7DCEB] bg-white px-2 py-1.5 text-xs text-[#302438]">
-                {[2, 3, 4, 5, 6].map(count => <option key={count} value={count}>{count}</option>)}
-              </select>
-            </label>}
+            {adjustableCarousels.has(section.id) && <>
+              <label className="flex items-center gap-2 text-xs text-gray-600">
+                Carousel
+                <input type="checkbox" checked={section.carouselEnabled !== false} disabled={busy} onChange={event => updateCarouselEnabled(section.id, event.target.checked)} className="h-4 w-4" />
+                <span>{section.carouselEnabled === false ? "Off — grid layout" : "On — swipe & arrows"}</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-gray-600">
+                Desktop cards
+                <select aria-label={`Desktop cards for ${info.title}`} value={section.cardsPerView ?? 5} disabled={busy} onChange={event => updateCardsPerView(section.id, Number(event.target.value))} className="rounded-lg border border-[#E7DCEB] bg-white px-2 py-1.5 text-xs text-[#302438]">
+                  {[2, 3, 4, 5, 6, 7, 8].map(count => <option key={count} value={count}>{count}</option>)}
+                </select>
+              </label>
+            </>}
             <label className="flex items-center gap-2 text-xs font-medium">
               <input type="checkbox" checked={section.enabled} disabled={busy} onChange={event => toggle(section.id, event.target.checked)} className="h-4 w-4" />
               Visible
