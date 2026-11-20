@@ -322,7 +322,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             return dateB - dateA;
           });
           const arrivalList = sortedNewest.slice(0, 4);
-          setNewArrivals(arrivalList.length > 0 ? arrivalList : newest.slice(0, 4));
+          setNewArrivals(arrivalList.length > 0 ? arrivalList : newest.slice(0, 5));
         }
       } catch (err) {
         console.error('[HomePage] Error loading storefront collections:', err);
@@ -543,7 +543,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
           {/* 5 Category Cards using plain CSS .category-grid */}
           <div className="category-grid">
-            {categories.slice(0, 5).map((cat) => (
+            {categories.slice(0, 8).map((cat) => (
                 <Link
                   key={cat.id}
                   to={`/shop?category=${cat.slug}`}
@@ -607,7 +607,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           {/* Product Grid using plain CSS .product-grid */}
           {loading ? (
             <div className="product-grid">
-              {[...Array(4)].map((_, i) => (
+              {[...Array(5)].map((_, i) => (
                 <div key={i} className="animate-pulse w-full">
                   <div className="bg-[#F7F0FA] aspect-[3/4] w-full border border-[#E7DCEB]"></div>
                   <div className="h-4 bg-[#F7F0FA] w-2/3 mt-3"></div>
@@ -617,7 +617,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </div>
           ) : newArrivals.length > 0 ? (
             <div className="product-grid">
-              {newArrivals.slice(0, 4).map((product) => (
+              {newArrivals.slice(0, 5).map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
