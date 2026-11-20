@@ -26,7 +26,11 @@ export function validateHomepageLayout(input) {
       throw new Error("Homepage section order is invalid.");
     }
     seen.add(section.id);
-    return { id: section.id, enabled: section.enabled, sortOrder: section.sortOrder };
+    const cardsPerView = section.cardsPerView === undefined ? undefined : section.cardsPerView;
+    if (cardsPerView !== undefined && (!Number.isInteger(cardsPerView) || cardsPerView < 2 || cardsPerView > 6)) {
+      throw new Error("Carousel cards per view must be a whole number from 2 to 6.");
+    }
+    return { id: section.id, enabled: section.enabled, sortOrder: section.sortOrder, ...(cardsPerView === undefined ? {} : { cardsPerView }) };
   });
   const positions = new Set(sections.map((section) => section.sortOrder));
   if (positions.size !== HOMEPAGE_SECTION_IDS.length) throw new Error("Homepage section positions must be unique.");
