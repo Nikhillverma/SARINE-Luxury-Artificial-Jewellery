@@ -182,9 +182,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const curatedCarouselRef = useRef<HTMLDivElement>(null);
   const occasionsCarouselRef = useRef<HTMLDivElement>(null);
 
+  const sectionCarouselEnabled = (id: string) => sectionConfig(id)?.carouselEnabled !== false;
   const cardsPerView = (id: string, fallback = 4) => {
     const value = sectionConfig(id)?.cardsPerView;
-    return Number.isInteger(value) ? Math.min(6, Math.max(2, value as number)) : fallback;
+    return Number.isInteger(value) ? Math.min(8, Math.max(2, value as number)) : fallback;
   };
   const desktopCardStyle = (id: string, gap = 20, fallback = 5): React.CSSProperties => ({
     ["--desktop-card-basis" as string]: `calc((100% - ${gap * (cardsPerView(id, fallback) - 1)}px) / ${cardsPerView(id, fallback)})`
@@ -560,26 +561,24 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               <Link to="/shop" className="hidden items-center gap-1 text-xs font-medium text-[#563568] transition-colors hover:text-[#8A6AA0] sm:inline-flex">
                 View all <ArrowRight size={13} />
               </Link>
-              <button type="button" onClick={() => scrollCategories('left')} aria-label="Scroll categories left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
-                <ChevronLeft size={17} />
-              </button>
-              <button type="button" onClick={() => scrollCategories('right')} aria-label="Scroll categories right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
-                <ChevronRight size={17} />
-              </button>
+              {sectionCarouselEnabled("categories") && <>
+                <button type="button" onClick={() => scrollCategories('left')} aria-label="Scroll categories left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronLeft size={17} /></button>
+                <button type="button" onClick={() => scrollCategories('right')} aria-label="Scroll categories right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronRight size={17} /></button>
+              </>}
             </div>
           </div>
 
           {categories.length > 0 ? (
             <div
               ref={categoryCarouselRef}
-              className="flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:gap-5"
+              className={sectionCarouselEnabled("categories") ? "flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:gap-5" : "grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 lg:gap-5"}
               aria-label="Jewellery categories"
             >
               {categories.map((cat) => (
                 <Link
                   key={cat.id}
                   to={`/shop?category=${encodeURIComponent(cat.slug)}`}
-                  className="group w-[72%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" style={desktopCardStyle("categories", 20, 5)}
+                  className={sectionCarouselEnabled("categories") ? "group w-[72%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "group min-w-0"} style={sectionCarouselEnabled("categories") ? desktopCardStyle("categories", 20, 5) : undefined}
                 >
                   <div className="relative aspect-[4/5] overflow-hidden rounded-sm border border-[#E7DCEB] bg-[#F0E6F4] transition-colors group-hover:border-[#B69ACF]">
                     <img
@@ -641,6 +640,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </div>
           </div>
 
+{sectionCarouselEnabled("new-arrivals") && (
           <div className="mb-3 flex items-center justify-end gap-2" aria-label="New Arrivals carousel controls">
             <button type="button" onClick={() => scrollProductTrack(newArrivalsCarouselRef.current, 'left')} aria-label="Scroll New Arrivals left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
               <ChevronLeft size={17} />
@@ -649,6 +649,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               <ChevronRight size={17} />
             </button>
           </div>
+          )}
           {loading ? (
             <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {[...Array(5)].map((_, i) => (
@@ -660,9 +661,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               ))}
             </div>
           ) : newArrivals.length > 0 ? (
-            <div ref={newArrivalsCarouselRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:gap-6" aria-label="New Arrivals products">
+            <div ref={newArrivalsCarouselRef} className={sectionCarouselEnabled("new-arrivals") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:gap-6" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"} aria-label="New Arrivals products">
               {newArrivals.slice(0, 8).map((product) => (
-                <div key={product.id} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" style={desktopCardStyle("new-arrivals", 24, 5)}>
+                <div key={product.id} className={sectionCarouselEnabled("new-arrivals") ? "w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "min-w-0"} style={sectionCarouselEnabled("new-arrivals") ? desktopCardStyle("new-arrivals", 24, 5) : undefined}>
                   <ProductCard product={product} />
                 </div>
               ))}
@@ -705,6 +706,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </div>
           </div>
 
+{sectionCarouselEnabled("best-sellers") && (
           <div className="mb-3 flex items-center justify-end gap-2" aria-label="Best Sellers carousel controls">
             <button type="button" onClick={() => scrollProductTrack(carouselRef.current, 'left')} aria-label="Scroll Best Sellers left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
               <ChevronLeft size={17} />
@@ -713,6 +715,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               <ChevronRight size={17} />
             </button>
           </div>
+          )}
           {loading ? (
             <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {[...Array(6)].map((_, i) => (
@@ -724,9 +727,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               ))}
             </div>
           ) : bestsellers.length > 0 ? (
-            <div ref={carouselRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:gap-6" aria-label="Best Sellers products">
+            <div ref={carouselRef} className={sectionCarouselEnabled("best-sellers") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:gap-6" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"} aria-label="Best Sellers products">
               {bestsellers.slice(0, 12).map((product) => (
-                <div key={product.id} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" style={desktopCardStyle("best-sellers", 24, 5)}>
+                <div key={product.id} className={sectionCarouselEnabled("best-sellers") ? "w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "min-w-0"} style={sectionCarouselEnabled("best-sellers") ? desktopCardStyle("best-sellers", 24, 5) : undefined}>
                   <ProductCard product={product} />
                 </div>
               ))}
@@ -758,17 +761,19 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               </Link>
             </div>
           </div>
+{sectionCarouselEnabled("curated-favourites") && (
           <div className="mb-3 flex items-center justify-end gap-2" aria-label="Curated Favourites carousel controls">
             <button type="button" onClick={() => scrollProductTrack(curatedCarouselRef.current, 'left')} aria-label="Scroll Curated Favourites left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronLeft size={17} /></button>
             <button type="button" onClick={() => scrollProductTrack(curatedCarouselRef.current, 'right')} aria-label="Scroll Curated Favourites right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronRight size={17} /></button>
           </div>
+          )}
           {loading ? (
             <div className="flex gap-4 overflow-hidden pb-3">
               {[...Array(4)].map((_, i) => <div key={i} className="w-[68%] shrink-0 sm:w-[42%] md:w-[30%] lg:w-1/4 animate-pulse"><div className="bg-[#F0E6F4] aspect-[3/4] w-full border border-[#E7DCEB]" /><div className="h-4 bg-[#F0E6F4] w-2/3 mt-3" /><div className="h-3 bg-[#F0E6F4] w-1/3 mt-2" /></div>)}
             </div>
           ) : (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0 ? (
-            <div ref={curatedCarouselRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5" aria-label="Curated Favourites products">
-              {(hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).slice(0, 12).map(product => <div key={product.id} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" style={desktopCardStyle("curated-favourites", 20, 5)}><ProductCard product={product} /></div>)}
+            <div ref={curatedCarouselRef} className={sectionCarouselEnabled("curated-favourites") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"} aria-label="Curated Favourites products">
+              {(hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).slice(0, 12).map(product => <div key={product.id} className={sectionCarouselEnabled("curated-favourites") ? "w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "min-w-0"} style={sectionCarouselEnabled("curated-favourites") ? desktopCardStyle("curated-favourites", 20, 5) : undefined}><ProductCard product={product} /></div>)}
             </div>
           ) : (
             <p className="col-span-full py-8 text-center text-xs text-[#6F6475]">
@@ -797,13 +802,13 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </p>
           </div>
 
-          <div className="mb-3 flex items-center justify-end gap-2" aria-label="Shop by Occasion carousel controls">
+          {sectionCarouselEnabled("occasions") && <div className="mb-3 flex items-center justify-end gap-2" aria-label="Shop by Occasion carousel controls">
             <button type="button" onClick={() => scrollProductTrack(occasionsCarouselRef.current, 'left')} aria-label="Scroll occasions left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronLeft size={17} /></button>
             <button type="button" onClick={() => scrollProductTrack(occasionsCarouselRef.current, 'right')} aria-label="Scroll occasions right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronRight size={17} /></button>
-          </div>
-          <div ref={occasionsCarouselRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5" aria-label="Shop by Occasion cards">
+          </div>}
+          <div ref={occasionsCarouselRef} className={sectionCarouselEnabled("occasions") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"} aria-label="Shop by Occasion cards">
             {occasions.filter(item => item.active).map((item) => (
-              <Link key={item.id} to={item.link} className="group flex w-[72%] shrink-0 snap-start flex-col items-center text-center sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" style={desktopCardStyle("occasions", 20, 5)}>
+              <Link key={item.id} to={item.link} className={sectionCarouselEnabled("occasions") ? "group flex w-[72%] shrink-0 snap-start flex-col items-center text-center sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "group flex min-w-0 flex-col items-center text-center"} style={sectionCarouselEnabled("occasions") ? desktopCardStyle("occasions", 20, 5) : undefined}>
                 <div className="aspect-[4/5] w-full overflow-hidden bg-[#F0E6F4] border border-[#E7DCEB] rounded-xs relative group-hover:border-[#B69ACF] transition-colors">
                   <img src={item.image} alt={item.title} loading="lazy" referrerPolicy="no-referrer" className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out" />
                 </div>
