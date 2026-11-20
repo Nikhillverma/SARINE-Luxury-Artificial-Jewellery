@@ -59,7 +59,7 @@ adminOnly.put("/draft", async (req, res, next) => {
     await writeSetting("homepage_layout_draft", layout);
     res.set("Cache-Control", "no-store").json({ success: true, draft: layout });
   } catch (error) {
-    if (error instanceof Error && /homepage|section|position|supported|duplicated|enabled|order|exactly once/i.test(error.message)) {
+    if (error instanceof Error && /homepage|section|position|supported|duplicated|enabled|order|exactly once|cards per view/i.test(error.message)) {
       return res.status(400).json({ error: error.message });
     }
     next(error);
