@@ -543,7 +543,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
           {/* 5 Category Cards using plain CSS .category-grid */}
           <div className="category-grid">
-            {categories.slice(0, 8).map((cat) => (
+            {categories.map((cat) => (
                 <Link
                   key={cat.id}
                   to={`/shop?category=${cat.slug}`}
