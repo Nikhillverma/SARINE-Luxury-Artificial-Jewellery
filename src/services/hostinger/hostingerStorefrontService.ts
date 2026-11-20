@@ -29,7 +29,6 @@ export interface OccasionCard {
   link: string;
   active: boolean;
   sortOrder: number;
-  cardsPerView?: number;
 }
 
 export interface StorefrontBanner {
