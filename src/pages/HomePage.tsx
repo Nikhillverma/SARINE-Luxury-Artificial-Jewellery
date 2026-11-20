@@ -175,6 +175,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const [editorial, setEditorial] = useState<EditorialContent>({ eyebrow: 'EDITORIAL COLLECTION', title: 'The Art of Everyday Elegance', description: 'A curated collection that blends classic beauty with modern sensibilities.', ctaText: 'Explore the Collection', ctaLink: '/shop', imageUrl: HOMEPAGE_IMAGES.editorialBanner, active: true });
 
   // Independent, touch-friendly horizontal tracks for homepage carousels.
+  const heroTouchStartX = useRef<number | null>(null);
   const categoryCarouselRef = useRef<HTMLDivElement>(null);
   const newArrivalsCarouselRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -406,7 +407,19 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Text in centered container (max-w-[1280px]) with soft lavender gradient overlay
           Slide indicators bottom-left, arrow buttons bottom-right inside container
           ========================================================================= */}
-      <section style={{ order: sectionOrder("hero"), display: sectionVisible("hero") ? undefined : "none" }} className="relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[#F0E6F4] border-b border-[#E7DCEB]">
+      <section
+        style={{ order: sectionOrder("hero"), display: sectionVisible("hero") ? undefined : "none" }}
+        onTouchStart={event => { heroTouchStartX.current = event.touches[0]?.clientX ?? null; }}
+        onTouchEnd={event => {
+          const startX = heroTouchStartX.current;
+          const endX = event.changedTouches[0]?.clientX;
+          heroTouchStartX.current = null;
+          if (startX === null || endX === undefined) return;
+          const deltaX = endX - startX;
+          if (Math.abs(deltaX) > 48) deltaX < 0 ? nextSlide() : prevSlide();
+        }}
+        className="relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[#F0E6F4] border-b border-[#E7DCEB] touch-pan-y"
+      >
         {/* Stacked background slide images */}
         {heroSlides.map((slide, idx) => (
           <div
