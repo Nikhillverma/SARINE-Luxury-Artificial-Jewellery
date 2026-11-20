@@ -29,7 +29,55 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return data as T;
 }
 
+
+export interface CustomerAccountOrderLine {
+  productId: string;
+  name: string;
+  image?: string;
+  sku?: string;
+  variantLabel?: string;
+  variantOptions?: Record<string, string>;
+  unitPrice: number;
+  quantity: number;
+}
+export interface CustomerAccountOrder {
+  id: string;
+  orderNumber: string;
+  createdAt?: string;
+  customer: { name: string; email: string; phone: string };
+  shippingAddress: { fullName: string; phone: string; line1: string; line2?: string; city: string; state: string; pincode: string };
+  lines: CustomerAccountOrderLine[];
+  subtotal: number;
+  shippingFee: number;
+  total: number;
+  paymentMethod: string;
+  paymentStatus: string;
+  orderStatus: string;
+  courierName?: string;
+  trackingNumber?: string;
+  trackingUrl?: string;
+  shippedAt?: string;
+  deliveredAt?: string;
+  cancelledAt?: string;
+  cancellationReason?: string;
+  refundNeeded: boolean;
+  refundAmount: number;
+  returnStatus: string;
+  returnReason?: string;
+  returnNotes?: string;
+}
+
 export const customerAuthService = {
+  async getOrders(): Promise<CustomerAccountOrder[]> {
+    const result = await request<{ orders: CustomerAccountOrder[] }>("orders");
+    return result.orders || [];
+  },
+  async cancelOrder(orderNumber: string, reason: string): Promise<{ success: boolean; message: string }> {
+    return request("cancel", { method: "POST", body: JSON.stringify({ orderNumber, reason }) });
+  },
+  async requestReturn(orderNumber: string, requestType: "return" | "exchange", reason: string, notes: string): Promise<{ success: boolean; requestId: number; message: string }> {
+    return request("returns", { method: "POST", body: JSON.stringify({ orderNumber, requestType, reason, notes }) });
+  },
   async getMethods(): Promise<{ email: { enabled: boolean; provider: string; reason: string | null }; phone: { enabled: boolean; provider: string; reason: string | null }; google: { enabled: boolean } }> {
     return request("methods");
   },
