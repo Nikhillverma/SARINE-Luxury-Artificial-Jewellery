@@ -157,7 +157,6 @@ export const AdminStorefrontPage: React.FC = () => {
         <div><h1 className="font-serif text-3xl text-[#2C1838]">Storefront Studio</h1><p className="text-sm text-[#705E7B] mt-1">Manage homepage sections, occasion cards, banners, editorial content and announcements.</p></div>
         <a href="/" target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg border text-sm">Preview storefront</a>
       </header>
-      <HomepageSectionManager />
       <ShopByOccasionManager />
       <CuratedFavouritesManager />
       {error && <div role="alert" className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>}
