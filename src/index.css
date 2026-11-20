@@ -295,7 +295,7 @@
   .sarine-home .category-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 @media (min-width: 1024px) {
-  .sarine-home .category-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+  .sarine-home .category-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px; }
 }
 
 /* Product cards: boutique-style image window, fine borders and plum pricing. */
@@ -366,9 +366,6 @@
 /* The story area receives a more editorial blush/ivory treatment. */
 .sarine-home > section:has(img[alt="SARINE Craftsmanship and Jewellery Details"]) {
   background: linear-gradient(115deg, #F1DCDD 0%, #FBF2EF 54%, #F8F0E8 100%);
-}
-.sarine-home > section:has(.lg\\:grid-cols-12) img {
-  border-radius: 10px;
 }
 @media (min-width: 768px) {
   .sarine-home .product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
