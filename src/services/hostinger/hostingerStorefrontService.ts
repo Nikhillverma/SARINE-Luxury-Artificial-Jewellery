@@ -9,6 +9,7 @@ export interface HomepageSectionConfig {
   enabled: boolean;
   sortOrder: number;
   cardsPerView?: number;
+  carouselEnabled?: boolean;
 }
 export interface HomepageLayout {
   version: 1;
