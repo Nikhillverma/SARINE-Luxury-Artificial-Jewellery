@@ -662,7 +662,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           ) : newArrivals.length > 0 ? (
             <div ref={newArrivalsCarouselRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:gap-6" aria-label="New Arrivals products">
               {newArrivals.slice(0, 8).map((product) => (
-                <div key={product.id} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-[23%] xl:w-[19%]">
+                <div key={product.id} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto" style={desktopCardStyle("new-arrivals", 24, 5)}>
                   <ProductCard product={product} />
                 </div>
               ))}
@@ -726,7 +726,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           ) : bestsellers.length > 0 ? (
             <div ref={carouselRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:gap-6" aria-label="Best Sellers products">
               {bestsellers.slice(0, 12).map((product) => (
-                <div key={product.id} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-[23%] xl:w-[19%]">
+                <div key={product.id} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto" style={desktopCardStyle("best-sellers", 24, 5)}>
                   <ProductCard product={product} />
                 </div>
               ))}
