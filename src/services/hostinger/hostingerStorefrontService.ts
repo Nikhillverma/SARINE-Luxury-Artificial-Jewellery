@@ -8,6 +8,7 @@ export interface HomepageSectionConfig {
   id: string;
   enabled: boolean;
   sortOrder: number;
+  cardsPerView?: number;
 }
 export interface HomepageLayout {
   version: 1;
@@ -28,6 +29,7 @@ export interface OccasionCard {
   link: string;
   active: boolean;
   sortOrder: number;
+  cardsPerView?: number;
 }
 
 export interface StorefrontBanner {
