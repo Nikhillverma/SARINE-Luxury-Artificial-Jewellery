@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
-import { HomepageSectionManager } from "../../components/admin/HomepageSectionManager";
 import { CuratedFavouritesManager } from "../../components/admin/CuratedFavouritesManager";
 import { ShopByOccasionManager } from "../../components/admin/ShopByOccasionManager";
 import { hostingerMediaService } from "../../services";
