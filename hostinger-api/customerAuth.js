@@ -97,16 +97,16 @@ async function createSession(customerId, res) {
 
 function normalizeSavedAddress(input) {
   const fullName = String(input?.fullName || "").trim();
-  const phone = String(input?.phone || "").replace(/\\D/g, "").slice(-10);
+  const phone = String(input?.phone || "").replace(/\D/g, "").slice(-10);
   const line1 = String(input?.line1 || "").trim();
   const line2 = String(input?.line2 || "").trim();
   const city = String(input?.city || "").trim();
   const state = String(input?.state || "").trim();
-  const pincode = String(input?.pincode || "").replace(/\\D/g, "");
+  const pincode = String(input?.pincode || "").replace(/\D/g, "");
   if (fullName.length < 2 || fullName.length > 120 || phone.length !== 10 ||
       line1.length < 4 || line1.length > 240 || line2.length > 240 ||
       city.length < 2 || city.length > 100 || state.length < 2 || state.length > 100 ||
-      !/^\\d{6}$/.test(pincode)) return null;
+      !/^\d{6}$/.test(pincode)) return null;
   return { fullName, phone, line1, line2: line2 || null, city, state, pincode };
 }
 function mapSavedAddress(row) {
