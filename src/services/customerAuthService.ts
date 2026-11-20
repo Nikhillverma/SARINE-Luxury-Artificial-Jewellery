@@ -67,7 +67,33 @@ export interface CustomerAccountOrder {
   returnNotes?: string;
 }
 
+
+export interface CustomerSavedAddress {
+  id: string;
+  fullName: string;
+  phone: string;
+  line1: string;
+  line2: string;
+  city: string;
+  state: string;
+  pincode: string;
+  isDefault: boolean;
+}
+
 export const customerAuthService = {
+  async getAddresses(): Promise<CustomerSavedAddress[]> {
+    const result = await request<{ addresses: CustomerSavedAddress[] }>("addresses");
+    return result.addresses || [];
+  },
+  async saveAddress(address: Omit<CustomerSavedAddress, "id"> & { id?: string }): Promise<CustomerSavedAddress> {
+    const result = address.id
+      ? await request<{ address: CustomerSavedAddress }>(`addresses/${encodeURIComponent(address.id)}`, { method: "PATCH", body: JSON.stringify(address) })
+      : await request<{ address: CustomerSavedAddress }>("addresses", { method: "POST", body: JSON.stringify(address) });
+    return result.address;
+  },
+  async deleteAddress(id: string): Promise<void> {
+    await request(`addresses/${encodeURIComponent(id)}`, { method: "DELETE" });
+  },
   async getOrders(): Promise<CustomerAccountOrder[]> {
     const result = await request<{ orders: CustomerAccountOrder[] }>("orders");
     return result.orders || [];
