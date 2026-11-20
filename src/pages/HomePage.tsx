@@ -738,7 +738,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="occasion-grid">
             {occasions.filter(item => item.active).map((item) => (
               <Link
                 key={item.title}
