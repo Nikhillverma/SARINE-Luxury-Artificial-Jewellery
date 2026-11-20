@@ -11,6 +11,7 @@ import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger
 import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
 import { formatVariantLabel } from "./productVariantPolicy.js";
 import { sortStockItems } from "./stockLockPolicy.js";
+import { ensureCustomerAddressSchema } from "./customerAddressSchema.js";
 import { ensureMarketingSchema, releaseCouponRedemptionForCancelledOrder } from "./marketingPolicy.js";
 
 const router = Router();
@@ -92,6 +93,134 @@ async function createSession(customerId, res) {
   );
   setCookie(res, token);
 }
+
+
+function normalizeSavedAddress(input) {
+  const fullName = String(input?.fullName || "").trim();
+  const phone = String(input?.phone || "").replace(/\\D/g, "").slice(-10);
+  const line1 = String(input?.line1 || "").trim();
+  const line2 = String(input?.line2 || "").trim();
+  const city = String(input?.city || "").trim();
+  const state = String(input?.state || "").trim();
+  const pincode = String(input?.pincode || "").replace(/\\D/g, "");
+  if (fullName.length < 2 || fullName.length > 120 || phone.length !== 10 ||
+      line1.length < 4 || line1.length > 240 || line2.length > 240 ||
+      city.length < 2 || city.length > 100 || state.length < 2 || state.length > 100 ||
+      !/^\\d{6}$/.test(pincode)) return null;
+  return { fullName, phone, line1, line2: line2 || null, city, state, pincode };
+}
+function mapSavedAddress(row) {
+  return {
+    id: row.id, fullName: row.full_name, phone: row.phone, line1: row.line1,
+    line2: row.line2 || "", city: row.city, state: row.state,
+    pincode: row.pincode, isDefault: Boolean(row.is_default)
+  };
+}
+
+// Customer-owned address book. Every query is scoped to the authenticated customer.
+router.get("/addresses", async (req, res, next) => {
+  try {
+    res.set("Cache-Control", "no-store");
+    const customer = await getAuthenticatedCustomer(req);
+    if (!customer) return res.status(401).json({ error: "Please sign in again." });
+    await ensureCustomerAddressSchema();
+    const [rows] = await pool.execute(
+      "SELECT id, full_name, phone, line1, line2, city, state, pincode, is_default FROM customer_addresses WHERE customer_id = ? ORDER BY is_default DESC, created_at DESC",
+      [customer.id]
+    );
+    return res.json({ addresses: rows.map(mapSavedAddress) });
+  } catch (error) { return next(error); }
+});
+
+router.post("/addresses", async (req, res, next) => {
+  let connection;
+  try {
+    res.set("Cache-Control", "no-store");
+    const customer = await getAuthenticatedCustomer(req);
+    if (!customer) return res.status(401).json({ error: "Please sign in again." });
+    const address = normalizeSavedAddress(req.body);
+    if (!address) return res.status(400).json({ error: "Enter a valid name, 10-digit mobile number and complete Indian delivery address with a 6-digit PIN code." });
+    await ensureCustomerAddressSchema();
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const [countRows] = await connection.execute("SELECT COUNT(*) AS total FROM customer_addresses WHERE customer_id = ? FOR UPDATE", [customer.id]);
+    if (Number(countRows[0]?.total) >= 10) {
+      await connection.rollback();
+      return res.status(400).json({ error: "You can save up to 10 delivery addresses." });
+    }
+    const isDefault = Boolean(req.body?.isDefault) || Number(countRows[0]?.total) === 0;
+    if (isDefault) await connection.execute("UPDATE customer_addresses SET is_default = 0 WHERE customer_id = ?", [customer.id]);
+    const id = crypto.randomUUID();
+    await connection.execute(
+      "INSERT INTO customer_addresses (id, customer_id, full_name, phone, line1, line2, city, state, pincode, is_default) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [id, customer.id, address.fullName, address.phone, address.line1, address.line2, address.city, address.state, address.pincode, isDefault ? 1 : 0]
+    );
+    await connection.commit();
+    return res.status(201).json({ success: true, address: { id, ...address, isDefault } });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    return next(error);
+  } finally { connection?.release(); }
+});
+
+router.patch("/addresses/:id", async (req, res, next) => {
+  let connection;
+  try {
+    res.set("Cache-Control", "no-store");
+    const customer = await getAuthenticatedCustomer(req);
+    if (!customer) return res.status(401).json({ error: "Please sign in again." });
+    const address = normalizeSavedAddress(req.body);
+    if (!address) return res.status(400).json({ error: "Enter a valid name, 10-digit mobile number and complete Indian delivery address with a 6-digit PIN code." });
+    await ensureCustomerAddressSchema();
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const [rows] = await connection.execute("SELECT id FROM customer_addresses WHERE id = ? AND customer_id = ? FOR UPDATE", [req.params.id, customer.id]);
+    if (!rows.length) {
+      await connection.rollback();
+      return res.status(404).json({ error: "Saved address not found." });
+    }
+    const isDefault = Boolean(req.body?.isDefault);
+    if (isDefault) await connection.execute("UPDATE customer_addresses SET is_default = 0 WHERE customer_id = ?", [customer.id]);
+    await connection.execute(
+      "UPDATE customer_addresses SET full_name = ?, phone = ?, line1 = ?, line2 = ?, city = ?, state = ?, pincode = ?, is_default = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ? AND customer_id = ?",
+      [address.fullName, address.phone, address.line1, address.line2, address.city, address.state, address.pincode, isDefault ? 1 : 0, req.params.id, customer.id]
+    );
+    await connection.commit();
+    return res.json({ success: true, address: { id: req.params.id, ...address, isDefault } });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    return next(error);
+  } finally { connection?.release(); }
+});
+
+router.delete("/addresses/:id", async (req, res, next) => {
+  let connection;
+  try {
+    res.set("Cache-Control", "no-store");
+    const customer = await getAuthenticatedCustomer(req);
+    if (!customer) return res.status(401).json({ error: "Please sign in again." });
+    await ensureCustomerAddressSchema();
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const [rows] = await connection.execute("SELECT id, is_default FROM customer_addresses WHERE id = ? AND customer_id = ? FOR UPDATE", [req.params.id, customer.id]);
+    if (!rows.length) {
+      await connection.rollback();
+      return res.status(404).json({ error: "Saved address not found." });
+    }
+    await connection.execute("DELETE FROM customer_addresses WHERE id = ? AND customer_id = ?", [req.params.id, customer.id]);
+    if (rows[0].is_default) {
+      await connection.execute(
+        "UPDATE customer_addresses SET is_default = 1 WHERE customer_id = ? ORDER BY created_at DESC LIMIT 1",
+        [customer.id]
+      );
+    }
+    await connection.commit();
+    return res.json({ success: true });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    return next(error);
+  } finally { connection?.release(); }
+});
 
 // GET /api/customer/auth/orders — only orders explicitly linked to this customer account.
 router.get("/orders", async (req, res, next) => {
