@@ -40,6 +40,7 @@ import { AdminReturnsPage } from './pages/admin/AdminReturnsPage';
 import { AdminReviewsPage } from './pages/admin/AdminReviewsPage';
 import { AdminInventoryPage } from './pages/admin/AdminInventoryPage';
 import { AdminStorefrontPage } from './pages/admin/AdminStorefrontPage';
+import { AdminCarouselFeaturesPage } from './pages/admin/AdminCarouselFeaturesPage';
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
 import { AdminMarketingPage } from './pages/admin/AdminMarketingPage';
 import { AdminCampaignsPage } from './pages/admin/AdminCampaignsPage';
@@ -111,6 +112,7 @@ function MainAppShell() {
           <Route path="/admin/marketing" element={<AdminMarketingPage />} />
           <Route path="/admin/campaigns" element={<AdminCampaignsPage />} />
           <Route path="/admin/storefront" element={<AdminStorefrontPage />} />
+          <Route path="/admin/carousel-features" element={<AdminCarouselFeaturesPage />} />
           <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           <Route path="/admin/copilot" element={<Navigate to="/admin" replace />} />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />
