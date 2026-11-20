@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, CalendarDays, CheckCircle2, Clock3, Package, RefreshCw, ShieldCheck, Truck } from "lucide-react";
 import { CustomerAuthPanel } from "../components/CustomerAuthPanel";
 import { CustomerIdentityLink } from "../components/account/CustomerIdentityLink";
+import { CustomerAddressBook } from "../components/account/CustomerAddressBook";
 import { customerAuthService, type CustomerAccountOrder } from "../services/customerAuthService";
 import type { CustomerIdentity } from "../types/customer";
 import { formatInr } from "../utils/currency";
@@ -204,6 +205,7 @@ export const AccountPage: React.FC = () => {
                 </div>
               )}
             </section>
+            <div className="lg:col-start-2"><CustomerAddressBook /></div>
           </div>
         ) : (
           <section className="max-w-xl mx-auto bg-white border border-[#E7DCEB] shadow-sm p-6 sm:p-10">
