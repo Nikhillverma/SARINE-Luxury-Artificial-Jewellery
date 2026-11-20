@@ -2,20 +2,40 @@ import React, { useEffect, useMemo, useState } from "react";
 import { hostingerStorefrontService, type HomepageLayout } from "../../services/hostinger/hostingerStorefrontService";
 
 const sectionLabels: Record<string, { title: string; description: string }> = {
-  categories: { title: "Shop by Category", description: "Your active jewellery categories, managed in Categories." },
+  hero: { title: "Hero Banner", description: "The first homepage feature. Banner artwork and slides are edited in the Hero Banners controls below." },
+  categories: { title: "Shop by Category Carousel", description: "A swipeable horizontal carousel of all active jewellery categories, using their category artwork." },
   "new-arrivals": { title: "New Arrivals", description: "Newest active products with available stock." },
   "best-sellers": { title: "Best Sellers", description: "Products ranked by genuine qualifying sales. Curated Favourites is managed separately." },
   "curated-favourites": { title: "Curated Favourites", description: "Your manually selected products, ordered and published from the Curated Favourites manager." },
   occasions: { title: "Shop by Occasion", description: "Daily Wear, Festive, Wedding and Gifting discovery cards." },
   price: { title: "Shop by Price", description: "The four preset price-navigation links." },
   "our-story": { title: "Our Story", description: "Brand story, image and three brand pillars." },
-  editorial: { title: "Editorial Collection", description: "Uses the separate Editorial Collection content controls below." }
+  editorial: { title: "Editorial Collection", description: "Uses the separate Editorial Collection content controls below." },
+  "care-guide": { title: "Jewellery Care Guide", description: "The jewellery care and storage guidance section." },
+  "stay-in-touch": { title: "Stay in Touch", description: "The final customer-care and contact invitation section." }
 };
 
 const defaultLayout: HomepageLayout = {
   version: 1,
-  sections: Object.keys(sectionLabels).map((id, sortOrder) => ({ id, enabled: true, sortOrder }))
+  sections: ["hero", ...Object.keys(sectionLabels).filter(id => id !== "hero")]
+    .map((id, sortOrder) => ({ id, enabled: true, sortOrder }))
 };
+
+function mergeKnownSections(layout: HomepageLayout): HomepageLayout {
+  const existing = Array.isArray(layout?.sections) ? layout.sections : [];
+  const existingIds = new Set(existing.map(section => section.id));
+  const maxOrder = existing.reduce((max, section) => Math.max(max, Number(section.sortOrder) || 0), -1);
+  const additions = defaultLayout.sections
+    .filter(section => !existingIds.has(section.id))
+    .map((section, index) => ({
+      ...section,
+      sortOrder: section.id === "hero" ? -1 : maxOrder + index + 1
+    }));
+  return {
+    version: 1,
+    sections: [...existing, ...additions]
+  };
+}
 
 export const HomepageSectionManager: React.FC = () => {
   const [draft, setDraft] = useState<HomepageLayout>(defaultLayout);
@@ -33,8 +53,8 @@ export const HomepageSectionManager: React.FC = () => {
     setError("");
     try {
       const result = await hostingerStorefrontService.getHomepageLayout();
-      setDraft(result.draft);
-      setPublished(result.published);
+      setDraft(mergeKnownSections(result.draft));
+      setPublished(mergeKnownSections(result.published));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not load homepage layout settings.");
     } finally {
@@ -88,8 +108,8 @@ export const HomepageSectionManager: React.FC = () => {
   return <section className="bg-white border rounded-2xl p-5 space-y-4">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h2 className="font-semibold text-[#2C1838]">Homepage Section Manager</h2>
-        <p className="text-xs text-gray-500 mt-1">Control section visibility and order. Save a draft first, then publish when the preview is ready.</p>
+        <h2 className="font-semibold text-[#2C1838]">Carousel Features</h2>
+        <p className="text-xs text-gray-500 mt-1">Manage every homepage feature in one place. Reorder sections, control visibility, save a draft, then publish when ready. Category artwork and category names stay connected to Categories Management.</p>
       </div>
       <span className={isPublished ? "text-xs rounded-full px-3 py-1 bg-green-50 text-green-700" : "text-xs rounded-full px-3 py-1 bg-amber-50 text-amber-700"}>
         {isPublished ? "Published version" : "Unpublished changes"}
