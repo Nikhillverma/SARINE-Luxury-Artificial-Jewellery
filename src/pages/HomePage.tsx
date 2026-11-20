@@ -174,10 +174,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const [managedHeroSlides, setManagedHeroSlides] = useState<Array<{id:string; tagline:string; title:string; subtitle:string; ctaText:string; ctaLink:string; imageUrl:string}>>([]);
   const [editorial, setEditorial] = useState<EditorialContent>({ eyebrow: 'EDITORIAL COLLECTION', title: 'The Art of Everyday Elegance', description: 'A curated collection that blends classic beauty with modern sensibilities.', ctaText: 'Explore the Collection', ctaLink: '/shop', imageUrl: HOMEPAGE_IMAGES.editorialBanner, active: true });
 
-  // Independent horizontal scroll track for the category carousel.
+  // Independent, touch-friendly horizontal tracks for homepage carousels.
   const categoryCarouselRef = useRef<HTMLDivElement>(null);
-
-  // Existing Best Sellers carousel scroll reference.
+  const newArrivalsCarouselRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
 
   // Wishlist State (Local interactive set)
@@ -372,15 +371,11 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     });
   };
 
-  // 3. Best Sellers Carousel Controls
-  const scrollCarousel = (direction: 'left' | 'right') => {
-    if (carouselRef.current) {
-      const scrollAmount = 300;
-      carouselRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
-    }
+  // Tap controls complement native finger/mouse horizontal scrolling.
+  const scrollProductTrack = (track: HTMLDivElement | null, direction: 'left' | 'right') => {
+    if (!track) return;
+    const amount = Math.max(track.clientWidth * 0.82, 260);
+    track.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
   };
 
   const toggleWishlist = (productId: string, e: React.MouseEvent) => {
@@ -554,7 +549,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           {categories.length > 0 ? (
             <div
               ref={categoryCarouselRef}
-              className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:gap-5"
+              className="flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:gap-5"
               aria-label="Jewellery categories"
             >
               {categories.map((cat) => (
@@ -623,21 +618,30 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </div>
           </div>
 
-          {/* Product Grid using plain CSS .product-grid */}
+          <div className="mb-3 flex items-center justify-end gap-2" aria-label="New Arrivals carousel controls">
+            <button type="button" onClick={() => scrollProductTrack(newArrivalsCarouselRef.current, 'left')} aria-label="Scroll New Arrivals left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
+              <ChevronLeft size={17} />
+            </button>
+            <button type="button" onClick={() => scrollProductTrack(newArrivalsCarouselRef.current, 'right')} aria-label="Scroll New Arrivals right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
+              <ChevronRight size={17} />
+            </button>
+          </div>
           {loading ? (
-            <div className="product-grid">
+            <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="animate-pulse w-full">
-                  <div className="bg-[#F7F0FA] aspect-[3/4] w-full border border-[#E7DCEB]"></div>
-                  <div className="h-4 bg-[#F7F0FA] w-2/3 mt-3"></div>
-                  <div className="h-3 bg-[#F7F0FA] w-1/3 mt-2"></div>
+                <div key={i} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-[23%] xl:w-[19%] animate-pulse">
+                  <div className="bg-[#F7F0FA] aspect-[3/4] w-full border border-[#E7DCEB]" />
+                  <div className="h-4 bg-[#F7F0FA] w-2/3 mt-3" />
+                  <div className="h-3 bg-[#F7F0FA] w-1/3 mt-2" />
                 </div>
               ))}
             </div>
           ) : newArrivals.length > 0 ? (
-            <div className="product-grid">
-              {newArrivals.slice(0, 5).map((product) => (
-                <ProductCard key={product.id} product={product} />
+            <div ref={newArrivalsCarouselRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:gap-6" aria-label="New Arrivals products">
+              {newArrivals.slice(0, 8).map((product) => (
+                <div key={product.id} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-[23%] xl:w-[19%]">
+                  <ProductCard product={product} />
+                </div>
               ))}
             </div>
           ) : (
@@ -678,21 +682,30 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </div>
           </div>
 
-          {/* Product Grid using plain CSS .product-grid */}
+          <div className="mb-3 flex items-center justify-end gap-2" aria-label="Best Sellers carousel controls">
+            <button type="button" onClick={() => scrollProductTrack(carouselRef.current, 'left')} aria-label="Scroll Best Sellers left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
+              <ChevronLeft size={17} />
+            </button>
+            <button type="button" onClick={() => scrollProductTrack(carouselRef.current, 'right')} aria-label="Scroll Best Sellers right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
+              <ChevronRight size={17} />
+            </button>
+          </div>
           {loading ? (
-            <div className="product-grid">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="animate-pulse w-full">
-                  <div className="bg-[#F0E6F4] aspect-[3/4] w-full border border-[#E7DCEB]"></div>
-                  <div className="h-4 bg-[#F0E6F4] w-2/3 mt-3"></div>
-                  <div className="h-3 bg-[#F0E6F4] w-1/3 mt-2"></div>
+            <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-[23%] xl:w-[19%] animate-pulse">
+                  <div className="bg-[#F0E6F4] aspect-[3/4] w-full border border-[#E7DCEB]" />
+                  <div className="h-4 bg-[#F0E6F4] w-2/3 mt-3" />
+                  <div className="h-3 bg-[#F0E6F4] w-1/3 mt-2" />
                 </div>
               ))}
             </div>
           ) : bestsellers.length > 0 ? (
-            <div className="product-grid">
-              {bestsellers.slice(0, 8).map((product) => (
-                <ProductCard key={product.id} product={product} />
+            <div ref={carouselRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:gap-6" aria-label="Best Sellers products">
+              {bestsellers.slice(0, 12).map((product) => (
+                <div key={product.id} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-[23%] xl:w-[19%]">
+                  <ProductCard product={product} />
+                </div>
               ))}
             </div>
           ) : (
