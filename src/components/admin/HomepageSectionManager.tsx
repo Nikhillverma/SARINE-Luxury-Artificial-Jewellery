@@ -3,11 +3,11 @@ import { hostingerStorefrontService, type HomepageLayout } from "../../services/
 
 const sectionLabels: Record<string, { title: string; description: string }> = {
   hero: { title: "Hero Banner", description: "The first homepage feature. Banner artwork and slides are edited in the Hero Banners controls below." },
-  categories: { title: "Shop by Category Carousel", description: "A swipeable horizontal carousel of all active jewellery categories, using their category artwork." },
-  "new-arrivals": { title: "New Arrivals", description: "Newest active products with available stock." },
-  "best-sellers": { title: "Best Sellers", description: "Products ranked by genuine qualifying sales. Curated Favourites is managed separately." },
-  "curated-favourites": { title: "Curated Favourites", description: "Your manually selected products, ordered and published from the Curated Favourites manager." },
-  occasions: { title: "Shop by Occasion", description: "Daily Wear, Festive, Wedding and Gifting discovery cards." },
+  categories: { title: "Shop by Category Carousel", description: "Swipe or tap through active jewellery categories. Adjust the number of cards shown on desktop." },
+  "new-arrivals": { title: "New Arrivals Carousel", description: "Swipe, drag or use arrows to browse newest products. Adjust desktop card count." },
+  "best-sellers": { title: "Best Sellers Carousel", description: "Swipe, drag or use arrows to browse genuine best sellers. Adjust desktop card count." },
+  "curated-favourites": { title: "Curated Favourites Carousel", description: "Swipe, drag or use arrows through your manually selected products. Adjust desktop card count." },
+  occasions: { title: "Shop by Occasion Carousel", description: "Swipe, drag or use arrows through occasion cards. Adjust desktop card count." },
   price: { title: "Shop by Price", description: "The four preset price-navigation links." },
   "our-story": { title: "Our Story", description: "Brand story, image and three brand pillars." },
   editorial: { title: "Editorial Collection", description: "Uses the separate Editorial Collection content controls below." },
@@ -81,6 +81,12 @@ export const HomepageSectionManager: React.FC = () => {
     updateSections(ordered.map(section => section.id === id ? { ...section, enabled } : section));
   };
 
+  const updateCardsPerView = (id: string, cardsPerView: number) => {
+    updateSections(ordered.map(section => section.id === id ? { ...section, cardsPerView } : section));
+  };
+
+  const adjustableCarousels = new Set(["categories", "new-arrivals", "best-sellers", "curated-favourites", "occasions"]);
+
   const save = async () => {
     setBusy(true); setError(""); setMessage("");
     try {
@@ -109,7 +115,7 @@ export const HomepageSectionManager: React.FC = () => {
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h2 className="font-semibold text-[#2C1838]">Carousel Features</h2>
-        <p className="text-xs text-gray-500 mt-1">Control the complete homepage here: reorder every section, show or hide it, save a draft, and publish. Customers can swipe or drag each horizontal carousel with a finger or mouse, or use the on-screen arrow buttons. Category names and artwork stay connected to Categories Management.</p>
+        <p className="text-xs text-gray-500 mt-1">Control every homepage section here: reorder it, show or hide it, and adjust desktop cards per view for each carousel. Customers can swipe with a finger, drag with a mouse/trackpad, or tap the arrow controls. Save a draft, then publish your changes.</p>
       </div>
       <span className={isPublished ? "text-xs rounded-full px-3 py-1 bg-green-50 text-green-700" : "text-xs rounded-full px-3 py-1 bg-amber-50 text-amber-700"}>
         {isPublished ? "Published version" : "Unpublished changes"}
@@ -129,10 +135,18 @@ export const HomepageSectionManager: React.FC = () => {
             <p className="text-sm font-medium text-[#302438]">{index + 1}. {info.title}</p>
             <p className="text-xs text-gray-500">{info.description}</p>
           </div>
-          <label className="flex items-center gap-2 text-xs font-medium">
-            <input type="checkbox" checked={section.enabled} disabled={busy} onChange={event => toggle(section.id, event.target.checked)} className="h-4 w-4" />
-            Visible
-          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            {adjustableCarousels.has(section.id) && <label className="flex items-center gap-2 text-xs text-gray-600">
+              Desktop cards
+              <select aria-label={`Desktop cards for ${info.title}`} value={section.cardsPerView ?? (section.id === "categories" ? 5 : 4)} disabled={busy} onChange={event => updateCardsPerView(section.id, Number(event.target.value))} className="rounded-lg border border-[#E7DCEB] bg-white px-2 py-1.5 text-xs text-[#302438]">
+                {[2, 3, 4, 5, 6].map(count => <option key={count} value={count}>{count}</option>)}
+              </select>
+            </label>}
+            <label className="flex items-center gap-2 text-xs font-medium">
+              <input type="checkbox" checked={section.enabled} disabled={busy} onChange={event => toggle(section.id, event.target.checked)} className="h-4 w-4" />
+              Visible
+            </label>
+          </div>
         </article>;
       })}
     </div>}
