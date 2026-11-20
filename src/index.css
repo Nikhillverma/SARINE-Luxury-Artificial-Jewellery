@@ -179,3 +179,206 @@
     row-gap: 14px;
   }
 }
+
+
+/* ==========================================================================
+   SARINE editorial luxury refresh — homepage only.
+   Palette sampled from the approved reference: deep plum, warm ivory,
+   dusty blush and muted mauve, with restrained champagne accents.
+   Typography and the hero's existing dimensions are intentionally untouched.
+   ========================================================================== */
+.sarine-home {
+  --sarine-plum: #482048;
+  --sarine-plum-soft: #704048;
+  --sarine-ivory: #F8F0E8;
+  --sarine-ivory-light: #FFF9F6;
+  --sarine-blush: #F0D8D8;
+  --sarine-blush-deep: #E0B8C0;
+  --sarine-mauve: #D0A8C0;
+  --sarine-champagne: #D8B878;
+  background: var(--sarine-ivory-light);
+  color: var(--sarine-plum);
+}
+
+/* Keep the hero height and layout exactly as defined in HomePage.tsx. */
+.sarine-home > section:first-child {
+  height: 420px;
+}
+@media (min-width: 768px) {
+  .sarine-home > section:first-child { height: 520px; }
+}
+@media (min-width: 1024px) {
+  .sarine-home > section:first-child { height: 600px; }
+}
+
+/* Section surfaces alternate between warm ivory and a barely-there blush. */
+.sarine-home > section:not(:first-child) {
+  border-color: rgba(72, 32, 72, .12);
+}
+.sarine-home > section:nth-of-type(odd) {
+  background-color: var(--sarine-ivory-light);
+}
+.sarine-home > section:nth-of-type(even) {
+  background-color: #FBF1F1;
+}
+.sarine-home > section h2 {
+  color: var(--sarine-plum);
+  letter-spacing: -0.035em;
+}
+.sarine-home > section .w-full.text-center.mb-4 {
+  position: relative;
+}
+.sarine-home > section .w-full.text-center.mb-4 h2 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.sarine-home > section .w-full.text-center.mb-4 h2::before,
+.sarine-home > section .w-full.text-center.mb-4 h2::after {
+  content: "";
+  display: inline-block;
+  width: clamp(28px, 5vw, 76px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--sarine-mauve));
+}
+.sarine-home > section .w-full.text-center.mb-4 h2::after {
+  transform: scaleX(-1);
+}
+.sarine-home > section .w-full.text-center.mb-4 p,
+.sarine-home > section .site-container > div > p {
+  color: #795F70;
+}
+
+/* Category tiles: jewellery-led square imagery with a soft blush title rail. */
+.sarine-home .category-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.sarine-home .category-grid > a {
+  overflow: hidden;
+  border: 1px solid rgba(72, 32, 72, .12);
+  border-radius: 10px;
+  background: #F7E6E6;
+  box-shadow: 0 4px 14px rgba(72, 32, 72, .045);
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.sarine-home .category-grid > a:hover {
+  transform: translateY(-3px);
+  border-color: var(--sarine-mauve);
+  box-shadow: 0 12px 24px rgba(72, 32, 72, .10);
+}
+.sarine-home .category-grid > a > div:first-child {
+  aspect-ratio: 1 / 1;
+  border: 0;
+  border-radius: 0;
+  background: var(--sarine-blush);
+}
+.sarine-home .category-grid > a > div:first-child img {
+  transition: transform .55s ease;
+}
+.sarine-home .category-grid > a > div:last-child {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 6px 10px;
+  background: linear-gradient(180deg, #F5E3E4, #F0D8D8);
+}
+.sarine-home .category-grid > a h3 {
+  color: var(--sarine-plum);
+  font-size: 13px;
+  font-weight: 500;
+}
+.sarine-home .category-grid > a span {
+  display: none;
+}
+@media (min-width: 640px) {
+  .sarine-home .category-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .sarine-home .category-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px; }
+}
+
+/* Product cards: boutique-style image window, fine borders and plum pricing. */
+.sarine-home .product-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.sarine-home .product-grid > article {
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid rgba(72, 32, 72, .13);
+  border-radius: 11px;
+  background: #FFFAF8;
+  box-shadow: 0 3px 12px rgba(72, 32, 72, .035);
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.sarine-home .product-grid > article:hover {
+  transform: translateY(-3px);
+  border-color: rgba(208, 168, 192, .9);
+  box-shadow: 0 14px 28px rgba(72, 32, 72, .10);
+}
+.sarine-home .product-grid > article > div:first-child {
+  aspect-ratio: 1 / 1;
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(145deg, #F7E6E6, #EED4D8);
+}
+.sarine-home .product-grid > article > div:first-child img {
+  mix-blend-mode: normal;
+}
+.sarine-home .product-grid > article > div:last-child {
+  padding: 10px 11px 12px;
+}
+.sarine-home .product-grid > article h3 {
+  color: var(--sarine-plum);
+  font-size: 14px;
+}
+.sarine-home .product-grid > article [class*="uppercase"] {
+  color: #946F83;
+}
+.sarine-home .product-grid > article [class*="line-through"] {
+  color: #9A8791;
+}
+.sarine-home .product-grid > article .text-sm.font-sans {
+  color: var(--sarine-plum);
+}
+
+/* Refined buttons, sale markers and small decorative details. */
+.sarine-home a[class*="bg-[#563568]"],
+.sarine-home button[class*="bg-[#563568]"] {
+  background-color: var(--sarine-plum);
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(72, 32, 72, .12);
+}
+.sarine-home a[class*="bg-[#563568]"]:hover,
+.sarine-home button[class*="bg-[#563568]"]:hover {
+  background-color: #704068;
+}
+.sarine-home .product-grid > article [class*="bg-[#A43E55]"] {
+  background-color: #8B315D;
+  border-radius: 999px;
+}
+.sarine-home .product-grid > article [class*="bg-[#563568]"] {
+  background-color: var(--sarine-plum);
+  border-radius: 999px;
+}
+
+/* The story area receives a more editorial blush/ivory treatment. */
+.sarine-home > section:has(.lg\\:grid-cols-12) {
+  background: linear-gradient(115deg, #F1DCDD 0%, #FBF2EF 54%, #F8F0E8 100%);
+}
+.sarine-home > section:has(.lg\\:grid-cols-12) img {
+  border-radius: 10px;
+}
+@media (min-width: 768px) {
+  .sarine-home .product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .sarine-home .product-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (max-width: 639px) {
+  .sarine-home .site-container { padding-left: 13px; padding-right: 13px; }
+  .sarine-home .product-grid { gap: 10px; }
+  .sarine-home .product-grid > article > div:last-child { padding: 8px 8px 10px; }
+  .sarine-home .product-grid > article h3 { font-size: 12px; }
+}
