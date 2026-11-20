@@ -518,7 +518,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         const countdownCampaign = orderedCampaigns.find(campaign =>
           campaign.showCountdown && campaign.endsAt && new Date(campaign.endsAt).getTime() > Date.now()
         );
-        return countdownCampaign ? (
+        return countdownCampaign && sectionVisible("hero") ? (
           <div style={{ order: sectionOrder("hero") }} className="flex w-full justify-center px-4 py-1.5 sm:py-2" aria-label="Current campaign countdown">
             <CampaignCountdownStrip campaign={countdownCampaign} />
           </div>
