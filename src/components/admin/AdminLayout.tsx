@@ -193,6 +193,12 @@ interface NavItem {
       match: (p: string) => p.startsWith('/admin/campaigns')
     },
     {
+      name: 'Carousel Features',
+      path: '/admin/carousel-features',
+      icon: LayoutTemplate,
+      match: (p: string) => p.startsWith('/admin/carousel-features')
+    },
+    {
       name: 'Storefront Studio',
       path: '/admin/storefront',
       icon: LayoutTemplate,
