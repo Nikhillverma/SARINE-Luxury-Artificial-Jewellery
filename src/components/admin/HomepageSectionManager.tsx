@@ -138,7 +138,7 @@ export const HomepageSectionManager: React.FC = () => {
           <div className="flex flex-wrap items-center gap-3">
             {adjustableCarousels.has(section.id) && <label className="flex items-center gap-2 text-xs text-gray-600">
               Desktop cards
-              <select aria-label={`Desktop cards for ${info.title}`} value={section.cardsPerView ?? (section.id === "categories" ? 5 : 4)} disabled={busy} onChange={event => updateCardsPerView(section.id, Number(event.target.value))} className="rounded-lg border border-[#E7DCEB] bg-white px-2 py-1.5 text-xs text-[#302438]">
+              <select aria-label={`Desktop cards for ${info.title}`} value={section.cardsPerView ?? 5} disabled={busy} onChange={event => updateCardsPerView(section.id, Number(event.target.value))} className="rounded-lg border border-[#E7DCEB] bg-white px-2 py-1.5 text-xs text-[#302438]">
                 {[2, 3, 4, 5, 6].map(count => <option key={count} value={count}>{count}</option>)}
               </select>
             </label>}
