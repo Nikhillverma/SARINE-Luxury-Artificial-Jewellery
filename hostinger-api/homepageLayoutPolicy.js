@@ -27,10 +27,20 @@ export function validateHomepageLayout(input) {
     }
     seen.add(section.id);
     const cardsPerView = section.cardsPerView === undefined ? undefined : section.cardsPerView;
-    if (cardsPerView !== undefined && (!Number.isInteger(cardsPerView) || cardsPerView < 2 || cardsPerView > 6)) {
-      throw new Error("Carousel cards per view must be a whole number from 2 to 6.");
+    if (cardsPerView !== undefined && (!Number.isInteger(cardsPerView) || cardsPerView < 2 || cardsPerView > 8)) {
+      throw new Error("Carousel cards per view must be a whole number from 2 to 8.");
     }
-    return { id: section.id, enabled: section.enabled, sortOrder: section.sortOrder, ...(cardsPerView === undefined ? {} : { cardsPerView }) };
+    const carouselEnabled = section.carouselEnabled === undefined ? undefined : section.carouselEnabled;
+    if (carouselEnabled !== undefined && typeof carouselEnabled !== "boolean") {
+      throw new Error("Carousel enabled setting must be true or false.");
+    }
+    return {
+      id: section.id,
+      enabled: section.enabled,
+      sortOrder: section.sortOrder,
+      ...(cardsPerView === undefined ? {} : { cardsPerView }),
+      ...(carouselEnabled === undefined ? {} : { carouselEnabled })
+    };
   });
   const positions = new Set(sections.map((section) => section.sortOrder));
   if (positions.size !== HOMEPAGE_SECTION_IDS.length) throw new Error("Homepage section positions must be unique.");
