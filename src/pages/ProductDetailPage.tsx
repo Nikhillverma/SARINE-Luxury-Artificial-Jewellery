@@ -11,6 +11,7 @@ import { productService, categoryService } from '../services';
 import { Product, isInStock, JEWELLERY_TYPE_LABELS } from '../types/product';
 import { Category } from '../types/category';
 import { formatInr } from '../utils/currency';
+import { setPageMetadata } from '../utils/seo';
 import { ProductCard } from '../components/ProductCard';
 import { hostingerStorefrontService } from '../services/hostinger/hostingerStorefrontService';
 import { useCart } from '../context/CartContext';
@@ -68,6 +69,22 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
   const [loading, setLoading] = useState<boolean>(true);
   const [addedToast, setAddedToast] = useState<boolean>(false);
   const [shareToast, setShareToast] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!product) return;
+
+    const rawDescription = product.shortDescription || product.description || '';
+    const description = rawDescription.replace(/\s+/g, ' ').trim().slice(0, 160)
+      || 'Discover this jewellery piece from SARINE.';
+    const image = product.images?.find((url) => url.startsWith('https://') || url.startsWith('http://'));
+
+    setPageMetadata({
+      title: `${product.name} | SARINE`,
+      description,
+      image,
+      robots: product.status === 'active' ? 'index, follow' : 'noindex, nofollow',
+    });
+  }, [product]);
 
   // Gallery Zoom Lightbox
   const [isZoomOpen, setIsZoomOpen] = useState(false);
