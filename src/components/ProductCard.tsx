@@ -10,7 +10,8 @@ import { Link } from 'react-router-dom';
 import { Product, isInStock, JEWELLERY_TYPE_LABELS, getDiscountPercent } from '../types/product';
 import { formatInr } from '../utils/currency';
 import { useWishlist } from '../context/WishlistContext';
-import { Heart } from 'lucide-react';
+import { Heart, Star } from 'lucide-react';
+import { hostingerStorefrontService } from '../services/hostinger/hostingerStorefrontService';
 import { useCart } from '../context/CartContext';
 
 interface ProductCardProps {
@@ -28,6 +29,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const primaryImage = product.images[0] || '/images/product-image-unavailable.svg';
   const secondaryImage = product.images[1];
+
+  const [reviewSummary, setReviewSummary] = React.useState<{ count: number; average: number } | null>(null);
+
+  React.useEffect(() => {
+    let isCurrent = true;
+    setReviewSummary(null);
+    hostingerStorefrontService.getPublicProductReviewSummary(product.id)
+      .then(summary => { if (isCurrent) setReviewSummary(summary); })
+      .catch(() => { if (isCurrent) setReviewSummary(null); });
+    return () => { isCurrent = false; };
+  }, [product.id]);
 
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -125,6 +137,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {product.name}
           </Link>
         </h3>
+
+        {reviewSummary && reviewSummary.count > 0 && (
+          <div className="mt-1.5 flex items-center gap-1.5 text-[10px] font-sans" role="img" aria-label={`Rated ${reviewSummary.average.toFixed(1)} out of 5 from ${reviewSummary.count} approved customer ${reviewSummary.count === 1 ? 'review' : 'reviews'}`}>
+            <span className="inline-flex items-center gap-0.5 text-[#563568]" aria-hidden="true">
+              {Array.from({ length: 5 }, (_, index) => (
+                <Star key={index} size={11} strokeWidth={1.8} fill={index < Math.round(reviewSummary.average) ? 'currentColor' : 'none'} />
+              ))}
+            </span>
+            <span className="text-[#6F6475]">{reviewSummary.average.toFixed(1)} ({reviewSummary.count})</span>
+          </div>
+        )}
 
         {/* Price Row */}
         <div className="mt-1.5 flex items-baseline gap-2.5">
