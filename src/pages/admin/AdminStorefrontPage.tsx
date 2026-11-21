@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
-import { hostingerMediaService } from "../../services";
+import { hostingerMediaService, adminProductService } from "../../services";
+import type { Product } from "../../types/product";
 import { hostingerStorefrontService, type StorefrontBanner, type EditorialContent, type ProductReview } from "../../services/hostinger/hostingerStorefrontService";
 
 const defaultEditorial: EditorialContent = { eyebrow: "EDITORIAL COLLECTION", title: "The Art of Everyday Elegance", description: "A curated collection that blends classic beauty with modern sensibilities.", ctaText: "Explore the Collection", ctaLink: "/shop", imageUrl: "/images/editorial-banner.jpg", active: true };
@@ -8,6 +9,9 @@ const emptyForm = { tagline: "", title: "", subtitle: "", ctaText: "Shop now", c
 
 export const AdminStorefrontPage: React.FC = () => {
   const [banners, setBanners] = useState<StorefrontBanner[]>([]);
+  const [exploreConfig, setExploreConfig] = useState({ version: 1 as const, enabled: false, productIds: [] as string[], displayCount: 8 });
+  const [catalogueProducts, setCatalogueProducts] = useState<Product[]>([]);
+  const [exploreSaving, setExploreSaving] = useState(false);
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [reviewStatus, setReviewStatus] = useState("pending");
   const [reviewReplies, setReviewReplies] = useState<Record<string,string>>({});
@@ -55,7 +59,25 @@ export const AdminStorefrontPage: React.FC = () => {
     try { const result = await hostingerStorefrontService.getAdminReviews(status); setReviews(result.reviews); }
     catch (e) { setError(e instanceof Error ? e.message : "Unable to load customer feedback."); }
   };
-  useEffect(() => { void load(); void loadReviews("pending"); }, []);
+  useEffect(() => {
+    void load(); void loadReviews("pending");
+    void Promise.all([hostingerStorefrontService.getExploreNow(), adminProductService.getProducts()])
+      .then(([config, products]) => {
+        setExploreConfig(config.draft);
+        setCatalogueProducts(products.filter(product => product.status === "active" && product.stock > 0));
+      })
+      .catch(e => setError(e instanceof Error ? e.message : "Unable to load Explore Now settings."));
+  }, []);
+
+  const saveExploreNow = async (publish: boolean) => {
+    setExploreSaving(true); setError(""); setMessage("");
+    try {
+      await hostingerStorefrontService.saveExploreNow(exploreConfig);
+      if (publish) await hostingerStorefrontService.publishExploreNow();
+      setMessage(publish ? "Explore Now settings saved and published." : "Explore Now draft saved.");
+    } catch (e) { setError(e instanceof Error ? e.message : "Unable to save Explore Now settings."); }
+    finally { setExploreSaving(false); }
+  };
 
   const beginAdd = () => { setEditingId(null); setForm(emptyForm); setFile(null); setMessage(""); setError(""); };
   const beginEdit = (banner: StorefrontBanner) => {
@@ -198,6 +220,20 @@ export const AdminStorefrontPage: React.FC = () => {
       <section className="bg-white border rounded-2xl p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold text-[#2C1838]">Customer Ratings & Feedback</h2><p className="text-xs text-gray-500">Only delivered-order reviews are accepted. Approve reviews before they appear publicly.</p></div><div className="flex gap-2"><select value={reviewStatus} onChange={e=>{setReviewStatus(e.target.value);void loadReviews(e.target.value);}} className="border rounded-lg p-2 text-xs"><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="all">All reviews</option></select><button onClick={()=>void loadReviews()} className="border rounded-lg px-3 py-2 text-xs">Refresh</button></div></div>
         {reviews.length===0 ? <p className="text-sm text-gray-500">No reviews found in this view.</p> : <div className="space-y-3">{reviews.map(review=><article key={review.id} className="border rounded-xl p-4 space-y-2"><div className="flex flex-wrap justify-between gap-2"><div><p className="font-medium text-sm">{review.productName || review.productId}</p><p className="text-xs text-gray-500">{review.name} · {review.email} · Order {review.orderNumber || "—"}</p></div><span className="text-xs capitalize">{review.status} · {"★".repeat(review.rating)}</span></div>{review.title && <p className="font-medium text-sm">{review.title}</p>}<p className="text-sm text-gray-700 whitespace-pre-wrap">{review.comment}</p>{review.imageUrls?.length > 0 && <div className="flex flex-wrap gap-2">{review.imageUrls.map((url,index)=><a key={url} href={url} target="_blank" rel="noreferrer"><img src={url} alt={`Customer review photo ${index+1}`} loading="lazy" className="h-20 w-20 rounded-lg border object-cover" /></a>)}</div>}<label className="block text-xs text-gray-500">Admin reply (optional)<textarea value={reviewReplies[review.id] ?? review.adminReply ?? ""} maxLength={1000} rows={2} onChange={e=>setReviewReplies({...reviewReplies,[review.id]:e.target.value})} className="mt-1 w-full border rounded-lg p-2 text-sm" placeholder="Write a response to the customer" /></label><div className="flex flex-wrap gap-2"><button disabled={busy || review.status==="approved"} onClick={()=>void moderateReview(review,"approved")} className="rounded-lg bg-[#563568] text-white px-3 py-2 text-xs disabled:opacity-50">Approve & publish</button><button disabled={busy || review.status==="rejected"} onClick={()=>void moderateReview(review,"rejected")} className="rounded-lg border border-red-200 text-red-700 px-3 py-2 text-xs disabled:opacity-50">Reject</button></div></article>)}</div>}
+      </section>
+
+      <section className="bg-white border rounded-2xl p-5 space-y-4">
+        <div><h2 className="font-semibold text-[#2C1838]">Explore Now product grid</h2><p className="mt-1 text-xs text-gray-500">A separate, non-carousel product grid directly below Shop by Occasion. Product order is randomized on each homepage visit.</p></div>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={exploreConfig.enabled} onChange={e => setExploreConfig(current => ({ ...current, enabled: e.target.checked }))} /> Enable Explore Now on the homepage</label>
+        <div className="max-w-xs"><label className="block text-xs font-medium text-gray-600 mb-1">Products shown initially</label><select value={exploreConfig.displayCount} onChange={e => setExploreConfig(current => ({ ...current, displayCount: Number(e.target.value) }))} className="w-full rounded-lg border p-2 text-sm">{[4,6,8,10,12,16,20,24].map(count => <option key={count} value={count}>{count} products</option>)}</select></div>
+        <div><div className="flex items-center justify-between gap-2"><h3 className="text-sm font-medium">Choose products for the rotation</h3><span className="text-xs text-gray-500">{exploreConfig.productIds.length} selected</span></div>
+          <div className="mt-2 grid sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-80 overflow-y-auto rounded-lg border p-3">
+            {catalogueProducts.map(product => <label key={product.id} className="flex items-center gap-2 text-xs"><input type="checkbox" checked={exploreConfig.productIds.includes(product.id)} onChange={e => setExploreConfig(current => ({ ...current, productIds: e.target.checked ? [...current.productIds, product.id] : current.productIds.filter(id => id !== product.id) }))} /><span className="min-w-0 truncate">{product.name}</span></label>)}
+            {!catalogueProducts.length && <p className="text-xs text-gray-500">No active, in-stock products are available.</p>}
+          </div>
+          <p className="mt-2 text-xs text-gray-500">Select at least as many products as the initial display count. View More reveals the remaining randomized products.</p>
+        </div>
+        <div className="flex flex-wrap gap-2"><button type="button" disabled={exploreSaving} onClick={() => void saveExploreNow(false)} className="rounded-lg border px-4 py-2 text-sm disabled:opacity-50">Save draft</button><button type="button" disabled={exploreSaving} onClick={() => void saveExploreNow(true)} className="rounded-lg bg-[#563568] px-4 py-2 text-sm text-white disabled:opacity-50">{exploreSaving ? "Saving…" : "Publish Explore Now"}</button></div>
       </section>
 
       <section className="bg-white border rounded-2xl p-5 space-y-4">
