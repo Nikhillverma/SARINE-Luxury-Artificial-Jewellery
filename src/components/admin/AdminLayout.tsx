@@ -12,7 +12,7 @@
  * - Session verification with admin access controls
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AdminIdentity, getAdminSession, adminLogout } from '../../lib/adminAuth';
 
@@ -40,11 +40,32 @@ import {
   X,
   CheckCircle2,
   AlertTriangle,
+  RefreshCw,
   UserCheck,
   RotateCcw,
   Star,
   MessageSquare
 } from 'lucide-react';
+
+
+const ADMIN_API_BASE = (
+  import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
+  (import.meta.env.DEV ? '/api' : 'https://lavender-goldfish-844589.hostingersite.com/api')
+).replace(/\/+$/, '');
+
+interface AdminNotificationData {
+  metrics: {
+    pendingOrders: number;
+    processingOrders: number;
+    lowStockProducts: number;
+  };
+  lowStockProducts: Array<{
+    id: string;
+    name: string;
+    stock: number;
+    alertThreshold: number;
+  }>;
+}
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -56,6 +77,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationData, setNotificationData] = useState<AdminNotificationData | null>(null);
+  const [notificationLoading, setNotificationLoading] = useState(false);
+  const [notificationError, setNotificationError] = useState<string | null>(null);
+  const [notificationUpdatedAt, setNotificationUpdatedAt] = useState<Date | null>(null);
   const [globalSearch, setGlobalSearch] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
 
@@ -67,6 +92,51 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  const loadNotifications = useCallback(async () => {
+    setNotificationLoading(true);
+    setNotificationError(null);
+    try {
+      const response = await fetch(`${ADMIN_API_BASE}/admin/dashboard`, {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { Accept: 'application/json' }
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(typeof result.error === 'string' ? result.error : `Alert request failed (${response.status}).`);
+      }
+      if (!result.metrics || !Array.isArray(result.lowStockProducts)) {
+        throw new Error('The alerts API returned an unexpected response.');
+      }
+      setNotificationData({
+        metrics: {
+          pendingOrders: Math.max(0, Number(result.metrics.pendingOrders) || 0),
+          processingOrders: Math.max(0, Number(result.metrics.processingOrders) || 0),
+          lowStockProducts: Math.max(0, Number(result.metrics.lowStockProducts) || 0)
+        },
+        lowStockProducts: result.lowStockProducts.map((product: AdminNotificationData['lowStockProducts'][number]) => ({
+          id: product.id,
+          name: product.name,
+          stock: Number(product.stock) || 0,
+          alertThreshold: Number(product.alertThreshold) || 0
+        }))
+      });
+      setNotificationUpdatedAt(new Date());
+    } catch (error) {
+      setNotificationError(error instanceof Error ? error.message : 'Unable to load store alerts.');
+    } finally {
+      setNotificationLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    void loadNotifications();
+    const interval = window.setInterval(() => { void loadNotifications(); }, 60_000);
+    return () => window.clearInterval(interval);
+  }, [user, loadNotifications]);
 
   // Enforce noindex for private admin views
   useEffect(() => {
@@ -454,31 +524,127 @@ interface NavItem {
             {/* Notification Bell with Badge */}
             <div className="relative">
               <button
-                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                onClick={() => {
+                  const nextOpen = !notificationsOpen;
+                  setNotificationsOpen(nextOpen);
+                  if (nextOpen) void loadNotifications();
+                }}
                 className="relative p-2 text-[#563568] hover:bg-[#FAF5FC] rounded-full transition-colors cursor-pointer"
-                aria-label="Store Notifications"
+                aria-label={`Store notifications${notificationData ? `, ${notificationData.metrics.pendingOrders + notificationData.metrics.lowStockProducts} active alerts` : ''}`}
+                aria-expanded={notificationsOpen}
               >
                 <Bell size={18} strokeWidth={1.75} />
+                {notificationData && notificationData.metrics.pendingOrders + notificationData.metrics.lowStockProducts > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-[#B42318] text-white text-[9px] font-bold leading-4 text-center">
+                    {Math.min(99, notificationData.metrics.pendingOrders + notificationData.metrics.lowStockProducts)}
+                  </span>
+                )}
               </button>
 
               {/* Notification Popover */}
               {notificationsOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-[#E7DCEB] rounded-xl shadow-xl py-3 z-50 text-xs">
-                  <div className="px-4 pb-2 border-b border-[#E7DCEB] flex items-center justify-between">
-                    <span className="font-semibold text-[#2C1838]">Notifications</span>
-                    <span className="text-[10px] bg-[#FAF5FC] text-[#563568] font-medium px-2 py-0.5 rounded-full border border-[#E7DCEB]">
-                      System Live
-                    </span>
+                <div className="absolute right-0 top-full mt-2 w-[min(22rem,calc(100vw-2rem))] bg-white border border-[#E7DCEB] rounded-xl shadow-xl py-3 z-50 text-xs">
+                  <div className="px-4 pb-2 border-b border-[#E7DCEB] flex items-center justify-between gap-3">
+                    <div>
+                      <span className="font-semibold text-[#2C1838] block">Store alerts</span>
+                      <span className="text-[10px] text-[#8E769E]">Live database status · refreshes every minute</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void loadNotifications()}
+                      disabled={notificationLoading}
+                      className="min-h-9 min-w-9 inline-flex items-center justify-center rounded-lg text-[#563568] hover:bg-[#FAF5FC] disabled:opacity-50"
+                      aria-label="Refresh store alerts"
+                    >
+                      <RefreshCw size={14} className={notificationLoading ? 'animate-spin' : ''} />
+                    </button>
                   </div>
-                  <div className="p-6 text-center text-xs text-[#8E769E]">
-                    <CheckCircle2 size={24} className="mx-auto mb-2 text-[#78469C]/40" />
-                    <p className="font-medium text-[#2C1838]">Store is operating smoothly</p>
-                    <p className="text-[11px] text-[#705E7B] mt-0.5">Real-time alerts for incoming orders and inventory will appear here.</p>
-                  </div>
+
+                  {notificationError ? (
+                    <div className="px-4 py-5" role="alert">
+                      <div className="flex items-start gap-2 text-[#B42318]">
+                        <AlertTriangle size={17} className="mt-0.5 shrink-0" />
+                        <div>
+                          <p className="font-semibold">Alerts could not be loaded</p>
+                          <p className="text-[11px] text-[#705E7B] mt-1">{notificationError}</p>
+                          <button type="button" onClick={() => void loadNotifications()} className="mt-2 text-[11px] font-semibold text-[#563568] hover:underline">Try again</button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : notificationLoading && !notificationData ? (
+                    <div className="px-4 py-7 text-center text-[#8E769E]">
+                      <RefreshCw size={18} className="mx-auto mb-2 animate-spin" />
+                      Loading live store alerts…
+                    </div>
+                  ) : notificationData ? (
+                    <div className="p-3 space-y-2">
+                      {notificationData.metrics.pendingOrders > 0 ? (
+                        <Link
+                          to="/admin/orders"
+                          onClick={() => setNotificationsOpen(false)}
+                          className="flex items-start gap-3 p-3 rounded-lg border border-[#F2D7A5] bg-[#FFFBEB] hover:bg-[#FEF3C7]"
+                        >
+                          <span className="w-8 h-8 rounded-lg bg-[#FEF3C7] text-[#92400E] flex items-center justify-center shrink-0"><ShoppingBag size={16} /></span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block font-semibold text-[#713F12]">{notificationData.metrics.pendingOrders} pending {notificationData.metrics.pendingOrders === 1 ? 'order' : 'orders'}</span>
+                            <span className="block mt-0.5 text-[10px] text-[#854D0E]">Orders awaiting payment or confirmation. Review the queue.</span>
+                          </span>
+                          <ChevronRight size={14} className="text-[#92400E] mt-1 shrink-0" />
+                        </Link>
+                      ) : null}
+
+                      {notificationData.metrics.lowStockProducts > 0 ? (
+                        <Link
+                          to="/admin/inventory"
+                          onClick={() => setNotificationsOpen(false)}
+                          className="block p-3 rounded-lg border border-[#F2D7A5] bg-[#FFFBEB] hover:bg-[#FEF3C7]"
+                        >
+                          <span className="flex items-start gap-3">
+                            <span className="w-8 h-8 rounded-lg bg-[#FEF3C7] text-[#92400E] flex items-center justify-center shrink-0"><Boxes size={16} /></span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block font-semibold text-[#713F12]">{notificationData.metrics.lowStockProducts} low-stock {notificationData.metrics.lowStockProducts === 1 ? 'product' : 'products'}</span>
+                              <span className="block mt-0.5 text-[10px] text-[#854D0E]">Active products at or below their stock alert threshold.</span>
+                            </span>
+                            <ChevronRight size={14} className="text-[#92400E] mt-1 shrink-0" />
+                          </span>
+                          {notificationData.lowStockProducts.length > 0 && (
+                            <span className="block mt-2 pt-2 border-t border-[#F2D7A5] space-y-1">
+                              {notificationData.lowStockProducts.slice(0, 3).map(product => (
+                                <span key={product.id} className="flex items-center justify-between gap-2 text-[10px] text-[#713F12]">
+                                  <span className="truncate">{product.name}</span>
+                                  <span className="shrink-0 font-semibold">{product.stock} left</span>
+                                </span>
+                              ))}
+                              {notificationData.metrics.lowStockProducts > notificationData.lowStockProducts.length && (
+                                <span className="block text-[10px] text-[#854D0E]">Plus {notificationData.metrics.lowStockProducts - notificationData.lowStockProducts.length} more</span>
+                              )}
+                            </span>
+                          )}
+                        </Link>
+                      ) : null}
+
+                      {notificationData.metrics.pendingOrders === 0 && notificationData.metrics.lowStockProducts === 0 && (
+                        <div className="px-3 py-5 text-center">
+                          <CheckCircle2 size={23} className="mx-auto mb-2 text-[#16A34A]" />
+                          <p className="font-medium text-[#2C1838]">No active order or stock alerts</p>
+                          <p className="text-[10px] text-[#705E7B] mt-1">No pending orders or products below their stock thresholds.</p>
+                        </div>
+                      )}
+                      {notificationData.metrics.processingOrders > 0 && (
+                        <p className="px-1 pt-1 text-[10px] text-[#705E7B]">{notificationData.metrics.processingOrders} {notificationData.metrics.processingOrders === 1 ? 'order is' : 'orders are'} currently in processing.</p>
+                      )}
+                      {notificationUpdatedAt && (
+                        <p className="px-1 pt-1 text-[9px] text-[#8E769E]">Last updated {notificationUpdatedAt.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit' })} IST</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-6 text-center text-[#8E769E]">Store alert data is not available yet.</div>
+                  )}
+
                   <div className="px-3 pt-2 border-t border-[#E7DCEB] text-center">
                     <button
                       onClick={() => setNotificationsOpen(false)}
-                      className="text-[11px] text-[#563568] font-semibold hover:underline cursor-pointer"
+                      className="min-h-9 text-[11px] text-[#563568] font-semibold hover:underline cursor-pointer"
                     >
                       Close Notifications
                     </button>
