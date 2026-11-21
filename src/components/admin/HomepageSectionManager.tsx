@@ -30,18 +30,17 @@ function mergeKnownSections(layout: HomepageLayout): HomepageLayout {
   const existing = Array.isArray(layout?.sections) ? layout.sections : [];
   const existingIds = new Set(existing.map(section => section.id));
   const maxOrder = existing.reduce((max, section) => Math.max(max, Number(section.sortOrder) || 0), -1);
-  const additions = defaultLayout.sections
-    .filter(section => !existingIds.has(section.id))
-    .map((section, index) => ({
-      ...section,
-      sortOrder: section.id === "hero" ? -1 : maxOrder + index + 1
-    }));
-  return {
-    version: 1,
-    sections: [...existing.map(section => adjustableCarousels.has(section.id)
-      ? { ...section, carouselEnabled: section.carouselEnabled !== false, cardsPerView: section.cardsPerView ?? 5 }
-      : section), ...additions]
-  };
+  const additions = defaultLayout.sections.filter(section => !existingIds.has(section.id));
+  const merged = [...existing.map(section => adjustableCarousels.has(section.id)
+    ? { ...section, carouselEnabled: section.carouselEnabled !== false, cardsPerView: section.cardsPerView ?? 5 }
+    : section), ...additions];
+  const occasionIndex = merged.findIndex(section => section.id === "occasions");
+  const exploreIndex = merged.findIndex(section => section.id === "explore-now");
+  if (occasionIndex >= 0 && exploreIndex >= 0 && exploreIndex !== occasionIndex + 1) {
+    const [explore] = merged.splice(exploreIndex, 1);
+    merged.splice(occasionIndex + 1, 0, explore);
+  }
+  return { version: 1, sections: merged.map((section, sortOrder) => ({ ...section, sortOrder })) };
 }
 
 export const HomepageSectionManager: React.FC = () => {
