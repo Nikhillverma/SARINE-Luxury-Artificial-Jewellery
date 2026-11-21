@@ -68,6 +68,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [bestsellers, setBestsellers] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
+  const [exploreProducts, setExploreProducts] = useState<Product[]>([]);
+  const [exploreDisplayCount, setExploreDisplayCount] = useState(8);
+  const [exploreVisibleCount, setExploreVisibleCount] = useState(8);
+  const [hasPublishedExploreNow, setHasPublishedExploreNow] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
 
   // Occasions curation
@@ -186,6 +190,20 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         }
       })
       .catch(error => console.warn('[HomePage] Published hero banners unavailable; using defaults.', error));
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    hostingerStorefrontService.getPublicExploreNow()
+      .then(result => {
+        if (cancelled) return;
+        setExploreProducts(result.products || []);
+        setExploreDisplayCount(result.displayCount || 8);
+        setExploreVisibleCount(result.displayCount || 8);
+        setHasPublishedExploreNow(result.configured === true);
+      })
+      .catch(error => console.warn("[HomePage] Explore Now unavailable.", error));
     return () => { cancelled = true; };
   }, []);
 
@@ -674,6 +692,26 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           </div>
         </div>
       </section>
+
+      {hasPublishedExploreNow && exploreProducts.length > 0 && (
+        <section className="py-12 sm:py-16 lg:py-20 border-t border-[#E7DCEB] bg-[#F7F0FA]">
+          <div className="site-container">
+            <div className="w-full text-center mb-8 sm:mb-10">
+              <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">DISCOVER MORE</span>
+              <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">Explore Now</h2>
+              <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">Discover more pieces chosen for your everyday moments and special occasions.</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+              {exploreProducts.slice(0, exploreVisibleCount).map(product => <ProductCard key={product.id} product={product} />)}
+            </div>
+            {exploreVisibleCount < exploreProducts.length && (
+              <div className="mt-8 text-center">
+                <button type="button" onClick={() => setExploreVisibleCount(count => Math.min(count + exploreDisplayCount, exploreProducts.length))} className="inline-flex min-h-11 items-center justify-center border border-[#563568] bg-white px-8 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#563568] transition hover:bg-[#563568] hover:text-white">View More</button>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* =========================================================================
           SHOP BY PRICE
