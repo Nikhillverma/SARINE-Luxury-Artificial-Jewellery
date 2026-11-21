@@ -29,6 +29,7 @@ import { AboutPage } from './pages/AboutPage';
 import { TrackOrderPage } from './pages/TrackOrderPage';
 import { AccountPage } from './pages/AccountPage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { AdminHelpPage } from './pages/admin/AdminHelpPage';
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminProductsPage } from './pages/admin/AdminProductsPage';
@@ -101,6 +102,7 @@ function MainAppShell() {
           {/* Private Admin Management Routes */}
           <Route path="/admin" element={<AdminDashboardPage />} />
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+          <Route path="/admin/help" element={<AdminHelpPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/admin/products" element={<AdminProductsPage />} />
           <Route path="/admin/products/:id/preview" element={<AdminProductPreviewPage />} />
