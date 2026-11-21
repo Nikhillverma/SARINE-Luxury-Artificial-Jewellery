@@ -1,0 +1,38 @@
+name: Explore Now backend CI
+
+on:
+  pull_request:
+    branches:
+      - fix/order-timestamps
+    paths:
+      - "hostinger-api/exploreNow.js"
+      - "hostinger-api/exploreNowPolicy.js"
+      - "hostinger-api/tests/exploreNow.test.js"
+      - "hostinger-api/server.js"
+      - ".github/workflows/explore-now-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  explore-now:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hostinger-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: hostinger-api/package-lock.json
+      - name: Install backend dependencies
+        run: npm ci
+      - name: Check Explore Now JavaScript syntax
+        run: |
+          node --check exploreNow.js
+          node --check exploreNowPolicy.js
+          node --check server.js
+      - name: Test Explore Now configuration
+        run: node --test tests/exploreNow.test.js
