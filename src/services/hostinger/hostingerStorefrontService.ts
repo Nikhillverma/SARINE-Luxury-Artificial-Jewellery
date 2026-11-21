@@ -18,6 +18,27 @@ export interface HomepageLayout {
 
 export interface ExploreNowConfig { version: 1; productIds: string[]; displayCount: number; configured: boolean; }
 
+export interface PublicProductReviewSummary { count: number; average: number; }
+let reviewSummaryCache: { expiresAt: number; summaries: Record<string, PublicProductReviewSummary> } | null = null;
+let reviewSummaryRequest: Promise<Record<string, PublicProductReviewSummary>> | null = null;
+
+async function loadPublicProductReviewSummaries(): Promise<Record<string, PublicProductReviewSummary>> {
+  if (reviewSummaryCache && reviewSummaryCache.expiresAt > Date.now()) return reviewSummaryCache.summaries;
+  if (!reviewSummaryRequest) {
+    reviewSummaryRequest = request<{ summaries: Array<{ productId: string; count: number; average: number }> }>("/storefront/review-summaries")
+      .then(result => {
+        const summaries = Object.fromEntries(result.summaries.map(item => [
+          item.productId,
+          { count: Math.max(0, Number(item.count) || 0), average: Math.max(0, Math.min(5, Number(item.average) || 0)) }
+        ]));
+        reviewSummaryCache = { expiresAt: Date.now() + 60_000, summaries };
+        return summaries;
+      })
+      .finally(() => { reviewSummaryRequest = null; });
+  }
+  return reviewSummaryRequest;
+}
+
 export interface CuratedFavouritesConfig {
   version: 1;
   productIds: string[];
@@ -96,6 +117,10 @@ export const hostingerStorefrontService = {
   saveEditorial: (editorial: EditorialContent) =>
     request<{ editorial: EditorialContent }>("/admin/storefront/editorial", { method: "PUT", body: JSON.stringify(editorial) }),
   getPublicEditorial: () => request<{ editorial: EditorialContent | null }>("/storefront/editorial"),
+  getPublicProductReviewSummary: async (productId: string) => {
+    const summaries = await loadPublicProductReviewSummaries();
+    return summaries[productId] || null;
+  },
   getReviews: async (productId: string) => {
     const result = await request<{ reviews: ProductReview[]; count: number; average: number }>(`/storefront/products/${encodeURIComponent(productId)}/reviews`);
     return { ...result, reviews: result.reviews.map(mapReviewMedia) };
