@@ -491,9 +491,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               {/* Customer Rating snippet */}
               {reviewCount > 0 && (
                 <div className="flex items-center gap-2 mt-2.5 text-xs text-[#6F6475]" aria-label={`Customer rating ${reviewAverage.toFixed(1)} out of 5`}>
-                  <div className="flex items-center text-[#FFFFFF]" aria-hidden="true">
+                  <div className="flex items-center text-[#563568]" aria-hidden="true">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={14} className="fill-[#FFFFFF]" />
+                      <Star key={i} size={14} className="fill-[#563568] text-[#563568]" />
                     ))}
                   </div>
                   <span className="font-medium text-[#302438]">{reviewAverage.toFixed(1)}/5</span>
@@ -892,7 +892,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                     >
                       <Star
                         size={20}
-                        className={star <= newReviewRating ? 'text-[#FFFFFF] fill-[#FFFFFF]' : 'text-[#E7DCEB]'}
+                        className={star <= newReviewRating ? 'text-[#563568] fill-[#563568]' : 'text-[#E7DCEB]'}
                       />
                     </button>
                   ))}
