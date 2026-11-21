@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { adminProductService, hostingerMediaService } from '../../services';
 import { hostingerAdminCategoryService } from '../../services/hostinger/hostingerAdminCategoryService';
 import type { Product, JewelleryType, ProductStatus } from '../../types/product';
@@ -33,12 +33,13 @@ function slugify(value: string): string {
 }
 
 export const AdminProductsPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
@@ -68,6 +69,8 @@ export const AdminProductsPage: React.FC = () => {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => { setSearch(searchParams.get('search') || ''); }, [searchParams]);
 
   const visibleProducts = useMemo(() => products.filter(product => {
     const term = search.trim().toLowerCase();
