@@ -146,8 +146,8 @@ export const HomepageSectionManager: React.FC = () => {
   return <section className="bg-white border rounded-2xl p-5 space-y-4">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h2 className="font-semibold text-[#2C1838]">Carousel Features</h2>
-        <p className="text-xs text-gray-500 mt-1">Control every homepage section here: reorder it, show or hide it, switch each carousel on or off, and choose 2–8 desktop cards per view. Save a draft, then publish your changes.</p>
+        <h2 className="font-semibold text-[#2C1838]">Homepage Sections</h2>
+        <p className="text-xs text-gray-500 mt-1">Reorder homepage sections, control visibility, and adjust carousel layouts. Explore Now has its own product pool and display-count controls below. Save a draft, then publish your changes.</p>
       </div>
       <span className={isPublished ? "text-xs rounded-full px-3 py-1 bg-green-50 text-green-700" : "text-xs rounded-full px-3 py-1 bg-amber-50 text-amber-700"}>
         {isPublished ? "Published version" : "Unpublished changes"}
