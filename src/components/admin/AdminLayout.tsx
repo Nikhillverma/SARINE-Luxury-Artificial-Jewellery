@@ -504,6 +504,16 @@ interface NavItem {
                       <ChevronRight size={13} className="text-[#8E769E]" />
                     </Link>
                     <Link
+                      to={`/admin/customers?search=${encodeURIComponent(globalSearch)}`}
+                      className="flex items-center justify-between p-2 hover:bg-[#FAF5FC] rounded-lg text-[#2C1838]"
+                    >
+                      <div className="flex items-center gap-2">
+                        <UserCheck size={14} className="text-[#563568]" />
+                        <span>Search in Customers</span>
+                      </div>
+                      <ChevronRight size={13} className="text-[#8E769E]" />
+                    </Link>
+                    <Link
                       to={`/admin/orders?search=${encodeURIComponent(globalSearch)}`}
                       className="flex items-center justify-between p-2 hover:bg-[#FAF5FC] rounded-lg text-[#2C1838]"
                     >
