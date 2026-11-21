@@ -9,7 +9,9 @@ export function validateContactInquiry(input) {
   const email = cleanText(input.email, 254).toLowerCase();
   const phone = cleanText(input.phone, 24);
   const subject = cleanText(input.subject, 160).replace(/\s+/g, " ");
-  const message = cleanText(input.message, 5000).replace(/\r\n?/g, "\n");
+  const rawMessage = String(input.message ?? "").replace(/\u0000/g, "").trim().replace(/\r\n?/g, "\n");
+  if (rawMessage.length > 5000) throw new Error("Your message is too long.");
+  const message = rawMessage;
   if (name.length < 2) throw new Error("Enter your full name.");
   if (!EMAIL_PATTERN.test(email)) throw new Error("Enter a valid email address.");
   if (phone && !PHONE_PATTERN.test(phone)) throw new Error("Enter a valid phone number, or leave it blank.");

@@ -18,6 +18,9 @@ test("allows omitted optional phone and subject", () => {
 test("rejects invalid optional phone numbers", () => {
   assert.throws(() => validateContactInquiry({ name: "Asha", email: "asha@example.com", phone: "not a phone", message: "Please help me with this order." }), /phone number/);
 });
+test("rejects messages longer than the server limit", () => {
+  assert.throws(() => validateContactInquiry({ name: "Asha", email: "asha@example.com", message: "x".repeat(5001) }), /too long/);
+});
 test("normalizes only supported statuses", () => {
   assert.equal(normalizeInquiryStatus(" REVIEWED "), "reviewed"); assert.equal(normalizeInquiryStatus("new"), "new"); assert.equal(normalizeInquiryStatus("unknown"), null);
 });
