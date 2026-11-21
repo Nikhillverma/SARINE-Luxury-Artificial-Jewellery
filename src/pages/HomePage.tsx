@@ -609,21 +609,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           ========================================================================= */}
       <section style={{ order: sectionOrder("new-arrivals"), display: sectionVisible("new-arrivals") ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
-          {/* Centered Full-Width Section Header Block */}
-          <div className="w-full text-center mb-4 sm:mb-4">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
-              JUST ARRIVED
-            </span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
+          <div className="relative mb-5 flex items-center justify-center gap-4">
+            <h2 className="w-full text-center font-serif text-2xl font-normal text-[#302438] sm:text-3xl lg:text-4xl">
               New Arrivals
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
-              Discover our newest handcrafted pieces, designed with delicate craftsmanship for modern grace.
-            </p>
-            <div className="mt-3">
+            <div className="absolute right-0 flex shrink-0 items-center gap-2">
               <Link
                 to="/shop?sort=newest"
-                className="text-xs sm:text-[13px] text-[#302438] hover:text-[#563568] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
+                className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-sans font-medium text-[#302438] transition-colors hover:text-[#563568] sm:text-[13px]"
               >
                 <span>View All</span>
                 <ArrowRight size={13} />
