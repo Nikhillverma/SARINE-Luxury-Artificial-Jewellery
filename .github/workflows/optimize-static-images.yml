@@ -1,0 +1,47 @@
+name: Optimize static storefront images
+
+on:
+  push:
+    branches:
+      - hostinger-migration
+    paths:
+      - "scripts/optimize-static-images.py"
+      - "public/images/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, 'chore: optimize static images to WebP')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out deployment branch
+        uses: actions/checkout@v4
+        with:
+          ref: hostinger-migration
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install image processor
+        run: python -m pip install --disable-pip-version-check Pillow
+
+      - name: Generate WebP assets and update references
+        run: python scripts/optimize-static-images.py
+
+      - name: Commit optimized assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/images/optimized src index.html
+          if git diff --cached --quiet; then
+            echo "No optimized image changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: optimize static images to WebP"
+          git push origin HEAD:hostinger-migration
