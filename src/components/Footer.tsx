@@ -110,7 +110,7 @@ export const Footer: React.FC = () => {
           {/* Brand & Socials Column */}
           <div className="lg:col-span-4">
             <Link to="/" className="inline-block">
-              <span className="font-serif text-2xl tracking-[0.25em] text-white font-normal uppercase hover:text-[#D9B8A0] transition-colors">
+              <span className="font-serif text-2xl tracking-[0.25em] text-white font-normal uppercase hover:text-[#FFFFFF] transition-colors">
                 SARINE
               </span>
             </Link>
@@ -124,7 +124,7 @@ export const Footer: React.FC = () => {
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-[#D9B8A0] transition-colors p-1"
+                className="hover:text-[#FFFFFF] transition-colors p-1"
                 aria-label="Facebook"
               >
                 <Facebook size={17} strokeWidth={1.5} />
@@ -134,7 +134,7 @@ export const Footer: React.FC = () => {
                 href="https://pinterest.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-[#D9B8A0] transition-colors p-1"
+                className="hover:text-[#FFFFFF] transition-colors p-1"
                 aria-label="Pinterest"
               >
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
@@ -145,7 +145,7 @@ export const Footer: React.FC = () => {
                 href="https://youtube.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-[#D9B8A0] transition-colors p-1"
+                className="hover:text-[#FFFFFF] transition-colors p-1"
                 aria-label="YouTube"
               >
                 <Youtube size={17} strokeWidth={1.5} />
@@ -155,27 +155,27 @@ export const Footer: React.FC = () => {
 
           {/* Column 1: Shop */}
           <div className="lg:col-span-2 col-span-1">
-            <h4 className="text-xs uppercase tracking-wider text-[#D9B8A0] font-semibold mb-4">
+            <h4 className="text-xs uppercase tracking-wider text-[#FFFFFF] font-semibold mb-4">
               Shop
             </h4>
             <ul className="space-y-2.5 text-xs text-[#E7DCEB]">
               <li>
-                <Link to="/shop" className="hover:text-[#D9B8A0] transition-colors">
+                <Link to="/shop" className="hover:text-[#FFFFFF] transition-colors">
                   All Products
                 </Link>
               </li>
               <li>
-                <Link to="/shop?sort=newest" className="hover:text-[#D9B8A0] transition-colors">
+                <Link to="/shop?sort=newest" className="hover:text-[#FFFFFF] transition-colors">
                   New Arrivals
                 </Link>
               </li>
               <li>
-                <Link to="/shop?sort=bestseller" className="hover:text-[#D9B8A0] transition-colors">
+                <Link to="/shop?sort=bestseller" className="hover:text-[#FFFFFF] transition-colors">
                   Best Sellers
                 </Link>
               </li>
               <li>
-                <a href="/#categories" className="hover:text-[#D9B8A0] transition-colors">
+                <a href="/#categories" className="hover:text-[#FFFFFF] transition-colors">
                   Categories
                 </a>
               </li>
@@ -184,32 +184,32 @@ export const Footer: React.FC = () => {
 
           {/* Column 2: Customer Care */}
           <div className="lg:col-span-2 col-span-1">
-            <h4 className="text-xs uppercase tracking-wider text-[#D9B8A0] font-semibold mb-4">
+            <h4 className="text-xs uppercase tracking-wider text-[#FFFFFF] font-semibold mb-4">
               Customer Care
             </h4>
             <ul className="space-y-2.5 text-xs text-[#E7DCEB]">
               <li>
-                <Link to="/contact" className="hover:text-[#D9B8A0] transition-colors">
+                <Link to="/contact" className="hover:text-[#FFFFFF] transition-colors">
                   Help & Support
                 </Link>
               </li>
               <li>
-                <Link to="/track-order" className="hover:text-[#D9B8A0] transition-colors">
+                <Link to="/track-order" className="hover:text-[#FFFFFF] transition-colors">
                   Track Order
                 </Link>
               </li>
               <li>
-                <Link to="/shipping-policy" className="hover:text-[#D9B8A0] transition-colors">
+                <Link to="/shipping-policy" className="hover:text-[#FFFFFF] transition-colors">
                   Shipping Policy
                 </Link>
               </li>
               <li>
-                <Link to="/refund-policy" className="hover:text-[#D9B8A0] transition-colors">
+                <Link to="/refund-policy" className="hover:text-[#FFFFFF] transition-colors">
                   Returns & Refunds
                 </Link>
               </li>
               <li>
-                <Link to="/cancellation-policy" className="hover:text-[#D9B8A0] transition-colors">
+                <Link to="/cancellation-policy" className="hover:text-[#FFFFFF] transition-colors">
                   Cancellation Policy
                 </Link>
               </li>
@@ -218,27 +218,27 @@ export const Footer: React.FC = () => {
 
           {/* Column 3: About */}
           <div className="lg:col-span-2 col-span-1">
-            <h4 className="text-xs uppercase tracking-wider text-[#D9B8A0] font-semibold mb-4">
+            <h4 className="text-xs uppercase tracking-wider text-[#FFFFFF] font-semibold mb-4">
               About
             </h4>
             <ul className="space-y-2.5 text-xs text-[#E7DCEB]">
               <li>
-                <Link to="/about" className="hover:text-[#D9B8A0] transition-colors">
+                <Link to="/about" className="hover:text-[#FFFFFF] transition-colors">
                   Our Story
                 </Link>
               </li>
               <li>
-                <Link to="/sustainability" className="hover:text-[#D9B8A0] transition-colors">
+                <Link to="/sustainability" className="hover:text-[#FFFFFF] transition-colors">
                   Sustainability
                 </Link>
               </li>
               <li>
-                <Link to="/blog" className="hover:text-[#D9B8A0] transition-colors">
+                <Link to="/blog" className="hover:text-[#FFFFFF] transition-colors">
                   Blog
                 </Link>
               </li>
               <li>
-                <Link to="/careers" className="hover:text-[#D9B8A0] transition-colors">
+                <Link to="/careers" className="hover:text-[#FFFFFF] transition-colors">
                   Careers
                 </Link>
               </li>
@@ -247,7 +247,7 @@ export const Footer: React.FC = () => {
 
           {/* Column 4: Payment Methods */}
           <div className="lg:col-span-2 col-span-1">
-            <h4 className="text-xs uppercase tracking-wider text-[#D9B8A0] font-semibold mb-4">
+            <h4 className="text-xs uppercase tracking-wider text-[#FFFFFF] font-semibold mb-4">
               Payment Methods
             </h4>
             <div className="flex flex-wrap items-center gap-2">
@@ -272,11 +272,11 @@ export const Footer: React.FC = () => {
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#E7DCEB]/80 gap-4">
           <p>© 2026 SARINE. All rights reserved.</p>
           <div className="flex items-center space-x-3">
-            <Link to="/privacy-policy" className="hover:text-[#D9B8A0] transition-colors">
+            <Link to="/privacy-policy" className="hover:text-[#FFFFFF] transition-colors">
               Privacy Policy
             </Link>
             <span>|</span>
-            <Link to="/terms" className="hover:text-[#D9B8A0] transition-colors">
+            <Link to="/terms" className="hover:text-[#FFFFFF] transition-colors">
               Terms & Conditions
             </Link>
           </div>
