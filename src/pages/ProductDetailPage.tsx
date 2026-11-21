@@ -489,9 +489,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               {/* Customer Rating snippet */}
               {reviewCount > 0 && (
                 <div className="flex items-center gap-2 mt-2.5 text-xs text-[#6F6475]" aria-label={`Customer rating ${reviewAverage.toFixed(1)} out of 5`}>
-                  <div className="flex items-center text-[#D9B8A0]" aria-hidden="true">
+                  <div className="flex items-center text-[#FFFFFF]" aria-hidden="true">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={14} className="fill-[#D9B8A0]" />
+                      <Star key={i} size={14} className="fill-[#FFFFFF]" />
                     ))}
                   </div>
                   <span className="font-medium text-[#302438]">{reviewAverage.toFixed(1)}/5</span>
@@ -825,9 +825,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                   <span className="text-[11px] text-[#6F6475]">{rev.date}</span>
                 </div>
 
-                <div className="flex items-center text-[#D9B8A0]">
+                <div className="flex items-center text-[#FFFFFF]">
                   {[...Array(rev.rating)].map((_, i) => (
-                    <Star key={i} size={13} className="fill-[#D9B8A0]" />
+                    <Star key={i} size={13} className="fill-[#FFFFFF]" />
                   ))}
                 </div>
 
@@ -890,7 +890,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                     >
                       <Star
                         size={20}
-                        className={star <= newReviewRating ? 'text-[#D9B8A0] fill-[#D9B8A0]' : 'text-[#E7DCEB]'}
+                        className={star <= newReviewRating ? 'text-[#FFFFFF] fill-[#FFFFFF]' : 'text-[#E7DCEB]'}
                       />
                     </button>
                   ))}
@@ -1047,11 +1047,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
       {/* Added to Bag Toast */}
       {addedToast && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#563568] text-white px-5 py-3 rounded-xs shadow-xl flex items-center gap-3 animate-in slide-in-from-bottom duration-300">
-          <CheckCircle2 size={16} className="text-[#D9B8A0]" />
+          <CheckCircle2 size={16} className="text-[#FFFFFF]" />
           <span className="text-xs font-sans font-medium">Added to your shopping bag!</span>
           <button
             onClick={openDrawer}
-            className="text-xs underline text-[#D9B8A0] hover:text-white ml-2 cursor-pointer font-medium"
+            className="text-xs underline text-[#FFFFFF] hover:text-white ml-2 cursor-pointer font-medium"
           >
             View Bag
           </button>
@@ -1061,7 +1061,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
       {/* Share Toast */}
       {shareToast && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#302438] text-white px-5 py-3 rounded-xs shadow-xl flex items-center gap-2 animate-in slide-in-from-bottom duration-300">
-          <CheckCircle2 size={16} className="text-[#D9B8A0]" />
+          <CheckCircle2 size={16} className="text-[#FFFFFF]" />
           <span className="text-xs font-sans font-medium">Link copied to clipboard!</span>
         </div>
       )}
