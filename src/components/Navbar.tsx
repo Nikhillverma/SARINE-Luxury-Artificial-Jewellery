@@ -1593,6 +1593,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {/* Accordion 1: Shop by Category */}
                   <div className="pt-2">
                     <button
+                      type="button"
+                      aria-expanded={mobileExpanded.categories}
+                      aria-controls="mobile-nav-categories"
                       onClick={() => toggleMobileAccordion('categories')}
                       className="w-full flex items-center justify-between py-2.5 text-[#302438] hover:text-[#563568] font-medium text-left cursor-pointer"
                     >
@@ -1605,7 +1608,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       />
                     </button>
                     {mobileExpanded.categories && (
-                      <div className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[#B69ACF]/40 ml-1 mt-1">
+                      <div id="mobile-nav-categories" className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[#B69ACF]/40 ml-1 mt-1">
                         <Link
                           to="/shop"
                           onClick={() => setIsMobileMenuOpen(false)}
@@ -1662,6 +1665,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {/* Accordion 2: Shop by Occasion */}
                   <div className="pt-2">
                     <button
+                      type="button"
+                      aria-expanded={mobileExpanded.occasions}
+                      aria-controls="mobile-nav-occasions"
                       onClick={() => toggleMobileAccordion('occasions')}
                       className="w-full flex items-center justify-between py-2.5 text-[#302438] hover:text-[#563568] font-medium text-left cursor-pointer"
                     >
@@ -1674,7 +1680,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       />
                     </button>
                     {mobileExpanded.occasions && (
-                      <div className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[#B69ACF]/40 ml-1 mt-1">
+                      <div id="mobile-nav-occasions" className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[#B69ACF]/40 ml-1 mt-1">
                         <Link
                           to="/shop?occasion=everyday"
                           onClick={() => setIsMobileMenuOpen(false)}
@@ -1717,6 +1723,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {/* Accordion 3: Gifts */}
                   <div className="pt-2">
                     <button
+                      type="button"
+                      aria-expanded={mobileExpanded.gifts}
+                      aria-controls="mobile-nav-gifts"
                       onClick={() => toggleMobileAccordion('gifts')}
                       className="w-full flex items-center justify-between py-2.5 text-[#302438] hover:text-[#563568] font-medium text-left cursor-pointer"
                     >
@@ -1729,7 +1738,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       />
                     </button>
                     {mobileExpanded.gifts && (
-                      <div className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[#B69ACF]/40 ml-1 mt-1">
+                      <div id="mobile-nav-gifts" className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[#B69ACF]/40 ml-1 mt-1">
                         <Link
                           to="/shop?price=under-999"
                           onClick={() => setIsMobileMenuOpen(false)}
@@ -1765,6 +1774,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {/* Accordion 4: Collections */}
                   <div className="pt-2">
                     <button
+                      type="button"
+                      aria-expanded={mobileExpanded.collections}
+                      aria-controls="mobile-nav-collections"
                       onClick={() => toggleMobileAccordion('collections')}
                       className="w-full flex items-center justify-between py-2.5 text-[#302438] hover:text-[#563568] font-medium text-left cursor-pointer"
                     >
@@ -1777,7 +1789,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       />
                     </button>
                     {mobileExpanded.collections && (
-                      <div className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[#B69ACF]/40 ml-1 mt-1">
+                      <div id="mobile-nav-collections" className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[#B69ACF]/40 ml-1 mt-1">
                         <Link
                           to="/shop?category=bracelets"
                           onClick={() => setIsMobileMenuOpen(false)}
@@ -1813,6 +1825,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {/* Accordion 5: About SARINE */}
                   <div className="pt-2">
                     <button
+                      type="button"
+                      aria-expanded={mobileExpanded.about}
+                      aria-controls="mobile-nav-about"
                       onClick={() => toggleMobileAccordion('about')}
                       className="w-full flex items-center justify-between py-2.5 text-[#302438] hover:text-[#563568] font-medium text-left cursor-pointer"
                     >
@@ -1825,7 +1840,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       />
                     </button>
                     {mobileExpanded.about && (
-                      <div className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[#B69ACF]/40 ml-1 mt-1">
+                      <div id="mobile-nav-about" className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[#B69ACF]/40 ml-1 mt-1">
                         <Link
                           to="/about"
                           onClick={() => setIsMobileMenuOpen(false)}
