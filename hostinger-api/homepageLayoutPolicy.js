@@ -1,6 +1,6 @@
 export const HOMEPAGE_SECTION_IDS = Object.freeze([
   "hero", "categories", "new-arrivals", "best-sellers", "curated-favourites",
-  "occasions", "price", "our-story", "editorial", "care-guide", "stay-in-touch"
+  "occasions", "explore-now", "price", "our-story", "editorial", "care-guide", "stay-in-touch"
 ]);
 
 export const DEFAULT_HOMEPAGE_LAYOUT = Object.freeze({
