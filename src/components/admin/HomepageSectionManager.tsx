@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { hostingerStorefrontService, type HomepageLayout } from "../../services/hostinger/hostingerStorefrontService";
+import { hostingerStorefrontService, type HomepageLayout, type ExploreNowConfig } from "../../services/hostinger/hostingerStorefrontService";
+import { adminProductService } from "../../services";
+import type { Product } from "../../types/product";
 
 const sectionLabels: Record<string, { title: string; description: string }> = {
   hero: { title: "Hero Banner", description: "The first homepage feature. Banner artwork and slides are edited in the Hero Banners controls below." },
@@ -16,6 +18,7 @@ const sectionLabels: Record<string, { title: string; description: string }> = {
 };
 
 const adjustableCarousels = new Set(["categories", "new-arrivals", "best-sellers", "curated-favourites", "occasions"]);
+const defaultExplore: ExploreNowConfig = { version: 1, productIds: [], displayCount: 8, configured: false };
 
 const defaultLayout: HomepageLayout = {
   version: 1,
@@ -48,6 +51,10 @@ export const HomepageSectionManager: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [exploreDraft, setExploreDraft] = useState<ExploreNowConfig>(defaultExplore);
+  const [explorePublished, setExplorePublished] = useState<ExploreNowConfig>(defaultExplore);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [exploreBusy, setExploreBusy] = useState(false);
 
   const ordered = useMemo(() => [...draft.sections].sort((a, b) => a.sortOrder - b.sortOrder), [draft]);
   const isPublished = JSON.stringify(draft) === JSON.stringify(published);
@@ -56,9 +63,16 @@ export const HomepageSectionManager: React.FC = () => {
     setLoading(true);
     setError("");
     try {
-      const result = await hostingerStorefrontService.getHomepageLayout();
+      const [result, explore, catalogue] = await Promise.all([
+        hostingerStorefrontService.getHomepageLayout(),
+        hostingerStorefrontService.getExploreNow(),
+        adminProductService.getProducts()
+      ]);
       setDraft(mergeKnownSections(result.draft));
       setPublished(mergeKnownSections(result.published));
+      setExploreDraft(explore.draft);
+      setExplorePublished(explore.published);
+      setProducts(catalogue);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not load homepage layout settings.");
     } finally {
@@ -102,6 +116,19 @@ export const HomepageSectionManager: React.FC = () => {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Homepage layout draft could not be saved.");
     } finally { setBusy(false); }
+  };
+
+  const saveExplore = async (publishAfterSave: boolean) => {
+    setExploreBusy(true); setError(""); setMessage("");
+    try {
+      const saved = await hostingerStorefrontService.saveExploreNow({ ...exploreDraft, configured: exploreDraft.productIds.length > 0 });
+      if (publishAfterSave) {
+        const result = await hostingerStorefrontService.publishExploreNow();
+        setExplorePublished(result.published); setExploreDraft(result.published);
+        setMessage("Explore Now settings published successfully.");
+      } else { setExploreDraft(saved.draft); setMessage("Explore Now draft saved. Publish it when ready."); }
+    } catch (e) { setError(e instanceof Error ? e.message : "Explore Now settings could not be saved."); }
+    finally { setExploreBusy(false); }
   };
 
   const publish = async () => {
@@ -163,6 +190,34 @@ export const HomepageSectionManager: React.FC = () => {
         </article>;
       })}
     </div>}
+    <div className="rounded-xl border border-[#E7DCEB] bg-[#F7F0FA]/60 p-4 space-y-3">
+      <div><h3 className="text-sm font-semibold text-[#302438]">Explore Now — Product Selection</h3>
+      <p className="mt-1 text-xs text-[#6F6475]">Choose the products eligible for random display. The order is shuffled for each homepage visit. Curated Favourites remains completely separate.</p></div>
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="text-xs font-medium text-[#302438]">Products initially shown
+          <select value={exploreDraft.displayCount} disabled={exploreBusy || loading} onChange={e => setExploreDraft(v => ({ ...v, displayCount: Number(e.target.value) }))} className="ml-2 rounded-lg border border-[#E7DCEB] bg-white px-3 py-2">
+            {[4,6,8,10,12,16,20,24].map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </label>
+        <span className="text-xs text-[#6F6475]">{exploreDraft.productIds.length} selected / {products.filter(p => p.status === "active" && p.stock > 0).length} active in-stock products</span>
+      </div>
+      <div className="max-h-72 overflow-y-auto rounded-lg border border-[#E7DCEB] bg-white divide-y divide-[#F0E8F3]">
+        {products.filter(p => p.status === "active" && p.stock > 0).map(product => (
+          <label key={product.id} className="flex items-center gap-3 px-3 py-2.5 text-xs">
+            <input type="checkbox" checked={exploreDraft.productIds.includes(product.id)} disabled={exploreBusy || loading || (!exploreDraft.productIds.includes(product.id) && exploreDraft.productIds.length >= 100)} onChange={e => setExploreDraft(v => ({ ...v, productIds: e.target.checked ? [...v.productIds, product.id] : v.productIds.filter(id => id !== product.id) }))} className="h-4 w-4 accent-[#563568]" />
+            <span className="min-w-0 flex-1 truncate text-[#302438]">{product.name}</span>
+            <span className="text-[#6F6475]">₹{product.price.toLocaleString("en-IN")}</span>
+          </label>
+        ))}
+        {!products.some(p => p.status === "active" && p.stock > 0) && <p className="p-4 text-xs text-gray-500">No active, in-stock products are available to select.</p>}
+      </div>
+      <p className="text-[11px] text-[#6F6475]">Only active, in-stock products are eligible. Up to 100 products can be selected. View More reveals the remaining selected products from that visit's randomized list.</p>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" disabled={exploreBusy || loading} onClick={() => void saveExplore(false)} className="rounded-lg border border-[#DCCDE5] bg-white px-4 py-2 text-xs font-medium text-[#563568]">Save Explore Now draft</button>
+        <button type="button" disabled={exploreBusy || loading} onClick={() => void saveExplore(true)} className="rounded-lg bg-[#563568] px-4 py-2 text-xs font-medium text-white">{exploreBusy ? "Saving…" : "Publish Explore Now"}</button>
+        <span className="self-center text-[11px] text-[#6F6475]">{JSON.stringify(exploreDraft) === JSON.stringify(explorePublished) ? "Published settings" : "Unpublished Explore Now changes"}</span>
+      </div>
+    </div>
     <div className="flex flex-wrap gap-2">
       <button type="button" disabled={busy || loading} onClick={() => void save()} className="px-4 py-2 rounded-lg border text-sm disabled:opacity-50">{busy ? "Saving…" : "Save draft"}</button>
       <button type="button" disabled={busy || loading} onClick={() => void publish()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy ? "Publishing…" : "Publish homepage"}</button>
