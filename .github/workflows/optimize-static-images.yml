@@ -6,15 +6,16 @@ on:
       - hostinger-migration
     paths:
       - "scripts/optimize-static-images.py"
-      - "public/images/**"
-  workflow_dispatch:
+      - "public/images/*.jpg"
+      - "public/images/*.jpeg"
+      - "public/images/*.png"
 
 permissions:
   contents: write
 
 jobs:
   optimize:
-    if: github.event_name != 'push' || github.event.head_commit.message != 'chore: optimize static images to WebP'
+    if: github.ref == 'refs/heads/hostinger-migration'
     runs-on: ubuntu-latest
     steps:
       - name: Check out deployment branch
