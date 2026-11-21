@@ -51,7 +51,7 @@ import {
 const ADMIN_API_BASE = (
   import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
   (import.meta.env.DEV ? '/api' : 'https://lavender-goldfish-844589.hostingersite.com/api')
-).replace(/\\/+$/, '');
+).replace(/\/+$/, '');
 
 interface AdminNotificationData {
   metrics: {
