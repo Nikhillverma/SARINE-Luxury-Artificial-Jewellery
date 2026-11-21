@@ -46,7 +46,10 @@ const AdminCarouselFeaturesPage = lazy(() => import('./pages/admin/AdminCarousel
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage').then((module) => ({ default: module.AdminSettingsPage })));
 const AdminMarketingPage = lazy(() => import('./pages/admin/AdminMarketingPage').then((module) => ({ default: module.AdminMarketingPage })));
 const AdminCampaignsPage = lazy(() => import('./pages/admin/AdminCampaignsPage').then((module) => ({ default: module.AdminCampaignsPage })));
-c
+const SustainabilityPage = lazy(() => import('./pages/PolicyPlaceholders').then((module) => ({ default: module.SustainabilityPage })));
+const BlogPage = lazy(() => import('./pages/PolicyPlaceholders').then((module) => ({ default: module.BlogPage })));
+const CareersPage = lazy(() => import('./pages/PolicyPlaceholders').then((module) => ({ default: module.CareersPage })));
+const CancellationPolicyPage = lazy(() => import('./pages/PolicyPlaceholders').then((module) => ({ default: module.CancellationPolicyPage })));
 
 function MainAppShell() {
   const [includeAll, setIncludeAll] = useState<boolean>(false);
