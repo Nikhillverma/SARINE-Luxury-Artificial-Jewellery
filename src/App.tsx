@@ -102,6 +102,7 @@ function MainAppShell() {
 
   return (
     <>
+    <a href="#main-content" className="skip-link">Skip to main content</a>
     <RouteMetadata />
     <div className="min-h-screen w-full flex flex-col bg-[#F7F0FA] text-[#302438] selection:bg-[#B69ACF]/30 selection:text-[#302438]">
       {/* Public Storefront Navigation & Slide-in Drawers */}
@@ -118,7 +119,7 @@ function MainAppShell() {
       )}
 
       {/* Main Route View */}
-      <div className="flex-1 w-full">
+      <div id="main-content" tabIndex={-1} className="flex-1 w-full">
         <Suspense fallback={<div className="flex min-h-[50vh] items-center justify-center px-6 text-sm text-[#563568]" role="status" aria-live="polite">Loading SARINE…</div>}>
         <Routes>
           <Route
