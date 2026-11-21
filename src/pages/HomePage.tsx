@@ -616,7 +616,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 newest products (sorted by createdAt descending, else the last 4 in the list),
           same product card as Best Sellers, "View All" linking to /shop?sort=newest
           ========================================================================= */}
-      <section style={{ order: sectionOrder("new-arrivals"), display: sectionVisible("new-arrivals") ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("new-arrivals"), display: sectionVisible("new-arrivals") ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-4 sm:mb-4">
@@ -747,7 +747,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Manually selected and ordered in Storefront Studio. Automatic newest-product
           fallback remains in place until a manual collection has been published.
           ========================================================================= */}
-      <section style={{ order: sectionOrder("curated-favourites"), display: sectionVisible("curated-favourites") && (loading || (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("curated-favourites"), display: sectionVisible("curated-favourites") && (loading || (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0) ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
           <div className="w-full text-center mb-4 sm:mb-4">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">THE SARINE EDIT</span>
@@ -828,7 +828,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 pill buttons: Under ₹999, ₹1,000 to ₹1,999, ₹2,000 and above, All pieces
           Linking to /shop with price presets
           ========================================================================= */}
-      <section style={{ order: sectionOrder("price"), display: sectionVisible("price") ? undefined : "none" }} className="py-6 sm:py-8 border-t border-[#E7DCEB] bg-[#F7F0FA]">
+      <section style={{ order: sectionOrder("price"), display: sectionVisible("price") ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 border-t border-[#E7DCEB] bg-[#F7F0FA]">
         <div className="site-container">
           <div className="w-full text-center mb-4">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
