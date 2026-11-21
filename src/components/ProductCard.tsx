@@ -26,7 +26,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const campaignDiscount = Math.max(0, Math.min(75, storewideDiscountPercent));
   const campaignPrice = Math.max(0, product.price - Math.floor(product.price * campaignDiscount / 100));
 
-  const primaryImage = product.images[0] || '/images/category-bracelets.jpg';
+  const primaryImage = product.images[0] || '/images/product-image-unavailable.svg';
   const secondaryImage = product.images[1];
 
   const handleWishlistClick = (e: React.MouseEvent) => {
@@ -42,7 +42,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <Link to={`/product/${product.slug}`} className="block w-full h-full">
           <img
             src={primaryImage}
-            onError={(event) => { if (!event.currentTarget.src.endsWith("/images/category-bracelets.jpg")) event.currentTarget.src = "/images/category-bracelets.jpg"; }}
+            onError={(event) => { if (!event.currentTarget.src.endsWith("/images/product-image-unavailable.svg")) event.currentTarget.src = "/images/product-image-unavailable.svg"; }}
             alt={product.name}
             loading="lazy"
             referrerPolicy="no-referrer"
