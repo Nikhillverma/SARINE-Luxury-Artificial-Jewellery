@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { formatInr } from '../../utils/currency';
 import {
@@ -96,6 +96,7 @@ function canMarkOrderAsShipped(order: AdminOrder): boolean {
 }
 
 export const AdminOrdersPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -107,7 +108,7 @@ export const AdminOrdersPage: React.FC = () => {
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>(() => searchParams.get('search') || '');
 
   // Selected Order for Detail Drawer
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
@@ -131,6 +132,8 @@ export const AdminOrdersPage: React.FC = () => {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const navigate = useNavigate();
+
+  useEffect(() => { setSearchTerm(searchParams.get('search') || ''); }, [searchParams]);
 
   // 1. Monitor Hostinger Admin Auth Session
   useEffect(() => {
