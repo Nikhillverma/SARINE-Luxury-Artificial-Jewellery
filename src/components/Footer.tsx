@@ -20,9 +20,11 @@ import {
   ArrowRight,
   CheckCircle2
 } from 'lucide-react';
-import { COD_ENABLED } from '../config/store';
+import { useCheckoutConfig } from '../hooks/useCheckoutConfig';
 
 export const Footer: React.FC = () => {
+  const { config } = useCheckoutConfig();
+
   return (
     <footer className="bg-[#563568] text-[#F7F0FA] border-t border-[#E7DCEB] font-sans">
       {/* Trust Strip */}
@@ -86,7 +88,7 @@ export const Footer: React.FC = () => {
               </div>
             </Link>
 
-            {COD_ENABLED && (
+            {config.codEnabled && (
               <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[#E7DCEB] rounded-md shadow-xs col-span-2 md:col-span-1">
                 <div className="p-2.5 bg-[#F0E6F4] rounded-md text-[#563568] shrink-0">
                   <CheckCircle2 size={20} strokeWidth={1.5} />
