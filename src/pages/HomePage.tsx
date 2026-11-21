@@ -100,7 +100,7 @@ interface HomePageProps {
 
 const defaultHomepageLayout: HomepageLayout = {
   version: 1,
-  sections: ["hero", "categories", "new-arrivals", "best-sellers", "curated-favourites", "occasions", "price", "our-story", "editorial", "care-guide", "stay-in-touch"]
+  sections: ["hero", "categories", "new-arrivals", "best-sellers", "curated-favourites", "occasions", "explore-now", "price", "our-story", "editorial", "care-guide", "stay-in-touch"]
     .map((id, sortOrder) => ({ id, enabled: true, sortOrder }))
 };
 
@@ -144,12 +144,31 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     return () => { cancelled = true; };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    hostingerStorefrontService.getPublicExploreNow()
+      .then(result => {
+        if (!cancelled) {
+          setExploreProducts(result.products || []);
+          setExploreDisplayCount(result.displayCount || 8);
+          setExploreVisibleCount(result.displayCount || 8);
+          setHasPublishedExploreNow(result.configured === true);
+        }
+      })
+      .catch(error => console.warn("[HomePage] Explore Now unavailable.", error));
+    return () => { cancelled = true; };
+  }, []);
+
   // Storefront Data
   const [categories, setCategories] = useState<Category[]>([]);
   const [bestsellers, setBestsellers] = useState<Product[]>([]);
   const [curatedFavourites, setCuratedFavourites] = useState<Product[]>([]);
   const [manualCuratedFavourites, setManualCuratedFavourites] = useState<Product[]>([]);
   const [hasPublishedCuratedFavourites, setHasPublishedCuratedFavourites] = useState(false);
+  const [exploreProducts, setExploreProducts] = useState<Product[]>([]);
+  const [exploreDisplayCount, setExploreDisplayCount] = useState(8);
+  const [exploreVisibleCount, setExploreVisibleCount] = useState(8);
+  const [hasPublishedExploreNow, setHasPublishedExploreNow] = useState(false);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<boolean>(false);
@@ -811,6 +830,30 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               </Link>
             ))}
           </div>
+        </div>
+      </section>
+
+
+      {/* Explore Now is intentionally a regular grid, separate from Curated Favourites. */}
+      <section style={{ order: sectionOrder("explore-now"), display: sectionVisible("explore-now") && hasPublishedExploreNow && exploreProducts.length ? undefined : "none" }} className="border-t border-[#E7DCEB] bg-white py-7 sm:py-9 lg:py-11">
+        <div className="site-container">
+          <div className="mb-5 text-center sm:mb-6">
+            <span className="mb-2 block text-[10px] font-medium uppercase tracking-[0.25em] text-[#6F6475]">DISCOVER SOMETHING NEW</span>
+            <h2 className="font-serif text-2xl font-normal text-[#302438] sm:text-3xl lg:text-4xl">Explore Now</h2>
+            <p className="mx-auto mt-2 max-w-xl text-xs leading-relaxed text-[#6F6475] sm:text-sm">A fresh selection of pieces to inspire your next look.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
+            {exploreProducts.slice(0, exploreVisibleCount).map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+          {exploreVisibleCount < exploreProducts.length && (
+            <div className="mt-7 text-center">
+              <button type="button" onClick={() => setExploreVisibleCount(count => Math.min(count + exploreDisplayCount, exploreProducts.length))} className="inline-flex min-h-11 items-center justify-center gap-2 border border-[#563568] bg-white px-7 py-3 text-xs font-medium text-[#563568] transition-colors hover:bg-[#F7F0FA]">
+                View More <ArrowRight size={14} />
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
