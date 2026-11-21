@@ -5,6 +5,7 @@ on:
     branches:
       - hostinger-migration
     paths:
+      - ".github/workflows/optimize-static-images.yml"
       - "scripts/optimize-static-images.py"
       - "public/images/*.jpg"
       - "public/images/*.jpeg"
