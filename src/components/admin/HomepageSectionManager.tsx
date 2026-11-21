@@ -10,6 +10,7 @@ const sectionLabels: Record<string, { title: string; description: string }> = {
   "best-sellers": { title: "Best Sellers Carousel", description: "Swipe, drag or use arrows to browse genuine best sellers. Adjust desktop card count." },
   "curated-favourites": { title: "Curated Favourites Carousel", description: "Swipe, drag or use arrows through your manually selected products. Adjust desktop card count." },
   occasions: { title: "Shop by Occasion Carousel", description: "Swipe, drag or use arrows through occasion cards. Adjust desktop card count." },
+  "explore-now": { title: "Explore Now — Product Grid", description: "A fresh random product selection on every visit. Manage the eligible product pool and display count below." },
   price: { title: "Shop by Price", description: "The four preset price-navigation links." },
   "our-story": { title: "Our Story", description: "Brand story, image and three brand pillars." },
   editorial: { title: "Editorial Collection", description: "Uses the separate Editorial Collection content controls below." },
@@ -29,7 +30,6 @@ const defaultLayout: HomepageLayout = {
 function mergeKnownSections(layout: HomepageLayout): HomepageLayout {
   const existing = Array.isArray(layout?.sections) ? layout.sections : [];
   const existingIds = new Set(existing.map(section => section.id));
-  const maxOrder = existing.reduce((max, section) => Math.max(max, Number(section.sortOrder) || 0), -1);
   const additions = defaultLayout.sections.filter(section => !existingIds.has(section.id));
   const merged = [...existing.map(section => adjustableCarousels.has(section.id)
     ? { ...section, carouselEnabled: section.carouselEnabled !== false, cardsPerView: section.cardsPerView ?? 5 }
