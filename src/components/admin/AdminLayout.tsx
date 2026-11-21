@@ -665,9 +665,10 @@ interface NavItem {
 
             {/* Help Circle */}
             <button
-              onClick={() => alert('SARINE Atelier Admin Support: Contact administrator team at atelier@sarinejewelry.com')}
+              onClick={() => navigate('/admin/help')}
               className="p-2 text-[#563568] hover:bg-[#FAF5FC] rounded-full transition-colors cursor-pointer"
               title="Help & Documentation"
+              aria-label="Open admin help centre"
             >
               <HelpCircle size={18} strokeWidth={1.75} />
             </button>
