@@ -549,11 +549,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           ========================================================================= */}
       <section id="categories" style={{ order: sectionOrder("categories"), display: sectionVisible("categories") ? undefined : "none" }} className="w-full py-6 sm:py-7 lg:py-10">
         <div className="site-container">
-          <div className="mb-5 flex items-end justify-between gap-4">
-            <div className="min-w-0">
-              <h2 className="font-serif text-2xl font-normal text-[#302438] sm:text-3xl lg:text-4xl">Shop by Category</h2>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
+          <div className="relative mb-5 flex items-center justify-center gap-4">
+            <h2 className="w-full text-center font-serif text-2xl font-normal text-[#302438] sm:text-3xl lg:text-4xl">Shop by Category</h2>
+            <div className="absolute right-0 flex shrink-0 items-center gap-2">
               <Link to="/shop" className="hidden items-center gap-1 text-xs font-medium text-[#563568] transition-colors hover:text-[#8A6AA0] sm:inline-flex">
                 View all <ArrowRight size={13} />
               </Link>
