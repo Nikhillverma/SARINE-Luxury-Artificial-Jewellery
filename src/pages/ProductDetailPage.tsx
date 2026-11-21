@@ -74,9 +74,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
     if (!product) return;
 
     const rawDescription = product.shortDescription || product.description || '';
-    const description = rawDescription.replace(/\\s+/g, ' ').trim().slice(0, 160)
+    const description = rawDescription.replace(/\s+/g, ' ').trim().slice(0, 160)
       || 'Discover this jewellery piece from SARINE.';
-    const image = product.images?.find((url) => /^https?:\\/\\//i.test(url));
+    const image = product.images?.find((url) => url.startsWith('https://') || url.startsWith('http://'));
 
     setPageMetadata({
       title: `${product.name} | SARINE`,
