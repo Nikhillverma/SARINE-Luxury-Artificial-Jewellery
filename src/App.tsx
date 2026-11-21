@@ -4,7 +4,7 @@
  * global CartDrawer & WishlistDrawer, customer storefront routes, and extended atelier admin suite.
  */
 
-import React, { useState } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
@@ -14,44 +14,42 @@ import { CartDrawer } from './components/CartDrawer';
 import { WishlistDrawer } from './components/WishlistDrawer';
 import { CustomerLoginPrompt } from './components/CustomerLoginPrompt';
 import { Footer } from './components/Footer';
-import { HomePage } from './pages/HomePage';
-import { CollectionPage } from './pages/CollectionPage';
-import { ProductDetailPage } from './pages/ProductDetailPage';
-import { BagPage } from './pages/BagPage';
-import { CheckoutPage } from './pages/CheckoutPage';
-import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
-import { ContactPage } from './pages/ContactPage';
-import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
-import { TermsPage } from './pages/TermsPage';
-import { ShippingPolicyPage } from './pages/ShippingPolicyPage';
-import { RefundPolicyPage } from './pages/RefundPolicyPage';
-import { AboutPage } from './pages/AboutPage';
-import { TrackOrderPage } from './pages/TrackOrderPage';
-import { AccountPage } from './pages/AccountPage';
-import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
-import { AdminHelpPage } from './pages/admin/AdminHelpPage';
-import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
-import { AdminLoginPage } from './pages/admin/AdminLoginPage';
-import { AdminProductsPage } from './pages/admin/AdminProductsPage';
-import { AdminProductPreviewPage } from './pages/admin/AdminProductPreviewPage';
-import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
-import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
-import { AdminCustomersPage } from './pages/admin/AdminCustomersPage';
-import { AdminReturnsPage } from './pages/admin/AdminReturnsPage';
-import { AdminContactInquiriesPage } from './pages/admin/AdminContactInquiriesPage';
-import { AdminReviewsPage } from './pages/admin/AdminReviewsPage';
-import { AdminInventoryPage } from './pages/admin/AdminInventoryPage';
-import { AdminStorefrontPage } from './pages/admin/AdminStorefrontPage';
-import { AdminCarouselFeaturesPage } from './pages/admin/AdminCarouselFeaturesPage';
-import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
-import { AdminMarketingPage } from './pages/admin/AdminMarketingPage';
-import { AdminCampaignsPage } from './pages/admin/AdminCampaignsPage';
-import {
-  SustainabilityPage,
-  BlogPage,
-  CareersPage,
-  CancellationPolicyPage
-} from './pages/PolicyPlaceholders';
+const HomePage = lazy(() => import('./pages/HomePage').then((module) => ({ default: module.HomePage })));
+const CollectionPage = lazy(() => import('./pages/CollectionPage').then((module) => ({ default: module.CollectionPage })));
+const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage').then((module) => ({ default: module.ProductDetailPage })));
+const BagPage = lazy(() => import('./pages/BagPage').then((module) => ({ default: module.BagPage })));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage').then((module) => ({ default: module.CheckoutPage })));
+const OrderConfirmationPage = lazy(() => import('./pages/OrderConfirmationPage').then((module) => ({ default: module.OrderConfirmationPage })));
+const ContactPage = lazy(() => import('./pages/ContactPage').then((module) => ({ default: module.ContactPage })));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then((module) => ({ default: module.PrivacyPolicyPage })));
+const TermsPage = lazy(() => import('./pages/TermsPage').then((module) => ({ default: module.TermsPage })));
+const ShippingPolicyPage = lazy(() => import('./pages/ShippingPolicyPage').then((module) => ({ default: module.ShippingPolicyPage })));
+const RefundPolicyPage = lazy(() => import('./pages/RefundPolicyPage').then((module) => ({ default: module.RefundPolicyPage })));
+const AboutPage = lazy(() => import('./pages/AboutPage').then((module) => ({ default: module.AboutPage })));
+const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage').then((module) => ({ default: module.TrackOrderPage })));
+const AccountPage = lazy(() => import('./pages/AccountPage').then((module) => ({ default: module.AccountPage })));
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })));
+const AdminHelpPage = lazy(() => import('./pages/admin/AdminHelpPage').then((module) => ({ default: module.AdminHelpPage })));
+const AdminAnalyticsPage = lazy(() => import('./pages/admin/AdminAnalyticsPage').then((module) => ({ default: module.AdminAnalyticsPage })));
+const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage').then((module) => ({ default: module.AdminLoginPage })));
+const AdminProductsPage = lazy(() => import('./pages/admin/AdminProductsPage').then((module) => ({ default: module.AdminProductsPage })));
+const AdminProductPreviewPage = lazy(() => import('./pages/admin/AdminProductPreviewPage').then((module) => ({ default: module.AdminProductPreviewPage })));
+const AdminCategoriesPage = lazy(() => import('./pages/admin/AdminCategoriesPage').then((module) => ({ default: module.AdminCategoriesPage })));
+const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage').then((module) => ({ default: module.AdminOrdersPage })));
+const AdminCustomersPage = lazy(() => import('./pages/admin/AdminCustomersPage').then((module) => ({ default: module.AdminCustomersPage })));
+const AdminReturnsPage = lazy(() => import('./pages/admin/AdminReturnsPage').then((module) => ({ default: module.AdminReturnsPage })));
+const AdminContactInquiriesPage = lazy(() => import('./pages/admin/AdminContactInquiriesPage').then((module) => ({ default: module.AdminContactInquiriesPage })));
+const AdminReviewsPage = lazy(() => import('./pages/admin/AdminReviewsPage').then((module) => ({ default: module.AdminReviewsPage })));
+const AdminInventoryPage = lazy(() => import('./pages/admin/AdminInventoryPage').then((module) => ({ default: module.AdminInventoryPage })));
+const AdminStorefrontPage = lazy(() => import('./pages/admin/AdminStorefrontPage').then((module) => ({ default: module.AdminStorefrontPage })));
+const AdminCarouselFeaturesPage = lazy(() => import('./pages/admin/AdminCarouselFeaturesPage').then((module) => ({ default: module.AdminCarouselFeaturesPage })));
+const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage').then((module) => ({ default: module.AdminSettingsPage })));
+const AdminMarketingPage = lazy(() => import('./pages/admin/AdminMarketingPage').then((module) => ({ default: module.AdminMarketingPage })));
+const AdminCampaignsPage = lazy(() => import('./pages/admin/AdminCampaignsPage').then((module) => ({ default: module.AdminCampaignsPage })));
+const SustainabilityPage = lazy(() => import('./pages/PolicyPlaceholders').then((module) => ({ default: module.SustainabilityPage })));
+const BlogPage = lazy(() => import('./pages/PolicyPlaceholders').then((module) => ({ default: module.BlogPage })));
+const CareersPage = lazy(() => import('./pages/PolicyPlaceholders').then((module) => ({ default: module.CareersPage })));
+const CancellationPolicyPage = lazy(() => import('./pages/PolicyPlaceholders').then((module) => ({ default: module.CancellationPolicyPage })));
 
 function MainAppShell() {
   const [includeAll, setIncludeAll] = useState<boolean>(false);
@@ -79,6 +77,7 @@ function MainAppShell() {
 
       {/* Main Route View */}
       <div className="flex-1 w-full">
+        <Suspense fallback={<div className="flex min-h-[50vh] items-center justify-center px-6 text-sm text-[#563568]" role="status" aria-live="polite">Loading SARINE…</div>}>
         <Routes>
           <Route
             path="/"
@@ -138,6 +137,7 @@ function MainAppShell() {
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </div>
 
       {/* Public Storefront Footer */}
