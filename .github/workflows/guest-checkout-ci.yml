@@ -35,6 +35,9 @@ jobs:
           node --check orders.js
           node --check checkoutPolicy.js
           node --check adminAuth.js
+          node --check contactInquiries.js
+          node --check contactInquiryPolicy.js
+          node --check contactInquirySchema.js
           node --check customerAuth.js
           node --check adminDatabaseAudit.js
           node --check adminOrders.js

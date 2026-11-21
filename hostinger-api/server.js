@@ -5,6 +5,8 @@ import rateLimit from "express-rate-limit";
 import { pool, testDatabase } from "./db.js";
 import { markExistingOrdersAsPrelaunchTests } from "./prelaunchOrderMigration.js";
 import adminAuthRouter from "./adminAuth.js";
+import { publicContactInquiriesRouter, adminContactInquiriesRouter } from "./contactInquiries.js";
+import { ensureContactInquiriesSchema } from "./contactInquirySchema.js";
 import adminCustomerAuthRouter from "./adminCustomerAuth.js";
 import customerAuthRouter from "./customerAuth.js";
 import customerOtpAuthRouter from "./customerOtpAuth.js";
@@ -284,6 +286,9 @@ function requireTrustedBrowserOrigin(req, res, next) {
 app.use("/api/admin", requireTrustedBrowserOrigin);
 app.use("/api/customer/auth", requireTrustedBrowserOrigin);
 app.use("/api/orders", requireTrustedBrowserOrigin);
+app.use("/api/contact", requireTrustedBrowserOrigin);
+app.use("/api/contact", publicContactInquiriesRouter);
+app.use("/api/admin/contact-inquiries", adminContactInquiriesRouter);
 
 app.use("/api/marketing/coupons", publicCouponsRouter);
 app.use("/api/admin/marketing", adminMarketingRouter);
@@ -420,6 +425,7 @@ async function startServer() {
   await markExistingOrdersAsPrelaunchTests();
   await ensureProductVideoColumn();
   await ensureOrderStatusSchema();
+  await ensureContactInquiriesSchema();
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`SARINE Hostinger API listening on port ${PORT}`);
   });
