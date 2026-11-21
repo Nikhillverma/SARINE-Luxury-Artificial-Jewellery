@@ -386,11 +386,11 @@ export const CheckoutPage: React.FC = () => {
       <div className="bg-[#F0E6F4]/50 border-b border-[#E7DCEB] py-8 text-center">
         <div className="site-container">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <span className="h-[1px] w-8 bg-[#D9B8A0]"></span>
+            <span className="h-[1px] w-8 bg-[#FFFFFF]"></span>
             <span className="text-xs uppercase tracking-[0.25em] text-[#563568] font-medium font-sans">
               Secured Checkout
             </span>
-            <span className="h-[1px] w-8 bg-[#D9B8A0]"></span>
+            <span className="h-[1px] w-8 bg-[#FFFFFF]"></span>
           </div>
           <h1 className="font-serif text-3xl sm:text-4xl text-[#302438] font-normal">
             Order & Delivery Details
