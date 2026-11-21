@@ -231,6 +231,7 @@ export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, co
               <form onSubmit={requestRecovery} className="space-y-4">
                 <h3 className="font-serif text-xl text-[#563568]">Recover your password</h3>
                 <p className="text-xs text-[#6F6475]">Choose the email or mobile number registered to your account.</p>
+                {!methods[method] && <p role="status" className="rounded-lg border border-[#E7DCEB] bg-[#F7F0FA] p-3 text-xs text-[#6F6475]">{methodReasons[method]} Password recovery will become available when a verified delivery method is configured.</p>}
                 <div className="grid grid-cols-2 gap-2">
                   <button type="button" onClick={() => { setMethod("email"); clearFeedback(); }} disabled={!methods.email} className={`min-h-10 border text-xs disabled:opacity-40 ${method === "email" ? "border-[#563568] bg-[#F7F0FA] text-[#563568]" : "border-[#E7DCEB]"}`}>Email</button>
                   <button type="button" onClick={() => { setMethod("phone"); clearFeedback(); }} disabled={!methods.phone} className={`min-h-10 border text-xs disabled:opacity-40 ${method === "phone" ? "border-[#563568] bg-[#F7F0FA] text-[#563568]" : "border-[#E7DCEB]"}`}>Mobile · unavailable</button>

@@ -37,6 +37,7 @@ import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
 import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
 import { AdminCustomersPage } from './pages/admin/AdminCustomersPage';
 import { AdminReturnsPage } from './pages/admin/AdminReturnsPage';
+import { AdminContactInquiriesPage } from './pages/admin/AdminContactInquiriesPage';
 import { AdminReviewsPage } from './pages/admin/AdminReviewsPage';
 import { AdminInventoryPage } from './pages/admin/AdminInventoryPage';
 import { AdminStorefrontPage } from './pages/admin/AdminStorefrontPage';
@@ -108,6 +109,7 @@ function MainAppShell() {
           <Route path="/admin/inventory" element={<AdminInventoryPage />} />
           <Route path="/admin/customers" element={<AdminCustomersPage />} />
           <Route path="/admin/returns" element={<AdminReturnsPage />} />
+          <Route path="/admin/contact-inquiries" element={<AdminContactInquiriesPage />} />
           <Route path="/admin/reviews" element={<AdminReviewsPage />} />
           <Route path="/admin/marketing" element={<AdminMarketingPage />} />
           <Route path="/admin/campaigns" element={<AdminCampaignsPage />} />
