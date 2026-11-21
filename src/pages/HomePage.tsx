@@ -460,12 +460,22 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           >
             {slide.campaign?.artworkOnly ? (
               <CampaignDestinationLink to={slide.shopLink} ariaLabel={`${slide.campaign.title} — ${slide.campaign.ctaText || "Shop now"}`} className="absolute inset-0 block">
-                <img src={slide.image} alt={`${slide.campaign.festival}: ${slide.campaign.title}`} className="absolute inset-0 w-full h-full object-cover object-center shadow-none" />
+                <img
+                  src={slide.image}
+                  alt={`${slide.campaign.festival}: ${slide.campaign.title}`}
+                  loading={activeSlide === idx ? "eager" : "lazy"}
+                  fetchPriority={activeSlide === idx ? "high" : "low"}
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-cover object-center shadow-none"
+                />
               </CampaignDestinationLink>
             ) : (
               <img
                 src={slide.image}
                 alt={slide.heading}
+                loading={activeSlide === idx ? "eager" : "lazy"}
+                fetchPriority={activeSlide === idx ? "high" : "low"}
+                decoding="async"
                 className="absolute inset-0 w-full h-full object-cover object-[70%_center] shadow-none"
               />
             )}
@@ -598,6 +608,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                       src={cat.image}
                       alt={cat.name}
                       loading="lazy"
+                      decoding="async"
+                      fetchPriority="low"
                       referrerPolicy="no-referrer"
                       className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                     />
@@ -820,7 +832,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             {occasions.filter(item => item.active).map((item) => (
               <Link key={item.id} to={item.link} className={sectionCarouselEnabled("occasions") ? "group flex w-[72%] shrink-0 snap-start flex-col items-center text-center sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "group flex min-w-0 flex-col items-center text-center"} style={sectionCarouselEnabled("occasions") ? desktopCardStyle("occasions", 20, 5) : undefined}>
                 <div className="aspect-[4/5] w-full overflow-hidden bg-[#F0E6F4] border border-[#E7DCEB] rounded-xs relative group-hover:border-[#B69ACF] transition-colors">
-                  <img src={item.image} alt={item.title} loading="lazy" referrerPolicy="no-referrer" className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out" />
+                  <img src={item.image} alt={item.title} loading="lazy" decoding="async" fetchPriority="low" referrerPolicy="no-referrer" className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out" />
                 </div>
                 <div className="pt-3 text-center flex flex-col items-center">
                   <h3 className="text-sm sm:text-base font-normal text-[#302438] font-sans group-hover:text-[#563568] transition-colors">{item.title}</h3>
@@ -920,6 +932,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 <img
                   src={HOMEPAGE_IMAGES.ourStory}
                   alt="SARINE Craftsmanship and Jewellery Details"
+                  loading="lazy"
+                  decoding="async"
+                  fetchPriority="low"
                   className="w-full h-full object-cover object-center"
                 />
               </div>
@@ -1012,7 +1027,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           ========================================================================= */}
       {editorial.active && (
         <section style={{ order: sectionOrder("editorial"), display: sectionVisible("editorial") ? undefined : "none" }} className="relative overflow-hidden bg-[#EBDFF2] border-b border-[#E7DCEB]">
-          <img src={editorial.imageUrl || HOMEPAGE_IMAGES.editorialBanner} alt={editorial.title} className="absolute inset-0 w-full h-full object-cover object-center" />
+          <img src={editorial.imageUrl || HOMEPAGE_IMAGES.editorialBanner} alt={editorial.title} loading="lazy" decoding="async" fetchPriority="low" className="absolute inset-0 w-full h-full object-cover object-center" />
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#F0E6F4]/75 to-[#F0E6F4]/95 sm:via-[#F0E6F4]/80 sm:to-[#F0E6F4]/95" />
           <div className="site-container min-h-[200px] sm:min-h-[235px] lg:min-h-[270px] flex items-center justify-end relative z-10">
             <div className="w-full sm:w-2/3 lg:w-1/2 py-5 sm:py-6 text-left">
