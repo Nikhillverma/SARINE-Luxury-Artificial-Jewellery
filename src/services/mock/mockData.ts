@@ -30,7 +30,7 @@ export const initialCategories: Category[] = [
     slug: 'bracelets',
     name: 'Bracelets & Bangles',
     description: 'Delicate coin link bracelets, open filigree cuffs, and contemporary textured wristwear.',
-    image: '/images/category-bracelets.jpg',
+    image: '/images/optimized/category-bracelets.webp',
     isActive: true,
     sortOrder: 3
   },
@@ -113,7 +113,7 @@ export const initialProducts: Product[] = [
     shortDescription: 'Embossed medallion coin bracelet with extension links.',
     price: 899,
     images: [
-      '/images/ananya-temple-coin-bracelet.jpg',
+      '/images/optimized/ananya-temple-coin-bracelet.webp',
       '/src/assets/images/temple_coin_bracelet_1792768038164.jpg'
     ],
     categoryId: 'cat-bracelets',
@@ -235,7 +235,7 @@ export const initialProducts: Product[] = [
     price: 999,
     compareAtPrice: 1299,
     images: [
-      '/images/zoya-open-cuff-leaf-bangle.jpg',
+      '/images/optimized/zoya-open-cuff-leaf-bangle.webp',
       '/src/assets/images/zoya_leaf_bangle_1792768482264.jpg'
     ],
     categoryId: 'cat-bracelets',

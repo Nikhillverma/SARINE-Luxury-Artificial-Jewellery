@@ -277,10 +277,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
   const resolvedImages = useMemo<string[]>(() => {
     if (!product) return [];
     if (product.slug === 'ananya-temple-coin-bracelet' || product.id === 'prod-003') {
-      return ['/images/ananya-temple-coin-bracelet.jpg', '/src/assets/images/temple_coin_bracelet_1792768038164.jpg'];
+      return ['/images/optimized/ananya-temple-coin-bracelet.webp', '/src/assets/images/temple_coin_bracelet_1792768038164.jpg'];
     }
     if (product.slug === 'zoya-open-cuff-leaf-bangle' || product.id === 'prod-008') {
-      return ['/images/zoya-open-cuff-leaf-bangle.jpg', '/src/assets/images/zoya_leaf_bangle_1792768482264.jpg'];
+      return ['/images/optimized/zoya-open-cuff-leaf-bangle.webp', '/src/assets/images/zoya_leaf_bangle_1792768482264.jpg'];
     }
     return product.images && product.images.length > 0
       ? product.images

@@ -6,7 +6,7 @@ import { HomepageSectionManager } from "../../components/admin/HomepageSectionMa
 import { hostingerMediaService } from "../../services";
 import { hostingerStorefrontService, type StorefrontBanner, type EditorialContent, type ProductReview } from "../../services/hostinger/hostingerStorefrontService";
 
-const defaultEditorial: EditorialContent = { eyebrow: "EDITORIAL COLLECTION", title: "The Art of Everyday Elegance", description: "A curated collection that blends classic beauty with modern sensibilities.", ctaText: "Explore the Collection", ctaLink: "/shop", imageUrl: "/images/editorial-banner.jpg", active: true };
+const defaultEditorial: EditorialContent = { eyebrow: "EDITORIAL COLLECTION", title: "The Art of Everyday Elegance", description: "A curated collection that blends classic beauty with modern sensibilities.", ctaText: "Explore the Collection", ctaLink: "/shop", imageUrl: "/images/optimized/editorial-banner.webp", active: true };
 const emptyForm = { tagline: "", title: "", subtitle: "", ctaText: "Shop now", ctaLink: "/shop", imageUrl: "", active: false };
 
 export const AdminStorefrontPage: React.FC = () => {
