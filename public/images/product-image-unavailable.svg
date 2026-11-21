@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" role="img" aria-label="SARINE product image unavailable">
+  <rect width="600" height="800" fill="#F7F0FA"/>
+  <rect x="34" y="34" width="532" height="732" fill="none" stroke="#DCCCE5" stroke-width="2"/>
+  <circle cx="300" cy="345" r="82" fill="none" stroke="#B69ACF" stroke-width="3"/>
+  <path d="M258 354l30-34 25 27 18-18 30 38H258z" fill="none" stroke="#563568" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="279" cy="299" r="8" fill="#B69ACF"/>
+  <path d="M220 456h160" stroke="#DCCCE5" stroke-width="2"/>
+  <text x="300" y="510" text-anchor="middle" fill="#563568" font-family="Georgia,serif" font-size="34" letter-spacing="8">SARINE</text>
+  <text x="300" y="548" text-anchor="middle" fill="#786781" font-family="Arial,sans-serif" font-size="13" letter-spacing="3">IMAGE UNAVAILABLE</text>
+</svg>
