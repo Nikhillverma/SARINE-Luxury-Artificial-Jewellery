@@ -194,6 +194,73 @@ publicRouter.get("/announcement", async (_req, res, next) => {
   } catch (error) { next(error); }
 });
 
+
+const EXPLORE_DEFAULTS = { version: 1, enabled: false, productIds: [], displayCount: 8 };
+async function readExploreConfig(key) {
+  await ensureSchema();
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [key]);
+  if (!rows.length) return EXPLORE_DEFAULTS;
+  try {
+    const value = JSON.parse(rows[0].setting_value);
+    return { ...EXPLORE_DEFAULTS, ...value, productIds: Array.isArray(value.productIds) ? value.productIds : [] };
+  } catch { return EXPLORE_DEFAULTS; }
+}
+function validateExploreConfig(input) {
+  const productIds = Array.isArray(input.productIds) ? [...new Set(input.productIds.filter(id => typeof id === "string" && id.length > 0))] : [];
+  const displayCount = Number(input.displayCount);
+  if (productIds.length > 100) return { error: "Select no more than 100 products." };
+  if (![4,6,8,10,12,16,20,24].includes(displayCount)) return { error: "Choose a valid initial product count." };
+  if (input.enabled === true && productIds.length < displayCount) return { error: "Select at least as many products as the initial display count." };
+  return { config: { version: 1, enabled: input.enabled === true, productIds, displayCount } };
+}
+adminOnly.get("/explore-now", async (_req, res, next) => {
+  try {
+    const [draft, published] = await Promise.all([readExploreConfig("explore_now_draft"), readExploreConfig("explore_now_published")]);
+    res.set("Cache-Control", "no-store").json({ draft, published, maxProducts: 100 });
+  } catch (error) { next(error); }
+});
+adminOnly.put("/explore-now/draft", async (req, res, next) => {
+  try {
+    const result = validateExploreConfig(req.body || {});
+    if (result.error) return res.status(400).json({ error: result.error });
+    await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('explore_now_draft', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [JSON.stringify(result.config)]);
+    res.set("Cache-Control", "no-store").json({ success: true, draft: result.config });
+  } catch (error) { next(error); }
+});
+adminOnly.post("/explore-now/publish", async (_req, res, next) => {
+  try {
+    const draft = await readExploreConfig("explore_now_draft");
+    const result = validateExploreConfig(draft);
+    if (result.error) return res.status(400).json({ error: result.error });
+    await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('explore_now_published', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [JSON.stringify(result.config)]);
+    res.set("Cache-Control", "no-store").json({ success: true, published: result.config });
+  } catch (error) { next(error); }
+});
+publicRouter.get("/explore-now", async (_req, res, next) => {
+  try {
+    const config = await readExploreConfig("explore_now_published");
+    if (!config.enabled || !config.productIds.length) return res.set("Cache-Control", "no-store").json({ products: [], displayCount: config.displayCount, configured: false });
+    const ids = config.productIds.slice(0, 100);
+    const placeholders = ids.map(() => "?").join(",");
+    const [rows] = await pool.execute(
+      `SELECT * FROM products WHERE status='active' AND stock > 0 AND id IN (${placeholders})`,
+      ids
+    );
+    const products = rows.map(row => ({
+      id: row.id, slug: row.slug, name: row.name, description: row.description || "",
+      shortDescription: row.short_description || "", price: Number(row.price),
+      compareAtPrice: row.compare_at_price == null ? undefined : Number(row.compare_at_price),
+      images: typeof row.images === "string" ? JSON.parse(row.images || "[]") : (row.images || []),
+      categoryId: row.category_id, collectionSlugs: typeof row.collection_slugs === "string" ? JSON.parse(row.collection_slugs || "[]") : (row.collection_slugs || []),
+      jewelleryType: row.jewellery_type, stock: Number(row.stock), status: row.status,
+      tags: typeof row.tags === "string" ? JSON.parse(row.tags || "[]") : (row.tags || []),
+      createdAt: row.created_at
+    }));
+    for (let i = products.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [products[i], products[j]] = [products[j], products[i]]; }
+    res.set("Cache-Control", "no-store").json({ products, displayCount: Math.min(config.displayCount, products.length), configured: products.length > 0 });
+  } catch (error) { next(error); }
+});
+
 admin.use("/", adminOnly);
 export { publicRouter as publicStorefrontRouter };
 export default admin;

@@ -4,6 +4,8 @@ const API_BASE = (
   (import.meta.env.DEV ? "/api" : "https://lavender-goldfish-844589.hostingersite.com/api")
 ).replace(/\/+$/, "");
 
+export interface ExploreNowConfig { version: 1; enabled: boolean; productIds: string[]; displayCount: number; }
+
 export interface StorefrontBanner {
   id: string;
   tagline: string;
@@ -28,6 +30,11 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export const hostingerStorefrontService = {
+  getExploreNow: () => request<{ draft: ExploreNowConfig; published: ExploreNowConfig; maxProducts: number }>("/admin/storefront/explore-now"),
+  saveExploreNow: (config: ExploreNowConfig) => request<{ success: boolean; draft: ExploreNowConfig }>("/admin/storefront/explore-now/draft", { method: "PUT", body: JSON.stringify(config) }),
+  publishExploreNow: () => request<{ success: boolean; published: ExploreNowConfig }>("/admin/storefront/explore-now/publish", { method: "POST" }),
+  getPublicExploreNow: () => request<{ products: import("../../types/product").Product[]; displayCount: number; configured: boolean }>("/storefront/explore-now"),
+
   getBanners: () => request<{ banners: StorefrontBanner[] }>("/admin/storefront/banners"),
   getPublicBanners: () => request<{ banners: StorefrontBanner[] }>("/storefront/banners"),
   createBanner: (banner: Omit<StorefrontBanner, "id" | "sortOrder">) =>
