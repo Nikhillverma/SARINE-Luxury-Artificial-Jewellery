@@ -203,7 +203,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <>
       <header
-        className="sticky top-0 z-40 bg-[#FAF5FC] border-b border-[#D9B8A0]/30 shadow-xs"
+        className="sticky top-0 z-40 bg-[#FAF5FC] border-b border-[#FFFFFF]/30 shadow-xs"
         onMouseLeave={handleMouseLeave}
       >
         {/* TIER 1: Continuous, admin-managed announcement ticker */}
@@ -214,23 +214,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {[...managedTrustMessages, ...(managedAnnouncement ? [managedAnnouncement] : [])].filter(Boolean).length > 0 ? (
                   [...managedTrustMessages, ...(managedAnnouncement ? [managedAnnouncement] : [])].filter(Boolean).map((item, index) => (
                     <span key={index} className="inline-flex items-center gap-2 px-6 whitespace-nowrap text-[11px] sm:text-xs text-[#FAF5FC]/95">
-                      <Sparkles size={12} className="text-[#D9B8A0] shrink-0" />
+                      <Sparkles size={12} className="text-[#FFFFFF] shrink-0" />
                       {item}
-                      <span className="text-[#D9B8A0]/70 ml-4">✦</span>
+                      <span className="text-[#FFFFFF]/70 ml-4">✦</span>
                     </span>
                   ))
                 ) : (
                   <span className="inline-flex items-center gap-2 px-6 whitespace-nowrap">
-                    <Sparkles size={12} className="text-[#D9B8A0]" />
+                    <Sparkles size={12} className="text-[#FFFFFF]" />
                     {ANNOUNCEMENT_MESSAGES[activeAnnouncement]}
                   </span>
                 )}
                 {[...managedTrustMessages, ...(managedAnnouncement ? [managedAnnouncement] : [])].filter(Boolean).length > 0 && (
                   [...managedTrustMessages, ...(managedAnnouncement ? [managedAnnouncement] : [])].filter(Boolean).map((item, index) => (
                     <span key={`repeat-${index}`} className="inline-flex items-center gap-2 px-6 whitespace-nowrap text-[11px] sm:text-xs text-[#FAF5FC]/95" aria-hidden="true">
-                      <Sparkles size={12} className="text-[#D9B8A0] shrink-0" />
+                      <Sparkles size={12} className="text-[#FFFFFF] shrink-0" />
                       {item}
-                      <span className="text-[#D9B8A0]/70 ml-4">✦</span>
+                      <span className="text-[#FFFFFF]/70 ml-4">✦</span>
                     </span>
                   ))
                 )}
@@ -258,16 +258,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                   SARINE
                 </span>
                 <div className="flex items-center justify-center w-full my-0.5 gap-2 px-1">
-                  <div className="h-[1px] flex-1 bg-[#D9B8A0]/70" />
+                  <div className="h-[1px] flex-1 bg-[#FFFFFF]/70" />
                   <svg
-                    className="w-2.5 h-2.5 text-[#D9B8A0] shrink-0"
+                    className="w-2.5 h-2.5 text-[#FFFFFF] shrink-0"
                     viewBox="0 0 24 24"
                     fill="currentColor"
                     aria-hidden="true"
                   >
                     <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" />
                   </svg>
-                  <div className="h-[1px] flex-1 bg-[#D9B8A0]/70" />
+                  <div className="h-[1px] flex-1 bg-[#FFFFFF]/70" />
                 </div>
                 <span className="text-[8px] sm:text-[9px] tracking-[0.32em] text-[#563568]/80 uppercase font-sans font-medium whitespace-nowrap">
                   LUXURY ARTIFICIAL JEWELLERY
@@ -279,7 +279,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="hidden lg:flex flex-1 max-w-xl mx-4 xl:mx-8">
               <div
                 onClick={() => setIsSearchOpen(true)}
-                className="w-full flex items-center bg-white border border-[#D9B8A0] hover:border-[#563568] rounded-full px-4 py-2 cursor-pointer shadow-2xs transition-all group"
+                className="w-full flex items-center bg-white border border-[#FFFFFF] hover:border-[#563568] rounded-full px-4 py-2 cursor-pointer shadow-2xs transition-all group"
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -473,7 +473,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* TIER 3: SECONDARY NAVIGATION BAR (Pale Ivory/Lavender #FAF5FC with Delicate Champagne Gold Borders) */}
         <nav
-          className="hidden lg:block bg-[#FAF5FC] border-t border-[#D9B8A0]/30 border-b border-[#D9B8A0]/30"
+          className="hidden lg:block bg-[#FAF5FC] border-t border-[#FFFFFF]/30 border-b border-[#FFFFFF]/30"
           aria-label="Main Category Navigation"
         >
           <div className="site-container flex items-center justify-center space-x-6 xl:space-x-8 text-[13px] font-sans">
@@ -483,7 +483,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 to="/"
                 className={`relative inline-flex items-center pb-1 transition-colors hover:text-[#563568] ${
                   location.pathname === '/' && !location.search
-                    ? 'text-[#563568] font-medium border-b-2 border-[#D9B8A0]'
+                    ? 'text-[#563568] font-medium border-b-2 border-[#FFFFFF]'
                     : 'text-[#302438]'
                 }`}
               >
@@ -667,7 +667,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           onMouseLeave={handleMouseLeave}
         >
           {/* Top accent line */}
-          <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[#D9B8A0]/60 to-transparent" />
+          <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[#FFFFFF]/60 to-transparent" />
 
           {/* Dropdown 1: New Arrivals */}
           {activeDropdown === 'new-arrivals' && (
@@ -804,7 +804,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                           className="text-[#302438] hover:text-[#563568] transition-colors flex items-center justify-between"
                         >
                           <span>Most-Loved Pieces (Over 5,000+ Patrons)</span>
-                          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#D9B8A0]/25 text-[#563568] rounded-xs font-medium">
+                          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#FFFFFF]/25 text-[#563568] rounded-xs font-medium">
                             Iconic
                           </span>
                         </Link>
@@ -1073,7 +1073,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <div className="col-span-4 bg-[#F7F0FA] border border-[#E7DCEB] p-4 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <Sparkles size={13} className="text-[#D9B8A0]" />
+                      <Sparkles size={13} className="text-[#FFFFFF]" />
                       <span className="text-[10px] uppercase tracking-wider text-[#563568] font-semibold">
                         SARINE Demi-Fine Promise
                       </span>
@@ -1582,7 +1582,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     className="p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] hover:border-[#B69ACF] flex items-center justify-between transition-colors"
                   >
                     <span className="text-xs font-medium text-[#302438]">Bestsellers</span>
-                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-[#D9B8A0]/30 text-[#563568] rounded-xs font-medium">
+                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-[#FFFFFF]/30 text-[#563568] rounded-xs font-medium">
                       Hot
                     </span>
                   </Link>
