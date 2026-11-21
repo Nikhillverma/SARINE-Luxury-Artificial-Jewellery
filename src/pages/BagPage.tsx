@@ -115,11 +115,11 @@ export const BagPage: React.FC = () => {
       <section className="bg-[#F0E6F4]/50 border-b border-[#E7DCEB] py-8 sm:py-12 text-center">
         <div className="site-container">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <span className="h-[1px] w-8 bg-[#D9B8A0]"></span>
+            <span className="h-[1px] w-8 bg-[#FFFFFF]"></span>
             <span className="text-xs uppercase tracking-[0.25em] text-[#563568] font-medium font-sans">
               Your Curated Bag
             </span>
-            <span className="h-[1px] w-8 bg-[#D9B8A0]"></span>
+            <span className="h-[1px] w-8 bg-[#FFFFFF]"></span>
           </div>
           <h1 className="font-serif text-3xl sm:text-4xl text-[#302438] font-normal">
             Shopping Bag
@@ -174,7 +174,7 @@ export const BagPage: React.FC = () => {
               <div className="bg-white p-4 border border-[#E7DCEB] rounded-xs shadow-2xs">
                 <div className="flex items-center justify-between text-xs mb-1.5">
                   <span className="text-[#563568] font-medium flex items-center gap-1.5">
-                    <Sparkles size={14} className="text-[#D9B8A0]" />
+                    <Sparkles size={14} className="text-[#FFFFFF]" />
                     {amountToGift > 0 ? (
                       <span>Add {formatInr(amountToGift)} more to receive Complimentary Velvet Presentation Box</span>
                     ) : (
