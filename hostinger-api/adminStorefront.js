@@ -392,6 +392,27 @@ publicRouter.get("/editorial", async (_req, res, next) => {
   } catch (error) { next(error); }
 });
 
+// Public aggregate ratings include approved reviews only; customer details remain private.
+publicRouter.get("/review-summaries", async (_req, res, next) => {
+  try {
+    await ensureReviewSchema();
+    const [rows] = await pool.execute(
+      `SELECT r.product_id, COUNT(*) AS count, AVG(r.rating) AS average
+       FROM product_reviews r
+       INNER JOIN products p ON p.id COLLATE utf8mb4_unicode_ci = r.product_id COLLATE utf8mb4_unicode_ci
+       WHERE r.status = 'approved' AND p.status = 'active'
+       GROUP BY r.product_id`
+    );
+    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300").json({
+      summaries: rows.map(row => ({
+        productId: row.product_id,
+        count: Number(row.count),
+        average: Number(row.average)
+      }))
+    });
+  } catch (error) { next(error); }
+});
+
 // Customer reviews are private until an administrator approves them.
 // A guest proves purchase by supplying the order number and the email used at checkout.
 async function ensureReviewSchema() {
