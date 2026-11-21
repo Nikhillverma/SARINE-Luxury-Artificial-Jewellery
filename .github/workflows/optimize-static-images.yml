@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   optimize:
-    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, 'chore: optimize static images to WebP')
+    if: github.event_name != 'push' || github.event.head_commit.message != 'chore: optimize static images to WebP'
     runs-on: ubuntu-latest
     steps:
       - name: Check out deployment branch
