@@ -177,7 +177,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
   }, [slug, includeAll]);
 
   // Handle Pincode check
-  const handleCheckPincode = (e: React.FormEvent) => {    e.preventDefault();
+  const handleCheckPincode = (e: React.FormEvent) => {
+    e.preventDefault();
     setPincodeError(null);
     setPincodeResult(null);
 
@@ -356,7 +357,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
         <div className="site-container flex items-center justify-between text-xs text-[#6F6475]">
           <div className="flex items-center gap-2">
             <Link to="/" className="hover:text-[#563568]">Home</Link>
-            <span>/</span>            <Link to="/shop" className="hover:text-[#563568]">Catalogue</Link>
+            <span>/</span>
+            <Link to="/shop" className="hover:text-[#563568]">Catalogue</Link>
             {category && (
               <>
                 <span>/</span>
@@ -535,7 +537,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs uppercase tracking-wider text-[#6F6475] font-medium">
                   Quantity
-                </span>                <span className={`text-xs font-medium ${inStock ? 'text-emerald-700' : 'text-[#DC2626]'}`}>
+                </span>
+                <span className={`text-xs font-medium ${inStock ? 'text-emerald-700' : 'text-[#DC2626]'}`}>
                   {hasVariants && !selectedVariant ? 'Choose your option' : inStock ? 'In Stock — Ready to dispatch' : 'Awaiting Atelier Crafting'}
                 </span>
               </div>
@@ -714,7 +717,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                   ? 'border-[#563568] text-[#563568] bg-white font-semibold'
                   : 'border-transparent text-[#6F6475] hover:text-[#302438]'
               }`}
-            >              Care & Longevity Guide
+            >
+              Care & Longevity Guide
             </button>
             <button
               onClick={() => setActiveTab('shipping')}
@@ -894,6 +898,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                   ))}
                 </div>
               </div>
+
               <div>
                 <label className="block text-[#6F6475] mb-1">Your Name</label>
                 <input
