@@ -36,7 +36,7 @@ export const RefundPolicyPage: React.FC = () => {
           </p>
           <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6F6475]">
             <li>Sign in to <Link to="/account" className="text-[#563568] underline underline-offset-2">My Account</Link> and submit a cancellation request while the order is still eligible. If you cannot access your account, use the <Link to="/contact" className="text-[#563568] underline underline-offset-2">Contact page</Link> and include your order number.</li>
-            <li>If the order has not yet been dispatched, we will cancel the order immediately and issue a 100% full refund to your original payment method.</li>
+            <li>If a cancellation request is approved before dispatch, the order will be cancelled. Any eligible prepaid refund is initiated to the original payment method in line with the applicable payment-provider process.</li>
             <li>Once an order has been picked up by the courier and an AWB tracking number has been generated, it cannot be canceled in transit.</li>
           </ul>
         </section>
