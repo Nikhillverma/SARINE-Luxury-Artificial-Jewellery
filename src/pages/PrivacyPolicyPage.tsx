@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { PolicyLayout } from '../components/PolicyLayout';
 import { ShieldCheck, Lock, Database, UserX, Mail } from 'lucide-react';
 
@@ -33,7 +34,8 @@ export const PrivacyPolicyPage: React.FC = () => {
             When you browse our storefront, curate selections in your bag, or place an order, we collect only the information strictly necessary to provide our services:
           </p>
           <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6F6475]">
-            <li><strong className="text-[#302438]">Contact Information:</strong> Your full name, email address, and mobile phone number.</li>
+            <li><strong className="text-[#302438]">Contact Information:</strong> Your full name, email address, and optional mobile phone number submitted with an enquiry.</li>
+            <li><strong className="text-[#302438]">Enquiry Details:</strong> The subject and message you choose to submit through our Contact page.</li>
             <li><strong className="text-[#302438]">Delivery Address:</strong> Street address, apartment/suite number, landmark, city, state, and postal PIN code.</li>
             <li><strong className="text-[#302438]">Order Details:</strong> Items purchased, order reference numbers (e.g., SAR-000001), transaction timestamp, and delivery status.</li>
             <li><strong className="text-[#302438]">Technical Session Data:</strong> Browser type, approximate geographical region, and device category to ensure seamless display and responsive design.</li>
@@ -55,7 +57,7 @@ export const PrivacyPolicyPage: React.FC = () => {
             <li>To process, verify, and fulfill your jewellery orders.</li>
             <li>To coordinate domestic dispatch and courier tracking to your doorstep.</li>
             <li>To send order confirmation notices, dispatch updates, and delivery confirmations via email and SMS.</li>
-            <li>To provide timely assistance through our concierge team regarding sizing, returns, or order inquiries.</li>
+            <li>To review customer enquiries and use the contact details supplied to respond where a response is required.</li>
             <li>To detect and prevent fraudulent transactions or security breaches.</li>
           </ul>
         </section>
@@ -118,11 +120,7 @@ export const PrivacyPolicyPage: React.FC = () => {
             <li>Permanent deletion of your customer profile and historical contact records.</li>
           </ul>
           <div className="mt-3 p-4 bg-[#FAF5FC] border border-[#E7DCEB] text-xs text-[#302438] rounded-xs">
-            To exercise your deletion right or for any privacy inquiry, please send an email with the subject line <em>&ldquo;Data Deletion Request&rdquo;</em> to{' '}
-            <a href="mailto:care@sarinejewelry.com" className="text-[#563568] hover:text-[#A184BD] font-medium underline underline-offset-2">
-              care@sarinejewelry.com
-            </a>
-            . We process and confirm verified deletion requests within 15 business days, subject to statutory tax and financial record retention required by Indian law.
+            To exercise a privacy or deletion request, submit a message through the <Link to="/contact" className="text-[#563568] hover:text-[#A184BD] font-medium underline underline-offset-2">Contact page</Link> and select a clear subject such as “Data Deletion Request”. Please include the email address associated with your account so the request can be verified. Requests are reviewed subject to statutory tax and financial record-retention requirements.
           </div>
         </section>
       </div>

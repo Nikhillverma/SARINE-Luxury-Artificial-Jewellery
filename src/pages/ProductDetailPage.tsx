@@ -14,6 +14,7 @@ import { formatInr } from '../utils/currency';
 import { ProductCard } from '../components/ProductCard';
 import { hostingerStorefrontService } from '../services/hostinger/hostingerStorefrontService';
 import { useCart } from '../context/CartContext';
+import { useCheckoutConfig } from '../hooks/useCheckoutConfig';
 import { useWishlist } from '../context/WishlistContext';
 import {
   ArrowLeft,
@@ -55,6 +56,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { addItem, openDrawer, storewideDiscountPercent } = useCart();
+  const { config: checkoutConfig } = useCheckoutConfig();
   const { isInWishlist, toggleWishlist } = useWishlist();
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -512,7 +514,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                 {campaignDiscount > 0 && <span className="text-xs text-[#A43E55] font-medium bg-[#FDF1F3] px-2 py-0.5 rounded-xs border border-[#F2D7DD]">Save {formatInr(currentPrice - campaignPrice)} in sale</span>}
                 {discountPercent && <span className="text-xs text-[#563568] font-medium bg-[#F7F0FA] px-2 py-0.5 rounded-xs border border-[#E7DCEB]">Save {formatInr(currentCompareAtPrice! - currentPrice)}</span>}
               </div>
-              <p className="text-[11px] text-[#6F6475] mt-1">Inclusive of all taxes & complimentary delivery</p>
+              <p className="text-[11px] text-[#6F6475] mt-1">Inclusive of all taxes. {checkoutConfig.shippingFlatFee === 0 ? 'Complimentary shipping on all orders.' : `Shipping ${formatInr(checkoutConfig.shippingFlatFee)}; free on orders of ${formatInr(checkoutConfig.freeShippingThreshold)} or more.`}</p>
             </div>
 
             {/* Size Guide Trigger (for rings/bracelets) */}
@@ -777,10 +779,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                   Every SARINE piece undergoes stringent quality checks to ensure premium polish, sturdy prongs, and skin-friendly hypoallergenic finishes.
                 </p>
                 <p>
-                  • Orders are dispatched within 24 hours via premium insured courier partners (Bluedart, Delhivery, DTDC).
+                  • Orders are prepared for dispatch after confirmation. Processing and courier transit times may vary by destination and product availability.
                 </p>
                 <p>
-                  • Tracking details are sent via SMS/Email and accessible anytime via our Track Order portal.
+                  • Use the Track Order page to view the latest shipment status once courier tracking details are available.
                 </p>
               </div>
             )}

@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { PolicyLayout } from '../components/PolicyLayout';
 import { RotateCcw, AlertOctagon, CheckCircle2, IndianRupee, Video, Mail } from 'lucide-react';
 
@@ -34,8 +35,8 @@ export const RefundPolicyPage: React.FC = () => {
             You may cancel your order at any time <strong>before the parcel has been packaged and handed over to our courier partner</strong>.
           </p>
           <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6F6475]">
-            <li>To cancel an order before dispatch, immediately email our concierge team at <a href="mailto:care@sarinejewelry.com" className="text-[#563568] hover:text-[#A184BD] underline underline-offset-2">care@sarinejewelry.com</a> or message on WhatsApp at <strong className="text-[#302438]">+91 98765 43210</strong> with your order number.</li>
-            <li>If the order has not yet been dispatched, we will cancel the order immediately and issue a 100% full refund to your original payment method.</li>
+            <li>Sign in to <Link to="/account" className="text-[#563568] underline underline-offset-2">My Account</Link> and submit a cancellation request while the order is still eligible. If you cannot access your account, use the <Link to="/contact" className="text-[#563568] underline underline-offset-2">Contact page</Link> and include your order number.</li>
+            <li>If a cancellation request is approved before dispatch, the order will be cancelled. Any eligible prepaid refund is initiated to the original payment method in line with the applicable payment-provider process.</li>
             <li>Once an order has been picked up by the courier and an AWB tracking number has been generated, it cannot be canceled in transit.</li>
           </ul>
         </section>
@@ -126,10 +127,10 @@ export const RefundPolicyPage: React.FC = () => {
             To begin a return request within the 7-day delivery window:
           </p>
           <ol className="list-decimal pl-5 space-y-2 text-xs text-[#6F6475]">
-            <li>Send an email to <a href="mailto:care@sarinejewelry.com" className="text-[#563568] hover:text-[#A184BD] font-medium underline underline-offset-2">care@sarinejewelry.com</a> with the subject: <em>&ldquo;Return Request: [Your Order Number]&rdquo;</em>.</li>
+            <li>Sign in to <Link to="/account" className="text-[#563568] underline underline-offset-2">My Account</Link>, open the delivered order and submit a return or exchange request with your order number and reason.</li>
             <li>Attach the unboxing video/photos clearly illustrating the damage, defect, or wrong item received.</li>
             <li>Provide a brief description of the issue along with your registered contact phone number.</li>
-            <li>Our concierge will verify the claim within 24 to 48 hours and coordinate reverse pickup instructions or provide the return shipping address.</li>
+            <li>You can review the recorded request status in My Account. If you cannot submit a request online, use the Contact page and include your order number.</li>
           </ol>
         </section>
       </div>

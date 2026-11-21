@@ -5,13 +5,15 @@
  */
 
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { useCheckoutConfig } from '../hooks/useCheckoutConfig';
 import { PolicyLayout } from '../components/PolicyLayout';
 import { Truck, Clock, MapPin, PackageCheck, AlertCircle } from 'lucide-react';
-import { SHIPPING_FLAT_FEE, FREE_SHIPPING_THRESHOLD } from '../config/store';
 
 export const ShippingPolicyPage: React.FC = () => {
-  const feeDisplay = SHIPPING_FLAT_FEE === 0 ? 'Complimentary (Free)' : `₹${SHIPPING_FLAT_FEE}`;
-  const thresholdDisplay = FREE_SHIPPING_THRESHOLD !== null ? `₹${FREE_SHIPPING_THRESHOLD}` : 'all orders';
+  const { config } = useCheckoutConfig();
+  const feeDisplay = config.shippingFlatFee === 0 ? 'Complimentary (Free)' : `₹${config.shippingFlatFee}`;
+  const thresholdDisplay = `₹${config.freeShippingThreshold.toLocaleString('en-IN')}`;
 
   return (
     <PolicyLayout
@@ -49,38 +51,20 @@ export const ShippingPolicyPage: React.FC = () => {
         <section className="space-y-3">
           <div className="flex items-center gap-2">
             <Clock size={16} className="text-[#563568]" />
-            <h2 className="font-serif text-lg sm:text-xl text-[#302438]">
-              2. Dispatch & Delivery Timelines
-            </h2>
+            <h2 className="font-serif text-lg sm:text-xl text-[#302438]">2. Dispatch & Delivery Updates</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
             <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs">
-              <h3 className="text-xs uppercase tracking-wider text-[#302438] font-semibold">
-                Dispatch Window
-              </h3>
-              <p className="font-serif text-xl text-[#563568] mt-1">
-                2 – 3 Business Days
-              </p>
-              <p className="text-xs text-[#6F6475] mt-2">
-                Every piece undergoes a multi-point quality check, secure polishing inspection, and protective packaging prior to dispatch from our atelier.
-              </p>
+              <h3 className="text-xs uppercase tracking-wider text-[#302438] font-semibold">Order Processing</h3>
+              <p className="font-serif text-xl text-[#563568] mt-1">After confirmation</p>
+              <p className="text-xs text-[#6F6475] mt-2">Orders are prepared for dispatch after order confirmation. Processing time may vary with product availability and order volume.</p>
             </div>
-
             <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs">
-              <h3 className="text-xs uppercase tracking-wider text-[#302438] font-semibold">
-                Transit & Delivery
-              </h3>
-              <p className="font-serif text-xl text-[#563568] mt-1">
-                5 – 7 Business Days
-              </p>
-              <p className="text-xs text-[#6F6475] mt-2">
-                Standard transit across India takes 5 to 7 business days following dispatch. Metro areas typically arrive in 4 to 5 days.
-              </p>
+              <h3 className="text-xs uppercase tracking-wider text-[#302438] font-semibold">Courier Tracking</h3>
+              <p className="font-serif text-xl text-[#563568] mt-1">After dispatch</p>
+              <p className="text-xs text-[#6F6475] mt-2">Tracking details become available after the shipment is handed to the courier. Use the Track Order page to check the latest recorded status.</p>
             </div>
           </div>
-          <p className="text-xs text-[#6F6475] mt-1">
-            * Note: Business days exclude Sundays and gazetted national holidays. Severe weather conditions, regional lockdowns, or festival peak volumes may occasionally add 1–2 days to courier transit.
-          </p>
         </section>
 
         {/* Section 3: Shipping Fees */}
@@ -102,11 +86,11 @@ export const ShippingPolicyPage: React.FC = () => {
             <div className="flex justify-between items-center py-1 border-b border-[#E7DCEB]">
               <span className="text-[#6F6475]">Free Shipping Eligibility:</span>
               <span className="font-medium text-[#302438]">
-                {FREE_SHIPPING_THRESHOLD !== null ? `On orders above ${thresholdDisplay}` : 'All orders across India'}
+                {config.shippingFlatFee === 0 ? 'All orders across India' : `On orders of ${thresholdDisplay} or more`}
               </span>
             </div>
             <p className="text-[#6F6475] pt-1">
-              The shipping fee shown above is applied at checkout. Complimentary shipping is applied automatically when the order subtotal meets the eligibility threshold.
+              The shipping fee shown above is applied at checkout. Free shipping is applied automatically when the order subtotal reaches or exceeds the threshold.
             </p>
           </div>
         </section>
@@ -123,9 +107,9 @@ export const ShippingPolicyPage: React.FC = () => {
             As soon as your parcel is dispatched from our atelier:
           </p>
           <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6F6475]">
-            <li>An automated notification containing your courier Airway Bill (AWB) number and direct online tracking URL will be sent to your registered email address and mobile number.</li>
+            <li>When tracking details are available, you can check the latest recorded shipment status on the Track Order page.</li>
             <li>You can monitor the live movement of your parcel from the logistics provider&apos;s real-time portal.</li>
-            <li>If you need assistance locating your package, contact our team at <a href="mailto:care@sarinejewelry.com" className="text-[#563568] hover:text-[#A184BD] underline underline-offset-2">care@sarinejewelry.com</a> with your SARINE order number (e.g., SAR-000001).</li>
+            <li>If you need help locating a package, submit an enquiry through our <Link to="/contact" className="text-[#563568] underline underline-offset-2">Contact page</Link> and include your SARINE order number.</li>
           </ul>
         </section>
       </div>

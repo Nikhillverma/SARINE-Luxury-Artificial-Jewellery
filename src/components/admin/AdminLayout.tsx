@@ -42,7 +42,8 @@ import {
   AlertTriangle,
   UserCheck,
   RotateCcw,
-  Star
+  Star,
+  MessageSquare
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -173,6 +174,12 @@ interface NavItem {
       path: '/admin/returns',
       icon: RotateCcw,
       match: (p: string) => p.startsWith('/admin/returns')
+    },
+    {
+      name: 'Customer Enquiries',
+      path: '/admin/contact-inquiries',
+      icon: MessageSquare,
+      match: (p: string) => p.startsWith('/admin/contact-inquiries')
     },
     {
       name: 'Reviews & Ratings',
