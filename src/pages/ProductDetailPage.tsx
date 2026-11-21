@@ -177,8 +177,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
   }, [slug, includeAll]);
 
   // Handle Pincode check
-  const handleCheckPincode = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCheckPincode = (e: React.FormEvent) => {    e.preventDefault();
     setPincodeError(null);
     setPincodeResult(null);
 
@@ -357,8 +356,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
         <div className="site-container flex items-center justify-between text-xs text-[#6F6475]">
           <div className="flex items-center gap-2">
             <Link to="/" className="hover:text-[#563568]">Home</Link>
-            <span>/</span>
-            <Link to="/shop" className="hover:text-[#563568]">Catalogue</Link>
+            <span>/</span>            <Link to="/shop" className="hover:text-[#563568]">Catalogue</Link>
             {category && (
               <>
                 <span>/</span>
@@ -491,9 +489,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               {/* Customer Rating snippet */}
               {reviewCount > 0 && (
                 <div className="flex items-center gap-2 mt-2.5 text-xs text-[#6F6475]" aria-label={`Customer rating ${reviewAverage.toFixed(1)} out of 5`}>
-                  <div className="flex items-center text-[#FFFFFF]" aria-hidden="true">
+                  <div className="flex items-center text-[#563568]" aria-hidden="true">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={14} className="fill-[#FFFFFF]" />
+                      <Star key={i} size={14} className="fill-[#563568] text-[#563568]" />
                     ))}
                   </div>
                   <span className="font-medium text-[#302438]">{reviewAverage.toFixed(1)}/5</span>
@@ -537,8 +535,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs uppercase tracking-wider text-[#6F6475] font-medium">
                   Quantity
-                </span>
-                <span className={`text-xs font-medium ${inStock ? 'text-emerald-700' : 'text-[#DC2626]'}`}>
+                </span>                <span className={`text-xs font-medium ${inStock ? 'text-emerald-700' : 'text-[#DC2626]'}`}>
                   {hasVariants && !selectedVariant ? 'Choose your option' : inStock ? 'In Stock — Ready to dispatch' : 'Awaiting Atelier Crafting'}
                 </span>
               </div>
@@ -717,8 +714,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                   ? 'border-[#563568] text-[#563568] bg-white font-semibold'
                   : 'border-transparent text-[#6F6475] hover:text-[#302438]'
               }`}
-            >
-              Care & Longevity Guide
+            >              Care & Longevity Guide
             </button>
             <button
               onClick={() => setActiveTab('shipping')}
@@ -892,13 +888,12 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                     >
                       <Star
                         size={20}
-                        className={star <= newReviewRating ? 'text-[#FFFFFF] fill-[#FFFFFF]' : 'text-[#E7DCEB]'}
+                        className={star <= newReviewRating ? 'text-[#563568] fill-[#563568]' : 'text-[#E7DCEB]'}
                       />
                     </button>
                   ))}
                 </div>
               </div>
-
               <div>
                 <label className="block text-[#6F6475] mb-1">Your Name</label>
                 <input
