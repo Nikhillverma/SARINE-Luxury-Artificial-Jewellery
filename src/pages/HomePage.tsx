@@ -551,11 +551,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         <div className="site-container">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div className="min-w-0">
-              <span className="mb-1 block text-[10px] font-medium uppercase tracking-[0.22em] text-[#8A7892]">DISCOVER SARINE</span>
               <h2 className="font-serif text-2xl font-normal text-[#302438] sm:text-3xl lg:text-4xl">Shop by Category</h2>
-              <p className="mt-2 max-w-xl text-xs leading-relaxed text-[#746B75] sm:text-sm">
-                Explore our collections, curated for celebrations and everyday elegance.
-              </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <Link to="/shop" className="hidden items-center gap-1 text-xs font-medium text-[#563568] transition-colors hover:text-[#8A6AA0] sm:inline-flex">
@@ -590,9 +586,6 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                     />
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#24162D]/75 via-[#24162D]/15 to-transparent px-4 pb-4 pt-12">
                       <h3 className="font-serif text-lg font-medium text-white sm:text-xl">{cat.name}</h3>
-                      <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-[0.16em] text-white/90">
-                        Shop collection <ArrowRight size={11} />
-                      </span>
                     </div>
                   </div>
                 </Link>
