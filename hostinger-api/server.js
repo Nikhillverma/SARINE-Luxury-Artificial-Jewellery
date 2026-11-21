@@ -277,6 +277,7 @@ app.get("/api/products/:slug", async (req, res, next) => {
 });
 
 // Public storefront content managed from the admin panel\napp.use("/api/storefront", publicStorefrontRouter);
+app.use("/api", publicStorefrontRouter);
 app.use("/api/admin", adminStorefrontRouter);
 app.use("/api/admin/storefront", adminStorefrontRouter);\n\n// Public category catalogue
 app.get("/api/categories", async (_req, res, next) => {
