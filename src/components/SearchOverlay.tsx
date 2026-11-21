@@ -76,6 +76,16 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
     };
   }, [isOpen]);
 
+  // Close the search overlay with Escape for keyboard users.
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   // Filter products as user types
   useEffect(() => {
     const q = query.trim().toLowerCase();
@@ -134,7 +144,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col font-sans">
+    <div className="fixed inset-0 z-50 flex flex-col font-sans" role="dialog" aria-modal="true" aria-label="Search SARINE">
       {/* Backdrop */}
       <div
         onClick={onClose}
@@ -151,6 +161,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
               <input
                 ref={inputRef}
                 type="text"
+                aria-label="Search jewellery"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search jewellery by piece, design, material, or occasion..."
@@ -162,6 +173,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
                   onClick={() => setQuery('')}
                   className="p-1.5 text-[#6F6475] hover:text-[#302438] transition-colors cursor-pointer"
                   title="Clear input"
+                  aria-label="Clear search input"
                 >
                   <X size={18} />
                 </button>

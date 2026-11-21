@@ -23,6 +23,8 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
+  Pause,
+  Play,
   Heart,
   Star,
   Sparkles,
@@ -190,6 +192,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   // Hero Slider State
   const [activeSlide, setActiveSlide] = useState<number>(0);
+  const [isHeroPaused, setIsHeroPaused] = useState(false);
   const [managedHeroSlides, setManagedHeroSlides] = useState<Array<{id:string; tagline:string; title:string; subtitle:string; ctaText:string; ctaLink:string; imageUrl:string}>>([]);
   const [editorial, setEditorial] = useState<EditorialContent>({ eyebrow: 'EDITORIAL COLLECTION', title: 'The Art of Everyday Elegance', description: 'A curated collection that blends classic beauty with modern sensibilities.', ctaText: 'Explore the Collection', ctaLink: '/shop', imageUrl: HOMEPAGE_IMAGES.editorialBanner, active: true });
 
@@ -377,12 +380,12 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   // Regular slides use 5 seconds; campaign slides use their admin-configured hold time.
   // The timer restarts on every slide change so a featured offer gets its full viewing time.
   useEffect(() => {
-    if (slideCount <= 1) return;
+    if (slideCount <= 1 || isHeroPaused) return;
     const timer = window.setTimeout(() => {
       setActiveSlide(prev => (prev + 1) % slideCount);
     }, activeSlideDuration);
     return () => window.clearTimeout(timer);
-  }, [activeSlide, activeSlideDuration, slideCount]);
+  }, [activeSlide, activeSlideDuration, isHeroPaused, slideCount]);
 
   const prevSlide = () => {
     setActiveSlide((prev) => (prev - 1 + slideCount) % slideCount);
@@ -540,8 +543,17 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               ))}
             </div>
 
-            {/* Circular Arrows */}
+            {/* Carousel controls, including a persistent pause option for motion-sensitive users. */}
             <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={() => setIsHeroPaused(paused => !paused)}
+                aria-label={isHeroPaused ? "Play automatic hero slides" : "Pause automatic hero slides"}
+                aria-pressed={isHeroPaused}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E7DCEB] bg-white/90 hover:bg-[#F0E6F4] hover:border-[#B69ACF] text-[#302438] hover:text-[#563568] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
+              >
+                {isHeroPaused ? <Play size={16} /> : <Pause size={16} />}
+              </button>
               <button
                 onClick={prevSlide}
                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E7DCEB] bg-white/90 hover:bg-[#F0E6F4] hover:border-[#B69ACF] text-[#302438] hover:text-[#563568] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"

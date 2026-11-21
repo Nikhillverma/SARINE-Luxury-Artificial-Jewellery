@@ -196,6 +196,8 @@ export const CartDrawer: React.FC = () => {
               <span>{availabilityNotice}</span>
             </div>
             <button
+              type="button"
+              aria-label="Dismiss availability notice"
               onClick={dismissNotice}
               className="text-[#6F6475] hover:text-[#302438] text-xs font-medium cursor-pointer"
             >
@@ -278,7 +280,7 @@ export const CartDrawer: React.FC = () => {
                             onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variantId)}
                             disabled={item.quantity <= 1}
                             className="w-7 h-7 flex items-center justify-center text-xs text-[#302438] hover:bg-[#F7F0FA] disabled:opacity-30 transition-colors cursor-pointer"
-                            aria-label="Decrease quantity"
+                            aria-label={`Decrease quantity of ${item.product.name}`}
                           >
                             -
                           </button>
@@ -289,7 +291,7 @@ export const CartDrawer: React.FC = () => {
                             onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variantId)}
                             disabled={isAtMax}
                             className="w-7 h-7 flex items-center justify-center text-xs text-[#302438] hover:bg-[#F7F0FA] disabled:opacity-30 transition-colors cursor-pointer"
-                            aria-label="Increase quantity"
+                            aria-label={`Increase quantity of ${item.product.name}`}
                           >
                             +
                           </button>
