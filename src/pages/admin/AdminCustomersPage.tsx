@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { hostingerAdminCustomerService, type AdminCustomer, type AdminCustomerOrder } from '../../services/hostinger/hostingerAdminCustomerService';
 import { formatInr } from '../../utils/currency';
@@ -26,10 +27,11 @@ function customerSegment(customer: AdminCustomer) {
 }
 
 export const AdminCustomersPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [customers, setCustomers] = useState<AdminCustomer[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => searchParams.get('search') || '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selected, setSelected] = useState<AdminCustomer | null>(null);
@@ -52,6 +54,8 @@ export const AdminCustomersPage: React.FC = () => {
       setLoading(false);
     }
   }, [offset, search]);
+
+  useEffect(() => { setSearch(searchParams.get('search') || ''); setOffset(0); }, [searchParams]);
 
   useEffect(() => { void load(0); }, [search]);
 
