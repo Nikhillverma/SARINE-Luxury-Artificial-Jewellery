@@ -210,8 +210,7 @@ function validateExploreConfig(input) {
   const displayCount = Number(input.displayCount);
   if (productIds.length > 100) return { error: "Select no more than 100 products." };
   if (![4,6,8,10,12,16,20,24].includes(displayCount)) return { error: "Choose a valid initial product count." };
-  if (productIds.length < 1) return { error: "Select at least one product for Explore Now." };
-  if (displayCount > productIds.length) return { error: "Initial display count cannot exceed the selected product pool." };
+  if (input.enabled === true && productIds.length < displayCount) return { error: "Select at least as many products as the initial display count." };
   return { config: { version: 1, enabled: input.enabled === true, productIds, displayCount } };
 }
 adminOnly.get("/explore-now", async (_req, res, next) => {
