@@ -8,7 +8,7 @@
   --color-brand-primary: #563568;    /* Deep Plum */
   --color-brand-accent: #B69ACF;     /* Lavender */
   --color-brand-background: #F7F0FA; /* Soft Lavender Background */
-  --color-brand-gold: #D9B8A0;       /* Champagne Gold */
+  --color-brand-gold: #FFFFFF;       /* Champagne Gold */
 
   --color-text-primary: #302438;     /* Primary Text */
   --color-text-secondary: #6F6475;   /* Secondary Text */
@@ -29,7 +29,7 @@
   --color-text-inverse: #FFFFFF;     /* White text on dark surfaces */
 
   /* Accents & Borders */
-  --color-accent-gold: #D9B8A0;      /* Champagne gold decorative details */
+  --color-accent-gold: #FFFFFF;      /* Champagne gold decorative details */
   --color-accent-gold-hover: #C5A288;
   --color-accent-gold-soft: #F8F1EB;
   --color-border-subtle: #F0E8F3;    /* Faint separator lines */
