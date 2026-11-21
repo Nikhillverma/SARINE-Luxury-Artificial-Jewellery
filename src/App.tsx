@@ -4,7 +4,7 @@
  * global CartDrawer & WishlistDrawer, customer storefront routes, and extended atelier admin suite.
  */
 
-import React, { lazy, Suspense, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
@@ -14,6 +14,7 @@ import { CartDrawer } from './components/CartDrawer';
 import { WishlistDrawer } from './components/WishlistDrawer';
 import { CustomerLoginPrompt } from './components/CustomerLoginPrompt';
 import { Footer } from './components/Footer';
+import { setPageMetadata } from './utils/seo';
 const HomePage = lazy(() => import('./pages/HomePage').then((module) => ({ default: module.HomePage })));
 const CollectionPage = lazy(() => import('./pages/CollectionPage').then((module) => ({ default: module.CollectionPage })));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage').then((module) => ({ default: module.ProductDetailPage })));
@@ -51,6 +52,45 @@ const BlogPage = lazy(() => import('./pages/PolicyPlaceholders').then((module) =
 const CareersPage = lazy(() => import('./pages/PolicyPlaceholders').then((module) => ({ default: module.CareersPage })));
 const CancellationPolicyPage = lazy(() => import('./pages/PolicyPlaceholders').then((module) => ({ default: module.CancellationPolicyPage })));
 
+
+const ROUTE_METADATA: Record<string, { title: string; description: string }> = {
+  '/': { title: 'SARINE | Luxury Artificial Jewellery', description: 'Discover contemporary artificial and fashion jewellery at SARINE, including necklaces, earrings, rings, bracelets and thoughtfully curated sets.' },
+  '/shop': { title: 'Shop Jewellery | SARINE', description: 'Explore SARINE jewellery collections. Discover earrings, necklaces, bracelets, rings and more in contemporary styles for everyday wear and celebrations.' },
+  '/bag': { title: 'Your Bag | SARINE', description: 'Review the jewellery pieces in your SARINE shopping bag.' },
+  '/checkout': { title: 'Checkout | SARINE', description: 'Complete your SARINE order securely.' },
+  '/account': { title: 'My Account | SARINE', description: 'Access your SARINE account, orders and saved details.' },
+  '/track-order': { title: 'Track Your Order | SARINE', description: 'Check the latest available status of your SARINE order.' },
+  '/contact': { title: 'Contact SARINE | Customer Support', description: 'Contact SARINE about an order, jewellery product, return or any other customer enquiry.' },
+  '/about': { title: 'Our Story | SARINE', description: 'Learn about SARINE and our approach to contemporary, accessible jewellery for everyday moments and celebrations.' },
+  '/privacy-policy': { title: 'Privacy Policy | SARINE', description: 'Read how SARINE handles personal information and customer data.' },
+  '/terms': { title: 'Terms & Conditions | SARINE', description: 'Review the terms and conditions for using the SARINE online store.' },
+  '/shipping-policy': { title: 'Shipping Policy | SARINE', description: 'Find information about SARINE shipping charges, delivery and order fulfilment.' },
+  '/refund-policy': { title: 'Returns & Refunds | SARINE', description: 'Read SARINE guidance for returns, refunds and eligible order issues.' },
+  '/cancellation-policy': { title: 'Cancellation Policy | SARINE', description: 'Review the SARINE order cancellation policy and available next steps.' },
+  '/sustainability': { title: 'Sustainability | SARINE', description: 'Read about SARINE sustainability information and related updates.' },
+  '/blog': { title: 'Journal | SARINE', description: 'Explore jewellery stories, styling ideas and updates from SARINE.' },
+  '/careers': { title: 'Careers | SARINE', description: 'Explore career information and opportunities at SARINE.' },
+};
+
+function RouteMetadata() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const path = location.pathname;
+    const isPrivateRoute = path.startsWith('/admin')
+      || ['/bag', '/checkout', '/account', '/track-order'].includes(path)
+      || path.startsWith('/order/');
+    const metadata = ROUTE_METADATA[path]
+      || (path.startsWith('/product/')
+        ? { title: 'Jewellery Details | SARINE', description: 'Explore product details, styling information and availability from SARINE.' }
+        : { title: 'SARINE | Luxury Artificial Jewellery', description: 'Discover contemporary artificial and fashion jewellery at SARINE.' });
+
+    setPageMetadata({ ...metadata, robots: isPrivateRoute ? 'noindex, nofollow' : 'index, follow' });
+  }, [location.pathname]);
+
+  return null;
+}
+
 function MainAppShell() {
   const [includeAll, setIncludeAll] = useState<boolean>(false);
   const location = useLocation();
@@ -61,6 +101,8 @@ function MainAppShell() {
   };
 
   return (
+    <>
+    <RouteMetadata />
     <div className="min-h-screen w-full flex flex-col bg-[#F7F0FA] text-[#302438] selection:bg-[#B69ACF]/30 selection:text-[#302438]">
       {/* Public Storefront Navigation & Slide-in Drawers */}
       {!isAdminRoute && (
@@ -143,6 +185,7 @@ function MainAppShell() {
       {/* Public Storefront Footer */}
       {!isAdminRoute && <Footer />}
     </div>
+    </>
   );
 }
 
