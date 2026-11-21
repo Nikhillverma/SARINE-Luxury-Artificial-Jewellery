@@ -57,6 +57,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             onError={(event) => { if (!event.currentTarget.src.endsWith("/images/product-image-unavailable.svg")) event.currentTarget.src = "/images/product-image-unavailable.svg"; }}
             alt={product.name}
             loading="lazy"
+            decoding="async"
+            fetchPriority="low"
             referrerPolicy="no-referrer"
             className={`absolute inset-0 h-full w-full object-cover object-center transition-all duration-500 ease-out ${
               secondaryImage ? 'group-hover:opacity-0' : 'group-hover:scale-105'
@@ -70,6 +72,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               onError={(event) => { event.currentTarget.style.display = "none"; }}
               alt={`${product.name} detail`}
               loading="lazy"
+              decoding="async"
+              fetchPriority="low"
               referrerPolicy="no-referrer"
               className="absolute inset-0 h-full w-full object-cover object-center opacity-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 ease-out"
             />
