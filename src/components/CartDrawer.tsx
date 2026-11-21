@@ -170,7 +170,7 @@ export const CartDrawer: React.FC = () => {
           <div className="bg-[#FAF5FC] border-b border-[#E7DCEB] px-4 py-2.5">
             <div className="flex items-center justify-between text-[11px] mb-1.5 font-sans">
               <span className="text-[#563568] font-medium flex items-center gap-1">
-                <Sparkles size={12} className="text-[#D9B8A0]" />
+                <Sparkles size={12} className="text-[#FFFFFF]" />
                 {amountToGift > 0 ? (
                   <span>Add {formatInr(amountToGift)} for Complimentary Luxury Velvet Box</span>
                 ) : (
