@@ -580,7 +580,7 @@ interface NavItem {
                     <div className="p-3 space-y-2">
                       {notificationData.metrics.pendingOrders > 0 ? (
                         <Link
-                          to="/admin/orders?status=pending"
+                          to="/admin/orders"
                           onClick={() => setNotificationsOpen(false)}
                           className="flex items-start gap-3 p-3 rounded-lg border border-[#F2D7A5] bg-[#FFFBEB] hover:bg-[#FEF3C7]"
                         >
