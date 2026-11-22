@@ -107,11 +107,28 @@ export const AdminInventoryPage: React.FC = () => {
 
   useEffect(() => { setPage(1); }, [searchTerm, selectedCategory, statusFilter, stockFilter]);
 
+  const getInventoryCostValue = (product: Product): number | null => {
+    const unitCost = Number(product.costPrice);
+    const units = Number(product.stock);
+    if (product.costPrice == null || product.costPrice === '' as unknown as number ||
+        !Number.isFinite(unitCost) || unitCost < 0 || !Number.isFinite(units) || units < 0) return null;
+    return unitCost * units;
+  };
+
   const sortedProducts = useMemo(() => [...filteredProducts].sort((a, b) => {
-    if (sortOrder === 'stock-low') return a.stock - b.stock || a.name.localeCompare(b.name);
-    if (sortOrder === 'stock-high') return b.stock - a.stock || a.name.localeCompare(b.name);
-    if (sortOrder === 'value-high') return ((b.costPrice || 0) * b.stock) - ((a.costPrice || 0) * a.stock) || a.name.localeCompare(b.name);
-    return a.name.localeCompare(b.name);
+    const nameOrder = a.name.localeCompare(b.name);
+    if (sortOrder === 'stock-low') return Number(a.stock) - Number(b.stock) || nameOrder;
+    if (sortOrder === 'stock-high') return Number(b.stock) - Number(a.stock) || nameOrder;
+    if (sortOrder === 'value-high' || sortOrder === 'value-low') {
+      const aValue = getInventoryCostValue(a);
+      const bValue = getInventoryCostValue(b);
+      // Keep products without a recorded cost price at the bottom in either direction.
+      if (aValue == null && bValue == null) return nameOrder;
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
+      return (sortOrder === 'value-high' ? bValue - aValue : aValue - bValue) || nameOrder;
+    }
+    return nameOrder;
   }), [filteredProducts, sortOrder]);
   const totalPages = Math.max(1, Math.ceil(sortedProducts.length / PAGE_SIZE));
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
@@ -283,7 +300,7 @@ export const AdminInventoryPage: React.FC = () => {
               <option value="in">In Stock Only</option>
             </select>
           </div>
-          <label className="text-[11px] text-[#6F6475]">Sort products<select value={sortOrder} onChange={event => { setSortOrder(event.target.value as typeof sortOrder); setPage(1); }} className="mt-1 block min-h-10 px-3 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs text-xs text-[#302438]"><option value="name">Name A–Z</option><option value="stock-low">Stock: lowest first</option><option value="stock-high">Stock: highest first</option><option value="value-high">Cost value: highest first</option></select></label>
+          <label className="text-[11px] text-[#6F6475]">Sort products<select value={sortOrder} onChange={event => { setSortOrder(event.target.value as typeof sortOrder); setPage(1); }} className="mt-1 block min-h-10 px-3 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs text-xs text-[#302438]"><option value="name">Name A–Z</option><option value="stock-low">Stock: lowest first</option><option value="stock-high">Stock: highest first</option><option value="value-high">Inventory cost value: highest first</option><option value="value-low">Inventory cost value: lowest first</option></select></label>
         </div>
 
         {/* Inventory Table */}
@@ -294,7 +311,9 @@ export const AdminInventoryPage: React.FC = () => {
                 <tr>
                   <th className="p-3">Piece Details</th>
                   <th className="p-3">Category</th>
-                  <th className="p-3">Price</th>
+                  <th className="p-3">Selling Price</th>
+                  <th className="p-3">Unit Cost</th>
+                  <th className="p-3 text-right">Inventory Cost Value</th>
                   <th className="p-3 text-center">Stock on Hand</th>
                   <th className="p-3">Status</th>
                   <th className="p-3">Low-stock Alert</th>
@@ -304,7 +323,7 @@ export const AdminInventoryPage: React.FC = () => {
               <tbody className="divide-y divide-[#E7DCEB]">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-[#6F6475]">
+                    <td colSpan={9} className="p-8 text-center text-[#6F6475]">
                       Loading inventory records...
                     </td>
                   </tr>
@@ -352,6 +371,10 @@ export const AdminInventoryPage: React.FC = () => {
                         <td className="p-3 font-medium text-[#302438]">
                           {formatInr(p.price)}
                         </td>
+
+                        {/* Cost price and total stock value */}
+                        <td className="p-3 text-[#6F6475]">{p.costPrice == null ? <span className="text-amber-700">Not set</span> : formatInr(Number(p.costPrice))}</td>
+                        <td className="p-3 text-right font-medium text-[#302438]">{getInventoryCostValue(p) == null ? <span className="text-amber-700">Not available</span> : formatInr(getInventoryCostValue(p) as number)}</td>
 
                         {/* Stock On Hand */}
                         <td className="p-3 text-center">
