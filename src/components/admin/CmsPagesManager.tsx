@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { hostingerStorefrontService, type CmsPage, type CmsBlock } from "../../services/hostinger/cmsPagesService";
+import { cmsPagesService, type CmsPage, type CmsBlock, type CmsPageDraft } from "../../services/hostinger/cmsPagesService";
 
-const blank: Omit<CmsPage,"id"|"isPublished"|"updatedAt"> = { title:"", slug:"", seoTitle:"", seoDescription:"", blocks:[] };
+const blank: CmsPageDraft = { title:"", slug:"", seoTitle:"", seoDescription:"", blocks:[] };
 export const CmsPagesManager: React.FC = () => {
   const [pages,setPages]=useState<CmsPage[]>([]);
   const [draft,setDraft]=useState(blank);
