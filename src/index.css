@@ -186,7 +186,7 @@
 /* ==========================================================================
    SARINE editorial luxury refresh — homepage only.
    Palette sampled from the approved reference: deep plum, warm ivory,
-   dusty blush and muted mauve, with restrained champagne accents.
+   the approved plum and lavender palette, with white replacing the former champagne accent.
    Typography and the hero's existing dimensions are intentionally untouched.
    ========================================================================== */
 .sarine-home {
@@ -197,7 +197,7 @@
   --sarine-blush: #F0D8D8;
   --sarine-blush-deep: #E0B8C0;
   --sarine-mauve: #D0A8C0;
-  --sarine-champagne: #D8B878;
+  --sarine-champagne: #FFFFFF;
   background: var(--sarine-ivory-light);
   color: var(--sarine-plum);
 }
