@@ -26,6 +26,14 @@ import {
 
 const DEFAULT_LOW_STOCK_THRESHOLD = 5;
 
+function getInventoryCostValue(product: Product): number | null {
+  if (product.costPrice == null || String(product.costPrice).trim() === '') return null;
+  const unitCost = Number(product.costPrice);
+  const units = Number(product.stock);
+  if (!Number.isFinite(unitCost) || unitCost < 0 || !Number.isFinite(units) || units < 0) return null;
+  return unitCost * units;
+}
+
 export const AdminInventoryPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [movements, setMovements] = useState<InventoryMovement[]>([]);
@@ -37,7 +45,7 @@ export const AdminInventoryPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
-  const [sortOrder, setSortOrder] = useState<'name' | 'stock-low' | 'stock-high' | 'value-high'>('name');
+  const [sortOrder, setSortOrder] = useState<'name' | 'stock-low' | 'stock-high' | 'value-high' | 'value-low'>('name');
   const [page, setPage] = useState(1);
   const [movementSearch, setMovementSearch] = useState('');
   const [movementFrom, setMovementFrom] = useState('');
@@ -106,14 +114,6 @@ export const AdminInventoryPage: React.FC = () => {
   }, [products, searchTerm, selectedCategory, statusFilter, stockFilter, lowStockThreshold, productThresholds]);
 
   useEffect(() => { setPage(1); }, [searchTerm, selectedCategory, statusFilter, stockFilter]);
-
-  const getInventoryCostValue = (product: Product): number | null => {
-    const unitCost = Number(product.costPrice);
-    const units = Number(product.stock);
-    if (product.costPrice == null || product.costPrice === '' as unknown as number ||
-        !Number.isFinite(unitCost) || unitCost < 0 || !Number.isFinite(units) || units < 0) return null;
-    return unitCost * units;
-  };
 
   const sortedProducts = useMemo(() => [...filteredProducts].sort((a, b) => {
     const nameOrder = a.name.localeCompare(b.name);
