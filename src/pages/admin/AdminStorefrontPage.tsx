@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AdminLayout } from "../../components/admin/AdminLayout";
-import { CuratedFavouritesManager } from "../../components/admin/CuratedFavouritesManager";
-import { ShopByOccasionManager } from "../../components/admin/ShopByOccasionManager";
-import { HomepageSectionManager } from "../../components/admin/HomepageSectionManager";
-import { HomepageContentManager } from "../../components/admin/HomepageContentManager";
-import { CmsPagesManager } from "../../components/admin/CmsPagesManager";
-import { GlobalDesignStudio } from "../../components/admin/GlobalDesignStudio";
-import { SiteChromeManager } from "../../components/admin/SiteChromeManager";
+const CuratedFavouritesManager = React.lazy(() => import("../../components/admin/CuratedFavouritesManager").then(module => ({ default: module.CuratedFavouritesManager })));
+const ShopByOccasionManager = React.lazy(() => import("../../components/admin/ShopByOccasionManager").then(module => ({ default: module.ShopByOccasionManager })));
+const HomepageSectionManager = React.lazy(() => import("../../components/admin/HomepageSectionManager").then(module => ({ default: module.HomepageSectionManager })));
+const HomepageContentManager = React.lazy(() => import("../../components/admin/HomepageContentManager").then(module => ({ default: module.HomepageContentManager })));
+const CmsPagesManager = React.lazy(() => import("../../components/admin/CmsPagesManager").then(module => ({ default: module.CmsPagesManager })));
+const GlobalDesignStudio = React.lazy(() => import("../../components/admin/GlobalDesignStudio").then(module => ({ default: module.GlobalDesignStudio })));
+const SiteChromeManager = React.lazy(() => import("../../components/admin/SiteChromeManager").then(module => ({ default: module.SiteChromeManager })));
 import { hostingerMediaService } from "../../services";
 import { hostingerStorefrontService, type StorefrontBanner, type EditorialContent, type ProductReview } from "../../services/hostinger/hostingerStorefrontService";
 
@@ -247,13 +247,15 @@ export const AdminStorefrontPage: React.FC = () => {
         <Link to="/admin/storefront" className="rounded-lg border border-[#E7DCEB] bg-white px-3 py-2 text-xs font-medium text-[#563568] hover:bg-[#F7F0FA]">← Storefront Studio menu</Link>
       </div>}
 
-      {activeSection === "design" && <div id="design" className="scroll-mt-24"><GlobalDesignStudio /></div>}
-      {activeSection === "header-footer" && <div id="header-footer" className="scroll-mt-24"><SiteChromeManager /></div>}
-      {activeSection === "occasions" && <div id="occasions" className="scroll-mt-24"><ShopByOccasionManager /></div>}
-      {activeSection === "homepage-layout" && <div id="homepage-sections" className="scroll-mt-24"><HomepageSectionManager /></div>}
-      {activeSection === "homepage-content" && <div id="homepage-content" className="scroll-mt-24"><HomepageContentManager /></div>}
-      {activeSection === "website-pages" && <div id="pages" className="scroll-mt-24"><CmsPagesManager /></div>}
-      {activeSection === "curated-favourites" && <div id="favourites" className="scroll-mt-24"><CuratedFavouritesManager /></div>}
+      <React.Suspense fallback={<div className="rounded-xl border border-[#E7DCEB] bg-white p-5 text-sm text-[#705E7B]" role="status" aria-live="polite">Loading this workspace…</div>}>
+        {activeSection === "design" && <div id="design" className="scroll-mt-24"><GlobalDesignStudio /></div>}
+        {activeSection === "header-footer" && <div id="header-footer" className="scroll-mt-24"><SiteChromeManager /></div>}
+        {activeSection === "occasions" && <div id="occasions" className="scroll-mt-24"><ShopByOccasionManager /></div>}
+        {activeSection === "homepage-layout" && <div id="homepage-sections" className="scroll-mt-24"><HomepageSectionManager /></div>}
+        {activeSection === "homepage-content" && <div id="homepage-content" className="scroll-mt-24"><HomepageContentManager /></div>}
+        {activeSection === "website-pages" && <div id="pages" className="scroll-mt-24"><CmsPagesManager /></div>}
+        {activeSection === "curated-favourites" && <div id="favourites" className="scroll-mt-24"><CuratedFavouritesManager /></div>}
+      </React.Suspense>
       {error && <div role="alert" className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>}
       {message && <div role="status" className="p-3 rounded-lg bg-green-50 text-green-800 text-sm">{message}</div>}
 
