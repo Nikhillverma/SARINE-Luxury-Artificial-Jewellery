@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
+import { recordAdminActivity } from "./adminActivityWriter.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -108,31 +109,6 @@ export function captureAdminActivity(req, res, next) {
   });
 
   next();
-}
-
-export async function recordAdminActivity(admin, event) {
-  try {
-    await pool.execute(
-      `INSERT INTO admin_activity_logs
-       (admin_id, admin_name, admin_email, action, entity_type, entity_id,
-        summary, http_method, route, status_code)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        cleanText(admin?.id, 64),
-        cleanText(admin?.name || admin?.email, 160),
-        cleanText(admin?.email, 254),
-        cleanText(event?.action, 100),
-        cleanText(event?.entityType || "admin", 80),
-        cleanText(event?.entityId, 190) || null,
-        cleanText(event?.summary, 500),
-        cleanText(event?.method || "POST", 10),
-        cleanText(event?.route || "/auth", 255),
-        Math.max(200, Math.min(599, Number(event?.statusCode) || 200))
-      ]
-    );
-  } catch (error) {
-    console.error("Admin activity audit write failed:", error.message);
-  }
 }
 
 function dateBoundary(value, nextDay = false) {
