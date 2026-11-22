@@ -117,7 +117,7 @@ export const AdminProductsPage: React.FC = () => {
     const headers = ['Product ID', 'Name', 'SKU / Slug', 'Category', 'Type', 'Price INR', 'Compare At INR', 'Cost INR', 'Stock', 'Status', 'Image URLs', 'Tags'];
     const escapeCsv = (value: unknown) => {
       let text = String(value ?? '');
-      if (typeof value === 'string' && /^[=+@\\-\\t\\r]/.test(text)) text = "'" + text;
+      if (typeof value === 'string' && (/^[=+@-]/.test(text) || text.startsWith('\\t') || text.startsWith('\\r'))) text = "'" + text;
       return '"' + text.replace(/"/g, '""') + '"';
     };
     const rows = visibleProducts.map(product => [
@@ -136,7 +136,7 @@ export const AdminProductsPage: React.FC = () => {
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     setNotice('Exported ' + visibleProducts.length + ' filtered catalogue records to CSV.');
   };
 
