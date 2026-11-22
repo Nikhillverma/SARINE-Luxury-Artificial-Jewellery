@@ -144,7 +144,7 @@ function MainAppShell() {
     <>
     <a href="#main-content" className="skip-link">Skip to main content</a>
     <RouteMetadata />
-    <div className="min-h-screen w-full flex flex-col bg-white text-[#563568] selection:bg-[#B69ACF]/30 selection:text-[#563568]">
+    <div className="min-h-screen w-full flex flex-col bg-white text-[#563568] selection:bg-[var(--gold-light)] selection:text-[#563568]">
       {/* Public Storefront Navigation & Slide-in Drawers */}
       {!isAdminRoute && (
         <>

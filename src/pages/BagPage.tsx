@@ -112,7 +112,7 @@ export const BagPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F7F0FA] pb-20 text-[#302438] font-sans">
       {/* Header */}
-      <section className="bg-[#F0E6F4]/50 border-b border-[#E7DCEB] py-8 sm:py-12 text-center">
+      <section className="bg-[var(--tint)] border-b border-[#E7DCEB] py-8 sm:py-12 text-center">
         <div className="site-container">
           <div className="flex items-center justify-center gap-2 mb-2">
             <span className="h-[1px] w-8 bg-[#FFFFFF]"></span>

@@ -53,7 +53,7 @@ export const WishlistDrawer: React.FC = () => {
       {/* Dimmed backdrop */}
       <div
         onClick={closeWishlist}
-        className="fixed inset-0 bg-[#302438]/40 backdrop-blur-xs transition-opacity duration-300"
+        className="fixed inset-0 bg-[var(--heading)] backdrop-blur-xs transition-opacity duration-300"
         aria-hidden="true"
       />
 

@@ -34,7 +34,7 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
   return (
     <div className="min-h-screen bg-[#F7F0FA] pb-20">
       {/* Editorial Header */}
-      <section className="bg-[#F0E6F4]/60 border-b border-[#E7DCEB] py-10 sm:py-14 text-center">
+      <section className="bg-[var(--tint)] border-b border-[#E7DCEB] py-10 sm:py-14 text-center">
         <div className="site-container">
           <div className="flex items-center justify-center gap-2 mb-3">
             <span className="h-[1px] w-8 bg-[#D9B8A0]"></span>
@@ -60,7 +60,7 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
       </section>
 
       {/* Navigation Tabs Bar for Policies */}
-      <nav aria-label="Policy pages" className="bg-[#F7F0FA]/90 border-b border-[#E7DCEB] sticky top-0 z-10 backdrop-blur-md">
+      <nav aria-label="Policy pages" className="bg-[var(--tint)] border-b border-[#E7DCEB] sticky top-0 z-10 backdrop-blur-md">
         <div className="site-container">
           <div className="flex items-center justify-start sm:justify-center overflow-x-auto py-3 gap-1 sm:gap-2 no-scrollbar">
             {POLICY_LINKS.map((link) => {

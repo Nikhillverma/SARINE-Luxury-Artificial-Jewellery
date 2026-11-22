@@ -136,7 +136,7 @@ export const CartDrawer: React.FC = () => {
       {/* Dimmed backdrop */}
       <div
         onClick={closeDrawer}
-        className="fixed inset-0 bg-[#302438]/40 backdrop-blur-xs transition-opacity duration-300"
+        className="fixed inset-0 bg-[var(--heading)] backdrop-blur-xs transition-opacity duration-300"
         aria-hidden="true"
       />
 

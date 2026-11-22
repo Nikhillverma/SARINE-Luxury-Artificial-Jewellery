@@ -52,7 +52,7 @@ export const CustomerLoginPrompt: React.FC = () => {
   return (
     <aside aria-label="SARINE account sign-in" className="fixed bottom-4 right-3 sm:bottom-6 sm:right-6 z-[100] w-[min(20rem,calc(100vw-1.5rem))] max-w-[320px]">
       {!expanded ? (
-        <div className="relative flex items-center gap-3 border border-[#B8893C]/45 bg-[#FBF7F2] px-4 py-3 shadow-xl">
+        <div className="relative flex items-center gap-3 border border-[var(--gold)] bg-[#FBF7F2] px-4 py-3 shadow-xl">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#F4ECE4] text-[#4A1D5C]"><Sparkles size={18}/></div>
           <div className="min-w-0 flex-1">
             <p className="font-serif text-base text-[#2B1A33]">A little more personal?</p>
@@ -62,7 +62,7 @@ export const CustomerLoginPrompt: React.FC = () => {
           <button type="button" onClick={dismiss} aria-label="Dismiss sign-in prompt" className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center text-[#5A4F5E] hover:text-[#4A1D5C]"><X size={16}/></button>
         </div>
       ) : (
-        <section aria-label="Sign in to SARINE" className="relative max-h-[70vh] overflow-y-auto border border-[#B8893C]/45 bg-[#FBF7F2] p-4 shadow-2xl sm:p-5">
+        <section aria-label="Sign in to SARINE" className="relative max-h-[70vh] overflow-y-auto border border-[var(--gold)] bg-[#FBF7F2] p-4 shadow-2xl sm:p-5">
           <button type="button" onClick={() => setExpanded(false)} aria-label="Minimise sign-in panel" className="absolute right-2 top-2 z-10 flex h-11 w-11 items-center justify-center text-[#5A4F5E] hover:text-[#4A1D5C]"><X size={17}/></button>
           <CustomerAuthPanel onAuthenticated={handleAuthenticated} onSkip={dismiss} compact />
         </section>

@@ -148,7 +148,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-[#302438]/50 backdrop-blur-xs transition-opacity duration-200"
+        className="fixed inset-0 bg-[var(--heading)] backdrop-blur-xs transition-opacity duration-200"
       />
 
       {/* Main Container */}
@@ -165,7 +165,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search jewellery by piece, design, material, or occasion..."
-                className="w-full text-base sm:text-xl font-serif text-[#302438] placeholder-[#6F6475]/50 focus:outline-none bg-transparent"
+                className="w-full text-base sm:text-xl font-serif text-[#302438] placeholder-[color:var(--body)] focus:outline-none bg-transparent"
               />
               {query && (
                 <button

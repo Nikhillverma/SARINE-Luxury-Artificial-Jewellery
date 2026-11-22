@@ -214,7 +214,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <>
       <header
-        className="sarine-global-header sticky top-0 z-40 bg-[var(--white)] border-b border-[#FFFFFF]/30 shadow-xs"
+        className="sarine-global-header sticky top-0 z-40 bg-[var(--white)] border-b border-[var(--white)] shadow-xs"
         onMouseLeave={handleMouseLeave}
       >
         {/* TIER 1: Continuous, admin-managed announcement ticker */}
@@ -272,7 +272,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   SARINE
                 </span>
                 <div className="flex items-center justify-center w-full my-0.5 gap-2 px-1">
-                  <div className="h-[1px] flex-1 bg-[#FFFFFF]/70" />
+                  <div className="h-[1px] flex-1 bg-[var(--white)]" />
                   <svg
                     className="w-2.5 h-2.5 text-[#FFFFFF] shrink-0"
                     viewBox="0 0 24 24"
@@ -281,7 +281,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   >
                     <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" />
                   </svg>
-                  <div className="h-[1px] flex-1 bg-[#FFFFFF]/70" />
+                  <div className="h-[1px] flex-1 bg-[var(--white)]" />
                 </div>
                 <span className="text-[8px] sm:text-[9px] tracking-[0.32em] text-[color:var(--body)] uppercase font-sans font-medium whitespace-nowrap">
                   {headerTagline || 'LUXURY ARTIFICIAL JEWELLERY'}
@@ -487,7 +487,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* TIER 3: SECONDARY NAVIGATION BAR (Pale Ivory/Lavender #FAF5FC with Delicate Champagne Gold Borders) */}
         <nav
-          className="hidden lg:block bg-[var(--white)] border-t border-[#FFFFFF]/30 border-b border-[#FFFFFF]/30"
+          className="hidden lg:block bg-[var(--white)] border-t border-[var(--white)] border-b border-[var(--white)]"
           aria-label="Main Category Navigation"
         >
           <div className="site-container flex items-center justify-center space-x-6 xl:space-x-8 text-[13px] font-sans">
@@ -681,7 +681,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           onMouseLeave={handleMouseLeave}
         >
           {/* Top accent line */}
-          <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[#FFFFFF]/60 to-transparent" />
+          <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[var(--white)] to-transparent" />
 
           {/* Dropdown 1: New Arrivals */}
           {activeDropdown === 'new-arrivals' && (
@@ -818,7 +818,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                           className="text-[#302438] hover:text-[color:var(--plum)] transition-colors flex items-center justify-between"
                         >
                           <span>Most-Loved Pieces (Over 5,000+ Patrons)</span>
-                          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#FFFFFF]/25 text-[color:var(--plum)] rounded-xs font-medium">
+                          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[var(--white)] text-[color:var(--plum)] rounded-xs font-medium">
                             Iconic
                           </span>
                         </Link>
@@ -1538,7 +1538,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="fixed inset-0 z-50 lg:hidden flex">
             {/* Backdrop */}
             <div
-              className="fixed inset-0 bg-[#302438]/50 backdrop-blur-xs transition-opacity"
+              className="fixed inset-0 bg-[var(--heading)] backdrop-blur-xs transition-opacity"
               onClick={() => setIsMobileMenuOpen(false)}
               aria-hidden="true"
             />
@@ -1596,14 +1596,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                     className="p-2.5 bg-[var(--white)] border border-[#E7DCEB] hover:border-[var(--gold)] flex items-center justify-between transition-colors"
                   >
                     <span className="text-xs font-medium text-[#302438]">Bestsellers</span>
-                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-[#FFFFFF]/30 text-[color:var(--plum)] rounded-xs font-medium">
+                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-[var(--white)] text-[color:var(--plum)] rounded-xs font-medium">
                       Hot
                     </span>
                   </Link>
                 </div>
 
                 {/* Accordion Nav Sections */}
-                <div className="space-y-1 divide-y divide-[#E7DCEB]/60 text-sm font-sans pt-2">
+                <div className="space-y-1 divide-y divide-[var(--border)] text-sm font-sans pt-2">
                   {/* Accordion 1: Shop by Category */}
                   <div className="pt-2">
                     <button
