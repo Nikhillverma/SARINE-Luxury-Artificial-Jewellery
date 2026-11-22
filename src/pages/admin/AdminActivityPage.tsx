@@ -45,6 +45,19 @@ function csvCell(value: unknown): string {
   if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
   return '"' + text.replace(/"/g, '""') + '"';
 }
+
+function formatAction(action: string): string {
+  const normalized = String(action || "").trim().toLowerCase().replace(/[_-]+/g, " ");
+  if (normalized === "login") return "Signed in";
+  if (normalized === "logout") return "Signed out";
+  return normalized.replace(/\b\w/g, character => character.toUpperCase()) || "Administrative activity";
+}
+
+function formatActivitySummary(item: ActivityEntry): string {
+  if (item.action === "login") return "Administrator signed in successfully";
+  if (item.action === "logout") return "Administrator signed out successfully";
+  return item.summary || "Administrative action completed";
+}
 function exportCsv(rows: ActivityEntry[]) {
   const headers = ["Timestamp (IST)", "Administrator", "Email", "Action", "Entity", "Record ID", "Summary", "Method", "Route", "HTTP Status"];
   const lines = [
@@ -195,9 +208,9 @@ export const AdminActivityPage: React.FC = () => {
                 : data?.activities.length ? data.activities.map(item => (
                   <tr key={item.id} className="align-top hover:bg-[#FCFAFD]">
                     <td className="whitespace-nowrap px-4 py-3 text-[#514657]">{formatTimestamp(item.createdAt)}</td>
-                    <td className="px-4 py-3"><p className="font-medium text-[#302438]">{item.adminName}</p><p className="mt-0.5 text-[10px] text-[#8B7598]">{item.adminEmail}</p></td>
-                    <td className="px-4 py-3"><p className="font-medium capitalize text-[#302438]">{item.action.replace(/_/g, " ")}</p><p className="mt-1 max-w-sm text-[10px] leading-5 text-[#8B7598]">{item.summary}</p></td>
-                    <td className="px-4 py-3"><p className="capitalize text-[#514657]">{item.entityType}</p>{item.entityId && <p className="mt-1 font-mono text-[10px] text-[#8B7598]">{item.entityId}</p>}</td>
+                    <td className="px-4 py-3"><p className="font-medium text-[#302438]">{item.adminName || item.adminEmail || "Administrator"}</p><p className="mt-0.5 break-all text-[10px] text-[#8B7598]">{item.adminEmail || "Email unavailable"}</p></td>
+                    <td className="px-4 py-3"><p className="font-medium text-[#302438]">{formatAction(item.action)}</p><p className="mt-1 max-w-sm whitespace-normal break-words text-[10px] leading-5 text-[#8B7598]">{formatActivitySummary(item)}</p></td>
+                    <td className="px-4 py-3"><p className="text-[#514657]">{item.entityType || "Administrative activity"}</p>{item.entityId && <p className="mt-1 font-mono text-[10px] text-[#8B7598]">{item.entityId}</p>}</td>
                     <td className="px-4 py-3"><span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-700"><ShieldCheck size={12}/> {item.statusCode}</span></td>
                   </tr>
                 )) : <tr><td colSpan={5} className="px-4 py-12 text-center"><Activity size={22} className="mx-auto mb-2 text-[#B69ACF]"/><p className="text-sm text-[#514657]">{loading ? "Refreshing activity…" : "No activity found for these filters."}</p><p className="mt-1 text-[10px] text-[#8B7598]">Successful admin changes and sign-ins are recorded after this feature is deployed.</p></td></tr>}
