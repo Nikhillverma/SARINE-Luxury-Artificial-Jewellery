@@ -179,8 +179,8 @@ export const AdminInventoryPage: React.FC = () => {
       movement.reason, movement.adminName, movement.adminEmail,
       movement.costPriceSnapshot ?? '', movement.previousStockCostValue ?? '', movement.newStockCostValue ?? ''
     ]);
-    const csv = [columns, ...rows].map(row => row.map(cell).join(',')).join('\\r\\n');
-    const blob = new Blob(['\\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+    const csv = [columns, ...rows].map(row => row.map(cell).join(',')).join('\r\n');
+    const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
