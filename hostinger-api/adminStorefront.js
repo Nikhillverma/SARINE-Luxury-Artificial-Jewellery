@@ -338,6 +338,50 @@ publicRouter.get("/campaign", async (_req, res, next) => {
   } catch (error) { next(error); }
 });
 
+
+const DEFAULT_OCCASIONS = [
+  { id: "daily-wear", title: "Daily Wear", subtitle: "Effortless everyday minimalism", image: "/images/optimized/ananya-temple-coin-bracelet.webp", link: "/shop?search=everyday", active: true, sortOrder: 0 },
+  { id: "festive", title: "Festive", subtitle: "Celebratory sparkle and classic motifs", image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=80", link: "/shop?search=festive", active: true, sortOrder: 1 },
+  { id: "wedding", title: "Wedding", subtitle: "Regal bridal sets & heritage chokers", image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=80", link: "/shop?search=wedding", active: true, sortOrder: 2 },
+  { id: "gifting", title: "Gifting", subtitle: "Precious tokens of affection", image: "/images/optimized/zoya-open-cuff-leaf-bangle.webp", link: "/shop", active: true, sortOrder: 3 }
+];
+function validOccasions(value) {
+  return Array.isArray(value) && value.length <= 12 && value.every((item, index) => {
+    if (!item || typeof item !== "object") return false;
+    const id = typeof item.id === "string" ? item.id.trim() : "";
+    const title = typeof item.title === "string" ? item.title.trim() : "";
+    const subtitle = typeof item.subtitle === "string" ? item.subtitle.trim() : "";
+    const image = typeof item.image === "string" ? item.image.trim() : "";
+    const link = typeof item.link === "string" ? item.link.trim() : "";
+    return /^[a-z0-9-]{1,50}$/.test(id) && title.length > 0 && title.length <= 80 &&
+      subtitle.length <= 180 && image.length <= 2048 &&
+      (image.startsWith("/") && !image.startsWith("//") || /^https:\/\//i.test(image)) &&
+      link.length <= 500 && link.startsWith("/") && !link.startsWith("//") &&
+      typeof item.active === "boolean" && Number.isInteger(item.sortOrder) && item.sortOrder === index;
+  }) && new Set(value.map(item => item.id)).size === value.length;
+}
+adminOnly.get("/occasions", async (_req, res, next) => {
+  try {
+    const occasions = await readSetting("shop_by_occasion_published", DEFAULT_OCCASIONS);
+    res.set("Cache-Control", "no-store").json({ occasions });
+  } catch (error) { next(error); }
+});
+adminOnly.put("/occasions", async (req, res, next) => {
+  try {
+    const occasions = req.body?.occasions;
+    if (!validOccasions(occasions)) return res.status(400).json({ error: "Provide up to 12 valid occasion cards with unique IDs, internal shop links and valid images." });
+    await writeSetting("shop_by_occasion_published", occasions);
+    res.set("Cache-Control", "no-store").json({ success: true, occasions });
+  } catch (error) { next(error); }
+});
+publicRouter.get("/occasions", async (_req, res, next) => {
+  try {
+    const occasions = await readSetting("shop_by_occasion_published", DEFAULT_OCCASIONS);
+    res.set("Cache-Control", "no-store").json({ occasions });
+  } catch (error) { next(error); }
+});
+
+
 admin.use("/", adminOnly);
 export { publicRouter as publicStorefrontRouter };
 export default admin;
