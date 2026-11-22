@@ -727,3 +727,16 @@ body.sarine-global-theme #main-content .sarine-editorial-banner p,
 body.sarine-global-theme #main-content .sarine-editorial-banner span {
   color: #FFFFFF !important;
 }
+
+@media (max-width: 767px) {
+  body.sarine-global-theme #main-content button,
+  body.sarine-global-theme #main-content a[role="button"],
+  body.sarine-global-theme #sarine-mobile-navigation button,
+  body.sarine-global-theme #sarine-mobile-navigation a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  body.sarine-global-theme #sarine-mobile-navigation .flex-1 a {
+    min-height: 44px;
+  }
+}
