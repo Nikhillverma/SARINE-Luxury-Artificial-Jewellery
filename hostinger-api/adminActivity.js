@@ -79,7 +79,7 @@ export function describeActivity(req) {
     : root === "inventory" ? "stock adjusted"
     : method === "POST" && segments.length === 1 ? "created"
     : method === "DELETE" ? "deleted" : "updated";
-  const action = (suppliedAction || `${method.toLowerCase()} ${root}`).slice(0, 100);
+  const action = (suppliedAction || routeVerb).slice(0, 100);
 
   const routeId = segments.slice(1).find(segment => !SPECIAL_SEGMENTS.has(segment)) || "";
   const entityId = cleanText(
