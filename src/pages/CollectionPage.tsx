@@ -373,7 +373,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                 type="checkbox"
                 checked={inStockOnly}
                 onChange={(e) => setInStockOnly(e.target.checked)}
-                className="accent-[#563568] rounded-xs cursor-pointer"
+                className="accent-[var(--plum)] rounded-xs cursor-pointer"
               />
               <span>In Stock Only</span>
             </label>
@@ -680,7 +680,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
             ) : (
               /* Empty Search / Filter State with Recovery */
               <div className="bg-white border border-[var(--border)] p-10 sm:p-14 text-center rounded-xs shadow-2xs">
-                <Sparkles size={36} className="mx-auto text-[#B69ACF] mb-3" />
+                <Sparkles size={36} className="mx-auto text-[var(--gold)] mb-3" />
                 <h3 className="font-serif text-xl sm:text-2xl text-[color:var(--body)] font-normal">
                   No matching jewellery found
                 </h3>
