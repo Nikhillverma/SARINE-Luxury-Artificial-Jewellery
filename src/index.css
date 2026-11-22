@@ -722,17 +722,17 @@ body.sarine-global-theme .sarine-global-footer {
 }
 
 /* Footer column colours and payment marks are deliberately independent of CTA styling. */
-body.sarine-global-theme .sarine-global-footer .grid > div h4 {
+body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div h4 {
   color: #FFFFFF !important;
 }
-body.sarine-global-theme .sarine-global-footer .grid > div ul,
-body.sarine-global-theme .sarine-global-footer .grid > div ul a {
+body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div ul,
+body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div ul a {
   color: #F3E9DF !important;
 }
-body.sarine-global-theme .sarine-global-footer .grid > div ul a:hover {
+body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div ul a:hover {
   color: var(--gold-light) !important;
 }
-body.sarine-global-theme .sarine-global-footer .grid > div:last-child > div > span {
+body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div:last-child > div > span {
   background-color: #FFFFFF !important;
 }
 body.sarine-global-theme .sarine-global-footer > div:last-child {
