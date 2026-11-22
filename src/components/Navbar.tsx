@@ -89,6 +89,15 @@ export const Navbar: React.FC<NavbarProps> = ({
     about: false
   });
 
+  // Load the published header tagline independently from announcement content.
+  useEffect(() => {
+    let cancelled = false;
+    siteChromeService.getPublic().then(({ settings }) => {
+      if (!cancelled) setHeaderTagline(settings.header.tagline);
+    }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, []);
+
   // Load the currently published announcement managed in Storefront Studio.
   useEffect(() => {
     let cancelled = false;
