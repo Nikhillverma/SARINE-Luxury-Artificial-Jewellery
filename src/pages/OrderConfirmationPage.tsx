@@ -178,7 +178,7 @@ export const OrderConfirmationPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F7F0FA] pb-20 text-[#302438]">
       {/* Editorial Header */}
-      <div className="bg-[#F0E6F4]/50 border-b border-[#E7DCEB] py-10 px-4 text-center">
+      <div className="bg-[var(--tint)] border-b border-[#E7DCEB] py-10 px-4 text-center">
         <div className="site-container">
           <div className="max-w-[760px] mx-auto">
             <div

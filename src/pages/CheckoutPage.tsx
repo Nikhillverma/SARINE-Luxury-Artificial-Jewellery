@@ -383,7 +383,7 @@ export const CheckoutPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F7F0FA] pb-20 text-[#302438]">
       {/* Editorial Header */}
-      <div className="bg-[#F0E6F4]/50 border-b border-[#E7DCEB] py-8 text-center">
+      <div className="bg-[var(--tint)] border-b border-[#E7DCEB] py-8 text-center">
         <div className="site-container">
           <div className="flex items-center justify-center gap-2 mb-2">
             <span className="h-[1px] w-8 bg-[#FFFFFF]"></span>
@@ -424,7 +424,7 @@ export const CheckoutPage: React.FC = () => {
 
         {/* Global Error Banner */}
         {submitError && (
-          <div className="mb-8 p-4 bg-[#DC2626]/10 border border-[#DC2626] text-xs text-[#DC2626] flex items-start gap-3 rounded-xs">
+          <div className="mb-8 p-4 bg-[#DC2626] border border-[#DC2626] text-xs text-[#DC2626] flex items-start gap-3 rounded-xs">
             <AlertCircle size={18} className="shrink-0 mt-0.5" />
             <div className="flex-1">
               <strong className="block font-semibold mb-1">Order Submission Issue</strong>

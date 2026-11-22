@@ -638,7 +638,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                       referrerPolicy="no-referrer"
                       className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                     />
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#2B1A33]/75 via-[#2B1A33]/15 to-transparent px-4 pb-4 pt-12">
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--heading)] via-[var(--heading)] to-transparent px-4 pb-4 pt-12">
                       <h3 className="font-serif text-lg font-medium !text-white sm:text-xl [text-shadow:0_1px_5px_rgba(0,0,0,0.7)]" style={{ color: "#FFFFFF" }}>{cat.name}</h3>
                     </div>
                   </div>

@@ -342,7 +342,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                 updateFilter({ search: e.target.value });
               }}
               placeholder="Filter by title, style, or tag..."
-              className="w-full pl-9 pr-8 py-2 text-xs text-[#302438] placeholder-[#6F6475]/60 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#B69ACF] rounded-xs focus:outline-none transition-colors"
+              className="w-full pl-9 pr-8 py-2 text-xs text-[#302438] placeholder-[color:var(--body)] bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#B69ACF] rounded-xs focus:outline-none transition-colors"
             />
             {searchQuery && (
               <button
@@ -586,7 +586,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                 </div>
 
                 {/* Custom Price Inputs */}
-                <div className="mt-3 pt-3 border-t border-[#E7DCEB]/60 flex items-center gap-2 text-xs">
+                <div className="mt-3 pt-3 border-t border-[var(--border)] flex items-center gap-2 text-xs">
                   <input
                     type="number"
                     placeholder="Min ₹"

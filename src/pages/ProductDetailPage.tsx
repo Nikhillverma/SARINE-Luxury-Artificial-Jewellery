@@ -588,7 +588,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                   type="button"
                   onClick={handleAddToCart}
                   disabled={!inStock}
-                  className="flex-1 py-3 px-4 bg-[#563568] text-white hover:bg-[#A184BD] disabled:bg-[#6F6475]/40 text-xs uppercase tracking-[0.2em] font-medium rounded-xs transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                  className="flex-1 py-3 px-4 bg-[#563568] text-white hover:bg-[#A184BD] disabled:bg-[var(--muted)] text-xs uppercase tracking-[0.2em] font-medium rounded-xs transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
                 >
                   <ShoppingBag size={15} />
                   <span>{hasVariants && !selectedVariant ? 'Choose Option' : inStock ? 'Add to Bag' : 'Sold Out'}</span>
@@ -767,7 +767,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                       ['Stones & Embellishments', product.stoneType],
                       ['Closure / Fastening', product.closureType]
                     ].filter(([, value]) => Boolean(value)).map(([label, value]) => (
-                      <div key={label} className="flex justify-between gap-4 py-2 border-b border-[#E7DCEB]/50">
+                      <div key={label} className="flex justify-between gap-4 py-2 border-b border-[var(--border)]">
                         <dt className="text-[#6F6475]">{label}</dt>
                         <dd className="text-right font-medium text-[#302438]">{value}</dd>
                       </div>
@@ -886,7 +886,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             onClick={() => setIsReviewModalOpen(false)}
-            className="fixed inset-0 bg-[#302438]/50 backdrop-blur-xs"
+            className="fixed inset-0 bg-[var(--heading)] backdrop-blur-xs"
           />
           <div className="relative bg-white w-full max-w-md p-6 border border-[#E7DCEB] rounded-xs shadow-2xl z-10 animate-in fade-in duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-[#E7DCEB]">
@@ -992,7 +992,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
       {/* Size Guide Modal */}
       {isSizeGuideOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div onClick={() => setIsSizeGuideOpen(false)} className="fixed inset-0 bg-[#302438]/50 backdrop-blur-xs" />
+          <div onClick={() => setIsSizeGuideOpen(false)} className="fixed inset-0 bg-[var(--heading)] backdrop-blur-xs" />
           <div className="relative bg-white w-full max-w-lg p-6 border border-[#E7DCEB] rounded-xs shadow-2xl z-10 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-[#E7DCEB]">
               <h3 className="font-serif text-lg text-[#302438]">Indian Jewellery Size Chart</h3>
