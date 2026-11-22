@@ -15,7 +15,21 @@ const REASONS = new Set([
   "Customer Return Restored"
 ]);
 
-// GET /api/admin/inventory/movements — newest audited stock changes.
+// GET /api/admin/inventory/movements — searchable, paginated product + variant ledger.
+router.get("/movements", async (req, res, next) => {
+  try {
+    await ensureInventoryTable();
+    await ensureProductVariantSchema();
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 25));
+    const search = String(req.query.search || "").trim().slice(0, 100);
+    const from = String(req.query.from || "");
+    const to = String(req.query.to || "");
+    const conditions = [];
+    const values = [];
+    if (search) {
+      conditions.push("(productName LIKE ? OR sku LIKE ? OR reason LIKE ? OR adminName LIKE ? OR adminEmail LIKE ? OR variantLabel LIKE ?)");
+      const term = "%" + search.replace(/[!%_]/g, "!// GET /api/admin/inventory/movements — newest audited stock changes.
 router.get("/movements", async (_req, res, next) => {
   try {
     await ensureInventoryTable();
@@ -30,6 +44,61 @@ router.get("/movements", async (_req, res, next) => {
     );
     res.set("Cache-Control", "no-store");
     return res.json({ movements: rows });
+  } catch (error) { next(error); }
+});") + "%";
+      values.push(term, term, term, term, term, term);
+    }
+    const toSqlUtc = (date, nextDay = false) => {
+      if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) return null;
+      const parsed = new Date(date + (nextDay ? "T00:00:00+05:30" : "T00:00:00+05:30"));
+      if (!Number.isFinite(parsed.getTime())) return null;
+      if (nextDay) parsed.setUTCDate(parsed.getUTCDate() + 1);
+      return parsed.toISOString().slice(0, 19).replace("T", " ");
+    };
+    if (from) {
+      const boundary = toSqlUtc(from);
+      if (!boundary) return res.status(400).json({ error: "Invalid movement start date." });
+      conditions.push("createdAt >= ?");
+      values.push(boundary);
+    }
+    if (to) {
+      const boundary = toSqlUtc(to, true);
+      if (!boundary) return res.status(400).json({ error: "Invalid movement end date." });
+      conditions.push("createdAt < ?");
+      values.push(boundary);
+    }
+    const union = `SELECT id, product_id AS productId, product_name AS productName, sku,
+              admin_name AS adminName, admin_email AS adminEmail,
+              previous_stock AS previousStock, quantity_delta AS quantityDelta,
+              new_stock AS newStock, reason, created_at AS createdAt,
+              'product' AS movementType, NULL AS variantLabel,
+              cost_price_snapshot AS costPriceSnapshot,
+              previous_stock_cost_value AS previousStockCostValue,
+              new_stock_cost_value AS newStockCostValue
+       FROM inventory_movements
+       UNION ALL
+       SELECT id, product_id AS productId, product_name AS productName, variant_sku AS sku,
+              admin_name AS adminName, admin_email AS adminEmail,
+              previous_stock AS previousStock, quantity_delta AS quantityDelta,
+              new_stock AS newStock, reason, created_at AS createdAt,
+              'variant' AS movementType, variant_label AS variantLabel,
+              cost_price_snapshot AS costPriceSnapshot,
+              previous_stock_cost_value AS previousStockCostValue,
+              new_stock_cost_value AS newStockCostValue
+       FROM variant_inventory_movements`;
+    const where = conditions.length ? " WHERE " + conditions.join(" AND ") : "";
+    const [countRows] = await pool.execute(
+      `SELECT COUNT(*) AS total FROM (${union}) AS movement_history${where}`,
+      values
+    );
+    const [rows] = await pool.execute(
+      `SELECT * FROM (${union}) AS movement_history${where}
+       ORDER BY createdAt DESC, id DESC LIMIT ? OFFSET ?`,
+      [...values, limit, (page - 1) * limit]
+    );
+    const total = Number(countRows[0]?.total || 0);
+    res.set("Cache-Control", "no-store");
+    return res.json({ movements: rows, total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) });
   } catch (error) { next(error); }
 });
 
