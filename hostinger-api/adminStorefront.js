@@ -180,36 +180,37 @@ const DESIGN_HEX = /^#[0-9A-Fa-f]{6}$/;
 function mergeDesign(base,value) {
   if (!base || typeof base !== "object" || Array.isArray(base)) return value === undefined ? base : value;
   const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
-  const merged = { ...base };
+  const merged = {};
   for (const key of Object.keys(base)) merged[key] = mergeDesign(base[key],source[key]);
-  for (const key of Object.keys(source)) if (!(key in base)) merged[key] = source[key];
   return merged;
 }
 function normalizeGlobalDesign(value) {
   const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const d = mergeDesign(DEFAULT_GLOBAL_DESIGN,source);
-  if (!source.elements?.announcement) d.elements.announcement.background = source.colors?.primary || d.elements.announcement.background;
-  if (!source.elements?.buttons) {
-    d.elements.buttons.primaryBackground = source.colors?.primary || d.elements.buttons.primaryBackground;
-    d.elements.buttons.primaryText = source.colors?.surface || d.elements.buttons.primaryText;
-    d.elements.buttons.primaryHoverBackground = source.colors?.accent || d.elements.buttons.primaryHoverBackground;
-  }
-  if (!source.elements?.footer) {
-    d.elements.footer.background = source.colors?.footerBackground || d.elements.footer.background;
-    d.elements.footer.links = source.colors?.footerText || d.elements.footer.links;
-  }
-  if (!source.elements?.text) {
-    d.elements.text.body = source.colors?.text || d.elements.text.body;
-    d.elements.text.link = source.colors?.primary || d.elements.text.link;
-    d.elements.text.linkHover = source.colors?.accent || d.elements.text.linkHover;
-  }
-  if (!source.fonts && source.typography) {
-    d.fonts.logo.family = source.typography.headingFont || d.fonts.logo.family;
-    d.fonts.heading.family = source.typography.headingFont || d.fonts.heading.family;
-    d.fonts.body.family = source.typography.bodyFont || d.fonts.body.family;
-    d.fonts.buttonLabel.family = source.typography.bodyFont || d.fonts.buttonLabel.family;
-    d.fonts.heading.sizeScale = Number(source.typography.headingScale) || 100;
-    d.fonts.body.sizeScale = Number(source.typography.bodyScale) || 100;
+  const isLegacy = Number(source.version || 1) < 2 || !source.elements;
+  if (isLegacy) {
+    const colors = source.colors || {};
+    // Legacy primary text was the heading/primary foreground, not body copy.
+    d.elements.text.heading = colors.text || d.elements.text.heading;
+    d.elements.text.link = colors.primary || d.elements.text.link;
+    d.elements.text.linkHover = colors.accent || d.elements.text.linkHover;
+    d.elements.buttons.primaryBackground = colors.primary || d.elements.buttons.primaryBackground;
+    d.elements.buttons.primaryText = colors.surface || d.elements.buttons.primaryText;
+    d.elements.buttons.primaryHoverBackground = colors.accent || d.elements.buttons.primaryHoverBackground;
+    d.elements.buttons.secondaryBorder = colors.accent || d.elements.buttons.secondaryBorder;
+    d.elements.surfaces.card = colors.surface || d.elements.surfaces.card;
+    d.elements.announcement.background = colors.primary || d.elements.announcement.background;
+    d.elements.footer.background = colors.footerBackground || d.elements.footer.background;
+    d.elements.footer.links = colors.footerText || d.elements.footer.links;
+    // Body remains the new palette default (#5A4F5E); old primary text is not body text.
+    if (source.typography) {
+      d.fonts.logo.family = source.typography.headingFont || d.fonts.logo.family;
+      d.fonts.heading.family = source.typography.headingFont || d.fonts.heading.family;
+      d.fonts.body.family = source.typography.bodyFont || d.fonts.body.family;
+      d.fonts.buttonLabel.family = source.typography.bodyFont || d.fonts.buttonLabel.family;
+      d.fonts.heading.sizeScale = Number(source.typography.headingScale) || d.fonts.heading.sizeScale;
+      d.fonts.body.sizeScale = Number(source.typography.bodyScale) || d.fonts.body.sizeScale;
+    }
   }
   d.version = 2;
   return d;
@@ -218,14 +219,14 @@ function validateGlobalDesign(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return "Design settings must be an object.";
   const d = normalizeGlobalDesign(value);
   for (const group of ["text","buttons","surfaces","productCards","announcement","hero","countdown","footer"]) {
-    for (const [key,color] of Object.entries(d.elements[group] || {})) if (typeof color !== "string" || !DESIGN_HEX.test(color)) return `Invalid hex colour at elements.${group}.${key}; use #RRGGBB.`;
+    for (const [key,color] of Object.entries(d.elements[group] || {})) if (typeof color !== "string" || !DESIGN_HEX.test(color)) return \`Invalid hex colour at elements.\${group}.\${key}; use #RRGGBB.\`;
   }
-  for (const [key,color] of Object.entries(d.colors || {})) if (typeof color !== "string" || !DESIGN_HEX.test(color)) return `Invalid legacy hex colour at colors.${key}; use #RRGGBB.`;
+  for (const [key,color] of Object.entries(d.colors || {})) if (typeof color !== "string" || !DESIGN_HEX.test(color)) return \`Invalid legacy hex colour at colors.\${key}; use #RRGGBB.\`;
   for (const role of ["logo","heading","body","buttonLabel"]) {
     const f=d.fonts?.[role];
-    if (!f || !DESIGN_FONT_FAMILIES.has(f.family)) return `Invalid font family for ${role}.`;
-    if (!Number.isFinite(f.sizeScale) || f.sizeScale<70 || f.sizeScale>150) return `Font size scale for ${role} must be between 70 and 150.`;
-    if (!DESIGN_WEIGHTS.has(f.weight)) return `Invalid font weight for ${role}.`;
+    if (!f || !DESIGN_FONT_FAMILIES.has(f.family)) return \`Invalid font family for \${role}.\`;
+    if (!Number.isFinite(f.sizeScale) || f.sizeScale<70 || f.sizeScale>150) return \`Font size scale for \${role} must be between 70 and 150.\`;
+    if (!DESIGN_WEIGHTS.has(f.weight)) return \`Invalid font weight for \${role}.\`;
   }
   if (![1120,1200,1280,1360].includes(d.layout.contentWidth)) return "Invalid content width.";
   if (![0,4,8,16].includes(d.layout.cornerRadius)) return "Invalid corner radius.";
@@ -235,8 +236,80 @@ function validateGlobalDesign(value) {
   for (const n of [d.typography.headingScale,d.typography.bodyScale]) if (!Number.isFinite(n)||n<70||n>150) return "Legacy typography scale must be between 70 and 150.";
   return null;
 }
-async function readGlobalDesign(key) { return normalizeGlobalDesign(await readSetting(key,null) || DEFAULT_GLOBAL_DESIGN); }
-async function saveGlobalDesign(value) { const d=normalizeGlobalDesign(value); await writeSetting("global_design_draft",d); return d; }
+function sanitizeStoredGlobalDesign(value, key) {
+  const d = normalizeGlobalDesign(value);
+  const warn = field => console.warn(\`[storefront-design] Invalid stored value at \${key}.\${field}; using the field default.\`);
+  for (const group of ["text","buttons","surfaces","productCards","announcement","hero","countdown","footer"]) {
+    for (const field of Object.keys(DEFAULT_GLOBAL_DESIGN.elements[group])) {
+      const color = d.elements[group][field];
+      if (typeof color !== "string" || !DESIGN_HEX.test(color)) {
+        d.elements[group][field] = DEFAULT_GLOBAL_DESIGN.elements[group][field];
+        warn(\`elements.\${group}.\${field}\`);
+      }
+    }
+  }
+  for (const field of Object.keys(DEFAULT_GLOBAL_DESIGN.colors)) {
+    const color = d.colors[field];
+    if (typeof color !== "string" || !DESIGN_HEX.test(color)) {
+      d.colors[field] = DEFAULT_GLOBAL_DESIGN.colors[field];
+      warn(\`colors.\${field}\`);
+    }
+  }
+  for (const role of ["logo","heading","body","buttonLabel"]) {
+    const font = d.fonts[role];
+    if (!DESIGN_FONT_FAMILIES.has(font.family)) { font.family = DEFAULT_GLOBAL_DESIGN.fonts[role].family; warn(\`fonts.\${role}.family\`); }
+    if (!Number.isFinite(font.sizeScale) || font.sizeScale < 70 || font.sizeScale > 150) { font.sizeScale = DEFAULT_GLOBAL_DESIGN.fonts[role].sizeScale; warn(\`fonts.\${role}.sizeScale\`); }
+    if (!DESIGN_WEIGHTS.has(font.weight)) { font.weight = DEFAULT_GLOBAL_DESIGN.fonts[role].weight; warn(\`fonts.\${role}.weight\`); }
+  }
+  if (![1120,1200,1280,1360].includes(d.layout.contentWidth)) { d.layout.contentWidth = DEFAULT_GLOBAL_DESIGN.layout.contentWidth; warn("layout.contentWidth"); }
+  if (![0,4,8,16].includes(d.layout.cornerRadius)) { d.layout.cornerRadius = DEFAULT_GLOBAL_DESIGN.layout.cornerRadius; warn("layout.cornerRadius"); }
+  if (!["solid","outline"].includes(d.components.buttonStyle)) { d.components.buttonStyle = DEFAULT_GLOBAL_DESIGN.components.buttonStyle; warn("components.buttonStyle"); }
+  if (!["Cormorant Garamond","Georgia","Playfair Display"].includes(d.typography.headingFont)) { d.typography.headingFont = DEFAULT_GLOBAL_DESIGN.typography.headingFont; warn("typography.headingFont"); }
+  if (!["Plus Jakarta Sans","Arial","DM Sans"].includes(d.typography.bodyFont)) { d.typography.bodyFont = DEFAULT_GLOBAL_DESIGN.typography.bodyFont; warn("typography.bodyFont"); }
+  for (const field of ["headingScale","bodyScale"]) if (!Number.isFinite(d.typography[field]) || d.typography[field] < 70 || d.typography[field] > 150) { d.typography[field] = DEFAULT_GLOBAL_DESIGN.typography[field]; warn(\`typography.\${field}\`); }
+  return d;
+}
+let legacyDesignMigrationPromise;
+async function migrateLegacyGlobalDesign() {
+  if (!legacyDesignMigrationPromise) {
+    legacyDesignMigrationPromise = (async () => {
+      const legacy = await readSetting("global_design",null);
+      if (!legacy || typeof legacy !== "object" || Array.isArray(legacy)) return;
+      for (const [field,key] of [["draft","global_design_draft"],["published","global_design_published"]]) {
+        const oldValue = legacy[field];
+        if (!oldValue || typeof oldValue !== "object" || Array.isArray(oldValue)) continue;
+        await ensureSchema();
+        await pool.execute(
+          "INSERT IGNORE INTO storefront_settings (setting_key,setting_value) VALUES (?,?)",
+          [key,JSON.stringify(normalizeGlobalDesign(oldValue))]
+        );
+      }
+    })().catch(error => { legacyDesignMigrationPromise = undefined; throw error; });
+  }
+  await legacyDesignMigrationPromise;
+}
+function toLegacyGlobalDesign(value) {
+  const d = normalizeGlobalDesign(value);
+  return { version:1, colors:d.colors, typography:d.typography, layout:d.layout, components:d.components };
+}
+async function writeLegacyGlobalDesignPart(field,value) {
+  const current = await readSetting("global_design",null);
+  const record = current && typeof current === "object" && !Array.isArray(current)
+    ? { ...current }
+    : { draft:toLegacyGlobalDesign(DEFAULT_GLOBAL_DESIGN), published:toLegacyGlobalDesign(DEFAULT_GLOBAL_DESIGN) };
+  record[field] = toLegacyGlobalDesign(value);
+  await writeSetting("global_design",record);
+}
+async function readGlobalDesign(key) {
+  await migrateLegacyGlobalDesign();
+  return sanitizeStoredGlobalDesign(await readSetting(key,null) || DEFAULT_GLOBAL_DESIGN,key);
+}
+async function saveGlobalDesign(value) {
+  const d=normalizeGlobalDesign(value);
+  await writeSetting("global_design_draft",d);
+  await writeLegacyGlobalDesignPart("draft",d);
+  return d;
+}
 
 function validProductIds(ids,max=100){return Array.isArray(ids)&&ids.length<=max&&ids.every(id=>typeof id==="string"&&id.length>0&&id.length<=191)&&new Set(ids).size===ids.length}
 function mapStorefrontProduct(row){const arr=value=>{try{const parsed=typeof value==="string"?JSON.parse(value):value;return Array.isArray(parsed)?parsed:[]}catch{return[]}};return{id:row.id,slug:row.slug,name:row.name,description:row.description||"",shortDescription:row.short_description||undefined,price:Number(row.price),...(row.compare_at_price==null?{}:{compareAtPrice:Number(row.compare_at_price)}),images:arr(row.images),categoryId:row.category_id||"",collectionSlugs:arr(row.collection_slugs),jewelleryType:row.jewellery_type||"necklace",stock:Number(row.stock),status:row.status,tags:arr(row.tags),createdAt:row.created_at?new Date(row.created_at).toISOString():new Date().toISOString()}}
