@@ -53,8 +53,8 @@ function exportCsv(rows: ActivityEntry[]) {
       formatTimestamp(row.createdAt), row.adminName, row.adminEmail, row.action,
       row.entityType, row.entityId || "", row.summary, row.method, row.route, row.statusCode
     ])
-  ].map(row => row.map(csvCell).join(",")).join("\\r\\n");
-  const blob = new Blob(["\\uFEFF", lines], { type: "text/csv;charset=utf-8;" });
+  ].map(row => row.map(csvCell).join(",")).join("\r\n");
+  const blob = new Blob(["\uFEFF", lines], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
