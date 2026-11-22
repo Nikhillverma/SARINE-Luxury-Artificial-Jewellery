@@ -44,6 +44,8 @@ export const AdminProductsPage: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
   const [sortBy, setSortBy] = useState('name');
+  const [page, setPage] = useState(1);
+  const pageSize = 25;
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -99,6 +101,10 @@ export const AdminProductsPage: React.FC = () => {
     });
   }, [products, search, statusFilter, categoryFilter, stockFilter, sortBy]);
 
+  useEffect(() => { setPage(1); }, [search, statusFilter, categoryFilter, stockFilter, sortBy]);
+  const pageCount = Math.max(1, Math.ceil(visibleProducts.length / pageSize));
+  const pageProducts = visibleProducts.slice((page - 1) * pageSize, page * pageSize);
+
   const catalogueStats = useMemo(() => ({
     total: products.length,
     active: products.filter(product => product.status === 'active').length,
@@ -109,7 +115,11 @@ export const AdminProductsPage: React.FC = () => {
 
   const exportCsv = () => {
     const headers = ['Product ID', 'Name', 'SKU / Slug', 'Category', 'Type', 'Price INR', 'Compare At INR', 'Cost INR', 'Stock', 'Status', 'Image URLs', 'Tags'];
-    const escapeCsv = (value: unknown) => '"' + String(value ?? '').replace(/"/g, '""') + '"';
+    const escapeCsv = (value: unknown) => {
+      let text = String(value ?? '');
+      if (typeof value === 'string' && /^[=+@\\-\\t\\r]/.test(text)) text = "'" + text;
+      return '"' + text.replace(/"/g, '""') + '"';
+    };
     const rows = visibleProducts.map(product => [
       product.id, product.name, product.slug,
       categories.find(category => category.id === product.categoryId)?.name || product.categoryId,
@@ -131,13 +141,13 @@ export const AdminProductsPage: React.FC = () => {
   };
 
 
-  const allVisibleSelected = visibleProducts.length > 0 && visibleProducts.every(product => selectedIds.includes(product.id));
+  const allVisibleSelected = pageProducts.length > 0 && pageProducts.every(product => selectedIds.includes(product.id));
   const toggleProductSelection = (id: string) => setSelectedIds(current =>
     current.includes(id) ? current.filter(item => item !== id) : current.length >= 100 ? current : [...current, id]
   );
   const toggleVisibleSelection = () => setSelectedIds(current => allVisibleSelected
-    ? current.filter(id => !visibleProducts.some(product => product.id === id))
-    : Array.from(new Set([...current, ...visibleProducts.map(product => product.id)])).slice(0, 100)
+    ? current.filter(id => !pageProducts.some(product => product.id === id))
+    : Array.from(new Set([...current, ...pageProducts.map(product => product.id)])).slice(0, 100)
   );
   const applyBulkChanges = async (updates: BulkProductUpdates): Promise<BulkProductUpdateResult> => {
     const result = await adminProductService.bulkUpdateProducts(selectedIds, updates);
@@ -424,12 +434,12 @@ export const AdminProductsPage: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-[#FAF5FC] text-[#705E7B] uppercase"><tr>
-                <th className="p-3"><input type="checkbox" aria-label="Select all visible products" checked={allVisibleSelected} onChange={toggleVisibleSelection} className="accent-[#563568]"/></th><th className="p-3">Product</th><th className="p-3">Category</th><th className="p-3">Price</th><th className="p-3">Stock</th><th className="p-3">Status</th><th className="p-3 text-right">Actions</th>
+                <th className="p-3"><input type="checkbox" aria-label="Select all products on this page" checked={allVisibleSelected} onChange={toggleVisibleSelection} className="accent-[#563568]"/></th><th className="p-3">Product</th><th className="p-3">Category</th><th className="p-3">Price</th><th className="p-3">Stock</th><th className="p-3">Status</th><th className="p-3 text-right">Actions</th>
               </tr></thead>
               <tbody className="divide-y divide-[#F5EDF8]">
                 {loading ? <tr><td colSpan={7} className="p-10 text-center text-[#8E769E]">Loading catalogue…</td></tr> :
                 visibleProducts.length === 0 ? <tr><td colSpan={7} className="p-10 text-center text-[#8E769E]">No products found.</td></tr> :
-                visibleProducts.map(product => (
+                pageProducts.map(product => (
                   <tr key={product.id} className="hover:bg-[#FAF5FC]">
                     <td className="p-3"><input type="checkbox" aria-label={"Select " + product.name} checked={selectedIds.includes(product.id)} onChange={() => toggleProductSelection(product.id)} className="accent-[#563568]"/></td>
                     <td className="p-3"><div className="flex items-center gap-3">
@@ -453,6 +463,14 @@ export const AdminProductsPage: React.FC = () => {
               </tbody>
             </table>
           </div>
+          {!loading && visibleProducts.length > 0 && <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-[#F0E8F3] px-4 py-3">
+            <p className="text-[10px] text-[#806B8D]">Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, visibleProducts.length)} of {visibleProducts.length} filtered products</p>
+            <div className="flex items-center gap-2">
+              <button type="button" disabled={page <= 1} onClick={() => setPage(current => Math.max(1, current - 1))} className="min-h-10 rounded-lg border border-[#E7DCEB] px-3 text-xs disabled:opacity-40">Previous</button>
+              <span className="min-w-20 text-center text-[10px] text-[#806B8D]">Page {page} of {pageCount}</span>
+              <button type="button" disabled={page >= pageCount} onClick={() => setPage(current => Math.min(pageCount, current + 1))} className="min-h-10 rounded-lg border border-[#E7DCEB] px-3 text-xs disabled:opacity-40">Next</button>
+            </div>
+          </div>}
         </div>
 
         {modalOpen && <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
