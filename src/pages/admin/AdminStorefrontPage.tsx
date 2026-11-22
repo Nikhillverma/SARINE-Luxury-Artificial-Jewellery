@@ -6,6 +6,7 @@ import { HomepageSectionManager } from "../../components/admin/HomepageSectionMa
 import { HomepageContentManager } from "../../components/admin/HomepageContentManager";
 import { CmsPagesManager } from "../../components/admin/CmsPagesManager";
 import { GlobalDesignStudio } from "../../components/admin/GlobalDesignStudio";
+import { SiteChromeManager } from "../../components/admin/SiteChromeManager";
 import { hostingerMediaService } from "../../services";
 import { hostingerStorefrontService, type StorefrontBanner, type EditorialContent, type ProductReview } from "../../services/hostinger/hostingerStorefrontService";
 
@@ -161,6 +162,7 @@ export const AdminStorefrontPage: React.FC = () => {
         <a href="/" target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg border text-sm">Preview storefront</a>
       </header>
       <GlobalDesignStudio />
+      <SiteChromeManager />
       <ShopByOccasionManager />
       <HomepageSectionManager />
       <HomepageContentManager />
