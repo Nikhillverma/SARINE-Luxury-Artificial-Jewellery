@@ -34,6 +34,7 @@ const AccountPage = lazy(() => import('./pages/AccountPage').then((module) => ({
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })));
 const AdminHelpPage = lazy(() => import('./pages/admin/AdminHelpPage').then((module) => ({ default: module.AdminHelpPage })));
 const AdminAnalyticsPage = lazy(() => import('./pages/admin/AdminAnalyticsPage').then((module) => ({ default: module.AdminAnalyticsPage })));
+const AdminActivityPage = lazy(() => import('./pages/admin/AdminActivityPage').then((module) => ({ default: module.AdminActivityPage })));
 const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage').then((module) => ({ default: module.AdminLoginPage })));
 const AdminProductsPage = lazy(() => import('./pages/admin/AdminProductsPage').then((module) => ({ default: module.AdminProductsPage })));
 const AdminProductPreviewPage = lazy(() => import('./pages/admin/AdminProductPreviewPage').then((module) => ({ default: module.AdminProductPreviewPage })));
@@ -201,6 +202,7 @@ function MainAppShell() {
           <Route path="/pages/:slug" element={<CmsPublicPage />} />
           <Route path="/admin/carousel-features" element={<AdminCarouselFeaturesPage />} />
           <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+          <Route path="/admin/activity" element={<AdminActivityPage />} />
           <Route path="/admin/copilot" element={<Navigate to="/admin" replace />} />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />
 

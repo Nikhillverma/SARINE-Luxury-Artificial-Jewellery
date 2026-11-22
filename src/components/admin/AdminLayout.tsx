@@ -23,6 +23,7 @@ import {
   ShoppingBag,
   LayoutTemplate,
   BarChart3,
+  Activity,
   Settings,
   Search,
   Bell,
@@ -297,6 +298,12 @@ interface NavItem {
       path: '/admin/analytics',
       icon: BarChart3,
       match: (p: string) => p.startsWith('/admin/analytics')
+    },
+    {
+      name: 'Admin Activity & Audit Log',
+      path: '/admin/activity',
+      icon: Activity,
+      match: (p: string) => p.startsWith('/admin/activity')
     },
     {
       name: 'Settings & Security',
