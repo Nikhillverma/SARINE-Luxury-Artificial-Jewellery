@@ -32,9 +32,9 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-[#F7F0FA] pb-20">
+    <div className="min-h-screen bg-[var(--tint)] pb-20">
       {/* Editorial Header */}
-      <section className="bg-[var(--tint)] border-b border-[#E7DCEB] py-10 sm:py-14 text-center">
+      <section className="bg-[var(--tint)] border-b border-[var(--border)] py-10 sm:py-14 text-center">
         <div className="site-container">
           <div className="flex items-center justify-center gap-2 mb-3">
             <span className="h-[1px] w-8 bg-[#D9B8A0]"></span>
@@ -48,11 +48,11 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
             {title}
           </h1>
 
-          <p className="mt-3 text-xs sm:text-sm text-[#6F6475] font-sans max-w-xl mx-auto leading-relaxed">
+          <p className="mt-3 text-xs sm:text-sm text-[color:var(--body)] font-sans max-w-xl mx-auto leading-relaxed">
             {subtitle}
           </p>
 
-          <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-[#6F6475] font-sans">
+          <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-[color:var(--body)] font-sans">
             <Clock size={12} className="text-[#563568]" />
             <span>Last updated: 21 October 2026</span>
           </div>
@@ -60,7 +60,7 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
       </section>
 
       {/* Navigation Tabs Bar for Policies */}
-      <nav aria-label="Policy pages" className="bg-[var(--tint)] border-b border-[#E7DCEB] sticky top-0 z-10 backdrop-blur-md">
+      <nav aria-label="Policy pages" className="bg-[var(--tint)] border-b border-[var(--border)] sticky top-0 z-10 backdrop-blur-md">
         <div className="site-container">
           <div className="flex items-center justify-start sm:justify-center overflow-x-auto py-3 gap-1 sm:gap-2 no-scrollbar">
             {POLICY_LINKS.map((link) => {
@@ -72,7 +72,7 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
                   className={`whitespace-nowrap px-3.5 py-1.5 text-xs font-sans tracking-wider transition-colors uppercase rounded-xs ${
                     isActive
                       ? 'bg-[#563568] text-white font-medium'
-                      : 'text-[#6F6475] hover:text-[#563568] hover:bg-[#F0E6F4]'
+                      : 'text-[color:var(--body)] hover:text-[color:var(--plum)] hover:bg-[var(--tint)]'
                   }`}
                 >
                   {link.label}
@@ -90,7 +90,7 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
           <div className="mb-8">
             <Link
               to="/shop"
-              className="inline-flex items-center gap-1.5 text-xs text-[#6F6475] hover:text-[#563568] tracking-wider uppercase font-sans transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-[color:var(--body)] hover:text-[color:var(--plum)] tracking-wider uppercase font-sans transition-colors"
             >
               <ArrowLeft size={13} />
               <span>Return to Collection</span>
@@ -98,7 +98,7 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
           </div>
 
           {/* Content Box */}
-          <div className="bg-white border border-[#E7DCEB] p-6 sm:p-12 shadow-xs rounded-sm">
+          <div className="bg-white border border-[var(--border)] p-6 sm:p-12 shadow-xs rounded-sm">
             {children}
           </div>
         </div>
