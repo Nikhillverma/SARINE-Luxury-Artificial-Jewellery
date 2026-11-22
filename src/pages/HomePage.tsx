@@ -442,7 +442,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const currentHero = heroSlides[activeSlide] || heroSlides[0];
 
   return (
-    <div className="sarine-home w-full bg-[#FBF8F5] text-[#302438] font-sans selection:bg-[#B69ACF]/30 selection:text-[#302438]" style={{ display: "flex", flexDirection: "column" }}>
+    <div className="sarine-home w-full bg-[#FBF8F5] text-[#302438] font-sans selection:bg-[var(--pill)] selection:text-[#302438]" style={{ display: "flex", flexDirection: "column" }}>
       {/* =========================================================================
           3. HERO SLIDER
           Fixed responsive height: h-[420px] md:h-[520px] lg:h-[600px]
@@ -604,14 +604,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       <section id="categories" style={{ order: sectionOrder("categories"), display: sectionVisible("categories") ? undefined : "none" }} className="w-full py-6 sm:py-7 lg:py-10">
         <div className="site-container">
           <div className="relative mb-5 flex items-center justify-center gap-4">
-            <h2 className="w-full text-center font-serif text-2xl font-normal text-[#302438] sm:text-3xl lg:text-4xl">Shop by Category</h2>
+            <h2 className="w-full text-center font-serif text-2xl font-normal !text-[color:var(--heading)] sm:text-3xl lg:text-4xl">Shop by Category</h2>
             <div className="absolute right-0 flex shrink-0 items-center gap-2">
-              <Link to="/shop" className="hidden items-center gap-1 text-xs font-medium text-[#563568] transition-colors hover:text-[#8A6AA0] sm:inline-flex">
+              <Link to="/shop" className="hidden items-center gap-1 text-xs font-medium !text-[color:var(--plum)] transition-colors hover:text-[#8A6AA0] sm:inline-flex">
                 View all <ArrowRight size={13} />
               </Link>
               {sectionCarouselEnabled("categories") && <>
-                <button type="button" onClick={() => scrollCategories('left')} aria-label="Scroll categories left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronLeft size={17} /></button>
-                <button type="button" onClick={() => scrollCategories('right')} aria-label="Scroll categories right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronRight size={17} /></button>
+                <button type="button" onClick={() => scrollCategories('left')} aria-label="Scroll categories left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white"><ChevronLeft size={17} /></button>
+                <button type="button" onClick={() => scrollCategories('right')} aria-label="Scroll categories right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white"><ChevronRight size={17} /></button>
               </>}
             </div>
           </div>
@@ -628,7 +628,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                   to={`/shop?category=${encodeURIComponent(cat.slug)}`}
                   className={sectionCarouselEnabled("categories") ? "group w-[72%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "group min-w-0"} style={sectionCarouselEnabled("categories") ? desktopCardStyle("categories", 20, 5) : undefined}
                 >
-                  <div className="relative aspect-[4/5] overflow-hidden rounded-sm border border-[#E7DCEB] bg-[#F0E6F4] transition-colors group-hover:border-[#B69ACF]">
+                  <div className="relative aspect-[4/5] overflow-hidden rounded-sm border border-[var(--border)] bg-[var(--pill)] transition-colors group-hover:border-[var(--gold)]">
                     <img
                       src={cat.image}
                       alt={cat.name}
@@ -638,7 +638,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                       referrerPolicy="no-referrer"
                       className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                     />
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#24162D]/75 via-[#24162D]/15 to-transparent px-4 pb-4 pt-12">
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#2B1A33]/75 via-[#2B1A33]/15 to-transparent px-4 pb-4 pt-12">
                       <h3 className="font-serif text-lg font-medium !text-white sm:text-xl [text-shadow:0_1px_5px_rgba(0,0,0,0.7)]" style={{ color: "#FFFFFF" }}>{cat.name}</h3>
                     </div>
                   </div>
@@ -646,12 +646,12 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               ))}
             </div>
           ) : (
-            <p className="rounded-lg border border-dashed border-[#E7DCEB] px-4 py-8 text-center text-sm text-[#746B75]">
+            <p className="rounded-lg border border-dashed border-[var(--border)] px-4 py-8 text-center text-sm !text-[color:var(--body)]">
               {loading ? "Loading categories…" : "Our jewellery collections will appear here soon."}
             </p>
           )}
           <div className="mt-1 text-center sm:hidden">
-            <Link to="/shop" className="inline-flex items-center gap-1 text-xs font-medium text-[#563568]">
+            <Link to="/shop" className="inline-flex items-center gap-1 text-xs font-medium !text-[color:var(--plum)]">
               View all categories <ArrowRight size={13} />
             </Link>
           </div>
@@ -663,23 +663,23 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 newest products (sorted by createdAt descending, else the last 4 in the list),
           same product card as Best Sellers, "View All" linking to /shop?sort=newest
           ========================================================================= */}
-      <section style={{ order: sectionOrder("new-arrivals"), display: sectionVisible("new-arrivals") ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E9E5E9] bg-white">
+      <section style={{ order: sectionOrder("new-arrivals"), display: sectionVisible("new-arrivals") ? undefined : "none", backgroundColor: "var(--white)" }} className="py-6 sm:py-8 lg:py-10 border-t border-[var(--border)] bg-white">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-4 sm:mb-4">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
+            <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">
               JUST ARRIVED
             </span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">
               New Arrivals
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
+            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed max-w-xl mx-auto">
               Discover our newest handcrafted pieces, designed with delicate craftsmanship for modern grace.
             </p>
             <div className="mt-3">
               <Link
                 to="/shop?sort=newest"
-                className="text-xs sm:text-[13px] text-[#302438] hover:text-[#563568] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
+                className="text-xs sm:text-[13px] !text-[color:var(--plum)] hover:!text-[color:var(--plum)] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
               >
                 <span>View All</span>
                 <ArrowRight size={13} />
@@ -689,10 +689,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
 {sectionCarouselEnabled("new-arrivals") && (
           <div className="mb-3 flex items-center justify-end gap-2" aria-label="New Arrivals carousel controls">
-            <button type="button" onClick={() => scrollProductTrack(newArrivalsCarouselRef.current, 'left')} aria-label="Scroll New Arrivals left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
+            <button type="button" onClick={() => scrollProductTrack(newArrivalsCarouselRef.current, 'left')} aria-label="Scroll New Arrivals left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white">
               <ChevronLeft size={17} />
             </button>
-            <button type="button" onClick={() => scrollProductTrack(newArrivalsCarouselRef.current, 'right')} aria-label="Scroll New Arrivals right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
+            <button type="button" onClick={() => scrollProductTrack(newArrivalsCarouselRef.current, 'right')} aria-label="Scroll New Arrivals right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white">
               <ChevronRight size={17} />
             </button>
           </div>
@@ -701,9 +701,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-[23%] xl:w-[19%] animate-pulse">
-                  <div className="bg-[#F7F0FA] aspect-[3/4] w-full border border-[#E7DCEB]" />
-                  <div className="h-4 bg-[#F7F0FA] w-2/3 mt-3" />
-                  <div className="h-3 bg-[#F7F0FA] w-1/3 mt-2" />
+                  <div className="bg-[var(--pill)] aspect-[3/4] w-full border border-[var(--border)]" />
+                  <div className="h-4 bg-[var(--pill)] w-2/3 mt-3" />
+                  <div className="h-3 bg-[var(--pill)] w-1/3 mt-2" />
                 </div>
               ))}
             </div>
@@ -716,7 +716,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               ))}
             </div>
           ) : (
-            <p className="col-span-full py-8 text-center text-xs text-[#6F6475]">
+            <p className="col-span-full py-8 text-center text-xs !text-[color:var(--body)]">
               {loadError ? 'We could not load new arrivals right now. Please try again shortly.' : 'New arrivals are on their way. Please explore the full collection.'}
             </p>
           )}
@@ -732,20 +732,20 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Arrows: absolute inside relative wrapper, never pushing or overflowing
           Consistent vertical spacing: py-6 sm:py-8 lg:py-10
           ========================================================================= */}
-      <section style={{ order: sectionOrder("best-sellers"), display: sectionVisible("best-sellers") && (loading || bestsellers.length > 0) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E9E5E9] bg-[#F7F4F8]">
+      <section style={{ order: sectionOrder("best-sellers"), display: sectionVisible("best-sellers") && (loading || bestsellers.length > 0) ? undefined : "none", backgroundColor: "var(--white)" }} className="py-6 sm:py-8 lg:py-10 border-t border-[var(--border)] bg-white">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-4 sm:mb-4">
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">
               Best Sellers
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
+            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed max-w-xl mx-auto">
               Our most cherished pieces, ranked by genuine customer purchases.
             </p>
             <div className="mt-3">
               <Link
                 to='/shop?sort=bestseller'
-                className="text-xs sm:text-[13px] text-[#302438] hover:text-[#563568] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
+                className="text-xs sm:text-[13px] !text-[color:var(--plum)] hover:!text-[color:var(--plum)] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
               >
                 <span>View All</span>
                 <ArrowRight size={13} />
@@ -755,10 +755,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
 {sectionCarouselEnabled("best-sellers") && (
           <div className="mb-3 flex items-center justify-end gap-2" aria-label="Best Sellers carousel controls">
-            <button type="button" onClick={() => scrollProductTrack(carouselRef.current, 'left')} aria-label="Scroll Best Sellers left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
+            <button type="button" onClick={() => scrollProductTrack(carouselRef.current, 'left')} aria-label="Scroll Best Sellers left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white">
               <ChevronLeft size={17} />
             </button>
-            <button type="button" onClick={() => scrollProductTrack(carouselRef.current, 'right')} aria-label="Scroll Best Sellers right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
+            <button type="button" onClick={() => scrollProductTrack(carouselRef.current, 'right')} aria-label="Scroll Best Sellers right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white">
               <ChevronRight size={17} />
             </button>
           </div>
@@ -767,9 +767,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-[23%] xl:w-[19%] animate-pulse">
-                  <div className="bg-[#F0E6F4] aspect-[3/4] w-full border border-[#E7DCEB]" />
-                  <div className="h-4 bg-[#F0E6F4] w-2/3 mt-3" />
-                  <div className="h-3 bg-[#F0E6F4] w-1/3 mt-2" />
+                  <div className="bg-[var(--pill)] aspect-[3/4] w-full border border-[var(--border)]" />
+                  <div className="h-4 bg-[var(--pill)] w-2/3 mt-3" />
+                  <div className="h-3 bg-[var(--pill)] w-1/3 mt-2" />
                 </div>
               ))}
             </div>
@@ -782,7 +782,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               ))}
             </div>
           ) : (
-            <p className="col-span-full py-8 text-center text-xs text-[#6F6475]">
+            <p className="col-span-full py-8 text-center text-xs !text-[color:var(--body)]">
               {loadError ? 'We could not load Best Sellers right now. Please try again shortly.' : 'Our Best Sellers will appear here as qualifying customer orders are completed.'}
             </p>
           )}
@@ -794,36 +794,36 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Manually selected and ordered in Storefront Studio. Automatic newest-product
           fallback remains in place until a manual collection has been published.
           ========================================================================= */}
-      <section style={{ order: sectionOrder("curated-favourites"), display: sectionVisible("curated-favourites") && (loading || (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0) ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("curated-favourites"), display: sectionVisible("curated-favourites") && (loading || (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0) ? undefined : "none", backgroundColor: "var(--tint)" }} className="py-6 sm:py-8 lg:py-10 border-t border-[var(--border)] bg-[var(--tint)]">
         <div className="site-container">
           <div className="w-full text-center mb-4 sm:mb-4">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">THE SARINE EDIT</span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">Curated Favourites</h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
+            <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">THE SARINE EDIT</span>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">Curated Favourites</h2>
+            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed max-w-xl mx-auto">
               A considered edit of beautiful pieces selected from the SARINE collection.
             </p>
             <div className="mt-3">
-              <Link to="/shop" className="text-xs sm:text-[13px] text-[#302438] hover:text-[#563568] font-sans font-medium inline-flex items-center gap-1.5 transition-colors">
+              <Link to="/shop" className="text-xs sm:text-[13px] !text-[color:var(--plum)] hover:!text-[color:var(--plum)] font-sans font-medium inline-flex items-center gap-1.5 transition-colors">
                 <span>View All</span><ArrowRight size={13} />
               </Link>
             </div>
           </div>
 {sectionCarouselEnabled("curated-favourites") && (
           <div className="mb-3 flex items-center justify-end gap-2" aria-label="Curated Favourites carousel controls">
-            <button type="button" onClick={() => scrollProductTrack(curatedCarouselRef.current, 'left')} aria-label="Scroll Curated Favourites left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronLeft size={17} /></button>
-            <button type="button" onClick={() => scrollProductTrack(curatedCarouselRef.current, 'right')} aria-label="Scroll Curated Favourites right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronRight size={17} /></button>
+            <button type="button" onClick={() => scrollProductTrack(curatedCarouselRef.current, 'left')} aria-label="Scroll Curated Favourites left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white"><ChevronLeft size={17} /></button>
+            <button type="button" onClick={() => scrollProductTrack(curatedCarouselRef.current, 'right')} aria-label="Scroll Curated Favourites right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white"><ChevronRight size={17} /></button>
           </div>
           )}
           {loading ? (
             <div className="flex gap-4 overflow-hidden pb-3">
-              {[...Array(4)].map((_, i) => <div key={i} className="w-[68%] shrink-0 sm:w-[42%] md:w-[30%] lg:w-1/4 animate-pulse"><div className="bg-[#F0E6F4] aspect-[3/4] w-full border border-[#E7DCEB]" /><div className="h-4 bg-[#F0E6F4] w-2/3 mt-3" /><div className="h-3 bg-[#F0E6F4] w-1/3 mt-2" /></div>)}
+              {[...Array(4)].map((_, i) => <div key={i} className="w-[68%] shrink-0 sm:w-[42%] md:w-[30%] lg:w-1/4 animate-pulse"><div className="bg-[var(--pill)] aspect-[3/4] w-full border border-[var(--border)]" /><div className="h-4 bg-[var(--pill)] w-2/3 mt-3" /><div className="h-3 bg-[var(--pill)] w-1/3 mt-2" /></div>)}
             </div>
           ) : (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0 ? (
             <div ref={curatedCarouselRef} className={sectionCarouselEnabled("curated-favourites") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"} aria-label="Curated Favourites products">
               {(hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).slice(0, 12).map(product => <div key={product.id} className={sectionCarouselEnabled("curated-favourites") ? "w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "min-w-0"} style={sectionCarouselEnabled("curated-favourites") ? desktopCardStyle("curated-favourites", 20, 5) : undefined}><ProductCard product={product} /></div>)}
             </div>
           ) : (
-            <p className="col-span-full py-8 text-center text-xs text-[#6F6475]">
+            <p className="col-span-full py-8 text-center text-xs !text-[color:var(--body)]">
               {hasPublishedCuratedFavourites ? "Our selected favourites are temporarily unavailable. Please check back soon." : "New collection pieces will be available soon. Please explore the full collection."}
             </p>
           )}
@@ -872,12 +872,12 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
 
       {/* Explore Now is intentionally a regular grid, separate from Curated Favourites. */}
-      <section style={{ order: sectionOrder("explore-now"), display: sectionVisible("explore-now") && hasPublishedExploreNow && exploreProducts.length ? undefined : "none" }} className="border-t border-[#E7DCEB] bg-white py-7 sm:py-9 lg:py-11">
+      <section style={{ order: sectionOrder("explore-now"), display: sectionVisible("explore-now") && hasPublishedExploreNow && exploreProducts.length ? undefined : "none", backgroundColor: "var(--white)" }} className="border-t border-[var(--border)] bg-white py-7 sm:py-9 lg:py-11">
         <div className="site-container">
           <div className="mb-5 text-center sm:mb-6">
-            <span className="mb-2 block text-[10px] font-medium uppercase tracking-[0.25em] text-[#6F6475]">DISCOVER SOMETHING NEW</span>
-            <h2 className="font-serif text-2xl font-normal text-[#302438] sm:text-3xl lg:text-4xl">Explore Now</h2>
-            <p className="mx-auto mt-2 max-w-xl text-xs leading-relaxed text-[#6F6475] sm:text-sm">A fresh selection of pieces to inspire your next look.</p>
+            <span className="mb-2 block text-[10px] font-medium uppercase tracking-[0.25em] !text-[color:var(--gold-text)]">DISCOVER SOMETHING NEW</span>
+            <h2 className="font-serif text-2xl font-normal !text-[color:var(--heading)] sm:text-3xl lg:text-4xl">Explore Now</h2>
+            <p className="mx-auto mt-2 max-w-xl text-xs leading-relaxed !text-[color:var(--body)] sm:text-sm">A fresh selection of pieces to inspire your next look.</p>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
             {exploreProducts.slice(0, exploreDisplayCount).map(product => (

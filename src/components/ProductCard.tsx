@@ -53,9 +53,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   return (
-    <article className="group flex flex-col w-full bg-white p-2 sm:p-2.5 border border-[#E7DCEB] rounded-md transition-all duration-300 hover:border-[#B69ACF] hover:shadow-xs relative">
+    <article className="group flex flex-col w-full bg-[var(--white)] p-2 sm:p-2.5 border border-[var(--border)] rounded-md transition-all duration-300 hover:border-[var(--border)] hover:shadow-xs relative" style={{ "--tw-shadow-color": "var(--border)" } as React.CSSProperties}>
       {/* 3:4 Portrait Image Container */}
-      <div className="relative block w-full overflow-hidden bg-[#FBF7F2] aspect-[4/5] border border-[#E8DED4] rounded-xs group-hover:border-[#B69ACF]/60 transition-colors">
+      <div className="relative block w-full overflow-hidden bg-[var(--white)] aspect-[4/5] border border-[var(--border)] rounded-xs group-hover:border-[var(--border)] transition-colors">
         <Link to={`/product/${product.slug}`} className="block w-full h-full">
           <img
             src={primaryImage}
@@ -89,12 +89,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <button
           onClick={handleWishlistClick}
           aria-label={wishlisted ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
-          className="absolute top-1.5 right-1.5 z-20 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-white/95 hover:bg-white text-[#302438] flex items-center border border-[#E7DCEB] transition-all cursor-pointer shadow-2xs backdrop-blur-xs touch-manipulation"
+          className="absolute top-1.5 right-1.5 z-20 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-[var(--white)] hover:bg-[var(--white)] !text-[color:var(--plum)] flex items-center border border-[var(--border)] transition-all cursor-pointer shadow-2xs backdrop-blur-xs touch-manipulation"
         >
           <Heart
             size={16}
             className={`transition-colors ${
-              wishlisted ? 'fill-[#563568] text-[#563568]' : 'text-[#6F6475] hover:text-[#563568]'
+              wishlisted ? 'fill-[var(--rose)] !text-[color:var(--rose)]' : '!text-[color:var(--plum)]'
             }`}
           />
         </button>
@@ -102,7 +102,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Understated Status Tag */}
         {!inStock && (
           <div className="absolute top-2.5 left-2.5 z-10">
-            <span className="text-[10px] uppercase tracking-[0.2em] px-2 py-0.5 bg-white/95 text-[#6F6475] border border-[#E7DCEB] font-sans font-medium rounded-xs">
+            <span className="text-[10px] uppercase tracking-[0.2em] px-2 py-0.5 bg-[var(--white)] !text-[color:var(--muted)] border border-[var(--border)] font-sans font-medium rounded-xs">
               Awaiting Atelier
             </span>
           </div>
@@ -110,8 +110,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {(campaignDiscount > 0 || discountPercent) && inStock && (
           <div className="absolute top-2.5 left-2.5 z-10 flex flex-col items-start gap-1">
-            {campaignDiscount > 0 && <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#B3265C] text-white font-sans font-semibold rounded-xs">{campaignDiscount}% SALE OFF</span>}
-            {discountPercent && <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#B3265C] text-white font-sans font-medium rounded-xs">{discountPercent}% OFF</span>}
+            {campaignDiscount > 0 && <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[var(--rose)] !text-white font-sans font-semibold rounded-xs">{campaignDiscount}% SALE OFF</span>}
+            {discountPercent && <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[var(--rose)] !text-white font-sans font-medium rounded-xs">{discountPercent}% OFF</span>}
           </div>
         )}
 
@@ -120,7 +120,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           to={`/product/${product.slug}`}
           className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center"
         >
-          <span className="text-[10px] uppercase tracking-[0.2em] text-[#563568] bg-white/95 border border-[#B69ACF] shadow-xs px-3 py-1 font-sans font-medium rounded-xs">
+          <span className="text-[10px] uppercase tracking-[0.2em] !text-white bg-[var(--plum)] group-hover:bg-[var(--gold)] border border-[var(--border)] shadow-xs px-3 py-1 font-sans font-medium rounded-xs">
             View Piece
           </span>
         </Link>
@@ -130,18 +130,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div className="pt-3 pb-1 flex flex-col flex-grow">
         {/* Category / Type Label */}
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[12px] uppercase tracking-[0.16em] text-[#5A4F5E] font-sans font-medium">
+          <span className="text-[12px] uppercase tracking-[0.16em] !text-[color:var(--gold-text)] font-sans font-medium">
             {JEWELLERY_TYPE_LABELS[product.jewelleryType] || product.jewelleryType}
           </span>
           {product.collectionSlugs.length > 0 && (
-            <span className="text-[12px] tracking-wider text-[#4A1D5C] font-sans">
+            <span className="text-[11px] tracking-wider bg-[var(--pill)] !text-[color:var(--plum)] px-2 py-1 rounded-xs font-sans">
               {product.collectionSlugs[0]}
             </span>
           )}
         </div>
 
         {/* Product Title */}
-        <h3 className="min-h-[2.6em] font-serif text-[15px] sm:text-base text-[#302438] font-normal leading-snug line-clamp-2 group-hover:text-[#563568] transition-colors">
+        <h3 className="min-h-[2.6em] font-serif text-[15px] sm:text-base !text-[color:var(--heading)] font-normal leading-snug line-clamp-2 group-hover:!text-[color:var(--plum)] transition-colors">
           <Link to={`/product/${product.slug}`}>
             {product.name}
           </Link>
@@ -149,12 +149,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {reviewSummary && reviewSummary.count > 0 && (
           <div className="mt-1.5 flex items-center gap-1.5 text-[10px] font-sans" role="img" aria-label={`Rated ${reviewSummary.average.toFixed(1)} out of 5 from ${reviewSummary.count} approved customer ${reviewSummary.count === 1 ? 'review' : 'reviews'}`}>
-            <span className="inline-flex items-center gap-0.5 text-[#563568]" aria-hidden="true">
+            <span className="inline-flex items-center gap-0.5 !text-[color:var(--gold)]" aria-hidden="true">
               {Array.from({ length: 5 }, (_, index) => (
                 <Star key={index} size={11} strokeWidth={1.8} fill={index < Math.round(reviewSummary.average) ? 'currentColor' : 'none'} />
               ))}
             </span>
-            <span className="text-[#6F6475]">{reviewSummary.average.toFixed(1)} ({reviewSummary.count})</span>
+            <span className="!text-[color:var(--muted)]">{reviewSummary.average.toFixed(1)} ({reviewSummary.count})</span>
           </div>
         )}
 
@@ -162,13 +162,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="mt-1.5 flex items-baseline gap-2.5">
           {campaignDiscount > 0 ? (
             <>
-              <span className="text-[#A43E55] font-semibold text-sm font-sans tracking-tight">{formatInr(campaignPrice)}</span>
-              <span className="text-[#6F6475] line-through text-xs font-sans">{formatInr(product.price)}</span>
+              <span className="!text-[color:var(--plum)] font-semibold text-sm font-sans tracking-tight">{formatInr(campaignPrice)}</span>
+              <span className="!text-[color:var(--muted)] line-through text-xs font-sans">{formatInr(product.price)}</span>
             </>
           ) : (
             <>
-              <span className="text-[#302438] font-medium text-sm font-sans tracking-tight">{formatInr(product.price)}</span>
-              {product.compareAtPrice && <span className="text-[#6F6475] line-through text-xs font-sans">{formatInr(product.compareAtPrice)}</span>}
+              <span className="!text-[color:var(--plum)] font-medium text-sm font-sans tracking-tight">{formatInr(product.price)}</span>
+              {product.compareAtPrice && <span className="!text-[color:var(--muted)] line-through text-xs font-sans">{formatInr(product.compareAtPrice)}</span>}
             </>
           )}
         </div>
