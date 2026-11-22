@@ -16,6 +16,59 @@ export interface HomepageLayout {
   sections: HomepageSectionConfig[];
 }
 
+
+export interface HomepageContentLink { label: string; href: string; }
+export interface HomepageContentItem { title: string; description: string; }
+export interface HomepageContent {
+  version: 1;
+  price: { eyebrow: string; title: string; description: string; links: HomepageContentLink[] };
+  story: { eyebrow: string; title: string; paragraphs: string[]; imageUrl: string; ctaText: string; ctaLink: string; pillars: HomepageContentItem[] };
+  care: { eyebrow: string; title: string; description: string; steps: HomepageContentItem[] };
+  contact: { eyebrow: string; title: string; description: string; linkText: string; linkHref: string };
+}
+
+export const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
+  version: 1,
+  price: {
+    eyebrow: "PRICE CURATION", title: "Shop by Price",
+    description: "Find stunning handcrafted jewellery suited to your style and budget.",
+    links: [
+      { label: "Under ₹999", href: "/shop?price=under-999" },
+      { label: "₹1,000 to ₹1,999", href: "/shop?price=1000-2000" },
+      { label: "₹2,000 and above", href: "/shop?price=above-2000" },
+      { label: "All pieces", href: "/shop" }
+    ]
+  },
+  story: {
+    eyebrow: "OUR STORY", title: "More Than Just Jewellery",
+    paragraphs: [
+      "SARINE is a premium Indian fashion jewellery brand created to bring timeless elegance to your everyday moments. We celebrate traditional motifs through modern design, curating versatile pieces that seamlessly elevate both celebrations and daily attire.",
+      "We believe in accessible luxury — exquisite craftsmanship, refined finishes, and enduring beauty at honest, direct prices. Every piece is crafted so you can express your personal grace with confidence and ease."
+    ],
+    imageUrl: "/images/optimized/our-story.webp", ctaText: "Our Story", ctaLink: "/about",
+    pillars: [
+      { title: "Thoughtfully Designed", description: "for Everyday Elegance" },
+      { title: "Artisanal Heritage", description: "& Modern Craft" },
+      { title: "Accessible Luxury", description: "for Every You" }
+    ]
+  },
+  care: {
+    eyebrow: "ATELIER CARE PHILOSOPHY", title: "The Art of Jewellery Preservation",
+    description: "Every SARINE piece is crafted with protective seals and demi-fine gold plating. Follow these four timeless steps to preserve its radiant shine for generations.",
+    steps: [
+      { title: "The Last Touch", description: "Put your jewellery on last after perfumes, lotions, and hair styling sprays have dried completely." },
+      { title: "Air-Tight Storage", description: "Store each piece in its individual velvet pouch or zip bag to prevent moisture and accidental scratches." },
+      { title: "Gentle Cleaning", description: "Wipe gently with a dry soft microfiber cloth after wear to remove skin oils before returning to storage." },
+      { title: "Moisture Barrier", description: "Keep pieces away from steam, pool chlorine, and water basins to maintain pristine prong tension." }
+    ]
+  },
+  contact: {
+    eyebrow: "STAY IN TOUCH", title: "Connect With SARINE",
+    description: "Have questions about styling, care, or your order? Connect with our customer care team on our",
+    linkText: "Contact page", linkHref: "/contact"
+  }
+};
+
 export interface ExploreNowConfig { version: 1; productIds: string[]; displayCount: number; configured: boolean; }
 
 export interface PublicProductReviewSummary { count: number; average: number; }
@@ -96,6 +149,12 @@ export const hostingerStorefrontService = {
     request<{ success: boolean; draft: HomepageLayout }>("/admin/homepage-layout/draft", { method: "PUT", body: JSON.stringify(layout) }),
   publishHomepageLayout: () =>
     request<{ success: boolean; published: HomepageLayout }>("/admin/homepage-layout/publish", { method: "POST" }),
+  getHomepageContent: () => request<{ draft: HomepageContent; published: HomepageContent }>("/admin/homepage-layout/content"),
+  saveHomepageContent: (content: HomepageContent) =>
+    request<{ success: boolean; draft: HomepageContent }>("/admin/homepage-layout/content/draft", { method: "PUT", body: JSON.stringify(content) }),
+  publishHomepageContent: () =>
+    request<{ success: boolean; published: HomepageContent }>("/admin/homepage-layout/content/publish", { method: "POST" }),
+  getPublicHomepageContent: () => request<{ content: HomepageContent }>("/homepage-layout/content"),
   getOccasions: () => request<{ occasions: OccasionCard[] }>("/admin/storefront/occasions"),
   getPublicOccasions: () => request<{ occasions: OccasionCard[] }>("/storefront/occasions"),
   saveOccasions: (occasions: OccasionCard[]) => request<{ success: boolean; occasions: OccasionCard[] }>("/admin/storefront/occasions", { method: "PUT", body: JSON.stringify({ occasions }) }),
