@@ -85,8 +85,9 @@ export async function recordInventoryMovement(connection, {
   await connection.execute(
     `INSERT INTO inventory_movements
      (id, product_id, product_name, sku, admin_id, admin_name, admin_email,
-      previous_stock, quantity_delta, new_stock, reason)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      previous_stock, quantity_delta, new_stock, reason, cost_price_snapshot,
+      previous_stock_cost_value, new_stock_cost_value)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       movement.id, movement.productId, movement.productName, movement.sku,
       String(actorId), movement.adminName, movement.adminEmail,
