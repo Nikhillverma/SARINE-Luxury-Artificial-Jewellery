@@ -16,44 +16,44 @@ export const PrivacyPolicyPage: React.FC = () => {
       subtitle="At SARINE, we respect and safeguard your privacy. This policy outlines how we handle your personal data with complete transparency and care."
       categoryName="Legal & Compliance"
     >
-      <div className="space-y-10 text-xs sm:text-sm text-[#6F6475] leading-relaxed font-sans">
+      <div className="space-y-10 text-xs sm:text-sm text-[var(--body)] leading-relaxed font-sans">
         {/* Effective Date Note */}
-        <div className="bg-[#FAF5FC] border-l-2 border-[#563568] p-4 text-xs text-[#6F6475]">
-          <strong className="text-[#302438] font-medium">Effective Date:</strong> 21 October 2026 | Applies to all visitors and customers of SARINE.
+        <div className="bg-[var(--tint)] border-l-2 border-[var(--plum)] p-4 text-xs text-[var(--body)]">
+          <strong className="text-[var(--heading)] font-medium">Effective Date:</strong> 21 October 2026 | Applies to all visitors and customers of SARINE.
         </div>
 
         {/* Section 1 */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <Database size={16} className="text-[#563568]" />
-            <h2 className="font-serif text-lg sm:text-xl text-[#302438]">
+            <Database size={16} className="text-[var(--plum)]" />
+            <h2 className="font-serif text-lg sm:text-xl text-[var(--heading)]">
               1. Information We Collect
             </h2>
           </div>
           <p>
             When you browse our storefront, curate selections in your bag, or place an order, we collect only the information strictly necessary to provide our services:
           </p>
-          <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6F6475]">
-            <li><strong className="text-[#302438]">Contact Information:</strong> Your full name, email address, and optional mobile phone number submitted with an enquiry.</li>
-            <li><strong className="text-[#302438]">Enquiry Details:</strong> The subject and message you choose to submit through our Contact page.</li>
-            <li><strong className="text-[#302438]">Delivery Address:</strong> Street address, apartment/suite number, landmark, city, state, and postal PIN code.</li>
-            <li><strong className="text-[#302438]">Order Details:</strong> Items purchased, order reference numbers (e.g., SAR-000001), transaction timestamp, and delivery status.</li>
-            <li><strong className="text-[#302438]">Technical Session Data:</strong> Browser type, approximate geographical region, and device category to ensure seamless display and responsive design.</li>
+          <ul className="list-disc pl-5 space-y-1.5 text-xs text-[var(--body)]">
+            <li><strong className="text-[var(--heading)]">Contact Information:</strong> Your full name, email address, and optional mobile phone number submitted with an enquiry.</li>
+            <li><strong className="text-[var(--heading)]">Enquiry Details:</strong> The subject and message you choose to submit through our Contact page.</li>
+            <li><strong className="text-[var(--heading)]">Delivery Address:</strong> Street address, apartment/suite number, landmark, city, state, and postal PIN code.</li>
+            <li><strong className="text-[var(--heading)]">Order Details:</strong> Items purchased, order reference numbers (e.g., SAR-000001), transaction timestamp, and delivery status.</li>
+            <li><strong className="text-[var(--heading)]">Technical Session Data:</strong> Browser type, approximate geographical region, and device category to ensure seamless display and responsive design.</li>
           </ul>
         </section>
 
         {/* Section 2 */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <ShieldCheck size={16} className="text-[#563568]" />
-            <h2 className="font-serif text-lg sm:text-xl text-[#302438]">
+            <ShieldCheck size={16} className="text-[var(--plum)]" />
+            <h2 className="font-serif text-lg sm:text-xl text-[var(--heading)]">
               2. Why We Collect Your Information
             </h2>
           </div>
           <p>
             Your information is utilized solely for lawful e-commerce and customer fulfillment functions:
           </p>
-          <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6F6475]">
+          <ul className="list-disc pl-5 space-y-1.5 text-xs text-[var(--body)]">
             <li>To process, verify, and fulfill your jewellery orders.</li>
             <li>To coordinate domestic dispatch and courier tracking to your doorstep.</li>
             <li>To send order confirmation notices, dispatch updates, and delivery confirmations via email and SMS.</li>
@@ -65,19 +65,19 @@ export const PrivacyPolicyPage: React.FC = () => {
         {/* Section 3: Razorpay Payment Processing */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <Lock size={16} className="text-[#563568]" />
-            <h2 className="font-serif text-lg sm:text-xl text-[#302438]">
+            <Lock size={16} className="text-[var(--plum)]" />
+            <h2 className="font-serif text-lg sm:text-xl text-[var(--heading)]">
               3. Payment Security & Razorpay Integration
             </h2>
           </div>
-          <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] space-y-2 rounded-xs">
-            <p className="font-medium text-[#302438] text-xs">
+          <div className="p-4 bg-[var(--tint)] border border-[var(--border)] space-y-2 rounded-xs">
+            <p className="font-medium text-[var(--heading)] text-xs">
               We never collect or store your payment card details.
             </p>
-            <p className="text-xs text-[#6F6475]">
+            <p className="text-xs text-[var(--body)]">
               All online payments on SARINE are securely processed by <strong>Razorpay Software Private Limited</strong>, an RBI-regulated and PCI-DSS Level 1 certified payment gateway partner. When completing a purchase:
             </p>
-            <ul className="list-disc pl-5 space-y-1 text-xs text-[#6F6475]">
+            <ul className="list-disc pl-5 space-y-1 text-xs text-[var(--body)]">
               <li>Credit card, debit card, UPI credentials, and NetBanking passwords are entered directly into Razorpay’s encrypted interface.</li>
               <li>SARINE servers and staff do not have access to, nor do we ever log, store, or view your full card numbers, CVV, or banking credentials.</li>
               <li>We only receive an encrypted token and confirmation status (e.g., payment ID and order match) to confirm your order.</li>
@@ -88,15 +88,15 @@ export const PrivacyPolicyPage: React.FC = () => {
         {/* Section 4 */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <UserX size={16} className="text-[#563568]" />
-            <h2 className="font-serif text-lg sm:text-xl text-[#302438]">
+            <UserX size={16} className="text-[var(--plum)]" />
+            <h2 className="font-serif text-lg sm:text-xl text-[var(--heading)]">
               4. We Do Not Sell Your Data
             </h2>
           </div>
           <p>
             SARINE has a strict zero-data-monetization policy:
           </p>
-          <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6F6475]">
+          <ul className="list-disc pl-5 space-y-1.5 text-xs text-[var(--body)]">
             <li>We do <strong>not</strong> sell, rent, trade, or lease personal information to any third party, advertising network, or data aggregator.</li>
             <li>Your details are shared strictly with operational partners required to deliver your order (specifically our logistics courier partners for parcel delivery, and Razorpay for payment verification).</li>
             <li>These partners receive only the details strictly required to perform their discrete function.</li>
@@ -106,21 +106,21 @@ export const PrivacyPolicyPage: React.FC = () => {
         {/* Section 5: Deletion Request */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <Mail size={16} className="text-[#563568]" />
-            <h2 className="font-serif text-lg sm:text-xl text-[#302438]">
+            <Mail size={16} className="text-[var(--plum)]" />
+            <h2 className="font-serif text-lg sm:text-xl text-[var(--heading)]">
               5. Data Deletion & Your Rights
             </h2>
           </div>
           <p>
             You hold complete ownership over your personal data. You may at any time request:
           </p>
-          <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6F6475]">
+          <ul className="list-disc pl-5 space-y-1.5 text-xs text-[var(--body)]">
             <li>Confirmation of what personal data we retain on your account.</li>
             <li>Correction or updating of any inaccurate contact or address records.</li>
             <li>Permanent deletion of your customer profile and historical contact records.</li>
           </ul>
-          <div className="mt-3 p-4 bg-[#FAF5FC] border border-[#E7DCEB] text-xs text-[#302438] rounded-xs">
-            To exercise a privacy or deletion request, submit a message through the <Link to="/contact" className="text-[#563568] hover:text-[#A184BD] font-medium underline underline-offset-2">Contact page</Link> and select a clear subject such as “Data Deletion Request”. Please include the email address associated with your account so the request can be verified. Requests are reviewed subject to statutory tax and financial record-retention requirements.
+          <div className="mt-3 p-4 bg-[var(--tint)] border border-[var(--border)] text-xs text-[var(--heading)] rounded-xs">
+            To exercise a privacy or deletion request, submit a message through the <Link to="/contact" className="text-[var(--plum)] hover:text-[var(--white)] font-medium underline underline-offset-2">Contact page</Link> and select a clear subject such as “Data Deletion Request”. Please include the email address associated with your account so the request can be verified. Requests are reviewed subject to statutory tax and financial record-retention requirements.
           </div>
         </section>
       </div>
