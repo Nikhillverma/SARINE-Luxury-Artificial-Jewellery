@@ -306,16 +306,16 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[color:var(--body)] mb-2">
               <Link to="/" className="hover:text-[color:var(--plum)]">Home</Link>
               <span className="text-[color:var(--border)]">/</span>
-              <span className="text-[color:var(--heading)] font-medium">Catalogue</span>
+              <span className={`font-medium ${currentCategory ? "text-[color:var(--body)]" : "text-[color:var(--heading)]"}`}>Catalogue</span>
               {currentCategory && (
                 <>
                   <span className="text-[color:var(--border)]">/</span>
-                  <span className="text-[color:var(--body)]">{currentCategory.name}</span>
+                  <span className="text-[color:var(--heading)]">{currentCategory.name}</span>
                 </>
               )}
             </div>
 
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-[40px] text-[color:var(--body)] font-normal leading-tight">
+            <h1 className="font-serif text-3xl sm:text-4xl lg:text-[40px] text-[color:var(--heading)] font-normal leading-tight">
               {currentCategory ? currentCategory.name : 'Handcrafted Jewellery Collections'}
             </h1>
 
