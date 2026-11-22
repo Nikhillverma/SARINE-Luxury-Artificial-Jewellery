@@ -626,7 +626,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                   type="checkbox"
                   checked={isGiftOrder}
                   onChange={(e) => setIsGiftOrder(e.target.checked)}
-                  className="mt-0.5 accent-[#563568] rounded-xs cursor-pointer"
+                  className="mt-0.5 accent-[var(--plum)] rounded-xs cursor-pointer"
                 />
                 <div className="text-xs">
                   <span className="font-medium text-[color:var(--body)] flex items-center gap-1.5">
@@ -1051,7 +1051,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
           <button
             onClick={() => setIsZoomOpen(false)}
-            className="absolute top-4 right-4 text-white hover:text-[#B69ACF] p-2 cursor-pointer z-20"
+            className="absolute top-4 right-4 text-white hover:text-[var(--gold)] p-2 cursor-pointer z-20"
           >
             <X size={28} />
           </button>
