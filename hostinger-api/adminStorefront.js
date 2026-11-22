@@ -625,11 +625,11 @@ publicRouter.get("/design", async (_req, res, next) => {
 // Shared header/footer content with isolated draft and published snapshots.
 const defaultSiteChrome = {
   version: 1,
-  header: { tagline: "Timeless jewellery for every you." },
+  header: { tagline: "LUXURY ARTIFICIAL JEWELLERY" },
   footer: {
     tagline: "Timeless jewellery for every you.",
     copyright: "© 2026 SARINE. All rights reserved.",
-    social: { instagram: "https://instagram.com", facebook: "https://facebook.com", pinterest: "https://pinterest.com", youtube: "https://youtube.com" },
+    social: { facebook: "https://facebook.com", pinterest: "https://pinterest.com", youtube: "https://youtube.com" },
     headings: { shop: "Shop", care: "Customer Care", about: "About", payments: "Payment Methods" }
   }
 };
