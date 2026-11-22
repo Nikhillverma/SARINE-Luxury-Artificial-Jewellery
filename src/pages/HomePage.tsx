@@ -663,7 +663,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 newest products (sorted by createdAt descending, else the last 4 in the list),
           same product card as Best Sellers, "View All" linking to /shop?sort=newest
           ========================================================================= */}
-      <section style={{ order: sectionOrder("new-arrivals"), display: sectionVisible("new-arrivals") ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("new-arrivals"), display: sectionVisible("new-arrivals") ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E9E5E9] bg-white">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-4 sm:mb-4">
@@ -732,7 +732,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Arrows: absolute inside relative wrapper, never pushing or overflowing
           Consistent vertical spacing: py-6 sm:py-8 lg:py-10
           ========================================================================= */}
-      <section style={{ order: sectionOrder("best-sellers"), display: sectionVisible("best-sellers") && (loading || bestsellers.length > 0) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E7DCEB] bg-[#F7F0FA]">
+      <section style={{ order: sectionOrder("best-sellers"), display: sectionVisible("best-sellers") && (loading || bestsellers.length > 0) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E9E5E9] bg-[#F7F4F8]">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-4 sm:mb-4">
@@ -835,7 +835,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 cards: Daily Wear, Festive, Wedding, Gifting
           Using existing product images, linking to /shop with filter queries
           ========================================================================= */}
-      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") && occasions.some(item => item.active) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") && occasions.some(item => item.active) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E9E5E9] bg-[#F7F4F8]">
         <div className="site-container">
           <div className="w-full text-center mb-4 sm:mb-4">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
@@ -915,7 +915,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Centered container mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10
           Consistent vertical spacing: py-6 sm:py-8 lg:py-10
           ========================================================================= */}
-      <section style={{ order: sectionOrder("our-story"), display: sectionVisible("our-story") ? undefined : "none" }} className="bg-[#F0E6F4] border-y border-[#E7DCEB] py-6 sm:py-8 lg:py-10">
+      <section style={{ order: sectionOrder("our-story"), display: sectionVisible("our-story") ? undefined : "none" }} className="bg-[#F7F4F8] border-y border-[#E9E5E9] py-6 sm:py-8 lg:py-10">
         <div className="site-container">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center">
             {/* Left: Large Jewellery Photo */}
@@ -1030,7 +1030,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           STAY IN TOUCH — editable in Storefront Studio
           ========================================================================= */}
-      <section style={{ order: sectionOrder("stay-in-touch"), display: sectionVisible("stay-in-touch") ? undefined : "none" }} className="py-7 sm:py-9 lg:py-11 bg-[#F7F0FA]">
+      <section style={{ order: sectionOrder("stay-in-touch"), display: sectionVisible("stay-in-touch") ? undefined : "none" }} id="stay-in-touch" className="py-7 sm:py-9 lg:py-11 bg-[#563568]">
         <div className="site-container">
           <div className="max-w-[620px] mx-auto text-center">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">{homepageContent.contact.eyebrow}</span>

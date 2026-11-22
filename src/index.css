@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "./styles/global.css";
 
@@ -186,7 +186,7 @@
 /* ==========================================================================
    SARINE editorial luxury refresh — homepage only.
    Palette sampled from the approved reference: deep plum, warm ivory,
-   dusty blush and muted mauve, with restrained champagne accents.
+   the approved plum and lavender palette, with white replacing the former champagne accent.
    Typography and the hero's existing dimensions are intentionally untouched.
    ========================================================================== */
 .sarine-home {
@@ -197,7 +197,7 @@
   --sarine-blush: #F0D8D8;
   --sarine-blush-deep: #E0B8C0;
   --sarine-mauve: #D0A8C0;
-  --sarine-champagne: #D8B878;
+  --sarine-champagne: #FFFFFF;
   background: var(--sarine-ivory-light);
   color: var(--sarine-plum);
 }
@@ -419,17 +419,12 @@
 
 
 /* ==========================================================================
-   Published SARINE Global Design Studio tokens.
-   Only the public storefront receives this class; admin screens stay isolated.
+   SARINE ORIGINAL FOUR-COLOUR THEME — public storefront only.
+   Header and footer components retain their existing colours.
    ========================================================================== */
-body.sarine-global-theme {
-  background-color: var(--sarine-global-page, #FFFFFF);
-  color: var(--sarine-global-text, #302438);
-  font-family: var(--sarine-global-body-font, "Plus Jakarta Sans"), sans-serif;
-}
 body.sarine-global-theme #main-content {
-  background-color: var(--sarine-global-page, #FFFFFF);
-  color: var(--sarine-global-text, #302438);
+  background: #FFFFFF;
+  color: #563568;
   font-family: var(--sarine-global-body-font, "Plus Jakarta Sans"), sans-serif;
 }
 body.sarine-global-theme #main-content h1,
@@ -437,561 +432,129 @@ body.sarine-global-theme #main-content h2,
 body.sarine-global-theme #main-content h3,
 body.sarine-global-theme #main-content h4,
 body.sarine-global-theme #main-content h5,
+body.sarine-global-theme #main-content h6,
 body.sarine-global-theme #main-content .font-serif {
+  color: #563568;
   font-family: var(--sarine-global-heading-font, "Cormorant Garamond"), Georgia, serif !important;
 }
 body.sarine-global-theme #main-content p,
 body.sarine-global-theme #main-content li,
+body.sarine-global-theme #main-content label,
+body.sarine-global-theme #main-content small,
 body.sarine-global-theme #main-content input,
 body.sarine-global-theme #main-content textarea,
 body.sarine-global-theme #main-content select,
-body.sarine-global-theme #main-content button,
 body.sarine-global-theme #main-content .font-sans {
+  color: #563568;
   font-family: var(--sarine-global-body-font, "Plus Jakarta Sans"), sans-serif;
 }
-body.sarine-global-theme #main-content .site-container {
-  max-width: var(--sarine-global-content-width, 1280px) !important;
+body.sarine-global-theme #main-content section {
+  border-color: #B69ACF;
 }
-body.sarine-global-theme #main-content .sarine-home {
-  background-color: var(--sarine-global-page, #FFFFFF) !important;
-  color: var(--sarine-global-text, #302438) !important;
-}
-body.sarine-global-theme #main-content .sarine-home > section:not(:first-child) {
-  background-color: var(--sarine-global-surface, #F7F0FA) !important;
-}
-body.sarine-global-theme #main-content .sarine-home h1,
-body.sarine-global-theme #main-content .sarine-home h2,
-body.sarine-global-theme #main-content .sarine-home h3 {
-  color: var(--sarine-global-primary, #563568) !important;
-}
-body.sarine-global-theme header.sticky {
-  background-color: var(--sarine-global-header, #FFFFFF) !important;
-}
-body.sarine-global-theme header.sticky > div:first-child {
-  background-color: var(--sarine-global-primary, #563568) !important;
-  color: var(--sarine-global-surface, #F7F0FA) !important;
-}
-body.sarine-global-theme header.sticky > div:first-child * {
-  color: inherit;
-}
-body.sarine-global-theme header.sticky > div:nth-child(2) {
-  background-color: var(--sarine-global-header, #FFFFFF) !important;
-}
-body.sarine-global-theme header.sticky [class*="text-[#563568]"] {
-  color: var(--sarine-global-primary, #563568) !important;
-}
-body.sarine-global-theme header.sticky [class*="border-[#563568]"] {
-  border-color: var(--sarine-global-primary, #563568) !important;
-}
-body.sarine-global-theme footer {
-  background-color: var(--sarine-global-footer, #563568) !important;
-  color: var(--sarine-global-footer-text, #F7F0FA) !important;
-}
-body.sarine-global-theme footer > div:not(:first-child) {
-  background-color: var(--sarine-global-footer, #563568) !important;
-  color: var(--sarine-global-footer-text, #F7F0FA) !important;
-}
-body.sarine-global-theme footer [class*="text-[#F7F0FA]"],
-body.sarine-global-theme footer [class*="text-[#E7DCEB]"],
-body.sarine-global-theme footer [class*="text-white"] {
-  color: var(--sarine-global-footer-text, #F7F0FA) !important;
-}
-body.sarine-global-theme #main-content a[class*="bg-[#563568]"],
-body.sarine-global-theme #main-content button[class*="bg-[#563568]"] {
-  border-radius: var(--sarine-global-radius, 8px) !important;
-}
-body.sarine-global-theme[data-sarine-button-style="solid"] #main-content a[class*="bg-[#563568]"],
-body.sarine-global-theme[data-sarine-button-style="solid"] #main-content button[class*="bg-[#563568]"] {
-  background-color: var(--sarine-global-primary, #563568) !important;
-  border-color: var(--sarine-global-primary, #563568) !important;
-}
-body.sarine-global-theme[data-sarine-button-style="outline"] #main-content a[class*="bg-[#563568]"],
-body.sarine-global-theme[data-sarine-button-style="outline"] #main-content button[class*="bg-[#563568]"] {
-  background-color: transparent !important;
-  color: var(--sarine-global-primary, #563568) !important;
-  border: 1px solid var(--sarine-global-primary, #563568) !important;
-}
-body.sarine-global-theme #main-content .product-grid > article,
-body.sarine-global-theme #main-content .category-grid > a {
-  border-radius: var(--sarine-global-radius, 8px) !important;
-}
-@media (max-width: 767px) {
-  body.sarine-global-theme #main-content .site-container {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-}
-
-body.sarine-global-theme #main-content h1 {
-  font-size: calc(var(--text-h1, 2rem) * var(--sarine-global-heading-scale, 1)) !important;
-}
-body.sarine-global-theme #main-content h2 {
-  font-size: calc(var(--text-h2, 1.65rem) * var(--sarine-global-heading-scale, 1)) !important;
-}
-body.sarine-global-theme #main-content h3 {
-  font-size: calc(var(--text-h3, 1.35rem) * var(--sarine-global-heading-scale, 1)) !important;
-}
-body.sarine-global-theme #main-content h4,
-body.sarine-global-theme #main-content h5,
-body.sarine-global-theme #main-content h6 {
-  font-size: calc(var(--text-h4, 1.15rem) * var(--sarine-global-heading-scale, 1)) !important;
-}
-body.sarine-global-theme #main-content p,
-body.sarine-global-theme #main-content li {
-  font-size: calc(var(--text-base, 1rem) * var(--sarine-global-body-scale, 1));
-}
-
-
-/* Mobile storefront usability: comfortable touch targets and safe scrolling. */
-@media (max-width: 767px) {
-  .product-grid > article {
-    min-width: 0;
-  }
-
-  .product-grid > article h3 {
-    overflow-wrap: anywhere;
-  }
-
-  .product-grid > article button,
-  .product-grid > article a {
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  #sarine-mobile-navigation {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  #sarine-mobile-navigation .flex-1 a {
-    min-height: 40px;
-    align-items: center;
-  }
-}
-
-@media (hover: none) and (pointer: coarse) {
-  .product-grid > article > div.relative > a.absolute {
-    min-height: 44px;
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sarine-announcement-track {
-    animation: none !important;
-    transform: none !important;
-  }
-}
-
-
-/* Restore the clean white storefront canvas requested for SARINE. */
-body.sarine-global-theme,
-body.sarine-global-theme #root,
-body.sarine-global-theme #main-content,
-body.sarine-global-theme #main-content .sarine-home {
-  background-color: #FFFFFF !important;
-}
-body.sarine-global-theme #main-content .sarine-home > section:not(:first-child) {
-  background: #FFFFFF !important;
-}
-body.sarine-global-theme #main-content .sarine-home > section:has(img[alt="SARINE Craftsmanship and Jewellery Details"]) {
-  background: #FFFFFF !important;
-}
-
-
-/* SARINE warm ivory / antique gold visual refresh — presentation only. */
-
-body.sarine-global-theme {
-  --sarine-global-primary: #4A1D5C !important;
-  --sarine-global-accent: #B8893C !important;
-  --sarine-global-page: #FBF7F2 !important;
-  --sarine-global-surface: #FBF7F2 !important;
-  --sarine-global-text: #5A4F5E !important;
-  --sarine-global-header: #FBF7F2 !important;
-  --sarine-global-footer: #4A1D5C !important;
-  --sarine-global-footer-text: #FBF7F2 !important;
-  --sarine-global-heading-font: "Playfair Display" !important;
-  --sarine-global-body-font: "Inter" !important;
-  background: #FBF7F2 !important;
-  color: #5A4F5E !important;
-  font-family: "Inter", sans-serif !important;
-}
-body.sarine-global-theme #root,
-body.sarine-global-theme #main-content,
-body.sarine-global-theme #main-content .sarine-home,
-body.sarine-global-theme #main-content .sarine-home > section:not(:first-child) {
-  background-color: #FBF7F2 !important;
-  color: #5A4F5E !important;
-}
-body.sarine-global-theme #main-content h1,
-body.sarine-global-theme #main-content h2,
-body.sarine-global-theme #main-content h3,
-body.sarine-global-theme #main-content h4,
-body.sarine-global-theme #main-content h5,
-body.sarine-global-theme #main-content h6,
-body.sarine-global-theme #main-content .font-serif {
-  font-family: "Playfair Display", Georgia, serif !important;
-  color: #2B1A33 !important;
-}
-body.sarine-global-theme #main-content,
-body.sarine-global-theme #main-content p,
-body.sarine-global-theme #main-content li,
-body.sarine-global-theme #main-content .font-sans,
-body.sarine-global-theme #main-content input,
-body.sarine-global-theme #main-content textarea,
-body.sarine-global-theme #main-content select {
-  font-family: "Inter", sans-serif !important;
-  color: #5A4F5E;
-}
-body.sarine-global-theme #main-content .sarine-home > section:first-child h1,
-body.sarine-global-theme #main-content .sarine-home > section:first-child p,
-body.sarine-global-theme #main-content .sarine-home > section:first-child span,
-body.sarine-global-theme #main-content .sarine-home > section:first-child a {
-  color: #FFFFFF !important;
-}
-body.sarine-global-theme #main-content .product-grid > article {
-  background: #FBF7F2 !important;
-  border: 1px solid rgba(74, 29, 92, 0.14) !important;
-  box-shadow: 0 3px 12px rgba(43, 26, 51, 0.055);
-}
-body.sarine-global-theme #main-content .product-grid > article > div:first-child {
-  aspect-ratio: 4 / 5 !important;
-  background: #FBF7F2 !important;
-  border-color: rgba(74, 29, 92, 0.12) !important;
-}
-body.sarine-global-theme #main-content .product-grid > article > div:first-child img {
-  width: 100%; height: 100%; object-fit: cover;
-}
-body.sarine-global-theme #main-content .product-grid > article [class*="uppercase"],
-body.sarine-global-theme #main-content .product-grid > article [class*="text-[10px]"] {
-  color: #5A4F5E !important;
-  font-size: 12px !important;
-}
-body.sarine-global-theme #main-content a[class*="bg-[#563568]"],
-body.sarine-global-theme #main-content button[class*="bg-[#563568]"],
-body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]"],
-body.sarine-global-theme #main-content button[class*="bg-[#4A1D5C]"] {
-  background-color: #4A1D5C !important;
-  color: #FFFFFF !important;
-  border-radius: 6px !important;
-}
-body.sarine-global-theme #main-content a[class*="bg-[#563568]"]:hover,
-body.sarine-global-theme #main-content button[class*="bg-[#563568]"]:hover,
-body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]"]:hover,
-body.sarine-global-theme #main-content button[class*="bg-[#4A1D5C]"]:hover {
-  background-color: #B8893C !important;
-  border-color: #B8893C !important;
-  color: #2B1A33 !important;
-}
-body.sarine-global-theme #main-content footer,
-body.sarine-global-theme footer,
-body.sarine-global-theme footer > div:not(:first-child) {
-  background-color: #4A1D5C !important;
-  color: #FBF7F2 !important;
-}
-body.sarine-global-theme footer > div:not(:first-child) a,
-body.sarine-global-theme footer > div:not(:first-child) p,
-body.sarine-global-theme footer > div:not(:first-child) h4,
-body.sarine-global-theme footer > div:not(:first-child) span,
-body.sarine-global-theme footer > div:not(:first-child) svg {
-  color: #FBF7F2;
-}
-body.sarine-global-theme footer > div:not(:first-child) a:hover,
-body.sarine-global-theme footer > div:not(:first-child) a:hover * {
-  color: #B8893C !important;
-}
-body.sarine-global-theme header.sticky,
-body.sarine-global-theme header.sticky > div:nth-child(2) {
-  background-color: #FBF7F2 !important;
-}
-body.sarine-global-theme header.sticky > div:first-child {
-  background-color: #4A1D5C !important;
-  color: #FBF7F2 !important;
-}
-body.sarine-global-theme header.sticky > div:first-child * { color: inherit; }
-body.sarine-global-theme #main-content .sarine-home .category-grid > a > div:last-child {
-  background: #F4ECE4 !important;
-}
-@media (max-width: 767px) {
-  body.sarine-global-theme #main-content button,
-  body.sarine-global-theme #main-content a[role="button"],
-  body.sarine-global-theme #main-content .product-grid > article button,
-  body.sarine-global-theme #main-content .product-grid > article a.absolute {
-    min-height: 44px;
-  }
-  body.sarine-global-theme #main-content .product-grid > article button {
-    min-width: 44px;
-  }
-}
-
-body.sarine-global-theme #main-content .sarine-editorial-banner h2,
-body.sarine-global-theme #main-content .sarine-editorial-banner p,
-body.sarine-global-theme #main-content .sarine-editorial-banner span {
-  color: #FFFFFF !important;
-}
-
-@media (max-width: 767px) {
-  body.sarine-global-theme #main-content button,
-  body.sarine-global-theme #main-content a[role="button"],
-  body.sarine-global-theme #sarine-mobile-navigation button,
-  body.sarine-global-theme #sarine-mobile-navigation a {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  body.sarine-global-theme #sarine-mobile-navigation .flex-1 a {
-    min-height: 44px;
-  }
-}
-
-
-/* ==========================================================================
-   SARINE clean black & white responsive refinement
-   Presentation only: neutralise lavender surfaces, sharpen text contrast,
-   and use fluid type scales across phones, tablets and desktops.
-   ========================================================================== */
-body.sarine-global-theme {
-  --sarine-global-primary: #302438 !important;
-  --sarine-global-accent: #8A6A3F !important;
-  --sarine-global-page: #FFFFFF !important;
-  --sarine-global-surface: #FFFFFF !important;
-  --sarine-global-text: #171717 !important;
-  --sarine-global-header: #FFFFFF !important;
-  --sarine-global-footer: #171717 !important;
-  --sarine-global-footer-text: #FFFFFF !important;
-  --sarine-global-heading-font: "Cormorant Garamond" !important;
-  --sarine-global-body-font: "Plus Jakarta Sans" !important;
-  background: #FFFFFF !important;
-  color: #171717 !important;
-  font-family: "Plus Jakarta Sans", sans-serif !important;
-}
-body.sarine-global-theme #root,
-body.sarine-global-theme #main-content,
-body.sarine-global-theme #main-content .sarine-home,
-body.sarine-global-theme #main-content .sarine-home > section,
-body.sarine-global-theme #main-content .sarine-home > section:nth-of-type(even),
-body.sarine-global-theme #main-content .sarine-home > section:nth-of-type(odd) {
-  background-color: #FFFFFF !important;
-  color: #171717 !important;
-}
-body.sarine-global-theme #main-content h1,
-body.sarine-global-theme #main-content h2,
-body.sarine-global-theme #main-content h3,
-body.sarine-global-theme #main-content h4,
-body.sarine-global-theme #main-content h5,
-body.sarine-global-theme #main-content h6,
-body.sarine-global-theme #main-content .font-serif {
-  color: #111111 !important;
-  font-family: "Cormorant Garamond", Georgia, serif !important;
-}
-body.sarine-global-theme #main-content p,
-body.sarine-global-theme #main-content li,
-body.sarine-global-theme #main-content label,
-body.sarine-global-theme #main-content .font-sans,
-body.sarine-global-theme #main-content input,
-body.sarine-global-theme #main-content textarea,
-body.sarine-global-theme #main-content select {
-  color: #333333;
-  font-family: "Plus Jakarta Sans", sans-serif !important;
-}
-/* Fluid type: restrained on mobile, comfortably scaled on larger screens. */
-body.sarine-global-theme #main-content h1 {
-  font-size: clamp(1.9rem, 4.4vw, 3.65rem) !important;
-  line-height: 1.08 !important;
-}
-body.sarine-global-theme #main-content h2 {
-  font-size: clamp(1.55rem, 3.1vw, 2.55rem) !important;
-  line-height: 1.14 !important;
-}
-body.sarine-global-theme #main-content h3 {
-  font-size: clamp(1.05rem, 1.65vw, 1.4rem) !important;
-  line-height: 1.25 !important;
-}
-body.sarine-global-theme #main-content h4,
-body.sarine-global-theme #main-content h5,
-body.sarine-global-theme #main-content h6 {
-  font-size: clamp(.98rem, 1.25vw, 1.2rem) !important;
-  line-height: 1.3 !important;
-}
-body.sarine-global-theme #main-content p,
-body.sarine-global-theme #main-content li {
-  font-size: clamp(.875rem, 1.05vw, 1rem) !important;
-  line-height: 1.65 !important;
-}
-body.sarine-global-theme #main-content .sarine-home .product-grid > article,
-body.sarine-global-theme #main-content .sarine-home .category-grid > a,
-body.sarine-global-theme #main-content .sarine-home .occasion-grid > a {
-  background: #FFFFFF !important;
-  border-color: #E5E5E5 !important;
-  box-shadow: 0 2px 10px rgba(0,0,0,.035) !important;
-}
-body.sarine-global-theme #main-content .sarine-home .category-grid > a > div:last-child,
-body.sarine-global-theme #main-content .sarine-home .category-grid > a > div:first-child,
-body.sarine-global-theme #main-content .sarine-home .product-grid > article > div:first-child {
-  background: #FFFFFF !important;
-}
-body.sarine-global-theme #main-content .sarine-home .category-grid > a h3,
-body.sarine-global-theme #main-content .sarine-home .product-grid > article h3,
-body.sarine-global-theme #main-content .sarine-home .product-grid > article [class*="text-[#563568]"],
-body.sarine-global-theme #main-content .sarine-home .product-grid > article [class*="text-[#4A1D5C]"] {
-  color: #171717 !important;
-}
-body.sarine-global-theme #main-content .sarine-home .product-grid > article [class*="uppercase"],
-body.sarine-global-theme #main-content .sarine-home .product-grid > article [class*="text-[10px]"] {
-  color: #555555 !important;
-  font-size: clamp(.68rem, .8vw, .75rem) !important;
-}
-/* Keep the brand accent in purposeful actions, not as large background areas. */
-body.sarine-global-theme header.sticky,
-body.sarine-global-theme header.sticky > div:nth-child(2) {
-  background: #FFFFFF !important;
-  color: #171717 !important;
-}
-body.sarine-global-theme header.sticky > div:first-child {
-  background: #302438 !important;
-  color: #FFFFFF !important;
-}
-body.sarine-global-theme footer,
-body.sarine-global-theme footer > div:not(:first-child) {
-  background: #171717 !important;
-  color: #FFFFFF !important;
-}
-body.sarine-global-theme footer a,
-body.sarine-global-theme footer p,
-body.sarine-global-theme footer h4,
-body.sarine-global-theme footer span {
-  color: #FFFFFF !important;
-}
-body.sarine-global-theme #main-content a[class*="bg-[#563568]"],
-body.sarine-global-theme #main-content button[class*="bg-[#563568]"],
-body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]"],
-body.sarine-global-theme #main-content button[class*="bg-[#4A1D5C]"] {
-  background: #302438 !important;
-  border-color: #302438 !important;
-  color: #FFFFFF !important;
-}
-body.sarine-global-theme #main-content a[class*="bg-[#563568]"]:hover,
-body.sarine-global-theme #main-content button[class*="bg-[#563568]"]:hover,
-body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]"]:hover,
-body.sarine-global-theme #main-content button[class*="bg-[#4A1D5C]"]:hover {
-  background: #514455 !important;
-  border-color: #514455 !important;
-  color: #FFFFFF !important;
-}
-body.sarine-global-theme #main-content .sarine-home > section:first-child h1,
-body.sarine-global-theme #main-content .sarine-home > section:first-child p,
-body.sarine-global-theme #main-content .sarine-home > section:first-child span,
-body.sarine-global-theme #main-content .sarine-home > section:first-child a,
-body.sarine-global-theme #main-content .sarine-editorial-banner h2,
-body.sarine-global-theme #main-content .sarine-editorial-banner p,
-body.sarine-global-theme #main-content .sarine-editorial-banner span {
-  color: #FFFFFF !important;
-}
-@media (max-width: 767px) {
-  body.sarine-global-theme #main-content .site-container {
-    padding-left: 16px !important;
-    padding-right: 16px !important;
-  }
-  body.sarine-global-theme #main-content h1 {
-    font-size: clamp(1.75rem, 7vw, 2.35rem) !important;
-  }
-  body.sarine-global-theme #main-content h2 {
-    font-size: clamp(1.4rem, 5.8vw, 1.9rem) !important;
-  }
-  body.sarine-global-theme #main-content h3 {
-    font-size: clamp(1rem, 4.2vw, 1.2rem) !important;
-  }
-  body.sarine-global-theme #main-content p,
-  body.sarine-global-theme #main-content li {
-    font-size: .9rem !important;
-    line-height: 1.6 !important;
-  }
-  body.sarine-global-theme #main-content .product-grid {
-    gap: 10px !important;
-  }
-  body.sarine-global-theme #main-content .product-grid > article > div:last-child {
-    padding: 8px !important;
-  }
-  body.sarine-global-theme #main-content .product-grid > article h3 {
-    font-size: .9rem !important;
-    line-height: 1.3 !important;
-  }
-}
-@media (min-width: 768px) and (max-width: 1023px) {
-  body.sarine-global-theme #main-content h1 { font-size: clamp(2.2rem, 4.5vw, 3rem) !important; }
-  body.sarine-global-theme #main-content h2 { font-size: clamp(1.7rem, 3.4vw, 2.2rem) !important; }
-}
-
-
-/* Remove legacy lavender utility fills across all customer-facing routes. */
 body.sarine-global-theme #main-content [class*="bg-[#F7F0FA]"],
-body.sarine-global-theme #main-content [class*="bg-[#F7F0FA]/"],
-body.sarine-global-theme #main-content [class*="bg-[#E7DCEB]"],
-body.sarine-global-theme #main-content [class*="bg-[#B69ACF]"],
-body.sarine-global-theme #main-content [class*="bg-[#B69ACF]/"] {
-  background-color: #FFFFFF !important;
+body.sarine-global-theme #main-content [class*="bg-[#F7F4F8]"],
+body.sarine-global-theme #main-content [class*="bg-[#F0E6F4]"],
+body.sarine-global-theme #main-content [class*="bg-[#FAF5FC]"],
+body.sarine-global-theme #main-content [class*="bg-[#EBDFF2]"] {
+  background-color: #F7F0FA;
 }
-body.sarine-global-theme #main-content [class*="border-[#E7DCEB]"],
-body.sarine-global-theme #main-content [class*="border-[#B69ACF]"] {
-  border-color: #E5E5E5 !important;
+body.sarine-global-theme #main-content [class*="bg-[#4A1D5C]"],
+body.sarine-global-theme #main-content [class*="bg-[#2B1A33]"] {
+  background-color: #563568;
 }
 body.sarine-global-theme #main-content [class*="text-[#302438]"],
+body.sarine-global-theme #main-content [class*="text-[#1D1B1F]"],
+body.sarine-global-theme #main-content [class*="text-[#5C5660]"],
 body.sarine-global-theme #main-content [class*="text-[#6F6475]"],
-body.sarine-global-theme #main-content [class*="text-[#5A4F5E]"] {
-  color: #222222 !important;
+body.sarine-global-theme #main-content [class*="text-[#2B1A33]"] {
+  color: #563568;
 }
-
-
-/* Rebalance the neutral storefront: black is for readable text, not brand surfaces. */
-body.sarine-global-theme header.sticky > div:first-child,
-body.sarine-global-theme footer,
-body.sarine-global-theme footer > div:not(:first-child) {
-  background-color: #563568 !important;
+body.sarine-global-theme #main-content [class*="border-[#E7DCEB]"],
+body.sarine-global-theme #main-content [class*="border-[#E9E5E9]"] {
+  border-color: #B69ACF;
 }
 body.sarine-global-theme #main-content a[class*="bg-[#563568]"],
 body.sarine-global-theme #main-content button[class*="bg-[#563568]"],
 body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]"],
 body.sarine-global-theme #main-content button[class*="bg-[#4A1D5C]"] {
-  background-color: #563568 !important;
-  border-color: #563568 !important;
-  color: #FFFFFF !important;
+  background-color: #563568;
+  border-color: #563568;
+  color: #FFFFFF;
 }
 body.sarine-global-theme #main-content a[class*="bg-[#563568]"]:hover,
 body.sarine-global-theme #main-content button[class*="bg-[#563568]"]:hover,
 body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]"]:hover,
 body.sarine-global-theme #main-content button[class*="bg-[#4A1D5C]"]:hover {
-  background-color: #6B4A7D !important;
-  border-color: #6B4A7D !important;
+  background-color: #B69ACF;
+  border-color: #B69ACF;
+  color: #563568;
 }
-body.sarine-global-theme #main-content,
-body.sarine-global-theme #main-content .sarine-home,
-body.sarine-global-theme #main-content .sarine-home > section {
-  background-color: #FFFFFF !important;
+body.sarine-global-theme #main-content a:not([class*="bg-"]),
+body.sarine-global-theme #main-content button:not([class*="bg-"]) {
+  accent-color: #563568;
 }
-body.sarine-global-theme #main-content h1,
-body.sarine-global-theme #main-content h2,
-body.sarine-global-theme #main-content h3,
-body.sarine-global-theme #main-content h4,
-body.sarine-global-theme #main-content h5,
-body.sarine-global-theme #main-content h6 {
-  color: #1D1B1F !important;
+body.sarine-global-theme #main-content #stay-in-touch {
+  background-color: #563568;
+  color: #FFFFFF;
 }
+body.sarine-global-theme #main-content #stay-in-touch h2,
+body.sarine-global-theme #main-content #stay-in-touch p,
+body.sarine-global-theme #main-content #stay-in-touch span {
+  color: #FFFFFF;
+}
+body.sarine-global-theme #main-content #stay-in-touch a {
+  color: #B69ACF;
+}
+body.sarine-global-theme #main-content #stay-in-touch a:hover {
+  color: #FFFFFF;
+}
+body.sarine-global-theme #main-content h1 { font-size: clamp(1.875rem, 4.4vw, 3.75rem); line-height: 1.08; }
+body.sarine-global-theme #main-content h2 { font-size: clamp(1.625rem, 3.2vw, 2.625rem); line-height: 1.14; }
+body.sarine-global-theme #main-content h3 { font-size: clamp(1rem, 1.65vw, 1.375rem); line-height: 1.25; }
 body.sarine-global-theme #main-content p,
-body.sarine-global-theme #main-content li,
-body.sarine-global-theme #main-content label {
-  color: #454149 !important;
+body.sarine-global-theme #main-content li { font-size: clamp(0.875rem, 1.05vw, 1rem); line-height: 1.65; }
+@media (max-width: 767px) {
+  body.sarine-global-theme #main-content .site-container { padding-left: 16px; padding-right: 16px; }
+  body.sarine-global-theme #main-content button,
+  body.sarine-global-theme #main-content a[role="button"] { min-height: 44px; min-width: 44px; }
+  body.sarine-global-theme #main-content .product-grid { gap: 10px; }
+  body.sarine-global-theme #main-content .product-grid > article > div:last-child { padding: 8px; }
 }
-body.sarine-global-theme #main-content [class*="bg-[#F7F0FA]"],
-body.sarine-global-theme #main-content [class*="bg-[#F7F0FA]/"],
-body.sarine-global-theme #main-content [class*="bg-[#E7DCEB]"],
-body.sarine-global-theme #main-content [class*="bg-[#B69ACF]"],
-body.sarine-global-theme #main-content [class*="bg-[#B69ACF]/"] {
-  background-color: #FFFFFF !important;
+@media (min-width: 768px) and (max-width: 1023px) {
+  body.sarine-global-theme #main-content h1 { font-size: clamp(2.2rem, 4.5vw, 3rem); }
+  body.sarine-global-theme #main-content h2 { font-size: clamp(1.7rem, 3.4vw, 2.2rem); }
 }
-body.sarine-global-theme #main-content [class*="border-[#E7DCEB]"],
-body.sarine-global-theme #main-content [class*="border-[#B69ACF]"] {
-  border-color: #E8E5E9 !important;
+
+/* Keep homepage cards and editorial surfaces inside the approved palette. */
+body.sarine-global-theme #main-content .sarine-home {
+  background: #FFFFFF;
+  color: #563568;
 }
-body.sarine-global-theme footer a,
-body.sarine-global-theme footer p,
-body.sarine-global-theme footer h4,
-body.sarine-global-theme footer span {
-  color: #FFFFFF !important;
+body.sarine-global-theme #main-content .sarine-home > section:not(:first-child):nth-of-type(odd) {
+  background-color: #FFFFFF;
+}
+body.sarine-global-theme #main-content .sarine-home > section:not(:first-child):nth-of-type(even) {
+  background-color: #F7F0FA;
+}
+body.sarine-global-theme #main-content .sarine-home .category-grid > a,
+body.sarine-global-theme #main-content .sarine-home .category-grid > a > div:last-child,
+body.sarine-global-theme #main-content .sarine-home .product-grid > article > div:first-child,
+body.sarine-global-theme #main-content .sarine-home .occasion-grid > a > div:first-child {
+  background: #F7F0FA;
+  border-color: #B69ACF;
+}
+body.sarine-global-theme #main-content .sarine-home .product-grid > article {
+  background: #FFFFFF;
+  border-color: #B69ACF;
+}
+body.sarine-global-theme #main-content .sarine-home .category-grid > a:hover,
+body.sarine-global-theme #main-content .sarine-home .product-grid > article:hover {
+  border-color: #563568;
+}
+body.sarine-global-theme #main-content .sarine-home > section:has(img[alt="SARINE Craftsmanship and Jewellery Details"]) {
+  background: #F7F0FA;
+}
+body.sarine-global-theme #main-content .sarine-home .sarine-editorial-banner,
+body.sarine-global-theme #main-content .sarine-home .sarine-editorial-banner > div.absolute {
+  background-color: #563568;
 }
