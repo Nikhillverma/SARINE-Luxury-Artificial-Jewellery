@@ -2,7 +2,7 @@ import { pool } from "./db.js";
 
 function cleanText(value, maxLength = 500) {
   if (typeof value !== "string" && typeof value !== "number") return "";
-  return String(value).replace(/[\\u0000-\\u001f\\u007f]/g, " ").trim().slice(0, maxLength);
+  return String(value).replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, maxLength);
 }
 
 export async function recordAdminActivity(admin, event) {

@@ -170,10 +170,19 @@ router.get("/", async (req, res, next) => {
       values
     );
     const [rows] = await pool.execute(
-      `SELECT id, admin_id AS adminId, admin_name AS adminName,
-              admin_email AS adminEmail, action, entity_type AS entityType,
-              entity_id AS entityId, summary, http_method AS method,
-              route, status_code AS statusCode, created_at AS createdAt
+      `SELECT id, admin_id AS adminId,
+              COALESCE(
+                (SELECT NULLIF(a.name, '') FROM admins a WHERE a.id = admin_activity_logs.admin_id LIMIT 1),
+                NULLIF(admin_name, ''),
+                SUBSTRING_INDEX(admin_email, '@', 1)
+              ) AS adminName,
+              COALESCE(
+                (SELECT NULLIF(a.email, '') FROM admins a WHERE a.id = admin_activity_logs.admin_id LIMIT 1),
+                admin_email
+              ) AS adminEmail,
+              action, entity_type AS entityType, entity_id AS entityId,
+              summary, http_method AS method, route,
+              status_code AS statusCode, created_at AS createdAt
        FROM admin_activity_logs${where}
        ORDER BY created_at DESC, id DESC
        LIMIT ? OFFSET ?`,
