@@ -608,7 +608,7 @@ body.sarine-global-theme #main-content li {
   font-size: calc(clamp(0.875rem, 1.05vw, 1rem) * var(--sarine-global-body-scale, 1));
 }
 body.sarine-global-theme #main-content section {
-  border-color: var(--sarine-global-accent, var(--gold-light));
+  border-color: var(--footer-line);
 }
 body.sarine-global-theme #main-content [class*="bg-[#F7F0FA]"],
 body.sarine-global-theme #main-content [class*="bg-[#F7F4F8]"],
@@ -716,15 +716,15 @@ body.sarine-global-theme .sarine-global-announcement * {
   color: var(--sarine-announcement-text, #FFFFFF) !important;
 }
 body.sarine-global-theme .sarine-global-footer {
-  background-color: var(--sarine-global-footer, var(--plum)) !important;
-  color: var(--sarine-global-footer-text, var(--tint));
+  background-color: var(--plum) !important;
+  color: var(--ivory-text);
   border-color: var(--sarine-global-accent, var(--gold-light));
 }
 body.sarine-global-theme .sarine-global-footer > div:last-child {
-  background-color: var(--sarine-global-footer, var(--plum));
+  background-color: var(--plum);
 }
 body.sarine-global-theme .sarine-global-footer > div:last-child :is(p, a, h1, h2, h3, h4, span) {
-  color: var(--sarine-global-footer-text, var(--tint)) !important;
+  color: var(--footer-muted) !important;
 }
 
 /* Consistent corner treatment and the selected button variant. */
