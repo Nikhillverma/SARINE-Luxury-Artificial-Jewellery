@@ -1,83 +1,54 @@
 :root {
-  /* ==========================================================================
-     SARINE Official Design Tokens: Lavender & Plum Purple Theme
-     ========================================================================== */
+  /* SARINE original four-colour brand palette */
   color-scheme: light;
-
-  /* Official Brand Palette */
-  --color-brand-primary: #563568;    /* Deep Plum */
-  --color-brand-accent: #B8893C;     /* Antique Gold */
-  --color-brand-background: #F7F4F8; /* Soft Lavender Background */
-  --color-brand-gold: #B8893C;       /* Champagne Gold */
-
-  --color-text-primary: #1D1B1F;     /* Primary Text */
-  --color-text-secondary: #5C5660;   /* Secondary Text */
-
-  --color-surface: #FFFFFF;          /* White */
-  --color-border: #E9E5E9;           /* Subtle Border */
-  --color-hover: #6B4A7D;            /* Hover Lavender */
-  --color-focus: #563568;            /* Focus Ring */
-
-  /* Backgrounds & Surfaces */
-  --color-bg-primary: #FFFFFF;       /* Soft Lavender Background */
-  --color-bg-surface: #F7F4F8;       /* Subtle plum/lavender panel background */
-  --color-bg-elevated: #FFFFFF;      /* Pure white content surface */
-  --color-bg-subtle: #F7F4F8;        /* Subtle lavender separator background */
-
-  /* Text & Contrast */
-  --color-text-muted: #5C5660;       /* Muted secondary text */
-  --color-text-inverse: #FFFFFF;     /* White text on dark surfaces */
-
-  /* Accents & Borders */
-  --color-accent-gold: #B8893C;      /* Champagne gold decorative details */
-  --color-accent-gold-hover: #9B7130;
-  --color-accent-gold-soft: #F7F4F8;
-  --color-border-subtle: #E9E5E9;    /* Faint separator lines */
-  --color-border-strong: #563568;    /* Interactive borders and focus */
-
-  /* Status / Feedback */
-  --color-status-success: #2E7D32;   /* Forest green */
-  --color-status-error: #C62828;     /* Rich red */
-  --color-status-info: #563568;      /* Deep Plum */
-
-  /* Header & Navigation */
+  --color-brand-primary: #563568;
+  --color-brand-accent: #B69ACF;
+  --color-brand-background: #F7F0FA;
+  --color-brand-gold: #B69ACF;
+  --color-text-primary: #563568;
+  --color-text-secondary: #563568;
+  --color-surface: #FFFFFF;
+  --color-border: #B69ACF;
+  --color-hover: #B69ACF;
+  --color-focus: #563568;
+  --color-bg-primary: #FFFFFF;
+  --color-bg-surface: #F7F0FA;
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-subtle: #F7F0FA;
+  --color-text-muted: #563568;
+  --color-text-inverse: #FFFFFF;
+  --color-accent-gold: #B69ACF;
+  --color-accent-gold-hover: #563568;
+  --color-accent-gold-soft: #F7F0FA;
+  --color-border-subtle: #B69ACF;
+  --color-border-strong: #563568;
+  --color-status-success: #563568;
+  --color-status-error: #563568;
+  --color-status-info: #563568;
   --header-height: 4.5rem;
-
-  /* Spacing Scale (4px base) */
-  --space-2xs: 0.25rem;  /* 4px */
-  --space-xs: 0.5rem;    /* 8px */
-  --space-sm: 0.75rem;   /* 12px */
-  --space-md: 1rem;      /* 16px */
-  --space-lg: 1.5rem;    /* 24px */
-  --space-xl: 2rem;      /* 32px */
-  --space-2xl: 3rem;     /* 48px */
-  --space-3xl: 4.5rem;   /* 72px */
-  --space-4xl: 6rem;     /* 96px */
-
-  /* Layout Containers */
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4.5rem;
+  --space-4xl: 6rem;
   --container-max-width: 1280px;
   --container-narrow-width: 860px;
   --container-padding: var(--space-md);
-
-  /* Border Radii (Crisp, minimal luxury feel) */
   --radius-sharp: 0px;
   --radius-sm: 2px;
   --radius-md: 4px;
   --radius-full: 9999px;
-
-  /* Shadows */
   --shadow-subtle: 0 4px 20px -2px rgba(86, 53, 104, 0.06);
   --shadow-elevated: 0 10px 30px -4px rgba(86, 53, 104, 0.10);
-
-  /* Transitions */
   --duration-fast: 150ms;
   --duration-normal: 250ms;
   --duration-slow: 400ms;
   --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
 }
-
 @media (min-width: 768px) {
-  :root {
-    --container-padding: var(--space-xl);
-  }
+  :root { --container-padding: var(--space-xl); }
 }
