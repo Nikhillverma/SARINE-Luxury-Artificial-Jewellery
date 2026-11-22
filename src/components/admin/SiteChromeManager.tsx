@@ -65,7 +65,7 @@ export const SiteChromeManager: React.FC = () => {
       <div className="rounded-xl border p-4 space-y-3">
         <h3 className="font-semibold text-[#302438]">Social profile destinations</h3>
         <div className="grid gap-3 sm:grid-cols-2">
-          {(["instagram","facebook","pinterest","youtube"] as const).map(key => field(key[0].toUpperCase()+key.slice(1)+" URL", settings.footer.social[key], value => update({ footer: { social: { ...settings.footer.social, [key]: value } } }), 300))}
+          {(["facebook","pinterest","youtube"] as const).map(key => field(key[0].toUpperCase()+key.slice(1)+" URL", settings.footer.social[key], value => update({ footer: { social: { ...settings.footer.social, [key]: value } } }), 300))}
         </div>
         <p className="text-xs text-gray-500">Use full HTTPS URLs. Leave a network's default destination until your official profile is ready.</p>
       </div>
