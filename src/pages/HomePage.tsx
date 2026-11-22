@@ -84,13 +84,13 @@ function CampaignCountdownStrip({ campaign }: { campaign: FestivalCampaign }) {
   const minutes = Math.floor((remaining % 3600000) / 60000);
   const seconds = Math.floor((remaining % 60000) / 1000);
   const label = campaign.countdownLabel?.trim() || campaign.offerLabel?.trim() || campaign.title;
-  const background = campaign.countdownBackgroundColor || "#563568";
-  const textColor = campaign.countdownTextColor || "#FFFFFF";
-  const timerColor = campaign.countdownTimerColor || "#FFE08A";
+  const background = "var(--rose-tint)";
+  const textColor = "var(--rose)";
+  const timerColor = "var(--rose)";
   if (remaining <= 0) return null;
   return (
-    <div className="inline-flex max-w-[calc(100vw-2rem)] items-center justify-center gap-2.5 sm:gap-3 rounded-full border border-white/35 px-3.5 sm:px-5 py-1.5 sm:py-2 text-[10px] sm:text-xs shadow-md backdrop-blur-md"
-      style={{ backgroundColor: `${background}CC`, color: textColor }}>
+    <div className="inline-flex max-w-[calc(100vw-2rem)] items-center justify-center gap-2.5 sm:gap-3 rounded-full border border-[var(--rose-border)] px-3.5 sm:px-5 py-1.5 sm:py-2 text-[10px] sm:text-xs shadow-md backdrop-blur-md"
+      style={{ backgroundColor: background, color: textColor }}>
       <span className="max-w-[42vw] truncate font-semibold uppercase tracking-[0.08em]">{label}</span>
       <span aria-hidden="true" className="opacity-60">|</span>
       <span className="whitespace-nowrap font-mono font-semibold tabular-nums" style={{ color: timerColor }}>
@@ -501,7 +501,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         {/* Persistent offer badge: remains visible even when campaign artwork includes its own copy. */}
         {currentHero.campaign?.offerLabel && (
           <div className="absolute top-6 left-4 sm:left-8 lg:left-[max(2rem,calc((100vw-1200px)/2))] z-20 pointer-events-none">
-            <span className="inline-flex items-center rounded-full border border-white/60 bg-[#563568]/95 px-4 py-2 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-white shadow-lg backdrop-blur-sm">
+            <span className="inline-flex items-center rounded-full border border-[var(--white)] bg-[var(--plum)] px-4 py-2 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-white shadow-lg backdrop-blur-sm">
               {currentHero.campaign.offerLabel}
             </span>
           </div>
@@ -510,26 +510,26 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         <div className="site-container h-full flex flex-col justify-between py-8 md:py-12 pointer-events-none relative z-10">
           {/* Campaign artwork can be a complete clickable creative; editable campaigns use the normal hero overlay. */}
           {!currentHero.campaign?.artworkOnly && <div className="my-auto max-w-xl md:max-w-lg lg:max-w-xl pointer-events-auto">
-            <span className="text-[12px] sm:text-[13px] uppercase tracking-[0.2em] text-white font-medium block mb-2 sm:mb-3 [text-shadow:0_2px_8px_rgba(0,0,0,0.45)]">
+            <span className="text-[12px] sm:text-[13px] uppercase tracking-[0.2em] !text-[color:var(--gold-light)] font-medium block mb-2 sm:mb-3 [text-shadow:0_2px_8px_rgba(43,26,51,0.45)]">
               {currentHero.eyebrow}
             </span>
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-[46px] leading-[1.16] text-white font-normal tracking-tight [text-shadow:0_2px_12px_rgba(0,0,0,0.45)]">
+            <h1 className="font-serif text-3xl sm:text-4xl lg:text-[46px] leading-[1.16] !text-white font-normal tracking-tight [text-shadow:0_2px_12px_rgba(43,26,51,0.45)]">
               {currentHero.heading}
             </h1>
-            <p className="mt-2 sm:mt-3 text-[13px] sm:text-sm text-white leading-relaxed max-w-md font-sans [text-shadow:0_1px_8px_rgba(0,0,0,0.45)]">
+            <p className="mt-2 sm:mt-3 text-[13px] sm:text-sm !text-white leading-relaxed max-w-md font-sans [text-shadow:0_1px_8px_rgba(43,26,51,0.45)]">
               {currentHero.paragraph}
             </p>
             <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-3">
               <CampaignDestinationLink
                 to={currentHero.shopLink}
-                className="px-6 sm:px-7 py-3 min-h-11 bg-[#4A1D5C] text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[#B8893C] hover:text-[#2B1A33] transition-colors rounded-[6px] inline-flex items-center gap-2 shadow-xs"
+                className="px-6 sm:px-7 py-3 min-h-11 bg-[var(--gold)] text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[var(--white)] hover:text-[color:var(--plum)] transition-colors rounded-[6px] inline-flex items-center gap-2 shadow-xs"
               >
                 <span>{currentHero.ctaText}</span>
                 <ArrowRight size={13} />
               </CampaignDestinationLink>
               <a
                 href="#categories"
-                className="px-6 sm:px-7 py-3 min-h-11 bg-[#4A1D5C]/90 border border-white/80 text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[#B8893C] hover:text-[#2B1A33] transition-colors rounded-[6px]"
+                className="px-6 sm:px-7 py-3 min-h-11 bg-[var(--white)] border border-[var(--white)] text-[color:var(--plum)] text-xs sm:text-[13px] font-sans font-medium hover:bg-[var(--gold)] hover:text-white transition-colors rounded-[6px]"
               >
                 Explore Categories
               </a>
@@ -546,8 +546,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                   onClick={() => setActiveSlide(idx)}
                   className={`pb-1 transition-all cursor-pointer ${
                     activeSlide === idx
-                      ? 'text-[#563568] font-semibold border-b-2 border-[#B69ACF]'
-                      : 'hover:text-[#B69ACF]'
+                      ? 'text-[color:var(--gold-light)] font-semibold border-b-2 border-[var(--gold-light)]'
+                      : 'text-[color:var(--footer-muted)]'
                   }`}
                   aria-label={`Go to slide 0${idx + 1}`}
                 >
@@ -563,20 +563,20 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 onClick={() => setIsHeroPaused(paused => !paused)}
                 aria-label={isHeroPaused ? "Play automatic hero slides" : "Pause automatic hero slides"}
                 aria-pressed={isHeroPaused}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E7DCEB] bg-white/90 hover:bg-[#F0E6F4] hover:border-[#B69ACF] text-[#302438] hover:text-[#563568] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[var(--border)] bg-[var(--white)] hover:bg-[var(--gold)] hover:border-[var(--gold)] text-[color:var(--plum)] hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
               >
                 {isHeroPaused ? <Play size={16} /> : <Pause size={16} />}
               </button>
               <button
                 onClick={prevSlide}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E7DCEB] bg-white/90 hover:bg-[#F0E6F4] hover:border-[#B69ACF] text-[#302438] hover:text-[#563568] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[var(--border)] bg-[var(--white)] hover:bg-[var(--gold)] hover:border-[var(--gold)] text-[color:var(--plum)] hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
                 aria-label="Previous slide"
               >
                 <ChevronLeft size={18} />
               </button>
               <button
                 onClick={nextSlide}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E7DCEB] bg-white/90 hover:bg-[#F0E6F4] hover:border-[#B69ACF] text-[#302438] hover:text-[#563568] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[var(--border)] bg-[var(--white)] hover:bg-[var(--gold)] hover:border-[var(--gold)] text-[color:var(--plum)] hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
                 aria-label="Next slide"
               >
                 <ChevronRight size={18} />
