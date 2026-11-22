@@ -687,15 +687,15 @@ body.sarine-global-theme footer > div:not(:first-child) {
   background-color: #4A1D5C !important;
   color: #FBF7F2 !important;
 }
-body.sarine-global-theme footer a,
-body.sarine-global-theme footer p,
-body.sarine-global-theme footer h4,
-body.sarine-global-theme footer span,
-body.sarine-global-theme footer svg {
+body.sarine-global-theme footer > div:not(:first-child) a,
+body.sarine-global-theme footer > div:not(:first-child) p,
+body.sarine-global-theme footer > div:not(:first-child) h4,
+body.sarine-global-theme footer > div:not(:first-child) span,
+body.sarine-global-theme footer > div:not(:first-child) svg {
   color: #FBF7F2;
 }
-body.sarine-global-theme footer a:hover,
-body.sarine-global-theme footer a:hover * {
+body.sarine-global-theme footer > div:not(:first-child) a:hover,
+body.sarine-global-theme footer > div:not(:first-child) a:hover * {
   color: #B8893C !important;
 }
 body.sarine-global-theme header.sticky,
