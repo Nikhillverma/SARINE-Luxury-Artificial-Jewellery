@@ -74,7 +74,21 @@ export const ShopByOccasionManager: React.FC = () => {
     } finally { setBusy(false); }
   };
 
+  const cardWarnings = (item: OccasionCard) => {
+    const warnings: string[] = [];
+    if (!item.title.trim() || /^new occasion$/i.test(item.title.trim())) warnings.push("Add a distinctive occasion title.");
+    if (!item.subtitle.trim() || /^discover the collection$/i.test(item.subtitle.trim())) warnings.push("Add a short customer-facing description.");
+    if (!item.image || /product-placeholder/i.test(item.image)) warnings.push("Choose a real occasion image.");
+    if (!item.link.startsWith("/") || item.link.startsWith("//")) warnings.push("Use an internal destination beginning with /.");
+    return warnings;
+  };
+  const incompleteVisibleCards = draft.filter(item => item.active && cardWarnings(item).length > 0);
+
   const save = async () => {
+    if (incompleteVisibleCards.length > 0) {
+      setError(`Complete or hide ${incompleteVisibleCards.length} visible occasion card(s) before saving. Hidden draft cards can remain incomplete.`);
+      return;
+    }
     setBusy(true); setError(""); setMessage("");
     try {
       const normalized = draft.map((item, sortOrder) => ({ ...item, id: makeId(item.id), sortOrder }));
@@ -116,14 +130,15 @@ export const ShopByOccasionManager: React.FC = () => {
           </div>
           <div className="rounded-lg border border-dashed border-[#B69ACF] bg-[#F7F0FA] p-3 space-y-2"><label className="block text-sm font-medium text-[#563568]">Occasion image</label><p className="text-xs text-gray-600">Choose a JPEG, PNG or WebP image from your computer. It uploads to Hostinger automatically.</p><div className="flex flex-wrap items-center gap-2"><label className="inline-flex cursor-pointer items-center rounded-lg bg-[#563568] px-3 py-2 text-xs font-medium text-white"> {item.image ? "Replace image" : "Upload image"} <input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e => { void upload(index, e.target.files?.[0]); e.currentTarget.value = ""; }} className="sr-only" /></label><button type="button" disabled={busy || !item.image} onClick={() => update(index, { image: "/images/product-placeholder.png" })} className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs text-red-700 disabled:opacity-40">Remove image</button></div></div>
           <label className="block text-xs space-y-1"><span>Shop destination (internal site path)</span><input value={item.link} maxLength={500} onChange={e => update(index, { link: e.target.value })} placeholder="/shop?search=festive" className="w-full border rounded-lg p-2 text-sm" /></label>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={item.active} onChange={e => update(index, { active: e.target.checked })} /> Show this card on homepage</label>
+          {cardWarnings(item).length > 0 && <div role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900"><strong>{item.active ? "Needs attention before saving" : "Draft quality check"}</strong><ul className="mt-1 list-disc pl-4">{cardWarnings(item).map(warning => <li key={warning}>{warning}</li>)}</ul></div>}
+          <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={item.active} onChange={e => update(index, { active: e.target.checked })} /> Show this card on homepage</label>
         </article>)}
       </div>
       {draft.length === 0 && <p className="text-sm text-gray-500 border rounded-xl p-4">No occasion cards. Add a card to display the Shop by Occasion section.</p>}
     </>}
     <div className="flex flex-wrap gap-2">
       <button type="button" disabled={busy || loading || draft.length >= 12} onClick={add} className="px-4 py-2 rounded-lg border text-sm disabled:opacity-50">Add occasion</button>
-      <button type="button" disabled={busy || loading} onClick={() => void save()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy ? "Saving…" : "Save occasion cards"}</button>
+      <button type="button" disabled={busy || loading || incompleteVisibleCards.length > 0} onClick={() => void save()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy ? "Saving…" : "Save occasion cards"}</button>
       <button type="button" disabled={busy || loading} onClick={() => void load()} className="px-4 py-2 rounded-lg border text-sm disabled:opacity-50">Reload</button>
       <a href="/" target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg border text-sm">Preview homepage</a>
     </div>
