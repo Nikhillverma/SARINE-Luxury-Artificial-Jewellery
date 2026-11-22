@@ -25,7 +25,8 @@ function formatReviewDate(value: string): string {
 }
 function csvCell(value: unknown): string {
   let text = String(value ?? '');
-  if (/^[=+@\\-\\t\\r]/.test(text)) text = "'" + text;
+  const first = text.charCodeAt(0);
+  if ([61, 43, 45, 64, 9, 13].includes(first)) text = "'" + text;
   return '"' + text.replace(/"/g, '""') + '"';
 }
 function downloadReviews(reviews: ProductReview[]) {
@@ -35,8 +36,8 @@ function downloadReviews(reviews: ProductReview[]) {
     review.comment, review.status, review.verified ? 'Yes' : 'No', review.orderNumber,
     review.adminReply, review.date
   ]);
-  const csv = [headers, ...rows].map(row => row.map(csvCell).join(',')).join('\\r\\n');
-  const blob = new Blob(['\\uFEFF', csv], { type: 'text/csv;charset=utf-8' });
+  const csv = [headers, ...rows].map(row => row.map(csvCell).join(',')).join(String.fromCharCode(13, 10));
+  const blob = new Blob([String.fromCharCode(0xfeff), csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
