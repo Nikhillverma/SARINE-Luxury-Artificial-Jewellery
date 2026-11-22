@@ -15,6 +15,7 @@ import { WishlistDrawer } from './components/WishlistDrawer';
 import { CustomerLoginPrompt } from './components/CustomerLoginPrompt';
 import { Footer } from './components/Footer';
 import { setPageMetadata } from './utils/seo';
+const CmsPublicPage = lazy(() => import('./pages/CmsPublicPage').then((module) => ({ default: module.CmsPublicPage })));
 const HomePage = lazy(() => import('./pages/HomePage').then((module) => ({ default: module.HomePage })));
 const CollectionPage = lazy(() => import('./pages/CollectionPage').then((module) => ({ default: module.CollectionPage })));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage').then((module) => ({ default: module.ProductDetailPage })));
@@ -158,6 +159,7 @@ function MainAppShell() {
           <Route path="/admin/marketing" element={<AdminMarketingPage />} />
           <Route path="/admin/campaigns" element={<AdminCampaignsPage />} />
           <Route path="/admin/storefront" element={<AdminStorefrontPage />} />
+          <Route path="/pages/:slug" element={<CmsPublicPage />} />
           <Route path="/admin/carousel-features" element={<AdminCarouselFeaturesPage />} />
           <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           <Route path="/admin/copilot" element={<Navigate to="/admin" replace />} />
