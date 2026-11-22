@@ -287,7 +287,7 @@ export const AdminOrdersPage: React.FC = () => {
     const columns = ['Order Number', 'Created At', 'Customer', 'Email', 'Phone', 'City', 'State', 'Pincode', 'Items', 'Subtotal', 'Shipping Fee', 'Total', 'Payment Method', 'Payment Status', 'Order Status', 'Courier', 'Tracking Number'];
     const cell = (value: unknown) => {
       const text = String(value ?? '');
-      const safe = /^[=+@\\-\\t\\r]/.test(text) ? `'${text}` : text;
+      const safe = ['=', '+', '-', '@', String.fromCharCode(9), String.fromCharCode(13)].includes(text.charAt(0)) ? `'${text}` : text;
       return `"${safe.replace(/"/g, '""')}"`;
     };
     const rows = filteredOrders.map((order) => [order.orderNumber, order.createdAt, order.customer?.name, order.customer?.email, order.customer?.phone, order.shippingAddress?.city, order.shippingAddress?.state, order.shippingAddress?.pincode, (order.lines || []).map((line) => `${line.name} x${line.quantity}`).join('; '), order.subtotal, order.shippingFee, order.total, order.paymentMethod, order.paymentStatus, order.orderStatus, order.courierName, order.trackingNumber]);
