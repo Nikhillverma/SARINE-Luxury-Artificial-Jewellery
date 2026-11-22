@@ -74,6 +74,8 @@ interface AdminLayoutProps {
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [user, setUser] = useState<AdminIdentity | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sessionError, setSessionError] = useState<string | null>(null);
+  const [sessionRetry, setSessionRetry] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -165,15 +167,24 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     let active = true;
 
     const verifySession = async () => {
-      const admin = await getAdminSession();
+      setLoading(true);
+      setSessionError(null);
+      try {
+        const admin = await getAdminSession();
+        if (!active) return;
 
-      if (!active) return;
-
-      setUser(admin);
-      setLoading(false);
-
-      if (!admin && location.pathname !== '/admin/login') {
-        navigate('/admin/login', { replace: true });
+        setUser(admin);
+        if (!admin && location.pathname !== '/admin/login') {
+          navigate('/admin/login', { replace: true });
+        }
+      } catch (error) {
+        if (!active) return;
+        setUser(null);
+        setSessionError(error instanceof Error
+          ? error.message
+          : 'The admin authentication service is temporarily unavailable.');
+      } finally {
+        if (active) setLoading(false);
       }
     };
 
@@ -182,7 +193,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     return () => {
       active = false;
     };
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, sessionRetry]);
   const handleSignOut = async () => {
     try {
       await adminLogout();
@@ -302,6 +313,28 @@ interface NavItem {
           <div className="w-7 h-7 border-2 border-[#563568] border-t-transparent rounded-full animate-spin"></div>
           <span className="font-serif text-[#563568] tracking-wider text-sm">Loading SARINE Atelier Workspace...</span>
         </div>
+      </div>
+    );
+  }
+
+  if (sessionError) {
+    return (
+      <div className="min-h-screen bg-[#F7F0FA] flex items-center justify-center p-6">
+        <section className="w-full max-w-md rounded-xl border border-[#E7DCEB] bg-white p-7 text-center shadow-sm" role="alert">
+          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[#FAF5FC] text-[#704A83]">
+            <AlertTriangle size={20} />
+          </div>
+          <h1 className="mt-4 font-serif text-xl text-[#302438]">Admin session could not be verified</h1>
+          <p className="mt-2 text-sm leading-6 text-[#6F6475]">{sessionError}</p>
+          <p className="mt-2 text-xs text-[#8B7598]">This does not mean your password is incorrect. Your admin data has not been changed.</p>
+          <button
+            type="button"
+            onClick={() => setSessionRetry((value) => value + 1)}
+            className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#563568] px-5 text-sm font-medium text-white hover:bg-[#704A83]"
+          >
+            <RefreshCw size={15} /> Retry connection
+          </button>
+        </section>
       </div>
     );
   }

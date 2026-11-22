@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { adminLogin, getAdminSession } from '../../lib/adminAuth';
+import { AdminAuthError, adminLogin, getAdminSession } from '../../lib/adminAuth';
 import {
   Lock,
   Mail,
@@ -30,14 +30,19 @@ export const AdminLoginPage: React.FC = () => {
     let active = true;
 
     const checkSession = async () => {
-      const admin = await getAdminSession();
-
-      if (active && admin) {
-        navigate('/admin', { replace: true });
-      }
-
-      if (active) {
-        setCheckingSession(false);
+      try {
+        const admin = await getAdminSession();
+        if (active && admin) {
+          navigate('/admin', { replace: true });
+        }
+      } catch (err) {
+        if (active) {
+          setError(err instanceof Error
+            ? 'Unable to verify your admin session because the service is temporarily unavailable. Please try signing in again.'
+            : 'Unable to verify your admin session. Please try again.');
+        }
+      } finally {
+        if (active) setCheckingSession(false);
       }
     };
 
@@ -90,7 +95,17 @@ export const AdminLoginPage: React.FC = () => {
       navigate('/admin', { replace: true });
     } catch (err) {
       console.error('[AdminLogin] Authentication failure:', err);
-      setError('Invalid email or password. Please try again.');
+      if (err instanceof AdminAuthError && err.status === 401) {
+        setError('Invalid email or password. Please check your details and try again.');
+      } else if (err instanceof AdminAuthError && err.status === 429) {
+        setError('Too many sign-in attempts. Please wait 15 minutes before trying again.');
+      } else if (err instanceof AdminAuthError && err.status >= 500) {
+        setError('The SARINE authentication service is temporarily unavailable. Your password has not been changed. Please try again shortly.');
+      } else {
+        setError(err instanceof Error
+          ? err.message
+          : 'Unable to sign in right now. Please check your connection and try again.');
+      }
     } finally {
       setLoading(false);
     }
