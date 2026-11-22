@@ -18,7 +18,7 @@ import { Category } from '../types/category';
 import { ProductCard } from '../components/ProductCard';
 import { formatInr } from '../utils/currency';
 import { festivalCampaignService, type FestivalCampaign } from '../services/hostinger/festivalCampaignService';
-import { hostingerStorefrontService, type EditorialContent, type HomepageLayout } from '../services/hostinger/hostingerStorefrontService';
+import { hostingerStorefrontService, DEFAULT_HOMEPAGE_CONTENT, type EditorialContent, type HomepageContent, type HomepageLayout } from '../services/hostinger/hostingerStorefrontService';
 import {
   ArrowRight,
   ChevronLeft,
@@ -195,6 +195,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const [isHeroPaused, setIsHeroPaused] = useState(false);
   const [managedHeroSlides, setManagedHeroSlides] = useState<Array<{id:string; tagline:string; title:string; subtitle:string; ctaText:string; ctaLink:string; imageUrl:string}>>([]);
   const [editorial, setEditorial] = useState<EditorialContent>({ eyebrow: 'EDITORIAL COLLECTION', title: 'The Art of Everyday Elegance', description: 'A curated collection that blends classic beauty with modern sensibilities.', ctaText: 'Explore the Collection', ctaLink: '/shop', imageUrl: HOMEPAGE_IMAGES.editorialBanner, active: true });
+  const [homepageContent, setHomepageContent] = useState<HomepageContent>(DEFAULT_HOMEPAGE_CONTENT);
 
   // Independent, touch-friendly horizontal tracks for homepage carousels.
   const heroTouchStartX = useRef<number | null>(null);
@@ -305,6 +306,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     hostingerStorefrontService.getPublicEditorial()
       .then(result => { if (!cancelled && result.editorial) setEditorial(result.editorial); else if (!cancelled && result.editorial === null) setEditorial(current => ({ ...current, active: false })); })
       .catch(error => console.warn('[HomePage] Editorial content unavailable; using default content.', error));
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    hostingerStorefrontService.getPublicHomepageContent()
+      .then(result => { if (!cancelled && result.content) setHomepageContent(result.content); })
+      .catch(error => console.warn('[HomePage] Editable homepage content unavailable; using the built-in defaults.', error));
     return () => { cancelled = true; };
   }, []);
 
@@ -881,50 +890,23 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         </div>
       </section>
 
+
       {/* =========================================================================
-          SHOP BY PRICE
-          4 pill buttons: Under ₹999, ₹1,000 to ₹1,999, ₹2,000 and above, All pieces
-          Linking to /shop with price presets
+          SHOP BY PRICE — content managed in Storefront Studio
           ========================================================================= */}
       <section style={{ order: sectionOrder("price"), display: sectionVisible("price") ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 border-t border-[#E7DCEB] bg-[#F7F0FA]">
         <div className="site-container">
           <div className="w-full text-center mb-4">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
-              PRICE CURATION
-            </span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
-              Shop by Price
-            </h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
-              Find stunning handcrafted jewellery suited to your style and budget.
-            </p>
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">{homepageContent.price.eyebrow}</span>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">{homepageContent.price.title}</h2>
+            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">{homepageContent.price.description}</p>
           </div>
-
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 max-w-2xl mx-auto">
-            <Link
-              to="/shop?price=under-999"
-              className="px-6 sm:px-8 py-3 bg-white border border-[#E7DCEB] hover:border-[#B69ACF] hover:text-[#563568] hover:bg-[#F0E6F4] text-[#302438] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
-            >
-              Under ₹999
-            </Link>
-            <Link
-              to="/shop?price=1000-2000"
-              className="px-6 sm:px-8 py-3 bg-white border border-[#E7DCEB] hover:border-[#B69ACF] hover:text-[#563568] hover:bg-[#F0E6F4] text-[#302438] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
-            >
-              ₹1,000 to ₹1,999
-            </Link>
-            <Link
-              to="/shop?price=above-2000"
-              className="px-6 sm:px-8 py-3 bg-white border border-[#E7DCEB] hover:border-[#B69ACF] hover:text-[#563568] hover:bg-[#F0E6F4] text-[#302438] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
-            >
-              ₹2,000 and above
-            </Link>
-            <Link
-              to="/shop"
-              className="px-6 sm:px-8 py-3 bg-white border border-[#E7DCEB] hover:border-[#B69ACF] hover:text-[#563568] hover:bg-[#F0E6F4] text-[#302438] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap"
-            >
-              All pieces
-            </Link>
+            {homepageContent.price.links.map((item, index) => (
+              <Link key={index} to={item.href} className="px-6 sm:px-8 py-3 bg-white border border-[#E7DCEB] hover:border-[#B69ACF] hover:text-[#563568] hover:bg-[#F0E6F4] text-[#302438] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap">
+                {item.label}
+              </Link>
+            ))}
           </div>
         </div>
       </section>
@@ -942,7 +924,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="lg:col-span-5">
               <div className="aspect-[4/3] sm:aspect-[1/1] bg-[#EBDFF2] overflow-hidden rounded-xs border border-[#E7DCEB]">
                 <img
-                  src={HOMEPAGE_IMAGES.ourStory}
+                  src={homepageContent.story.imageUrl || HOMEPAGE_IMAGES.ourStory}
                   alt="SARINE Craftsmanship and Jewellery Details"
                   loading="lazy"
                   decoding="async"
@@ -957,26 +939,25 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               {/* Story Narrative */}
               <div className="flex-1">
                 <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
-                  OUR STORY
+                  {homepageContent.story.eyebrow}
                 </span>
 
                 <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal leading-tight">
-                  More Than Just Jewellery
+                  {homepageContent.story.title}
                 </h2>
 
-                <p className="mt-4 text-xs sm:text-sm text-[#6F6475] leading-relaxed font-sans">
-                  SARINE is a premium Indian fashion jewellery brand created to bring timeless elegance to your everyday moments. We celebrate traditional motifs through modern design, curating versatile pieces that seamlessly elevate both celebrations and daily attire.
-                </p>
-                <p className="mt-3 text-xs sm:text-sm text-[#6F6475] leading-relaxed font-sans">
-                  We believe in accessible luxury — exquisite craftsmanship, refined finishes, and enduring beauty at honest, direct prices. Every piece is crafted so you can express your personal grace with confidence and ease.
-                </p>
+                {homepageContent.story.paragraphs.map((paragraph, index) => (
+                  <p key={index} className={index === 0 ? "mt-4 text-xs sm:text-sm text-[#6F6475] leading-relaxed font-sans" : "mt-3 text-xs sm:text-sm text-[#6F6475] leading-relaxed font-sans"}>
+                    {paragraph}
+                  </p>
+                ))}
 
                 <div className="mt-7">
                   <Link
-                    to="/about"
+                    to={homepageContent.story.ctaLink}
                     className="px-6 py-3 bg-[#563568] text-white text-xs font-sans font-medium hover:bg-[#A184BD] transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"
                   >
-                    <span>Our Story</span>
+                    <span>{homepageContent.story.ctaText}</span>
                     <ArrowRight size={13} />
                   </Link>
                 </div>
@@ -985,50 +966,22 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               {/* Thin Vertical Divider (Desktop) */}
               <div className="hidden md:block w-[1px] bg-[#E7DCEB] self-stretch"></div>
 
-              {/* 3 Icon Rows */}
+              {/* Three editable brand pillars */}
               <div className="w-full md:w-64 space-y-5 pt-2">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-xs text-[#563568] shrink-0 bg-[#FAF5FC] border border-[#E7DCEB]">
-                    <Gem size={18} strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-medium text-[#302438] leading-snug">
-                      Thoughtfully Designed
-                    </h3>
-                    <p className="text-[11px] text-[#6F6475] leading-tight mt-0.5">
-                      for Everyday Elegance
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-xs text-[#563568] shrink-0 bg-[#FAF5FC] border border-[#E7DCEB]">
-                    <Sparkles size={18} strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-medium text-[#302438] leading-snug">
-                      Artisanal Heritage
-                    </h3>
-                    <p className="text-[11px] text-[#6F6475] leading-tight mt-0.5">
-                      & Modern Craft
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-xs text-[#563568] shrink-0 bg-[#FAF5FC] border border-[#E7DCEB]">
-                    <ShieldCheck size={18} strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-medium text-[#302438] leading-snug">
-                      Accessible Luxury
-                    </h3>
-                    <p className="text-[11px] text-[#6F6475] leading-tight mt-0.5">
-                      for Every You
-                    </p>
-                  </div>
-                </div>
+                {homepageContent.story.pillars.map((pillar, index) => {
+                  const PillarIcon = [Gem, Sparkles, ShieldCheck][index] || Gem;
+                  return <div key={index} className="flex items-start gap-3">
+                    <div className="p-2 rounded-xs text-[#563568] shrink-0 bg-[#FAF5FC] border border-[#E7DCEB]">
+                      <PillarIcon size={18} strokeWidth={1.5} />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-medium text-[#302438] leading-snug">{pillar.title}</h3>
+                      <p className="text-[11px] text-[#6F6475] leading-tight mt-0.5">{pillar.description}</p>
+                    </div>
+                  </div>;
+                })}
               </div>
+
             </div>
           </div>
         </div>
@@ -1052,82 +1005,43 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         </section>
       )}
 
+
       {/* =========================================================================
-          8. JEWELLERY CARE & PRESERVATION GUIDE
+          JEWELLERY CARE GUIDE — editable in Storefront Studio
           ========================================================================= */}
       <section style={{ order: sectionOrder("care-guide"), display: sectionVisible("care-guide") ? undefined : "none" }} className="py-7 sm:py-9 border-t border-[#E7DCEB] bg-white">
         <div className="site-container">
           <div className="max-w-[720px] mx-auto text-center mb-6">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
-              ATELIER CARE PHILOSOPHY
-            </span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
-              The Art of Jewellery Preservation
-            </h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed">
-              Every SARINE piece is crafted with protective seals and demi-fine gold plating. Follow these four timeless steps to preserve its radiant shine for generations.
-            </p>
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">{homepageContent.care.eyebrow}</span>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">{homepageContent.care.title}</h2>
+            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed">{homepageContent.care.description}</p>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-center space-y-2">
-              <span className="w-8 h-8 rounded-full bg-[#563568] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">1</span>
-              <h3 className="font-serif text-base text-[#302438]">The Last Touch</h3>
-              <p className="text-xs text-[#6F6475] leading-relaxed">
-                Put your jewellery on last after perfumes, lotions, and hair styling sprays have dried completely.
-              </p>
-            </div>
-
-            <div className="p-5 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-center space-y-2">
-              <span className="w-8 h-8 rounded-full bg-[#563568] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">2</span>
-              <h3 className="font-serif text-base text-[#302438]">Air-Tight Storage</h3>
-              <p className="text-xs text-[#6F6475] leading-relaxed">
-                Store each piece in its individual velvet pouch or zip bag to prevent moisture and accidental scratches.
-              </p>
-            </div>
-
-            <div className="p-5 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-center space-y-2">
-              <span className="w-8 h-8 rounded-full bg-[#563568] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">3</span>
-              <h3 className="font-serif text-base text-[#302438]">Gentle Cleaning</h3>
-              <p className="text-xs text-[#6F6475] leading-relaxed">
-                Wipe gently with a dry soft microfiber cloth after wear to remove skin oils before returning to storage.
-              </p>
-            </div>
-
-            <div className="p-5 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-center space-y-2">
-              <span className="w-8 h-8 rounded-full bg-[#563568] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">4</span>
-              <h3 className="font-serif text-base text-[#302438]">Moisture Barrier</h3>
-              <p className="text-xs text-[#6F6475] leading-relaxed">
-                Keep pieces away from steam, pool chlorine, and water basins to maintain pristine prong tension.
-              </p>
-            </div>
+            {homepageContent.care.steps.map((step, index) => (
+              <div key={index} className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-center space-y-2">
+                <span className="w-8 h-8 rounded-full bg-[#563568] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">{index + 1}</span>
+                <h3 className="font-serif text-base text-[#302438]">{step.title}</h3>
+                <p className="text-xs text-[#6F6475] leading-relaxed">{step.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
+
       {/* =========================================================================
-          9. STAY IN TOUCH
+          STAY IN TOUCH — editable in Storefront Studio
           ========================================================================= */}
       <section style={{ order: sectionOrder("stay-in-touch"), display: sectionVisible("stay-in-touch") ? undefined : "none" }} className="py-7 sm:py-9 lg:py-11 bg-[#F7F0FA]">
         <div className="site-container">
           <div className="max-w-[620px] mx-auto text-center">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
-              STAY IN TOUCH
-            </span>
-
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
-              Connect With SARINE
-            </h2>
-
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">{homepageContent.contact.eyebrow}</span>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">{homepageContent.contact.title}</h2>
             <p className="mt-3 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed">
-              Have questions about styling, care, or your order? Connect with our customer care team on our{' '}
-              <Link
-                to="/contact"
-                className="text-[#563568] font-medium underline underline-offset-4 hover:text-[#B69ACF] transition-colors"
-              >
-                Contact page
-              </Link>
-              .
+              {homepageContent.contact.description}{" "}
+              <Link to={homepageContent.contact.linkHref} className="text-[#563568] font-medium underline underline-offset-4 hover:text-[#B69ACF] transition-colors">
+                {homepageContent.contact.linkText}
+              </Link>.
             </p>
           </div>
         </div>
