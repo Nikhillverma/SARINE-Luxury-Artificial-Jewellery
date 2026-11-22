@@ -1079,6 +1079,11 @@ body.sarine-global-theme #main-content .sarine-home > section:not(:first-child) 
   line-height: 1.65;
 }
 
+
+/* The photography-led hero keeps its white-on-image headline treatment. */
+body.sarine-global-theme #main-content .sarine-home > section:first-child h1 {
+  color: #FFFFFF !important;
+}
 /* Category and product cards: white surfaces, restrained borders and subtle
    elevation. Product imagery, card dimensions and grid behaviour are untouched. */
 body.sarine-global-theme #main-content .sarine-home .category-grid > *,
@@ -1116,6 +1121,13 @@ body.sarine-global-theme #main-content button[class*="bg-[#563568]"]:hover {
   background-color: #B8893C;
   border-color: #B8893C;
   color: #1D1B1F;
+}
+
+/* The hero's secondary action remains an outlined, transparent control. */
+body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]/90"] {
+  background-color: transparent !important;
+  border-color: #FFFFFF !important;
+  color: #FFFFFF !important;
 }
 body.sarine-global-theme #main-content input,
 body.sarine-global-theme #main-content textarea,
