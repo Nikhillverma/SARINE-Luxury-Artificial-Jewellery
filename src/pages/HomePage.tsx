@@ -49,6 +49,10 @@ export const HOMEPAGE_IMAGES = {
    Returns primary image, falls back to other fields, then placeholder.
    Logs console.warn if product lacks an image.
    ========================================================================== */
+export function hasUsableProductImage(product?: Partial<Product> | null): boolean {
+  return Boolean(product?.images?.some(image => typeof image === 'string' && image.trim().length > 0 && !/(product-image-unavailable|placeholder|no[-_]?image)/i.test(image)));
+}
+
 export function getProductImage(product?: Partial<Product> | null): string {
   const fallback = 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80';
   if (!product) return fallback;
@@ -138,7 +142,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     hostingerStorefrontService.getPublicCuratedFavourites()
       .then(result => {
         if (!cancelled) {
-          setManualCuratedFavourites(result.products);
+          setManualCuratedFavourites(result.products.filter(hasUsableProductImage));
           setHasPublishedCuratedFavourites(result.configured);
         }
       })
@@ -151,7 +155,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     hostingerStorefrontService.getPublicExploreNow()
       .then(result => {
         if (!cancelled) {
-          setExploreProducts(result.products || []);
+          setExploreProducts((result.products || []).filter(hasUsableProductImage));
           setExploreDisplayCount(result.displayCount || 8);
           setHasPublishedExploreNow(result.configured === true);
         }
@@ -355,8 +359,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
           setCategories(sortedCats);
 
-          setBestsellers(bestSelling);
-          setCuratedFavourites(curated);
+          setBestsellers(bestSelling.filter(hasUsableProductImage));
+          setCuratedFavourites(curated.filter(hasUsableProductImage));
 
           // 4 newest products sorted by createdAt descending
           const sortedNewest = [...newest].sort((a, b) => {
@@ -365,7 +369,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             return dateB - dateA;
           });
           const arrivalList = sortedNewest.slice(0, 4);
-          setNewArrivals(arrivalList.length > 0 ? arrivalList : newest.slice(0, 5));
+          setNewArrivals((arrivalList.length > 0 ? arrivalList : newest.slice(0, 5)).filter(hasUsableProductImage));
         }
       } catch (err) {
         console.error('[HomePage] Error loading storefront collections:', err);
@@ -492,6 +496,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           </div>
         ))}
 
+        {!currentHero.campaign?.artworkOnly && <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(90deg,rgba(43,26,51,0.60)_0%,rgba(43,26,51,0.48)_42%,rgba(43,26,51,0.12)_76%,rgba(43,26,51,0)_100%)]" />}
+
         {/* Persistent offer badge: remains visible even when campaign artwork includes its own copy. */}
         {currentHero.campaign?.offerLabel && (
           <div className="absolute top-6 left-4 sm:left-8 lg:left-[max(2rem,calc((100vw-1200px)/2))] z-20 pointer-events-none">
@@ -504,26 +510,26 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         <div className="site-container h-full flex flex-col justify-between py-8 md:py-12 pointer-events-none relative z-10">
           {/* Campaign artwork can be a complete clickable creative; editable campaigns use the normal hero overlay. */}
           {!currentHero.campaign?.artworkOnly && <div className="my-auto max-w-xl md:max-w-lg lg:max-w-xl pointer-events-auto">
-            <span className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 sm:mb-3">
+            <span className="text-[12px] sm:text-[13px] uppercase tracking-[0.2em] text-white font-medium block mb-2 sm:mb-3 [text-shadow:0_2px_8px_rgba(0,0,0,0.45)]">
               {currentHero.eyebrow}
             </span>
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-[46px] leading-[1.16] text-[#302438] font-normal tracking-tight">
+            <h1 className="font-serif text-3xl sm:text-4xl lg:text-[46px] leading-[1.16] text-white font-normal tracking-tight [text-shadow:0_2px_12px_rgba(0,0,0,0.45)]">
               {currentHero.heading}
             </h1>
-            <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-[#6F6475] leading-relaxed max-w-md font-sans">
+            <p className="mt-2 sm:mt-3 text-[13px] sm:text-sm text-white leading-relaxed max-w-md font-sans [text-shadow:0_1px_8px_rgba(0,0,0,0.45)]">
               {currentHero.paragraph}
             </p>
             <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-3">
               <CampaignDestinationLink
                 to={currentHero.shopLink}
-                className="px-6 sm:px-7 py-3 bg-[#563568] text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[#A184BD] transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"
+                className="px-6 sm:px-7 py-3 min-h-11 bg-[#4A1D5C] text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[#B8893C] hover:text-[#2B1A33] transition-colors rounded-[6px] inline-flex items-center gap-2 shadow-xs"
               >
                 <span>{currentHero.ctaText}</span>
                 <ArrowRight size={13} />
               </CampaignDestinationLink>
               <a
                 href="#categories"
-                className="px-6 sm:px-7 py-3 bg-transparent border border-[#563568] text-[#563568] text-xs sm:text-[13px] font-sans font-medium hover:bg-[#EBDFF2] hover:text-[#563568] transition-colors rounded-xs"
+                className="px-6 sm:px-7 py-3 min-h-11 bg-[#4A1D5C]/90 border border-white/80 text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[#B8893C] hover:text-[#2B1A33] transition-colors rounded-[6px]"
               >
                 Explore Categories
               </a>
@@ -726,7 +732,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Arrows: absolute inside relative wrapper, never pushing or overflowing
           Consistent vertical spacing: py-6 sm:py-8 lg:py-10
           ========================================================================= */}
-      <section style={{ order: sectionOrder("best-sellers"), display: sectionVisible("best-sellers") ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E7DCEB] bg-[#F7F0FA]">
+      <section style={{ order: sectionOrder("best-sellers"), display: sectionVisible("best-sellers") && (loading || bestsellers.length > 0) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E7DCEB] bg-[#F7F0FA]">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-4 sm:mb-4">
@@ -947,7 +953,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 <div className="mt-7">
                   <Link
                     to={homepageContent.story.ctaLink}
-                    className="px-6 py-3 bg-[#563568] text-white text-xs font-sans font-medium hover:bg-[#A184BD] transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"
+                    className="px-6 py-3 min-h-11 bg-[#4A1D5C] text-white text-xs font-sans font-medium hover:bg-[#B8893C] hover:text-[#2B1A33] transition-colors rounded-[6px] inline-flex items-center gap-2 shadow-xs"
                   >
                     <span>{homepageContent.story.ctaText}</span>
                     <ArrowRight size={13} />
@@ -983,14 +989,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           7. EDITORIAL BANNER
           ========================================================================= */}
       {editorial.active && (
-        <section style={{ order: sectionOrder("editorial"), display: sectionVisible("editorial") ? undefined : "none" }} className="relative overflow-hidden bg-[#EBDFF2] border-b border-[#E7DCEB]">
+        <section style={{ order: sectionOrder("editorial"), display: sectionVisible("editorial") ? undefined : "none" }} className="sarine-editorial-banner relative overflow-hidden bg-[#2B1A33] border-b border-[#E7DCEB]">
           <img src={editorial.imageUrl || HOMEPAGE_IMAGES.editorialBanner} alt={editorial.title} loading="lazy" decoding="async" fetchPriority="low" className="absolute inset-0 w-full h-full object-cover object-center" />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#F0E6F4]/75 to-[#F0E6F4]/95 sm:via-[#F0E6F4]/80 sm:to-[#F0E6F4]/95" />
+          <div className="absolute inset-0 bg-[#2B1A33]/50" />
           <div className="site-container min-h-[200px] sm:min-h-[235px] lg:min-h-[270px] flex items-center justify-end relative z-10">
             <div className="w-full sm:w-2/3 lg:w-1/2 py-5 sm:py-6 text-left">
-              <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">{editorial.eyebrow}</span>
-              <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal leading-tight">{editorial.title}</h2>
-              <p className="mt-3 text-xs sm:text-sm text-[#6F6475] leading-relaxed max-w-md font-sans">{editorial.description}</p>
+              <span className="text-[12px] sm:text-[13px] uppercase tracking-[0.2em] text-white font-medium block mb-2 font-sans [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">{editorial.eyebrow}</span>
+              <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-white font-normal leading-tight [text-shadow:0_2px_10px_rgba(0,0,0,0.5)]">{editorial.title}</h2>
+              <p className="mt-3 text-[13px] sm:text-sm text-white leading-relaxed max-w-md font-sans [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">{editorial.description}</p>
               <div className="mt-6"><Link to={editorial.ctaLink} className="px-6 py-3 bg-[#563568] text-white text-xs font-sans font-medium hover:bg-[#A184BD] transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"><span>{editorial.ctaText}</span><ArrowRight size={13} /></Link></div>
             </div>
           </div>
