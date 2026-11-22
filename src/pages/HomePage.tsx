@@ -850,8 +850,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           </div>
 
           {sectionCarouselEnabled("occasions") && <div className="mb-3 flex items-center justify-end gap-2" aria-label="Shop by Occasion carousel controls">
-            <button type="button" onClick={() => scrollProductTrack(occasionsCarouselRef.current, 'left')} aria-label="Scroll occasions left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--gold)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--plum)] hover:bg-[var(--plum)] hover:!text-white"><ChevronLeft size={17} /></button>
-            <button type="button" onClick={() => scrollProductTrack(occasionsCarouselRef.current, 'right')} aria-label="Scroll occasions right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--gold)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--plum)] hover:bg-[var(--plum)] hover:!text-white"><ChevronRight size={17} /></button>
+            <button type="button" onClick={() => scrollProductTrack(occasionsCarouselRef.current, 'left')} aria-label="Scroll occasions left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white"><ChevronLeft size={17} /></button>
+            <button type="button" onClick={() => scrollProductTrack(occasionsCarouselRef.current, 'right')} aria-label="Scroll occasions right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white"><ChevronRight size={17} /></button>
           </div>}
           <div ref={occasionsCarouselRef} className={sectionCarouselEnabled("occasions") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"} aria-label="Shop by Occasion cards">
             {occasions.filter(item => item.active).map((item) => (
@@ -993,7 +993,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           <img src={editorial.imageUrl || HOMEPAGE_IMAGES.editorialBanner} alt={editorial.title} loading="lazy" decoding="async" fetchPriority="low" className="absolute inset-0 w-full h-full object-cover object-center" />
           <div className="absolute inset-0" style={{ backgroundColor: "transparent" }} aria-hidden="true" />
           <div className="site-container min-h-[200px] sm:min-h-[235px] lg:min-h-[270px] flex items-center justify-end relative z-10">
-            <div className="w-full sm:w-2/3 lg:w-1/2 py-5 sm:py-6 text-left">
+            <div className="w-full sm:w-2/3 lg:w-1/2 bg-[#4A1D5C] py-5 sm:py-6 text-left">
               <span className="text-[12px] sm:text-[13px] uppercase tracking-[0.2em] !text-[color:var(--gold-light)] font-medium block mb-2 font-sans [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">{editorial.eyebrow}</span>
               <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-white font-normal leading-tight [text-shadow:0_2px_10px_rgba(0,0,0,0.5)]">{editorial.title}</h2>
               <p className="mt-3 text-[13px] sm:text-sm !text-white leading-relaxed max-w-md font-sans">{editorial.description}</p>
@@ -1017,7 +1017,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {homepageContent.care.steps.map((step, index) => (
               <div key={index} className="p-4 bg-white border border-[var(--border)] rounded-xs text-center space-y-2">
-                <span className="w-8 h-8 rounded-full bg-[var(--plum)] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">{index + 1}</span>
+                <span className="w-8 h-8 rounded-full bg-[var(--plum)] !text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">{index + 1}</span>
                 <h3 className="font-serif text-base !text-[color:var(--heading)]">{step.title}</h3>
                 <p className="text-xs !text-[color:var(--body)] leading-relaxed">{step.description}</p>
               </div>
