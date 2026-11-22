@@ -117,7 +117,7 @@ export const AdminProductsPage: React.FC = () => {
     const headers = ['Product ID', 'Name', 'SKU / Slug', 'Category', 'Type', 'Price INR', 'Compare At INR', 'Cost INR', 'Stock', 'Status', 'Image URLs', 'Tags'];
     const escapeCsv = (value: unknown) => {
       let text = String(value ?? '');
-      if (typeof value === 'string' && (/^[=+@-]/.test(text) || text.startsWith('\\t') || text.startsWith('\\r'))) text = "'" + text;
+      if (typeof value === 'string' && (/^[=+@-]/.test(text) || text.startsWith('\t') || text.startsWith('\r'))) text = "'" + text;
       return '"' + text.replace(/"/g, '""') + '"';
     };
     const rows = visibleProducts.map(product => [
@@ -127,8 +127,8 @@ export const AdminProductsPage: React.FC = () => {
       product.costPrice ?? '', product.stock, product.status,
       (product.images || []).join(' | '), (product.tags || []).join(' | ')
     ]);
-    const csv = [headers, ...rows].map(row => row.map(escapeCsv).join(',')).join('\\r\\n');
-    const blob = new Blob(['\\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+    const csv = [headers, ...rows].map(row => row.map(escapeCsv).join(',')).join('\r\n');
+    const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
