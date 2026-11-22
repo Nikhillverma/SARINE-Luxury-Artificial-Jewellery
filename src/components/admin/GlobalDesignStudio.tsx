@@ -34,6 +34,8 @@ export const GlobalDesignStudio: React.FC = () => {
   const [message, setMessage] = useState("");
 
   const dirty = useMemo(() => JSON.stringify(design) !== JSON.stringify(savedDesign), [design, savedDesign]);
+  const invalidColors = colorFields.filter(field => !/^#[0-9A-Fa-f]{6}$/.test(design.colors[field.key]));
+  const canSave = invalidColors.length === 0 && !loading && !saving && !publishing;
 
   useEffect(() => {
     let active = true;
@@ -61,6 +63,7 @@ export const GlobalDesignStudio: React.FC = () => {
   };
 
   const saveDraft = async () => {
+    if (invalidColors.length) { setError("Correct the highlighted colour values before saving."); return; }
     setSaving(true); setError(""); setMessage("");
     try {
       const result = await hostingerStorefrontService.saveGlobalDesign(design);
@@ -73,6 +76,8 @@ export const GlobalDesignStudio: React.FC = () => {
   };
 
   const publish = async () => {
+    if (invalidColors.length) { setError("Correct the highlighted colour values before publishing."); return; }
+    if (!window.confirm("Publish these global design changes to the live SARINE storefront?")) return;
     setPublishing(true); setError(""); setMessage("");
     try {
       const saved = await hostingerStorefrontService.saveGlobalDesign(design);
@@ -119,6 +124,7 @@ export const GlobalDesignStudio: React.FC = () => {
 
       {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
       {message && <div role="status" aria-live="polite" className="rounded-lg border border-[#DCCBE7] bg-[#F7F0FA] p-3 text-sm text-[#563568]">{message}</div>}
+      {invalidColors.length > 0 && <p role="alert" className="text-xs text-red-700">Enter a valid six-digit hex colour for: {invalidColors.map(field => field.label).join(", ")}.</p>}
       {loading ? <p className="text-sm text-[#705E7B]" role="status">Loading your saved brand settings…</p> : (
         <>
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(300px,0.85fr)]">
@@ -147,7 +153,8 @@ export const GlobalDesignStudio: React.FC = () => {
                           maxLength={7}
                           pattern="^#[0-9A-Fa-f]{6}$"
                           aria-label={field.label + " hex code"}
-                          className="mt-1 w-full max-w-32 rounded-md border border-[#E7DCEB] px-2 py-1.5 font-mono text-xs uppercase"
+                          aria-invalid={!/^#[0-9A-Fa-f]{6}$/.test(design.colors[field.key])}
+                          className={"mt-1 w-full max-w-32 rounded-md border px-2 py-1.5 font-mono text-xs uppercase " + (/^#[0-9A-Fa-f]{6}$/.test(design.colors[field.key]) ? "border-[#E7DCEB]" : "border-red-500 bg-red-50")}
                         />
                       </span>
                     </label>
@@ -282,10 +289,10 @@ export const GlobalDesignStudio: React.FC = () => {
               <RotateCcw size={16} /> Restore brand defaults
             </button>
             <div className="flex flex-col gap-2 sm:flex-row">
-              <button type="button" onClick={() => void saveDraft()} disabled={saving || publishing || !dirty} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#563568] px-5 py-2.5 text-sm font-medium text-[#563568] hover:bg-[#F7F0FA] disabled:opacity-50">
+              <button type="button" onClick={() => void saveDraft()} disabled={!canSave || !dirty} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#563568] px-5 py-2.5 text-sm font-medium text-[#563568] hover:bg-[#F7F0FA] disabled:opacity-50">
                 <Save size={16} /> {saving ? "Saving…" : "Save draft"}
               </button>
-              <button type="button" onClick={() => void publish()} disabled={saving || publishing} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#563568] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#442753] disabled:opacity-50">
+              <button type="button" onClick={() => void publish()} disabled={!canSave} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#563568] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#442753] disabled:opacity-50">
                 {publishing ? <Upload size={16} className="animate-pulse" /> : <Check size={16} />} {publishing ? "Publishing…" : "Publish design"}
               </button>
             </div>
