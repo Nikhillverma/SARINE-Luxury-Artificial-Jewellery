@@ -310,7 +310,34 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   useEffect(() => {
     let cancelled = false;
     hostingerStorefrontService.getPublicHomepageContent()
-      .then(result => { if (!cancelled && result.content) setHomepageContent(result.content); })
+      .then(result => {
+        if (!cancelled && result.content) {
+          const legacyCareDescription = "Every SARINE piece is crafted with protective seals and demi-fine gold plating. Follow these four timeless steps to preserve its radiant shine for generations.";
+          const legacyCareSteps = [
+            { title: "The Last Touch", description: "Put your jewellery on last after perfumes, lotions, and hair styling sprays have dried completely." },
+            { title: "Air-Tight Storage", description: "Store each piece in its individual velvet pouch or zip bag to prevent moisture and accidental scratches." },
+            { title: "Gentle Cleaning", description: "Wipe gently with a dry soft microfiber cloth after wear to remove skin oils before returning to storage." },
+            { title: "Moisture Barrier", description: "Keep pieces away from steam, pool chlorine, and water basins to maintain pristine prong tension." }
+          ];
+          const care = result.content.care;
+          const steps = care.steps.map((step, index) => {
+            const legacy = legacyCareSteps[index];
+            return legacy && step.title === legacy.title && step.description === legacy.description
+              ? DEFAULT_HOMEPAGE_CONTENT.care.steps[index]
+              : step;
+          });
+          setHomepageContent({
+            ...result.content,
+            care: {
+              ...care,
+              description: care.description === legacyCareDescription
+                ? DEFAULT_HOMEPAGE_CONTENT.care.description
+                : care.description,
+              steps
+            }
+          });
+        }
+      })
       .catch(error => console.warn('[HomePage] Editable homepage content unavailable; using the built-in defaults.', error));
     return () => { cancelled = true; };
   }, []);
@@ -775,10 +802,23 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 </div>
               ))}
             </div>
+          ) : loadError ? (
+            <div className="rounded-xl border border-[#E7DCEB] bg-white/80 px-5 py-8 text-center">
+              <p className="text-sm text-[#6F6475]" role="status">We could not load Best Sellers right now. Please try again shortly.</p>
+            </div>
           ) : (
-            <p className="col-span-full py-8 text-center text-xs text-[#6F6475]">
-              {loadError ? 'We could not load Best Sellers right now. Please try again shortly.' : 'Our Best Sellers will appear here as qualifying customer orders are completed.'}
-            </p>
+            <div className="mx-auto flex max-w-2xl flex-col items-center rounded-xl border border-[#E7DCEB] bg-white/80 px-5 py-8 text-center sm:px-8 sm:py-10">
+              <span className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#F7F0FA] text-[#563568]" aria-hidden="true">
+                <Sparkles size={20} strokeWidth={1.6} />
+              </span>
+              <h3 className="font-serif text-xl text-[#563568] sm:text-2xl">Your next favourite awaits</h3>
+              <p className="mt-2 max-w-md text-xs leading-relaxed text-[#6F6475] sm:text-sm">
+                Our customer favourites will take shape as genuine orders come in. In the meantime, discover the pieces in our collection.
+              </p>
+              <Link to="/shop" className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#563568] px-5 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#563568] transition-colors hover:bg-[#563568] hover:text-white">
+                Explore the collection <ArrowRight size={14} />
+              </Link>
+            </div>
           )}
         </div>
       </section>
