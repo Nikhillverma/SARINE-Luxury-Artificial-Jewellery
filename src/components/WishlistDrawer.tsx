@@ -101,7 +101,7 @@ export const WishlistDrawer: React.FC = () => {
                   closeWishlist();
                   navigate('/shop');
                 }}
-                className="mt-6 px-7 py-3 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-medium hover:bg-[var(--white)] rounded-xs transition-colors shadow-xs cursor-pointer"
+                className="mt-6 px-7 py-3 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-medium hover:bg-[var(--gold)] rounded-xs transition-colors shadow-xs cursor-pointer"
               >
                 Explore Catalogue
               </button>
@@ -161,7 +161,7 @@ export const WishlistDrawer: React.FC = () => {
                       {inStock ? (
                         <button
                           onClick={() => handleMoveToBag(product)}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[var(--plum)] text-white hover:bg-[var(--white)] text-xs font-medium rounded-xs transition-colors shadow-2xs cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[var(--plum)] text-white hover:bg-[var(--gold)] text-xs font-medium rounded-xs transition-colors shadow-2xs cursor-pointer"
                         >
                           <ShoppingBag size={13} />
                           <span>{product.variants?.length ? 'Choose Options' : 'Move to Bag'}</span>
