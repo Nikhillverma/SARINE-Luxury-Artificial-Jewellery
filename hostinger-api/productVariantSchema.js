@@ -173,8 +173,9 @@ export async function recordVariantInventoryMovement(connection, {
   await connection.execute(
     `INSERT INTO variant_inventory_movements
       (id, variant_id, product_id, product_name, variant_sku, variant_label,
-       admin_id, admin_name, admin_email, previous_stock, quantity_delta, new_stock, reason)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       admin_id, admin_name, admin_email, previous_stock, quantity_delta, new_stock, reason,
+       cost_price_snapshot, previous_stock_cost_value, new_stock_cost_value)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [movement.id, movement.variantId, movement.productId, movement.productName,
      movement.variantSku, movement.variantLabel, movement.adminId, movement.adminName,
      movement.adminEmail, movement.previousStock, movement.quantityDelta,
