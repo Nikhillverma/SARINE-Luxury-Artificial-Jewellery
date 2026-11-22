@@ -64,3 +64,48 @@ export async function markExistingOrdersAsPrelaunchTests() {
     connection.release();
   }
 }
+
+
+const NAMED_TEST_ORDER_MIGRATION_KEY = "2026-11-22-exclude-sarine-migration-test-orders";
+const NAMED_TEST_PRODUCT = "SARINE Migration Test";
+
+/**
+ * Exclude only orders made exclusively from the explicitly identified
+ * internal test product. Order, payment, and line-item records are retained.
+ */
+export async function markNamedTestProductOrdersAsTests(connection) {
+  const [appliedRows] = await connection.execute(
+    "SELECT migration_key FROM app_schema_migrations WHERE migration_key = ? LIMIT 1",
+    [NAMED_TEST_ORDER_MIGRATION_KEY]
+  );
+
+  if (appliedRows.length > 0) return;
+
+  try {
+    await connection.beginTransaction();
+    await connection.execute(
+      `UPDATE orders AS o
+       SET o.is_test = 1
+       WHERE o.is_test = 0
+         AND EXISTS (
+           SELECT 1 FROM order_items AS test_item
+           WHERE test_item.order_id = o.id
+             AND test_item.product_name = ?
+         )
+         AND NOT EXISTS (
+           SELECT 1 FROM order_items AS other_item
+           WHERE other_item.order_id = o.id
+             AND COALESCE(other_item.product_name, '') <> ?
+         )`,
+      [NAMED_TEST_PRODUCT, NAMED_TEST_PRODUCT]
+    );
+    await connection.execute(
+      "INSERT INTO app_schema_migrations (migration_key, applied_at) VALUES (?, UTC_TIMESTAMP(3))",
+      [NAMED_TEST_ORDER_MIGRATION_KEY]
+    );
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback().catch(() => {});
+    throw error;
+  }
+}
