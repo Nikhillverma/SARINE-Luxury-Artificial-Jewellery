@@ -310,7 +310,34 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   useEffect(() => {
     let cancelled = false;
     hostingerStorefrontService.getPublicHomepageContent()
-      .then(result => { if (!cancelled && result.content) setHomepageContent(result.content); })
+      .then(result => {
+        if (!cancelled && result.content) {
+          const legacyCareDescription = "Every SARINE piece is crafted with protective seals and demi-fine gold plating. Follow these four timeless steps to preserve its radiant shine for generations.";
+          const legacyCareSteps = [
+            { title: "The Last Touch", description: "Put your jewellery on last after perfumes, lotions, and hair styling sprays have dried completely." },
+            { title: "Air-Tight Storage", description: "Store each piece in its individual velvet pouch or zip bag to prevent moisture and accidental scratches." },
+            { title: "Gentle Cleaning", description: "Wipe gently with a dry soft microfiber cloth after wear to remove skin oils before returning to storage." },
+            { title: "Moisture Barrier", description: "Keep pieces away from steam, pool chlorine, and water basins to maintain pristine prong tension." }
+          ];
+          const care = result.content.care;
+          const steps = care.steps.map((step, index) => {
+            const legacy = legacyCareSteps[index];
+            return legacy && step.title === legacy.title && step.description === legacy.description
+              ? DEFAULT_HOMEPAGE_CONTENT.care.steps[index]
+              : step;
+          });
+          setHomepageContent({
+            ...result.content,
+            care: {
+              ...care,
+              description: care.description === legacyCareDescription
+                ? DEFAULT_HOMEPAGE_CONTENT.care.description
+                : care.description,
+              steps
+            }
+          });
+        }
+      })
       .catch(error => console.warn('[HomePage] Editable homepage content unavailable; using the built-in defaults.', error));
     return () => { cancelled = true; };
   }, []);
