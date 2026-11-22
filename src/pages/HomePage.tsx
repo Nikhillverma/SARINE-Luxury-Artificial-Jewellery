@@ -1045,7 +1045,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </p>
           </div>
         </div>
-      </section>ction>
+      </section>
     </div>
   );
 };
