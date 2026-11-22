@@ -21,11 +21,11 @@ export const CustomerLoginPrompt: React.FC = () => {
       let dismissed = false;
       try { dismissed = window.sessionStorage.getItem(DISMISSED_KEY) === "1"; } catch { /* session storage may be unavailable */ }
       if (!dismissed && location.pathname !== "/account" && !location.pathname.startsWith("/admin")) {
-        timer = window.setTimeout(() => { if (active) setVisible(true); }, 1400);
+        timer = window.setTimeout(() => { if (active) setVisible(true); }, 20000);
       }
     }).finally(() => { if (active) setChecking(false); });
     return () => { active = false; if (timer !== undefined) window.clearTimeout(timer); };
-  }, []);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!visible || !expanded) return;
@@ -47,20 +47,20 @@ export const CustomerLoginPrompt: React.FC = () => {
   if (checking || !visible || location.pathname === "/account" || location.pathname.startsWith("/admin")) return null;
 
   return (
-    <aside aria-label="SARINE account sign-in" className="fixed bottom-4 right-3 sm:bottom-6 sm:right-6 z-[100] w-[calc(100%-1.5rem)] max-w-[390px]">
+    <aside aria-label="SARINE account sign-in" className="fixed bottom-4 right-3 sm:bottom-6 sm:right-6 z-[100] w-[min(20rem,calc(100vw-1.5rem))] max-w-[320px]">
       {!expanded ? (
-        <div className="relative flex items-center gap-3 border border-[#D9B8A0]/70 bg-[#FFFCFF] px-4 py-3 shadow-xl">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#F7F0FA] text-[#563568]"><Sparkles size={18}/></div>
+        <div className="relative flex items-center gap-3 border border-[#B8893C]/45 bg-[#FBF7F2] px-4 py-3 shadow-xl">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#F4ECE4] text-[#4A1D5C]"><Sparkles size={18}/></div>
           <div className="min-w-0 flex-1">
-            <p className="font-serif text-base text-[#563568]">A little more personal?</p>
-            <p className="mt-0.5 text-[11px] leading-snug text-[#6F6475]">Sign in to keep your SARINE moments and orders together.</p>
-            <button type="button" onClick={() => setExpanded(true)} className="mt-2 text-xs font-semibold text-[#563568] underline underline-offset-4">Sign in or create an account</button>
+            <p className="font-serif text-base text-[#2B1A33]">A little more personal?</p>
+            <p className="mt-0.5 text-[12px] leading-snug text-[#5A4F5E]">Sign in to keep your SARINE moments and orders together.</p>
+            <button type="button" onClick={() => setExpanded(true)} className="mt-2 inline-flex min-h-11 items-center rounded-[6px] bg-[#4A1D5C] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#B8893C] hover:text-[#2B1A33]">Sign in or create an account</button>
           </div>
-          <button type="button" onClick={dismiss} aria-label="Dismiss sign-in prompt" className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center text-[#8A7B90] hover:text-[#563568]"><X size={16}/></button>
+          <button type="button" onClick={dismiss} aria-label="Dismiss sign-in prompt" className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center text-[#5A4F5E] hover:text-[#4A1D5C]"><X size={16}/></button>
         </div>
       ) : (
-        <section aria-label="Sign in to SARINE" className="relative max-h-[82vh] overflow-y-auto border border-[#D9B8A0]/70 bg-[#FFFCFF] p-4 shadow-2xl sm:p-6">
-          <button type="button" onClick={() => setExpanded(false)} aria-label="Minimise sign-in panel" className="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center text-[#8A7B90] hover:text-[#563568]"><X size={17}/></button>
+        <section aria-label="Sign in to SARINE" className="relative max-h-[70vh] overflow-y-auto border border-[#B8893C]/45 bg-[#FBF7F2] p-4 shadow-2xl sm:p-5">
+          <button type="button" onClick={() => setExpanded(false)} aria-label="Minimise sign-in panel" className="absolute right-2 top-2 z-10 flex h-11 w-11 items-center justify-center text-[#5A4F5E] hover:text-[#4A1D5C]"><X size={17}/></button>
           <CustomerAuthPanel onAuthenticated={handleAuthenticated} onSkip={dismiss} compact />
         </section>
       )}
