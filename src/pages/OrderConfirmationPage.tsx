@@ -71,7 +71,7 @@ export const OrderConfirmationPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--tint)] flex items-center justify-center p-8">
+      <div className="min-h-screen bg-white flex items-center justify-center p-8">
         <p className="text-xs uppercase tracking-widest text-[var(--body)] animate-pulse">
           Retrieving order confirmation...
         </p>
@@ -81,7 +81,7 @@ export const OrderConfirmationPage: React.FC = () => {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-[var(--tint)] flex flex-col items-center justify-center p-8 text-center">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-8 text-center">
         <h2 className="font-serif text-3xl text-[var(--heading)]">We couldn't find this order</h2>
         <p className="text-xs sm:text-sm text-[var(--body)] mt-2 font-sans max-w-md">
           We could not locate an order matching reference &quot;{orderNumber}&quot;. Please verify the order number and secure link.
@@ -176,7 +176,7 @@ export const OrderConfirmationPage: React.FC = () => {
   const isGreenStatusDot = order.orderStatus === 'confirmed' || order.orderStatus === 'placed';
 
   return (
-    <div className="min-h-screen bg-[var(--tint)] pb-20 text-[var(--heading)]">
+    <div className="min-h-screen bg-white pb-20 text-[var(--heading)]">
       {/* Editorial Header */}
       <div className="bg-[var(--tint)] border-b border-[var(--border)] py-10 px-4 text-center">
         <div className="site-container">
