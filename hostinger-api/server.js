@@ -46,23 +46,35 @@ const app = express();
 app.set("trust proxy", 1);
 const PORT = Number(process.env.PORT || 3000);
 
+const normalizeBrowserOrigin = (value) => String(value || "").trim().replace(/\/+$/, "");
 const allowedOrigins = new Set([
   "https://lavender-emu-732118.hostingersite.com",
+  "https://www.lavender-emu-732118.hostingersite.com",
+  "http://lavender-emu-732118.hostingersite.com",
+  "http://www.lavender-emu-732118.hostingersite.com",
   "http://localhost:5173",
   "http://127.0.0.1:5173"
 ]);
 
+// Accept one or more explicitly configured storefront origins. Normalize
+// trailing slashes so a harmless hPanel value formatting difference cannot
+// block every browser request to the API.
 if (process.env.FRONTEND_ORIGIN) {
-  allowedOrigins.add(process.env.FRONTEND_ORIGIN);
+  for (const configuredOrigin of process.env.FRONTEND_ORIGIN.split(",")) {
+    const normalized = normalizeBrowserOrigin(configuredOrigin);
+    if (normalized) allowedOrigins.add(normalized);
+  }
 }
 
 app.use(helmet());
 
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.has(origin)) {
+    const normalizedOrigin = normalizeBrowserOrigin(origin);
+    if (!origin || allowedOrigins.has(normalizedOrigin)) {
       return callback(null, true);
     }
+    console.warn("[CORS] Rejected browser origin:", origin);
     return callback(new Error("Origin not allowed by CORS"));
   },
   credentials: true
