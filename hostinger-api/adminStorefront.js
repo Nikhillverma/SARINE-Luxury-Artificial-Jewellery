@@ -620,3 +620,75 @@ publicRouter.get("/design", async (_req, res, next) => {
     res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300").json({ design: published });
   } catch (error) { next(error); }
 });
+
+
+// Shared header/footer content with isolated draft and published snapshots.
+const defaultSiteChrome = {
+  version: 1,
+  header: { tagline: "Timeless jewellery for every you." },
+  footer: {
+    tagline: "Timeless jewellery for every you.",
+    copyright: "© 2026 SARINE. All rights reserved.",
+    social: { instagram: "https://instagram.com", facebook: "https://facebook.com", pinterest: "https://pinterest.com", youtube: "https://youtube.com" },
+    headings: { shop: "Shop", care: "Customer Care", about: "About", payments: "Payment Methods" }
+  }
+};
+function validateSiteChrome(input) {
+  const value = input && typeof input === "object" ? input : {};
+  const header = { ...defaultSiteChrome.header, ...(value.header || {}) };
+  const footer = { ...defaultSiteChrome.footer, ...(value.footer || {}) };
+  const cleanText = (value, fallback, max) => {
+    const text = typeof value === "string" ? value.trim() : fallback;
+    if (text.length > max) throw new Error("Header and footer text exceeds the allowed length.");
+    return text;
+  };
+  header.tagline = cleanText(header.tagline, defaultSiteChrome.header.tagline, 100);
+  footer.tagline = cleanText(footer.tagline, defaultSiteChrome.footer.tagline, 140);
+  footer.copyright = cleanText(footer.copyright, defaultSiteChrome.footer.copyright, 140);
+  const headings = { ...defaultSiteChrome.footer.headings, ...(footer.headings || {}) };
+  for (const key of Object.keys(headings)) headings[key] = cleanText(headings[key], defaultSiteChrome.footer.headings[key], 50);
+  const social = { ...defaultSiteChrome.footer.social, ...(footer.social || {}) };
+  for (const [key, url] of Object.entries(social)) {
+    if (typeof url !== "string" || url.length > 300 || !/^https:\/\//i.test(url)) throw new Error("Social profile links must be HTTPS URLs.");
+    social[key] = url;
+  }
+  return { version: 1, header, footer: { tagline: footer.tagline, copyright: footer.copyright, headings, social } };
+}
+async function readSiteChrome() {
+  await ensureSchema();
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='site_chrome' LIMIT 1");
+  if (!rows.length) return { draft: defaultSiteChrome, published: defaultSiteChrome };
+  try {
+    const record = JSON.parse(rows[0].setting_value);
+    return { draft: validateSiteChrome(record.draft || defaultSiteChrome), published: validateSiteChrome(record.published || defaultSiteChrome) };
+  } catch { return { draft: defaultSiteChrome, published: defaultSiteChrome }; }
+}
+async function writeSiteChrome(record) {
+  await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('site_chrome', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [JSON.stringify(record)]);
+}
+adminOnly.get("/site-chrome", async (_req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json(await readSiteChrome()); } catch (error) { next(error); }
+});
+adminOnly.put("/site-chrome", async (req, res, next) => {
+  try {
+    let draft;
+    try { draft = validateSiteChrome(req.body?.settings); } catch (error) { return res.status(400).json({ error: error.message }); }
+    const record = await readSiteChrome();
+    await writeSiteChrome({ ...record, draft });
+    res.set("Cache-Control", "no-store").json({ success: true, draft });
+  } catch (error) { next(error); }
+});
+adminOnly.post("/site-chrome/publish", async (_req, res, next) => {
+  try {
+    const record = await readSiteChrome();
+    const published = validateSiteChrome(record.draft);
+    await writeSiteChrome({ ...record, published });
+    res.set("Cache-Control", "no-store").json({ success: true, published });
+  } catch (error) { next(error); }
+});
+publicRouter.get("/site-chrome", async (_req, res, next) => {
+  try {
+    const record = await readSiteChrome();
+    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300").json({ settings: record.published });
+  } catch (error) { next(error); }
+});
