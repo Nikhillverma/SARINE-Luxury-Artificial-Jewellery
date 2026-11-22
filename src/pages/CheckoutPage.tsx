@@ -366,7 +366,7 @@ export const CheckoutPage: React.FC = () => {
 
   if (orderPlaced || orderPlacedRef.current) {
     return (
-      <div className="min-h-screen bg-[var(--tint)] flex items-center justify-center p-8">
+      <div className="min-h-screen bg-white flex items-center justify-center p-8">
         <p className="text-xs uppercase tracking-widest text-[var(--body)]">Transferring to order confirmation...</p>
       </div>
     );
@@ -374,14 +374,14 @@ export const CheckoutPage: React.FC = () => {
 
   if (checkoutConfigLoading || isHydrating || items.length === 0) {
     return (
-      <div className="min-h-screen bg-[var(--tint)] flex items-center justify-center p-8">
+      <div className="min-h-screen bg-white flex items-center justify-center p-8">
         <p className="text-xs uppercase tracking-widest text-[var(--body)]">Loading checkout...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--tint)] pb-20 text-[var(--heading)]">
+    <div className="min-h-screen bg-white pb-20 text-[var(--heading)]">
       {/* Editorial Header */}
       <div className="bg-[var(--tint)] border-b border-[var(--border)] py-8 text-center">
         <div className="site-container">
@@ -459,7 +459,7 @@ export const CheckoutPage: React.FC = () => {
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="e.g. Radhika Sharma"
                       disabled={isSubmitting}
-                      className={`w-full px-3 py-2 text-sm bg-[var(--tint)] border rounded-xs focus:bg-white focus:outline-none transition-colors ${
+                      className={`w-full px-3 py-2 text-sm bg-white border rounded-xs focus:bg-white focus:outline-none transition-colors ${
                         errors.fullName ? 'border-[#DC2626]' : 'border-[var(--border)] focus:border-[var(--gold)]'
                       }`}
                     />
@@ -478,7 +478,7 @@ export const CheckoutPage: React.FC = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="e.g. radhika@example.com"
                       disabled={isSubmitting}
-                      className={`w-full px-3 py-2 text-sm bg-[var(--tint)] border rounded-xs focus:bg-white focus:outline-none transition-colors ${
+                      className={`w-full px-3 py-2 text-sm bg-white border rounded-xs focus:bg-white focus:outline-none transition-colors ${
                         errors.email ? 'border-[#DC2626]' : 'border-[var(--border)] focus:border-[var(--gold)]'
                       }`}
                     />
@@ -535,7 +535,7 @@ export const CheckoutPage: React.FC = () => {
                       onChange={(e) => setLine1(e.target.value)}
                       placeholder="e.g. 402, Lotus Apartments, 14th Main Road"
                       disabled={isSubmitting}
-                      className={`w-full px-3 py-2 text-sm bg-[var(--tint)] border rounded-xs focus:bg-white focus:outline-none transition-colors ${
+                      className={`w-full px-3 py-2 text-sm bg-white border rounded-xs focus:bg-white focus:outline-none transition-colors ${
                         errors.line1 ? 'border-[#DC2626]' : 'border-[var(--border)] focus:border-[var(--gold)]'
                       }`}
                     />
@@ -554,7 +554,7 @@ export const CheckoutPage: React.FC = () => {
                       onChange={(e) => setLine2(e.target.value)}
                       placeholder="e.g. Near City Center Park"
                       disabled={isSubmitting}
-                      className="w-full px-3 py-2 text-sm bg-[var(--tint)] border border-[var(--border)] rounded-xs focus:bg-white focus:outline-none focus:border-[var(--gold)] transition-colors"
+                      className="w-full px-3 py-2 text-sm bg-white border border-[var(--border)] rounded-xs focus:bg-white focus:outline-none focus:border-[var(--gold)] transition-colors"
                     />
                   </div>
 
@@ -569,7 +569,7 @@ export const CheckoutPage: React.FC = () => {
                         onChange={(e) => setCity(e.target.value)}
                         placeholder="e.g. Jaipur"
                         disabled={isSubmitting}
-                        className={`w-full px-3 py-2 text-sm bg-[var(--tint)] border rounded-xs focus:bg-white focus:outline-none transition-colors ${
+                        className={`w-full px-3 py-2 text-sm bg-white border rounded-xs focus:bg-white focus:outline-none transition-colors ${
                           errors.city ? 'border-[#DC2626]' : 'border-[var(--border)] focus:border-[var(--gold)]'
                         }`}
                       />
@@ -586,7 +586,7 @@ export const CheckoutPage: React.FC = () => {
                         value={state}
                         onChange={(e) => setState(e.target.value)}
                         disabled={isSubmitting}
-                        className={`w-full px-3 py-2 text-sm bg-[var(--tint)] border rounded-xs focus:bg-white focus:outline-none transition-colors ${
+                        className={`w-full px-3 py-2 text-sm bg-white border rounded-xs focus:bg-white focus:outline-none transition-colors ${
                           errors.state ? 'border-[#DC2626]' : 'border-[var(--border)] focus:border-[var(--gold)]'
                         }`}
                       >
@@ -613,7 +613,7 @@ export const CheckoutPage: React.FC = () => {
                         placeholder="e.g. 302001"
                         maxLength={6}
                         disabled={isSubmitting}
-                        className={`w-full px-3 py-2 text-sm bg-[var(--tint)] border rounded-xs focus:bg-white focus:outline-none transition-colors font-mono ${
+                        className={`w-full px-3 py-2 text-sm bg-white border rounded-xs focus:bg-white focus:outline-none transition-colors font-mono ${
                           errors.pincode ? 'border-[#DC2626]' : 'border-[var(--border)] focus:border-[var(--gold)]'
                         }`}
                       />
@@ -636,7 +636,7 @@ export const CheckoutPage: React.FC = () => {
                   <label
                     className={`block p-4 border rounded-sm cursor-pointer transition-colors ${
                       paymentMethod === 'online'
-                        ? 'border-[var(--plum)] bg-[var(--tint)] ring-1 ring-[var(--plum)]'
+                        ? 'border-[var(--plum)] bg-[var(--pill)] ring-1 ring-[var(--plum)]'
                         : 'border-[var(--border)] bg-white hover:border-[var(--gold)]'
                     }`}
                   >
@@ -668,7 +668,7 @@ export const CheckoutPage: React.FC = () => {
                     <label
                       className={`block p-4 border rounded-sm cursor-pointer transition-colors ${
                         paymentMethod === 'cod'
-                          ? 'border-[var(--plum)] bg-[var(--tint)] ring-1 ring-[var(--plum)]'
+                          ? 'border-[var(--plum)] bg-[var(--pill)] ring-1 ring-[var(--plum)]'
                           : 'border-[var(--border)] bg-white hover:border-[var(--gold)]'
                       }`}
                     >
