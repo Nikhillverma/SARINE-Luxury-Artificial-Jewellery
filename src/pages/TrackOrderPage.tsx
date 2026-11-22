@@ -265,7 +265,7 @@ export const TrackOrderPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--tint)] text-[var(--heading)] font-sans py-12 sm:py-16 lg:py-20">
+    <div className="min-h-screen bg-white text-[var(--heading)] font-sans py-12 sm:py-16 lg:py-20">
       <div className="site-container">
         <div className="max-w-xl mx-auto">
           {/* Header */}
@@ -298,7 +298,7 @@ export const TrackOrderPage: React.FC = () => {
                   onChange={(e) => setOrderNumberInput(e.target.value)}
                   placeholder="SAR-000111"
                   required
-                  className="w-full px-4 py-2.5 bg-[var(--tint)] border border-[var(--border)] text-xs sm:text-sm text-[var(--heading)] placeholder-[var(--muted)] rounded-xs focus:outline-none focus:border-[var(--gold)] focus:ring-1 focus:ring-[#80609A] transition-colors font-mono uppercase"
+                  className="w-full px-4 py-2.5 bg-white border border-[var(--border)] text-xs sm:text-sm text-[var(--heading)] placeholder-[var(--muted)] rounded-xs focus:outline-none focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)] transition-colors font-mono uppercase"
                 />
               </div>
 
@@ -321,7 +321,7 @@ export const TrackOrderPage: React.FC = () => {
                     placeholder="9876543210"
                     maxLength={14}
                     required
-                    className="w-full px-4 py-2.5 bg-[var(--tint)] border border-[var(--border)] text-xs sm:text-sm text-[var(--heading)] placeholder-[var(--muted)] rounded-r-xs focus:outline-none focus:border-[var(--gold)] focus:ring-1 focus:ring-[#80609A] transition-colors font-sans"
+                    className="w-full px-4 py-2.5 bg-white border border-[var(--border)] text-xs sm:text-sm text-[var(--heading)] placeholder-[var(--muted)] rounded-r-xs focus:outline-none focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)] transition-colors font-sans"
                   />
                 </div>
               </div>
