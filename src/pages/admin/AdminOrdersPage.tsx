@@ -262,8 +262,9 @@ export const AdminOrdersPage: React.FC = () => {
       const matchesSearch = !term || [o.orderNumber, o.customer?.name, o.customer?.email, o.customer?.phone, o.shippingAddress?.pincode, ...(o.lines || []).map((line) => line.name)].some((value) => String(value || '').toLowerCase().includes(term));
       const orderDate = o.createdAt ? new Date(o.createdAt) : null;
       const validDate = orderDate && Number.isFinite(orderDate.getTime());
-      const matchesFrom = !dateFrom || (validDate && orderDate!.toISOString().slice(0, 10) >= dateFrom);
-      const matchesTo = !dateTo || (validDate && orderDate!.toISOString().slice(0, 10) <= dateTo);
+      const localDateKey = validDate ? [orderDate!.getFullYear(), String(orderDate!.getMonth() + 1).padStart(2, '0'), String(orderDate!.getDate()).padStart(2, '0')].join('-') : '';
+      const matchesFrom = !dateFrom || (validDate && localDateKey >= dateFrom);
+      const matchesTo = !dateTo || (validDate && localDateKey <= dateTo);
       return matchesSearch && matchesFrom && matchesTo;
     }).sort((a, b) => {
       if (sortOrder === 'highest') return (Number(b.total) || 0) - (Number(a.total) || 0);
@@ -572,7 +573,7 @@ export const AdminOrdersPage: React.FC = () => {
               aria-label="Search orders by order number or customer"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by order # or customer..."
+              placeholder="Search order, customer, item or pincode..."
               className="w-full pl-9 pr-3 py-2 bg-[#F7F0FA] border border-[#E7DCEB] text-xs text-[#302438] placeholder:text-[#9E90A2] rounded-xs focus:outline-none focus:border-[#B69ACF] focus:ring-1 focus:ring-[#80609A]"
             />
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6F6475]" />
@@ -603,7 +604,10 @@ export const AdminOrdersPage: React.FC = () => {
                 <option value="pending">Pending</option>
                 <option value="placed">Placed (COD)</option>
                 <option value="confirmed">Confirmed (Paid)</option>
+                <option value="processing">Processing</option>
+                <option value="packed">Packed</option>
                 <option value="shipped">Shipped</option>
+                <option value="out_for_delivery">Out for delivery</option>
                 <option value="delivered">Delivered</option>
                 <option value="needs_refund">Needs Refund</option>
                 <option value="cancelled">Cancelled</option>
