@@ -264,7 +264,7 @@ export const CheckoutPage: React.FC = () => {
             contact: phone.replace(/\D/g, '')
           },
           theme: {
-            color: '#563568'
+            color: '#4A1D5C'
           },
           handler: async (response: {
             razorpay_order_id: string;
