@@ -4,7 +4,7 @@
  * from customer storefront views.
  */
 
-import { IAdminProductService, InventoryMovement, BulkProductUpdates, BulkProductUpdateResult, ProductVariantDraft, VariantInventoryMovement } from '../interfaces';
+import { IAdminProductService, InventoryMovement, InventoryMovementQuery, InventoryMovementPage, BulkProductUpdates, BulkProductUpdateResult, ProductVariantDraft, VariantInventoryMovement } from '../interfaces';
 import { Product, ProductVariant } from '../../types/product';
 import { MockProductService } from './mockProductService';
 
@@ -155,9 +155,27 @@ export class MockAdminProductService implements IAdminProductService {
     return movement;
   }
 
-  async getInventoryMovements(): Promise<InventoryMovement[]> {
+  async getInventoryMovements(options: InventoryMovementQuery = {}): Promise<InventoryMovementPage> {
     await sleep(NETWORK_DELAY_MS);
-    return [...this.movements];
+    const page = Math.max(1, options.page ?? 1);
+    const limit = Math.min(100, Math.max(1, options.limit ?? 25));
+    const search = options.search?.trim().toLowerCase() || '';
+    const from = options.from || '';
+    const to = options.to || '';
+    const filtered = [...this.movements].filter(movement => {
+      const text = [movement.productName, movement.sku, movement.reason, movement.adminName, movement.adminEmail]
+        .some(value => String(value || '').toLowerCase().includes(search));
+      const stamp = new Date(movement.createdAt);
+      const date = Number.isFinite(stamp.getTime())
+        ? [stamp.getFullYear(), String(stamp.getMonth() + 1).padStart(2, '0'), String(stamp.getDate()).padStart(2, '0')].join('-')
+        : '';
+      return (!search || text) && (!from || date >= from) && (!to || date <= to);
+    });
+    const total = filtered.length;
+    return {
+      movements: filtered.slice((page - 1) * limit, page * limit),
+      total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit))
+    };
   }
 
   async deleteProduct(id: string): Promise<boolean> {
