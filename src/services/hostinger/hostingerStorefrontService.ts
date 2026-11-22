@@ -4,6 +4,46 @@ const API_BASE = (
   (import.meta.env.DEV ? "/api" : "https://lavender-goldfish-844589.hostingersite.com/api")
 ).replace(/\/+$/, "");
 
+
+export interface GlobalDesignSettings {
+  version: 1;
+  colors: {
+    primary: string;
+    accent: string;
+    surface: string;
+    pageBackground: string;
+    text: string;
+    headerBackground: string;
+    footerBackground: string;
+    footerText: string;
+  };
+  typography: {
+    headingFont: "Cormorant Garamond" | "Georgia" | "Playfair Display";
+    bodyFont: "Plus Jakarta Sans" | "Arial" | "DM Sans";
+    headingScale: number;
+    bodyScale: number;
+  };
+  layout: {
+    contentWidth: 1120 | 1200 | 1280 | 1360;
+    cornerRadius: 0 | 4 | 8 | 16;
+  };
+  components: { buttonStyle: "solid" | "outline" };
+}
+export const DEFAULT_GLOBAL_DESIGN: GlobalDesignSettings = {
+  version: 1,
+  colors: {
+    primary: "#563568", accent: "#B69ACF", surface: "#F7F0FA",
+    pageBackground: "#FFFFFF", text: "#302438", headerBackground: "#FFFFFF",
+    footerBackground: "#563568", footerText: "#F7F0FA"
+  },
+  typography: {
+    headingFont: "Cormorant Garamond", bodyFont: "Plus Jakarta Sans",
+    headingScale: 100, bodyScale: 100
+  },
+  layout: { contentWidth: 1280, cornerRadius: 8 },
+  components: { buttonStyle: "solid" }
+};
+
 export interface HomepageSectionConfig {
   id: string;
   enabled: boolean;
@@ -132,6 +172,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export const hostingerStorefrontService = {
+  getGlobalDesign: () => request<{ draft: GlobalDesignSettings; published: GlobalDesignSettings }>("/admin/storefront/design"),
+  saveGlobalDesign: (design: GlobalDesignSettings) => request<{ success: boolean; draft: GlobalDesignSettings }>("/admin/storefront/design", { method: "PUT", body: JSON.stringify({ design }) }),
+  publishGlobalDesign: () => request<{ success: boolean; published: GlobalDesignSettings }>("/admin/storefront/design/publish", { method: "POST" }),
+  getPublicGlobalDesign: () => request<{ design: GlobalDesignSettings }>("/storefront/design"),
   getHomepageLayout: () => request<{ draft: HomepageLayout; published: HomepageLayout }>("/admin/homepage-layout"),
   getPublicHomepageLayout: () => request<{ layout: HomepageLayout }>("/homepage-layout"),
   getCuratedFavourites: () => request<{ draft: CuratedFavouritesConfig; published: CuratedFavouritesConfig; maxProducts: number }>("/admin/curated-favourites"),

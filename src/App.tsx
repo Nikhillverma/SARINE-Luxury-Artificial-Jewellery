@@ -15,6 +15,7 @@ import { WishlistDrawer } from './components/WishlistDrawer';
 import { CustomerLoginPrompt } from './components/CustomerLoginPrompt';
 import { Footer } from './components/Footer';
 import { setPageMetadata } from './utils/seo';
+import { hostingerStorefrontService } from './services/hostinger/hostingerStorefrontService';
 const CmsPublicPage = lazy(() => import('./pages/CmsPublicPage').then((module) => ({ default: module.CmsPublicPage })));
 const HomePage = lazy(() => import('./pages/HomePage').then((module) => ({ default: module.HomePage })));
 const CollectionPage = lazy(() => import('./pages/CollectionPage').then((module) => ({ default: module.CollectionPage })));
@@ -96,6 +97,43 @@ function MainAppShell() {
   const [includeAll, setIncludeAll] = useState<boolean>(false);
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+
+  // Apply only the published global design. Admin screens keep their dedicated workspace theme.
+  useEffect(() => {
+    let active = true;
+    if (isAdminRoute) {
+      document.body.classList.remove('sarine-global-theme');
+      delete document.body.dataset.sarineButtonStyle;
+      return () => { active = false; };
+    }
+    hostingerStorefrontService.getPublicGlobalDesign()
+      .then(({ design }) => {
+        if (!active || !design) return;
+        const root = document.documentElement;
+        root.style.setProperty('--sarine-global-primary', design.colors.primary);
+        root.style.setProperty('--sarine-global-accent', design.colors.accent);
+        root.style.setProperty('--sarine-global-surface', design.colors.surface);
+        root.style.setProperty('--sarine-global-page', design.colors.pageBackground);
+        root.style.setProperty('--sarine-global-text', design.colors.text);
+        root.style.setProperty('--sarine-global-header', design.colors.headerBackground);
+        root.style.setProperty('--sarine-global-footer', design.colors.footerBackground);
+        root.style.setProperty('--sarine-global-footer-text', design.colors.footerText);
+        root.style.setProperty('--sarine-global-heading-font', '"' + design.typography.headingFont + '"');
+        root.style.setProperty('--sarine-global-body-font', '"' + design.typography.bodyFont + '"');
+        root.style.setProperty('--sarine-global-heading-scale', String(design.typography.headingScale / 100));
+        root.style.setProperty('--sarine-global-body-scale', String(design.typography.bodyScale / 100));
+        root.style.setProperty('--sarine-global-content-width', design.layout.contentWidth + 'px');
+        root.style.setProperty('--sarine-global-radius', design.layout.cornerRadius + 'px');
+        document.body.dataset.sarineButtonStyle = design.components.buttonStyle;
+        document.body.classList.add('sarine-global-theme');
+      })
+      .catch(error => console.warn('[SARINE] Published design settings unavailable; using built-in theme.', error));
+    return () => {
+      active = false;
+      document.body.classList.remove('sarine-global-theme');
+      delete document.body.dataset.sarineButtonStyle;
+    };
+  }, [isAdminRoute]);
 
   const handleToggleIncludeAll = () => {
     setIncludeAll((prev) => !prev);
