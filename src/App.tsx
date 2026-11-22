@@ -111,16 +111,16 @@ function MainAppShell() {
       .then(({ design }) => {
         if (!active || !design) return;
         const root = document.documentElement;
-        root.style.setProperty('--sarine-global-primary', design.colors.primary);
-        root.style.setProperty('--sarine-global-accent', design.colors.accent);
-        root.style.setProperty('--sarine-global-surface', design.colors.surface);
-        root.style.setProperty('--sarine-global-page', design.colors.pageBackground);
-        root.style.setProperty('--sarine-global-text', design.colors.text);
+        root.style.setProperty('--sarine-global-primary', '#563568');
+        root.style.setProperty('--sarine-global-accent', '#B8893C');
+        root.style.setProperty('--sarine-global-surface', '#F7F4F8');
+        root.style.setProperty('--sarine-global-page', '#FFFFFF');
+        root.style.setProperty('--sarine-global-text', '#5C5660');
         root.style.setProperty('--sarine-global-header', design.colors.headerBackground);
         root.style.setProperty('--sarine-global-footer', design.colors.footerBackground);
         root.style.setProperty('--sarine-global-footer-text', design.colors.footerText);
-        root.style.setProperty('--sarine-global-heading-font', '"' + design.typography.headingFont + '"');
-        root.style.setProperty('--sarine-global-body-font', '"' + design.typography.bodyFont + '"');
+        root.style.setProperty('--sarine-global-heading-font', '"Cormorant Garamond"');
+        root.style.setProperty('--sarine-global-body-font', '"Plus Jakarta Sans"');
         root.style.setProperty('--sarine-global-heading-scale', String(design.typography.headingScale / 100));
         root.style.setProperty('--sarine-global-body-scale', String(design.typography.bodyScale / 100));
         root.style.setProperty('--sarine-global-content-width', design.layout.contentWidth + 'px');
@@ -144,7 +144,7 @@ function MainAppShell() {
     <>
     <a href="#main-content" className="skip-link">Skip to main content</a>
     <RouteMetadata />
-    <div className="min-h-screen w-full flex flex-col bg-[#F7F0FA] text-[#302438] selection:bg-[#B69ACF]/30 selection:text-[#302438]">
+    <div className="min-h-screen w-full flex flex-col bg-white text-[#5C5660] selection:bg-[#563568]/15 selection:text-[#1D1B1F]">
       {/* Public Storefront Navigation & Slide-in Drawers */}
       {!isAdminRoute && (
         <>
