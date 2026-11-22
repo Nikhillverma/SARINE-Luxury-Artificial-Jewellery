@@ -60,13 +60,13 @@ export async function ensureAdminActivitySchema() {
 
 function cleanText(value, maxLength = 180) {
   if (typeof value !== "string" && typeof value !== "number") return "";
-  return String(value).replace(/[\\u0000-\\u001f\\u007f]/g, " ").trim().slice(0, maxLength);
+  return String(value).replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, maxLength);
 }
 
 export function describeActivity(req) {
   const method = String(req.method || "POST").toUpperCase();
   const route = String(req.originalUrl || req.path || "").split("?")[0]
-    .replace(/^\\/api\\/admin/, "").slice(0, 255);
+    .replace(/^\/api\/admin/, "").slice(0, 255);
   const segments = route.split("/").filter(Boolean);
   const root = segments[0] || "admin";
   const entityType = ENTITY_LABELS[root] || "admin setting";
