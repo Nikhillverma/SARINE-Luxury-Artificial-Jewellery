@@ -102,7 +102,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Understated Status Tag */}
         {!inStock && (
           <div className="absolute top-2.5 left-2.5 z-10">
-            <span className="text-[10px] uppercase tracking-[0.2em] px-2 py-0.5 bg-[var(--white)] !text-[color:var(--muted)] border border-[var(--border)] font-sans font-medium rounded-xs">
+            <span className="text-[10px] uppercase tracking-[0.2em] px-2 py-0.5 bg-[var(--white)] !text-[color:var(--body)] border border-[var(--border)] font-sans font-medium rounded-xs">
               Awaiting Atelier
             </span>
           </div>

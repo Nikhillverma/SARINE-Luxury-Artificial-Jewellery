@@ -606,7 +606,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           <div className="relative mb-5 flex items-center justify-center gap-4">
             <h2 className="w-full text-center font-serif text-2xl font-normal !text-[color:var(--heading)] sm:text-3xl lg:text-4xl">Shop by Category</h2>
             <div className="absolute right-0 flex shrink-0 items-center gap-2">
-              <Link to="/shop" className="hidden items-center gap-1 text-xs font-medium !text-[color:var(--plum)] transition-colors hover:text-[#8A6AA0] sm:inline-flex">
+              <Link to="/shop" className="hidden items-center gap-1 text-xs font-medium !text-[color:var(--plum)] transition-colors hover:!text-[color:var(--plum)] sm:inline-flex">
                 View all <ArrowRight size={13} />
               </Link>
               {sectionCarouselEnabled("categories") && <>
