@@ -88,7 +88,7 @@ export const OrderConfirmationPage: React.FC = () => {
         </p>
         <Link
           to="/shop"
-          className="mt-6 px-6 py-2.5 bg-[var(--plum)] text-white text-xs uppercase tracking-widest hover:bg-[var(--white)] transition-colors rounded-xs shadow-xs"
+          className="mt-6 px-6 py-2.5 bg-[var(--plum)] text-white text-xs uppercase tracking-widest hover:bg-[var(--gold)] transition-colors rounded-xs shadow-xs"
         >
           Return to Shop
         </Link>
@@ -201,7 +201,7 @@ export const OrderConfirmationPage: React.FC = () => {
               <div className="mt-6">
                 <Link
                   to="/checkout"
-                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-[var(--plum)] text-white text-xs uppercase tracking-widest font-semibold hover:bg-[var(--white)] transition-colors shadow-xs rounded-xs"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-[var(--plum)] text-white text-xs uppercase tracking-widest font-semibold hover:bg-[var(--gold)] transition-colors shadow-xs rounded-xs"
                 >
                   <span>Return to Checkout</span>
                   <ArrowRight size={14} />
@@ -367,7 +367,7 @@ export const OrderConfirmationPage: React.FC = () => {
 
           <Link
             to="/shop"
-            className="w-full sm:w-auto px-8 py-3 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[var(--white)] transition-colors inline-flex items-center justify-center gap-2 rounded-xs shadow-xs"
+            className="w-full sm:w-auto px-8 py-3 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[var(--gold)] transition-colors inline-flex items-center justify-center gap-2 rounded-xs shadow-xs"
           >
             <span>Explore More Pieces</span>
             <ArrowRight size={14} />
