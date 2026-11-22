@@ -73,6 +73,12 @@ export function describeActivity(req) {
   const body = req.body && typeof req.body === "object" ? req.body : {};
   const verb = method === "POST" ? "created" : method === "DELETE" ? "deleted" : "updated";
   const suppliedAction = root === "orders" ? cleanText(body.action, 70) : "";
+  const routeVerb = segments.includes("bulk") ? "bulk updated"
+    : segments.includes("archive") ? "archived"
+    : segments.includes("status") ? "status updated"
+    : root === "inventory" ? "stock adjusted"
+    : method === "POST" && segments.length === 1 ? "created"
+    : method === "DELETE" ? "deleted" : "updated";
   const action = (suppliedAction || `${method.toLowerCase()} ${root}`).slice(0, 100);
 
   const routeId = segments.slice(1).find(segment => !SPECIAL_SEGMENTS.has(segment)) || "";
@@ -87,7 +93,7 @@ export function describeActivity(req) {
   const label = cleanText(body.orderNumber || body.name || body.code || body.title || body.slug, 160);
   const actionText = suppliedAction
     ? `${entityType} ${suppliedAction.replace(/_/g, " ")}`
-    : `${entityType} ${verb}`;
+    : `${entityType} ${routeVerb}`;
   const summary = `${actionText}${label ? ` · ${label}` : entityId ? ` · ${entityId}` : ""}`.slice(0, 500);
 
   return { action, entityType, entityId: entityId || null, summary, method, route };
