@@ -37,7 +37,7 @@ function getCouponState(coupon: MarketingCoupon): Exclude<CouponState, "all"> {
 }
 function csvCell(value: unknown): string {
   let text = String(value ?? "");
-  if (/^[\\s\\u0000-\\u001f]*[=+\\-@]/.test(text)) text = "'" + text;
+  if (/^[\s\u0000-\u001f]*[=+\-@]/.test(text)) text = "'" + text;
   return '"' + text.replace(/"/g, '""') + '"';
 }
 function exportCoupons(coupons: MarketingCoupon[]) {
@@ -45,8 +45,8 @@ function exportCoupons(coupons: MarketingCoupon[]) {
     ["Coupon code", "Discount type", "Discount value", "Maximum discount INR", "Minimum order INR", "Used count", "Usage limit", "Uses per customer", "Starts at", "Expires at", "Effective status"],
     ...coupons.map(c => [c.code, c.discountType, c.discountValue, c.maxDiscount ?? "", c.minOrder, c.usedCount, c.usageLimit ?? "Unlimited", c.perCustomerLimit, c.startsAt ?? "", c.expiresAt, getCouponState(c)])
   ];
-  const csv = rows.map(row => row.map(csvCell).join(",")).join("\\r\\n");
-  const blob = new Blob(["\\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+  const csv = rows.map(row => row.map(csvCell).join(",")).join("\r\n");
+  const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url; anchor.download = "sarine-coupon-report.csv";
