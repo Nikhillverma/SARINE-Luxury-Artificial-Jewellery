@@ -747,3 +747,30 @@ body.sarine-global-theme[data-sarine-button-style="outline"] #main-content butto
 body.sarine-global-theme .sarine-global-header > div:nth-child(2) {
   background-color: var(--sarine-global-header, #FFFFFF) !important;
 }
+
+
+/* Storefront primary CTA interaction states — palette tokens only. */
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#563568]"],
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#4A1D5C]"],
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[var(--plum)]"] {
+  background-color: var(--plum) !important;
+  color: #FFFFFF !important;
+}
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#563568]"]:hover,
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#4A1D5C]"]:hover,
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[var(--plum)]"]:hover {
+  background-color: var(--gold) !important;
+  color: #FFFFFF !important;
+}
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#563568]"]:active,
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#4A1D5C]"]:active,
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[var(--plum)]"]:active {
+  background-color: var(--plum-dark) !important;
+  color: #FFFFFF !important;
+}
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#563568]"]:focus-visible,
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#4A1D5C]"]:focus-visible,
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[var(--plum)]"]:focus-visible {
+  outline: 2px solid var(--gold) !important;
+  outline-offset: 3px;
+}
