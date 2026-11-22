@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import { pool, testDatabase } from "./db.js";
 import { markExistingOrdersAsPrelaunchTests, markNamedTestProductOrdersAsTests } from "./prelaunchOrderMigration.js";
 import adminAuthRouter from "./adminAuth.js";
+import adminActivityRouter, { captureAdminActivity, ensureAdminActivitySchema } from "./adminActivity.js";
 import { publicContactInquiriesRouter, adminContactInquiriesRouter } from "./contactInquiries.js";
 import { ensureContactInquiriesSchema } from "./contactInquirySchema.js";
 import adminCustomerAuthRouter from "./adminCustomerAuth.js";
@@ -296,6 +297,7 @@ function requireTrustedBrowserOrigin(req, res, next) {
 // requests that rely on cookies. Reject untrusted origins before any admin,
 // customer-account, or checkout/payment mutation route is reached.
 app.use("/api/admin", requireTrustedBrowserOrigin);
+app.use("/api/admin", captureAdminActivity);
 app.use("/api/customer/auth", requireTrustedBrowserOrigin);
 app.use("/api/orders", requireTrustedBrowserOrigin);
 app.use("/api/contact", requireTrustedBrowserOrigin);
@@ -368,6 +370,7 @@ app.use("/api/customer/auth", customerGoogleAuthRouter);
 app.use("/api/customer/auth", customerOtpAuthRouter);
 app.use("/api/customer/auth", customerAuthRouter);
 app.use("/api/admin/auth", adminAuthRouter);
+app.use("/api/admin/activity", adminActivityRouter);
 app.use("/api/admin/customer-auth", adminCustomerAuthRouter);
 app.use("/api/admin/database-audit", adminDatabaseAuditRouter);
 
@@ -446,6 +449,7 @@ async function startServer() {
   await ensureProductVideoColumn();
   await ensureOrderStatusSchema();
   await ensureContactInquiriesSchema();
+  await ensureAdminActivitySchema();
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`SARINE Hostinger API listening on port ${PORT}`);
   });
