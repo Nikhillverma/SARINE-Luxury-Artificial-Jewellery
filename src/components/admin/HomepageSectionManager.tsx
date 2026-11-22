@@ -34,12 +34,6 @@ function mergeKnownSections(layout: HomepageLayout): HomepageLayout {
   const merged = [...existing.map(section => adjustableCarousels.has(section.id)
     ? { ...section, carouselEnabled: section.carouselEnabled !== false, cardsPerView: section.cardsPerView ?? 5 }
     : section), ...additions];
-  const occasionIndex = merged.findIndex(section => section.id === "occasions");
-  const exploreIndex = merged.findIndex(section => section.id === "explore-now");
-  if (occasionIndex >= 0 && exploreIndex >= 0 && exploreIndex !== occasionIndex + 1) {
-    const [explore] = merged.splice(exploreIndex, 1);
-    merged.splice(occasionIndex + 1, 0, explore);
-  }
   return { version: 1, sections: merged.map((section, sortOrder) => ({ ...section, sortOrder })) };
 }
 
