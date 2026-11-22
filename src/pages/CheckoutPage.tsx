@@ -647,7 +647,7 @@ export const CheckoutPage: React.FC = () => {
                         value="online"
                         checked={paymentMethod === 'online'}
                         onChange={() => setPaymentMethod('online')}
-                        className="mt-0.5 accent-[#563568]"
+                        className="mt-0.5 accent-[var(--plum)]"
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
@@ -679,7 +679,7 @@ export const CheckoutPage: React.FC = () => {
                           value="cod"
                           checked={paymentMethod === 'cod'}
                           onChange={() => setPaymentMethod('cod')}
-                          className="mt-0.5 accent-[#563568]"
+                          className="mt-0.5 accent-[var(--plum)]"
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -703,7 +703,7 @@ export const CheckoutPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting || isVerifyingPayment}
-                  className="w-full py-4 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[var(--white)] disabled:bg-[var(--border)] disabled:text-[var(--body)] disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 shadow-xs rounded-xs"
+                  className="w-full py-4 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[var(--gold)] disabled:bg-[var(--border)] disabled:text-[var(--body)] disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 shadow-xs rounded-xs"
                 >
                   <Lock size={15} />
                   <span>
