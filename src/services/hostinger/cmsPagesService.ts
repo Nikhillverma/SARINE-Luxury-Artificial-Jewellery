@@ -10,5 +10,8 @@ export const cmsPagesService={
  save:(id:string,page:CmsPageDraft)=>call("/admin/pages/"+encodeURIComponent(id)+"/draft",{method:"PUT",body:JSON.stringify(page)}),
  publish:(id:string)=>call("/admin/pages/"+encodeURIComponent(id)+"/publish",{method:"POST"}),
  unpublish:(id:string)=>call("/admin/pages/"+encodeURIComponent(id)+"/unpublish",{method:"POST"}),
- getPublic:(slug:string)=>call<{page:CmsPage["draft"]}>("/pages/"+encodeURIComponent(slug)),\n listSections:()=>call<{sections:CmsReusableSection[]}>("/admin/pages/sections"),\n saveSection:(title:string,blocks:CmsBlock[])=>call<{success:boolean;section:CmsReusableSection}>("/admin/pages/sections",{method:"POST",body:JSON.stringify({title,blocks})}),\n deleteSection:(id:string)=>call<{success:boolean}>("/admin/pages/sections/"+encodeURIComponent(id),{method:"DELETE"})
+ getPublic:(slug:string)=>call<{page:CmsPage["draft"]}>("/pages/"+encodeURIComponent(slug)),
+ listSections:()=>call<{sections:CmsReusableSection[]}>("/admin/pages/sections"),
+ saveSection:(title:string,blocks:CmsBlock[])=>call<{success:boolean;section:CmsReusableSection}>("/admin/pages/sections",{method:"POST",body:JSON.stringify({title,blocks})}),
+ deleteSection:(id:string)=>call<{success:boolean}>("/admin/pages/sections/"+encodeURIComponent(id),{method:"DELETE"})
 };
