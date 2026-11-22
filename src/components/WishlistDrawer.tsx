@@ -59,23 +59,23 @@ export const WishlistDrawer: React.FC = () => {
 
       {/* Slide-over panel */}
       <aside
-        className="relative w-full max-w-md bg-white text-[#302438] h-full shadow-2xl flex flex-col z-10 border-l border-[#E7DCEB] animate-in slide-in-from-right duration-300"
+        className="relative w-full max-w-md bg-white text-[var(--heading)] h-full shadow-2xl flex flex-col z-10 border-l border-[var(--border)] animate-in slide-in-from-right duration-300"
         role="dialog"
         aria-label="Your Saved Pieces"
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-[#E7DCEB] flex items-center justify-between bg-white">
+        <div className="p-4 sm:p-5 border-b border-[var(--border)] flex items-center justify-between bg-white">
           <div className="flex items-baseline gap-2">
-            <h2 className="font-serif text-xl sm:text-2xl font-normal tracking-tight text-[#302438]">
+            <h2 className="font-serif text-xl sm:text-2xl font-normal tracking-tight text-[var(--heading)]">
               Saved Pieces
             </h2>
-            <span className="text-[11px] uppercase tracking-widest text-[#6F6475]">
+            <span className="text-[11px] uppercase tracking-widest text-[var(--body)]">
               ({count} {count === 1 ? 'piece' : 'pieces'})
             </span>
           </div>
           <button
             onClick={closeWishlist}
-            className="p-1.5 text-[#6F6475] hover:text-[#563568] transition-colors cursor-pointer"
+            className="p-1.5 text-[var(--body)] hover:text-[var(--plum)] transition-colors cursor-pointer"
             aria-label="Close Wishlist"
           >
             <X size={20} strokeWidth={1.5} />
@@ -83,17 +83,17 @@ export const WishlistDrawer: React.FC = () => {
         </div>
 
         {/* Content list or Empty State */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 divide-y divide-[#E7DCEB]">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 divide-y divide-[var(--border)]">
           {loading ? (
             <div className="h-full flex flex-col items-center justify-center p-8">
-              <div className="w-6 h-6 border-2 border-[#563568] border-t-transparent rounded-full animate-spin mb-3"></div>
-              <p className="text-xs text-[#6F6475]">Loading your saved pieces...</p>
+              <div className="w-6 h-6 border-2 border-[var(--plum)] border-t-transparent rounded-full animate-spin mb-3"></div>
+              <p className="text-xs text-[var(--body)]">Loading your saved pieces...</p>
             </div>
           ) : count === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-6">
-              <Heart size={40} strokeWidth={1.2} className="text-[#B69ACF] mb-3" />
-              <h3 className="font-serif text-xl text-[#302438] font-normal">Your wishlist is empty</h3>
-              <p className="text-xs text-[#6F6475] mt-2 max-w-xs leading-relaxed">
+              <Heart size={40} strokeWidth={1.2} className="text-[var(--gold)] mb-3" />
+              <h3 className="font-serif text-xl text-[var(--heading)] font-normal">Your wishlist is empty</h3>
+              <p className="text-xs text-[var(--body)] mt-2 max-w-xs leading-relaxed">
                 Save your favourite handcrafted jewellery pieces to revisit them anytime or move them directly into your shopping bag.
               </p>
               <button
@@ -101,7 +101,7 @@ export const WishlistDrawer: React.FC = () => {
                   closeWishlist();
                   navigate('/shop');
                 }}
-                className="mt-6 px-7 py-3 bg-[#563568] text-white text-xs uppercase tracking-[0.2em] font-medium hover:bg-[#A184BD] rounded-xs transition-colors shadow-xs cursor-pointer"
+                className="mt-6 px-7 py-3 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-medium hover:bg-[var(--white)] rounded-xs transition-colors shadow-xs cursor-pointer"
               >
                 Explore Catalogue
               </button>
@@ -115,7 +115,7 @@ export const WishlistDrawer: React.FC = () => {
                   <Link
                     to={`/product/${product.slug}`}
                     onClick={closeWishlist}
-                    className="w-20 h-24 bg-[#F7F0FA] border border-[#E7DCEB] shrink-0 overflow-hidden rounded-xs"
+                    className="w-20 h-24 bg-[var(--tint)] border border-[var(--border)] shrink-0 overflow-hidden rounded-xs"
                   >
                     <img
                       src={product.images[0] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80'}
@@ -131,13 +131,13 @@ export const WishlistDrawer: React.FC = () => {
                         <Link
                           to={`/product/${product.slug}`}
                           onClick={closeWishlist}
-                          className="font-serif text-base text-[#302438] hover:text-[#563568] font-normal line-clamp-1 transition-colors"
+                          className="font-serif text-base text-[var(--heading)] hover:text-[var(--plum)] font-normal line-clamp-1 transition-colors"
                         >
                           {product.name}
                         </Link>
                         <button
                           onClick={() => removeFromWishlist(product.id)}
-                          className="text-[#6F6475] hover:text-[#DC2626] transition-colors p-1 cursor-pointer"
+                          className="text-[var(--body)] hover:text-[#DC2626] transition-colors p-1 cursor-pointer"
                           title="Remove from wishlist"
                           aria-label={`Remove ${product.name}`}
                         >
@@ -146,11 +146,11 @@ export const WishlistDrawer: React.FC = () => {
                       </div>
 
                       <div className="flex items-baseline gap-2 mt-1">
-                        <span className="text-sm font-medium text-[#302438]">
+                        <span className="text-sm font-medium text-[var(--heading)]">
                           {formatInr(product.price)}
                         </span>
                         {product.compareAtPrice && (
-                          <span className="text-xs text-[#6F6475] line-through">
+                          <span className="text-xs text-[var(--body)] line-through">
                             {formatInr(product.compareAtPrice)}
                           </span>
                         )}
@@ -161,13 +161,13 @@ export const WishlistDrawer: React.FC = () => {
                       {inStock ? (
                         <button
                           onClick={() => handleMoveToBag(product)}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#563568] text-white hover:bg-[#A184BD] text-xs font-medium rounded-xs transition-colors shadow-2xs cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[var(--plum)] text-white hover:bg-[var(--white)] text-xs font-medium rounded-xs transition-colors shadow-2xs cursor-pointer"
                         >
                           <ShoppingBag size={13} />
                           <span>{product.variants?.length ? 'Choose Options' : 'Move to Bag'}</span>
                         </button>
                       ) : (
-                        <span className="text-[11px] text-[#6F6475] font-medium bg-[#F7F0FA] px-2.5 py-1 rounded-xs border border-[#E7DCEB]">
+                        <span className="text-[11px] text-[var(--body)] font-medium bg-[var(--tint)] px-2.5 py-1 rounded-xs border border-[var(--border)]">
                           Out of Stock
                         </span>
                       )}
@@ -181,17 +181,17 @@ export const WishlistDrawer: React.FC = () => {
 
         {/* Footer */}
         {count > 0 && (
-          <div className="p-4 sm:p-5 border-t border-[#E7DCEB] bg-[#F7F0FA] flex items-center justify-between">
+          <div className="p-4 sm:p-5 border-t border-[var(--border)] bg-[var(--tint)] flex items-center justify-between">
             <button
               onClick={() => {
                 closeWishlist();
                 navigate('/shop');
               }}
-              className="text-xs text-[#563568] font-medium hover:underline cursor-pointer"
+              className="text-xs text-[var(--plum)] font-medium hover:underline cursor-pointer"
             >
               Continue Exploring
             </button>
-            <span className="text-xs text-[#6F6475]">
+            <span className="text-xs text-[var(--body)]">
               Items remain saved on this device
             </span>
           </div>
