@@ -1,7 +1,7 @@
 const API_BASE = (
   import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
   (import.meta.env.DEV ? '/api' : 'https://lavender-goldfish-844589.hostingersite.com/api')
-).replace(/\\/+$/, '');
+).replace(/\/+$/, '');
 
 export interface AdminIdentity {
   id: string;
@@ -34,7 +34,7 @@ async function authRequest<T>(
   let response: Response;
 
   try {
-    response = await fetch(`${API_BASE}/admin/auth/${endpoint}`, {
+    response = await fetch(\`\${API_BASE}/admin/auth/\${endpoint}\`, {
       ...options,
       credentials: 'include',
       cache: 'no-store',
@@ -78,8 +78,6 @@ export async function adminLogin(
     throw new AdminAuthError('The authentication service returned an invalid response.', 502);
   }
 
-  // Confirm that the browser retained the HttpOnly session cookie before
-  // sending the administrator into protected pages.
   const session = await authRequest<SessionResponse>('session');
   if (!session.authenticated || !session.admin) {
     throw new AdminAuthError(
