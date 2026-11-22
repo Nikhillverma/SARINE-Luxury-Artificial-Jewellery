@@ -464,38 +464,7 @@ body.sarine-global-theme #main-content .sarine-home h2,
 body.sarine-global-theme #main-content .sarine-home h3 {
   color: var(--sarine-global-primary, #563568) !important;
 }
-body.sarine-global-theme header.sticky {
-  background-color: var(--sarine-global-header, #FFFFFF) !important;
-}
-body.sarine-global-theme header.sticky > div:first-child {
-  background-color: var(--sarine-global-primary, #563568) !important;
-  color: var(--sarine-global-surface, #F7F0FA) !important;
-}
-body.sarine-global-theme header.sticky > div:first-child * {
-  color: inherit;
-}
-body.sarine-global-theme header.sticky > div:nth-child(2) {
-  background-color: var(--sarine-global-header, #FFFFFF) !important;
-}
-body.sarine-global-theme header.sticky [class*="text-[#563568]"] {
-  color: var(--sarine-global-primary, #563568) !important;
-}
-body.sarine-global-theme header.sticky [class*="border-[#563568]"] {
-  border-color: var(--sarine-global-primary, #563568) !important;
-}
-body.sarine-global-theme footer {
-  background-color: var(--sarine-global-footer, #563568) !important;
-  color: var(--sarine-global-footer-text, #F7F0FA) !important;
-}
-body.sarine-global-theme footer > div:not(:first-child) {
-  background-color: var(--sarine-global-footer, #563568) !important;
-  color: var(--sarine-global-footer-text, #F7F0FA) !important;
-}
-body.sarine-global-theme footer [class*="text-[#F7F0FA]"],
-body.sarine-global-theme footer [class*="text-[#E7DCEB]"],
-body.sarine-global-theme footer [class*="text-white"] {
-  color: var(--sarine-global-footer-text, #F7F0FA) !important;
-}
+/* Header and footer are intentionally styled only by their own components. */
 body.sarine-global-theme #main-content a[class*="bg-[#563568]"],
 body.sarine-global-theme #main-content button[class*="bg-[#563568]"] {
   border-radius: var(--sarine-global-radius, 8px) !important;
