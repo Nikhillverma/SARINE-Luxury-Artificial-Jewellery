@@ -38,41 +38,41 @@ export const ContactPage: React.FC = () => {
     >
       <div className="max-w-3xl mx-auto">
         {submitted ? (
-          <div className="bg-[#FAF5FC] border border-[#B69ACF] p-8 sm:p-10 text-center space-y-4 rounded-xs">
-            <div className="w-12 h-12 rounded-full bg-[#563568] text-white flex items-center justify-center mx-auto">
+          <div className="bg-[var(--tint)] border border-[var(--gold)] p-8 sm:p-10 text-center space-y-4 rounded-xs">
+            <div className="w-12 h-12 rounded-full bg-[var(--plum)] text-white flex items-center justify-center mx-auto">
               <CheckCircle2 size={24} />
             </div>
-            <h2 className="font-serif text-2xl text-[#302438]">Your message has been recorded</h2>
-            <p className="text-sm text-[#6F6475] max-w-lg mx-auto leading-relaxed">
+            <h2 className="font-serif text-2xl text-[var(--heading)]">Your message has been recorded</h2>
+            <p className="text-sm text-[var(--body)] max-w-lg mx-auto leading-relaxed">
               Thank you for contacting SARINE. Your enquiry is saved securely for our team to review. Keep a copy of your message and order number for reference.
             </p>
-            <button type="button" onClick={() => { setFormData(EMPTY_FORM); setSubmitted(false); }} className="min-h-11 px-6 text-xs uppercase tracking-wider text-[#563568] underline underline-offset-4">
+            <button type="button" onClick={() => { setFormData(EMPTY_FORM); setSubmitted(false); }} className="min-h-11 px-6 text-xs uppercase tracking-wider text-[var(--plum)] underline underline-offset-4">
               Send another enquiry
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-5 bg-white border border-[#E7DCEB] p-5 sm:p-8 rounded-xs">
+          <form onSubmit={handleSubmit} className="space-y-5 bg-white border border-[var(--border)] p-5 sm:p-8 rounded-xs">
             <div className="flex items-center gap-2 mb-1">
-              <MessageSquare size={17} className="text-[#563568]" />
-              <h2 className="font-serif text-2xl text-[#302438]">Send an enquiry</h2>
+              <MessageSquare size={17} className="text-[var(--plum)]" />
+              <h2 className="font-serif text-2xl text-[var(--heading)]">Send an enquiry</h2>
             </div>
-            <p className="text-xs text-[#6F6475]">Fields marked with * are required. Your contact details are used only to review and respond to this enquiry.</p>
+            <p className="text-xs text-[var(--body)]">Fields marked with * are required. Your contact details are used only to review and respond to this enquiry.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <label className="block text-xs text-[#6F6475]">Full name *
-                <input required minLength={2} maxLength={120} autoComplete="name" value={formData.name} onChange={e => update('name', e.target.value)} className="mt-1.5 w-full min-h-11 border border-[#E7DCEB] bg-[#F7F0FA] px-3.5 text-sm text-[#302438] focus:outline-none focus:border-[#563568]" placeholder="Your name" />
+              <label className="block text-xs text-[var(--body)]">Full name *
+                <input required minLength={2} maxLength={120} autoComplete="name" value={formData.name} onChange={e => update('name', e.target.value)} className="mt-1.5 w-full min-h-11 border border-[var(--border)] bg-[var(--tint)] px-3.5 text-sm text-[var(--heading)] focus:outline-none focus:border-[var(--plum)]" placeholder="Your name" />
               </label>
-              <label className="block text-xs text-[#6F6475]">Email address *
-                <input required type="email" maxLength={254} autoComplete="email" value={formData.email} onChange={e => update('email', e.target.value)} className="mt-1.5 w-full min-h-11 border border-[#E7DCEB] bg-[#F7F0FA] px-3.5 text-sm text-[#302438] focus:outline-none focus:border-[#563568]" placeholder="you@example.com" />
+              <label className="block text-xs text-[var(--body)]">Email address *
+                <input required type="email" maxLength={254} autoComplete="email" value={formData.email} onChange={e => update('email', e.target.value)} className="mt-1.5 w-full min-h-11 border border-[var(--border)] bg-[var(--tint)] px-3.5 text-sm text-[var(--heading)] focus:outline-none focus:border-[var(--plum)]" placeholder="you@example.com" />
               </label>
-              <label className="block text-xs text-[#6F6475]">Phone / WhatsApp (optional)
-                <input type="tel" maxLength={24} autoComplete="tel" value={formData.phone} onChange={e => update('phone', e.target.value)} className="mt-1.5 w-full min-h-11 border border-[#E7DCEB] bg-[#F7F0FA] px-3.5 text-sm text-[#302438] focus:outline-none focus:border-[#563568]" placeholder="+91" />
+              <label className="block text-xs text-[var(--body)]">Phone / WhatsApp (optional)
+                <input type="tel" maxLength={24} autoComplete="tel" value={formData.phone} onChange={e => update('phone', e.target.value)} className="mt-1.5 w-full min-h-11 border border-[var(--border)] bg-[var(--tint)] px-3.5 text-sm text-[var(--heading)] focus:outline-none focus:border-[var(--plum)]" placeholder="+91" />
               </label>
-              <label className="block text-xs text-[#6F6475]">Subject (optional)
-                <input maxLength={160} value={formData.subject} onChange={e => update('subject', e.target.value)} className="mt-1.5 w-full min-h-11 border border-[#E7DCEB] bg-[#F7F0FA] px-3.5 text-sm text-[#302438] focus:outline-none focus:border-[#563568]" placeholder="Order, product, returns…" />
+              <label className="block text-xs text-[var(--body)]">Subject (optional)
+                <input maxLength={160} value={formData.subject} onChange={e => update('subject', e.target.value)} className="mt-1.5 w-full min-h-11 border border-[var(--border)] bg-[var(--tint)] px-3.5 text-sm text-[var(--heading)] focus:outline-none focus:border-[var(--plum)]" placeholder="Order, product, returns…" />
               </label>
             </div>
-            <label className="block text-xs text-[#6F6475]">Your message *
-              <textarea required minLength={10} maxLength={5000} rows={6} value={formData.message} onChange={e => update('message', e.target.value)} className="mt-1.5 w-full border border-[#E7DCEB] bg-[#F7F0FA] p-3.5 text-sm text-[#302438] focus:outline-none focus:border-[#563568] resize-y" placeholder="How can we help?" />
+            <label className="block text-xs text-[var(--body)]">Your message *
+              <textarea required minLength={10} maxLength={5000} rows={6} value={formData.message} onChange={e => update('message', e.target.value)} className="mt-1.5 w-full border border-[var(--border)] bg-[var(--tint)] p-3.5 text-sm text-[var(--heading)] focus:outline-none focus:border-[var(--plum)] resize-y" placeholder="How can we help?" />
             </label>
             <label aria-hidden="true" className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden">
               Website
@@ -80,8 +80,8 @@ export const ContactPage: React.FC = () => {
             </label>
             {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-              <p className="text-[11px] text-[#8A7B90]">Please do not include payment card details or passwords.</p>
-              <button type="submit" disabled={submitting} className="min-h-12 px-7 inline-flex items-center justify-center gap-2 bg-[#563568] hover:bg-[#6C4781] text-white text-xs uppercase tracking-[0.16em] disabled:opacity-50">
+              <p className="text-[11px] text-[var(--body)]">Please do not include payment card details or passwords.</p>
+              <button type="submit" disabled={submitting} className="min-h-12 px-7 inline-flex items-center justify-center gap-2 bg-[var(--plum)] hover:bg-[var(--plum)] text-white text-xs uppercase tracking-[0.16em] disabled:opacity-50">
                 <Send size={14} /> {submitting ? 'Submitting…' : 'Submit enquiry'}
               </button>
             </div>
