@@ -108,3 +108,50 @@ publicRouter.get("/:slug", async (req,res,next) => {
 });
 export { publicRouter as publicCmsPagesRouter };
 export default admin;
+
+
+// Reusable, validated content sections for the visual page builder.
+async function ensureReusableSectionsSchema() {
+  await pool.execute(`CREATE TABLE IF NOT EXISTS cms_reusable_sections (
+    id VARCHAR(36) NOT NULL PRIMARY KEY,
+    title VARCHAR(120) NOT NULL,
+    blocks_json LONGTEXT NOT NULL,
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+    KEY idx_cms_reusable_sections_updated (updated_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+}
+admin.get("/sections", async (_req, res, next) => {
+  try {
+    await ensureReusableSectionsSchema();
+    const [rows] = await pool.execute("SELECT id, title, blocks_json, updated_at FROM cms_reusable_sections ORDER BY updated_at DESC LIMIT 100");
+    res.set("Cache-Control", "no-store").json({ sections: rows.map(row => {
+      let blocks = [];
+      try { blocks = JSON.parse(row.blocks_json); } catch {}
+      return { id: row.id, title: row.title, blocks, updatedAt: row.updated_at };
+    }) });
+  } catch (error) { next(error); }
+});
+admin.post("/sections", async (req, res, next) => {
+  try {
+    await ensureReusableSectionsSchema();
+    const title = typeof req.body?.title === "string" ? req.body.title.trim() : "";
+    if (!title || title.length > 120) return res.status(400).json({ error: "Reusable section title is required (maximum 120 characters)." });
+    const checked = cleanPage({ title: "Reusable section", slug: "reusable-section", seoTitle: "Reusable section", seoDescription: "Reusable section", blocks: req.body?.blocks });
+    if (!checked.blocks.length) return res.status(400).json({ error: "Add at least one content block to save a reusable section." });
+    const id = crypto.randomUUID();
+    await pool.execute("INSERT INTO cms_reusable_sections (id, title, blocks_json) VALUES (?, ?, ?)", [id, title, JSON.stringify(checked.blocks)]);
+    res.status(201).set("Cache-Control", "no-store").json({ success: true, section: { id, title, blocks: checked.blocks } });
+  } catch (error) {
+    if (/required|valid|under|block|internal|HTTPS|characters|available|text/i.test(error.message)) return res.status(400).json({ error: error.message });
+    next(error);
+  }
+});
+admin.delete("/sections/:id", async (req, res, next) => {
+  try {
+    await ensureReusableSectionsSchema();
+    const [result] = await pool.execute("DELETE FROM cms_reusable_sections WHERE id=?", [req.params.id]);
+    if (!result.affectedRows) return res.status(404).json({ error: "Reusable section not found." });
+    res.json({ success: true });
+  } catch (error) { next(error); }
+});
