@@ -16,6 +16,9 @@ export const CustomerLoginPrompt: React.FC = () => {
   useEffect(() => {
     let active = true;
     let timer: number | undefined;
+    setVisible(false);
+    setExpanded(false);
+    setChecking(true);
     customerAuthService.getSession().then(customer => {
       if (!active || customer) return;
       let dismissed = false;
