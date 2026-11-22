@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "./styles/global.css";
 
@@ -597,7 +598,6 @@ body.sarine-global-theme #main-content .sarine-home > section:has(img[alt="SARIN
 
 
 /* SARINE warm ivory / antique gold visual refresh — presentation only. */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 body.sarine-global-theme {
   --sarine-global-primary: #4A1D5C !important;
@@ -720,4 +720,10 @@ body.sarine-global-theme #main-content .sarine-home .category-grid > a > div:las
   body.sarine-global-theme #main-content .product-grid > article button {
     min-width: 44px;
   }
+}
+
+body.sarine-global-theme #main-content .sarine-editorial-banner h2,
+body.sarine-global-theme #main-content .sarine-editorial-banner p,
+body.sarine-global-theme #main-content .sarine-editorial-banner span {
+  color: #FFFFFF !important;
 }
