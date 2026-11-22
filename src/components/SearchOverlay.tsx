@@ -347,7 +347,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
                   <Link
                     to="/shop?category=sets"
                     onClick={onClose}
-                    className="col-span-2 p-2.5 bg-[var(--plum)] text-white hover:bg-[var(--white)] rounded-xs transition-colors text-center font-medium"
+                    className="col-span-2 p-2.5 bg-[var(--plum)] text-white hover:bg-[var(--gold)] rounded-xs transition-colors text-center font-medium"
                   >
                     Curated Jewellery Sets
                   </Link>
