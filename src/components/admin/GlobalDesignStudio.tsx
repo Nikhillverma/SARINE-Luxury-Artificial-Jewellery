@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Check, Monitor, RotateCcw, Save, Smartphone, Tablet, Upload } from "lucide-react";
 import {
   DEFAULT_GLOBAL_DESIGN,
@@ -99,7 +100,7 @@ export const GlobalDesignStudio: React.FC = () => {
   const previewWidth = previewMode === "desktop" ? "100%" : previewMode === "tablet" ? "620px" : "375px";
   const previewStyle: React.CSSProperties = {
     width: previewWidth,
-    maxWidth: "100%",
+    maxWidth: previewMode === "desktop" ? design.layout.contentWidth + "px" : "100%",
     marginInline: "auto",
     background: design.colors.pageBackground,
     color: design.colors.text,
@@ -158,6 +159,29 @@ export const GlobalDesignStudio: React.FC = () => {
                         />
                       </span>
                     </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-[#EFE8F2] pt-5 space-y-3">
+                <div>
+                  <h3 className="font-semibold text-[#302438]">Storefront text & content editors</h3>
+                  <p className="text-xs text-[#806F89]">Edit the actual wording, headings, descriptions, labels and links in their dedicated workspaces. These are separate from visual styling, so changing colours will never overwrite your copy.</p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {[
+                    ["Homepage content", "/admin/storefront/homepage-content", "Story, price section, care guide and contact copy"],
+                    ["Editorial Collection", "/admin/storefront/editorial", "Eyebrow, heading, paragraph, button label, link and image"],
+                    ["Header & footer", "/admin/storefront/header-footer", "Brand tagline, footer headings, contact and social details"],
+                    ["Announcements", "/admin/storefront/announcements", "Top announcement and every trust ticker message"],
+                    ["Hero banners", "/admin/storefront/hero-banners", "Every slide heading, description, CTA and image"],
+                    ["Website pages", "/admin/storefront/website-pages", "Editable page headings, body copy, FAQs and calls to action"],
+                    ["Shop by occasion", "/admin/storefront/occasions", "Card titles, descriptions and destinations"]
+                  ].map(([label, href, description]) => (
+                    <Link key={href} to={href} className="rounded-lg border border-[#E7DCEB] bg-white p-3 transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
+                      <span className="block text-sm font-semibold text-[#563568]">{label} <span aria-hidden="true">→</span></span>
+                      <span className="mt-1 block text-xs leading-5 text-[#806F89]">{description}</span>
+                    </Link>
                   ))}
                 </div>
               </div>
