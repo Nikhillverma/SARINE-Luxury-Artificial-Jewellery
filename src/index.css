@@ -419,147 +419,14 @@
 
 
 /* ==========================================================================
-   Published SARINE Global Design Studio tokens.
-   Only the public storefront receives this class; admin screens stay isolated.
+   SARINE ORIGINAL FOUR-COLOUR THEME — public storefront only.
+   Header and footer components retain their existing colours.
    ========================================================================== */
-body.sarine-global-theme {
-  background-color: var(--sarine-global-page, #FFFFFF);
-  color: var(--sarine-global-text, #302438);
-  font-family: var(--sarine-global-body-font, "Plus Jakarta Sans"), sans-serif;
-}
 body.sarine-global-theme #main-content {
-  background-color: var(--sarine-global-page, #FFFFFF);
-  color: var(--sarine-global-text, #302438);
+  background: #FFFFFF;
+  color: #563568;
   font-family: var(--sarine-global-body-font, "Plus Jakarta Sans"), sans-serif;
 }
-body.sarine-global-theme #main-content h1,
-body.sarine-global-theme #main-content h2,
-body.sarine-global-theme #main-content h3,
-body.sarine-global-theme #main-content h4,
-body.sarine-global-theme #main-content h5,
-body.sarine-global-theme #main-content .font-serif {
-  font-family: var(--sarine-global-heading-font, "Cormorant Garamond"), Georgia, serif !important;
-}
-body.sarine-global-theme #main-content p,
-body.sarine-global-theme #main-content li,
-body.sarine-global-theme #main-content input,
-body.sarine-global-theme #main-content textarea,
-body.sarine-global-theme #main-content select,
-body.sarine-global-theme #main-content button,
-body.sarine-global-theme #main-content .font-sans {
-  font-family: var(--sarine-global-body-font, "Plus Jakarta Sans"), sans-serif;
-}
-body.sarine-global-theme #main-content .site-container {
-  max-width: var(--sarine-global-content-width, 1280px) !important;
-}
-body.sarine-global-theme #main-content .sarine-home {
-  background-color: var(--sarine-global-page, #FFFFFF) !important;
-  color: var(--sarine-global-text, #302438) !important;
-}
-/* Header and footer are intentionally styled only by their own components. */
-body.sarine-global-theme #main-content a[class*="bg-[#563568]"],
-body.sarine-global-theme #main-content button[class*="bg-[#563568]"] {
-  border-radius: var(--sarine-global-radius, 8px) !important;
-}
-body.sarine-global-theme[data-sarine-button-style="solid"] #main-content a[class*="bg-[#563568]"],
-body.sarine-global-theme[data-sarine-button-style="solid"] #main-content button[class*="bg-[#563568]"] {
-  background-color: var(--sarine-global-primary, #563568) !important;
-  border-color: var(--sarine-global-primary, #563568) !important;
-}
-body.sarine-global-theme[data-sarine-button-style="outline"] #main-content a[class*="bg-[#563568]"],
-body.sarine-global-theme[data-sarine-button-style="outline"] #main-content button[class*="bg-[#563568]"] {
-  background-color: transparent !important;
-  color: var(--sarine-global-primary, #563568) !important;
-  border: 1px solid var(--sarine-global-primary, #563568) !important;
-}
-body.sarine-global-theme #main-content .product-grid > article,
-body.sarine-global-theme #main-content .category-grid > a {
-  border-radius: var(--sarine-global-radius, 8px) !important;
-}
-@media (max-width: 767px) {
-  body.sarine-global-theme #main-content .site-container {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-}
-
-body.sarine-global-theme #main-content h1 {
-  font-size: calc(var(--text-h1, 2rem) * var(--sarine-global-heading-scale, 1)) !important;
-}
-body.sarine-global-theme #main-content h2 {
-  font-size: calc(var(--text-h2, 1.65rem) * var(--sarine-global-heading-scale, 1)) !important;
-}
-body.sarine-global-theme #main-content h3 {
-  font-size: calc(var(--text-h3, 1.35rem) * var(--sarine-global-heading-scale, 1)) !important;
-}
-body.sarine-global-theme #main-content h4,
-body.sarine-global-theme #main-content h5,
-body.sarine-global-theme #main-content h6 {
-  font-size: calc(var(--text-h4, 1.15rem) * var(--sarine-global-heading-scale, 1)) !important;
-}
-body.sarine-global-theme #main-content p,
-body.sarine-global-theme #main-content li {
-  font-size: calc(var(--text-base, 1rem) * var(--sarine-global-body-scale, 1));
-}
-
-
-/* Mobile storefront usability: comfortable touch targets and safe scrolling. */
-@media (max-width: 767px) {
-  .product-grid > article {
-    min-width: 0;
-  }
-
-  .product-grid > article h3 {
-    overflow-wrap: anywhere;
-  }
-
-  .product-grid > article button,
-  .product-grid > article a {
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  #sarine-mobile-navigation {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  #sarine-mobile-navigation .flex-1 a {
-    min-height: 40px;
-    align-items: center;
-  }
-}
-
-@media (hover: none) and (pointer: coarse) {
-  .product-grid > article > div.relative > a.absolute {
-    min-height: 44px;
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sarine-announcement-track {
-    animation: none !important;
-    transform: none !important;
-  }
-}
-
-
-/* ==========================================================================
-   SARINE approved storefront theme
-   Replaces the stacked experimental colour overrides. The header and footer
-   are intentionally excluded; their component styles remain the source of truth.
-   ========================================================================== */
-body.sarine-global-theme {
-  background: var(--sarine-global-page, #FFFFFF);
-  color: var(--sarine-global-text, #5C5660);
-  font-family: var(--sarine-global-body-font, "Plus Jakarta Sans"), sans-serif;
-}
-
-body.sarine-global-theme #main-content {
-  background: var(--sarine-global-page, #FFFFFF);
-  color: var(--sarine-global-text, #5C5660);
-  font-family: var(--sarine-global-body-font, "Plus Jakarta Sans"), sans-serif;
-}
-
 body.sarine-global-theme #main-content h1,
 body.sarine-global-theme #main-content h2,
 body.sarine-global-theme #main-content h3,
@@ -567,140 +434,65 @@ body.sarine-global-theme #main-content h4,
 body.sarine-global-theme #main-content h5,
 body.sarine-global-theme #main-content h6,
 body.sarine-global-theme #main-content .font-serif {
-  color: #1D1B1F;
-  font-family: var(--sarine-global-heading-font, "Cormorant Garamond"), Georgia, serif;
+  color: #563568;
+  font-family: var(--sarine-global-heading-font, "Cormorant Garamond"), Georgia, serif !important;
 }
-
 body.sarine-global-theme #main-content p,
 body.sarine-global-theme #main-content li,
 body.sarine-global-theme #main-content label,
+body.sarine-global-theme #main-content small,
 body.sarine-global-theme #main-content input,
 body.sarine-global-theme #main-content textarea,
 body.sarine-global-theme #main-content select,
 body.sarine-global-theme #main-content .font-sans {
-  color: var(--sarine-global-text, #5C5660);
+  color: #563568;
   font-family: var(--sarine-global-body-font, "Plus Jakarta Sans"), sans-serif;
 }
-
-body.sarine-global-theme #main-content .sarine-home {
-  background: var(--sarine-global-page, #FFFFFF);
-  color: var(--sarine-global-text, #5C5660);
+body.sarine-global-theme #main-content section {
+  border-color: #B69ACF;
 }
-
-
-
-body.sarine-global-theme #main-content .sarine-home > section:first-child h1,
-body.sarine-global-theme #main-content .sarine-home > section:first-child p,
-body.sarine-global-theme #main-content .sarine-home > section:first-child span,
-body.sarine-global-theme #main-content .sarine-home > section:first-child a,
-body.sarine-global-theme #main-content .sarine-editorial-banner h2,
-body.sarine-global-theme #main-content .sarine-editorial-banner p,
-body.sarine-global-theme #main-content .sarine-editorial-banner span {
-  color: #FFFFFF;
+body.sarine-global-theme #main-content [class*="bg-[#F7F0FA]"],
+body.sarine-global-theme #main-content [class*="bg-[#F7F4F8]"],
+body.sarine-global-theme #main-content [class*="bg-[#F0E6F4]"],
+body.sarine-global-theme #main-content [class*="bg-[#FAF5FC]"],
+body.sarine-global-theme #main-content [class*="bg-[#EBDFF2]"] {
+  background-color: #F7F0FA;
 }
-
-body.sarine-global-theme #main-content .product-grid > article,
-body.sarine-global-theme #main-content .category-grid > a,
-body.sarine-global-theme #main-content .occasion-grid > a {
-  background: #FFFFFF;
-  border: 1px solid #E9E5E9;
-  box-shadow: 0 2px 10px rgba(29, 27, 31, 0.04);
+body.sarine-global-theme #main-content [class*="bg-[#4A1D5C]"],
+body.sarine-global-theme #main-content [class*="bg-[#2B1A33]"] {
+  background-color: #563568;
 }
-
-body.sarine-global-theme #main-content .product-grid > article h3,
-body.sarine-global-theme #main-content .category-grid > a h3 {
-  color: #1D1B1F;
+body.sarine-global-theme #main-content [class*="text-[#302438]"],
+body.sarine-global-theme #main-content [class*="text-[#1D1B1F]"],
+body.sarine-global-theme #main-content [class*="text-[#5C5660]"],
+body.sarine-global-theme #main-content [class*="text-[#6F6475]"],
+body.sarine-global-theme #main-content [class*="text-[#2B1A33]"] {
+  color: #563568;
 }
-
-body.sarine-global-theme #main-content .product-grid > article .text-sm.font-sans,
-body.sarine-global-theme #main-content .product-grid > article [class*="text-[#563568]"],
-body.sarine-global-theme #main-content .product-grid > article [class*="text-[#4A1D5C]"] {
-  color: var(--sarine-global-primary, #563568);
-}
-
-body.sarine-global-theme #main-content .product-grid > article [class*="uppercase"],
-body.sarine-global-theme #main-content .product-grid > article [class*="line-through"] {
-  color: #5C5660;
-}
-
 body.sarine-global-theme #main-content [class*="border-[#E7DCEB]"],
-body.sarine-global-theme #main-content [class*="border-[#B69ACF]"] {
-  border-color: #E9E5E9;
+body.sarine-global-theme #main-content [class*="border-[#E9E5E9]"] {
+  border-color: #B69ACF;
 }
-
 body.sarine-global-theme #main-content a[class*="bg-[#563568]"],
 body.sarine-global-theme #main-content button[class*="bg-[#563568]"],
 body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]"],
 body.sarine-global-theme #main-content button[class*="bg-[#4A1D5C]"] {
-  background-color: var(--sarine-global-primary, #563568);
-  border-color: var(--sarine-global-primary, #563568);
+  background-color: #563568;
+  border-color: #563568;
   color: #FFFFFF;
 }
-
 body.sarine-global-theme #main-content a[class*="bg-[#563568]"]:hover,
 body.sarine-global-theme #main-content button[class*="bg-[#563568]"]:hover,
 body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]"]:hover,
 body.sarine-global-theme #main-content button[class*="bg-[#4A1D5C]"]:hover {
-  background-color: #6B4A7D;
-  border-color: #6B4A7D;
-  color: #FFFFFF;
+  background-color: #B69ACF;
+  border-color: #B69ACF;
+  color: #563568;
 }
-
-body.sarine-global-theme #main-content [class*="bg-[#F7F0FA]"],
-body.sarine-global-theme #main-content [class*="bg-[#F7F0FA]/"],
-body.sarine-global-theme #main-content [class*="bg-[#E7DCEB]"],
-body.sarine-global-theme #main-content [class*="bg-[#B69ACF]"],
-body.sarine-global-theme #main-content [class*="bg-[#B69ACF]/"] {
-  background-color: var(--sarine-global-surface, #F7F4F8);
+body.sarine-global-theme #main-content a:not([class*="bg-"]),
+body.sarine-global-theme #main-content button:not([class*="bg-"]) {
+  accent-color: #563568;
 }
-
-body.sarine-global-theme #main-content h1 {
-  font-size: clamp(1.875rem, 4.4vw, 3.75rem);
-  line-height: 1.08;
-}
-body.sarine-global-theme #main-content h2 {
-  font-size: clamp(1.625rem, 3.2vw, 2.625rem);
-  line-height: 1.14;
-}
-body.sarine-global-theme #main-content h3 {
-  font-size: clamp(1rem, 1.65vw, 1.375rem);
-  line-height: 1.25;
-}
-body.sarine-global-theme #main-content p,
-body.sarine-global-theme #main-content li {
-  font-size: clamp(0.875rem, 1.05vw, 1rem);
-  line-height: 1.65;
-}
-
-@media (max-width: 767px) {
-  body.sarine-global-theme #main-content .site-container {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-  body.sarine-global-theme #main-content button,
-  body.sarine-global-theme #main-content a[role="button"],
-  body.sarine-global-theme #sarine-mobile-navigation button,
-  body.sarine-global-theme #sarine-mobile-navigation a {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  body.sarine-global-theme #main-content .product-grid {
-    gap: 10px;
-  }
-  body.sarine-global-theme #main-content .product-grid > article > div:last-child {
-    padding: 8px;
-  }
-}
-@media (min-width: 768px) and (max-width: 1023px) {
-  body.sarine-global-theme #main-content h1 {
-    font-size: clamp(2.2rem, 4.5vw, 3rem);
-  }
-  body.sarine-global-theme #main-content h2 {
-    font-size: clamp(1.7rem, 3.4vw, 2.2rem);
-  }
-}
-
-/* Newsletter-style contact band: plum surface with high-contrast copy. */
 body.sarine-global-theme #main-content #stay-in-touch {
   background-color: #563568;
   color: #FFFFFF;
@@ -711,8 +503,24 @@ body.sarine-global-theme #main-content #stay-in-touch span {
   color: #FFFFFF;
 }
 body.sarine-global-theme #main-content #stay-in-touch a {
-  color: #E2C58D;
+  color: #B69ACF;
 }
 body.sarine-global-theme #main-content #stay-in-touch a:hover {
   color: #FFFFFF;
+}
+body.sarine-global-theme #main-content h1 { font-size: clamp(1.875rem, 4.4vw, 3.75rem); line-height: 1.08; }
+body.sarine-global-theme #main-content h2 { font-size: clamp(1.625rem, 3.2vw, 2.625rem); line-height: 1.14; }
+body.sarine-global-theme #main-content h3 { font-size: clamp(1rem, 1.65vw, 1.375rem); line-height: 1.25; }
+body.sarine-global-theme #main-content p,
+body.sarine-global-theme #main-content li { font-size: clamp(0.875rem, 1.05vw, 1rem); line-height: 1.65; }
+@media (max-width: 767px) {
+  body.sarine-global-theme #main-content .site-container { padding-left: 16px; padding-right: 16px; }
+  body.sarine-global-theme #main-content button,
+  body.sarine-global-theme #main-content a[role="button"] { min-height: 44px; min-width: 44px; }
+  body.sarine-global-theme #main-content .product-grid { gap: 10px; }
+  body.sarine-global-theme #main-content .product-grid > article > div:last-child { padding: 8px; }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  body.sarine-global-theme #main-content h1 { font-size: clamp(2.2rem, 4.5vw, 3rem); }
+  body.sarine-global-theme #main-content h2 { font-size: clamp(1.7rem, 3.4vw, 2.2rem); }
 }
