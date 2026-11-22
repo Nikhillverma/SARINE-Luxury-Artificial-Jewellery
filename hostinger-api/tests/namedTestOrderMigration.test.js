@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { markNamedTestProductOrdersAsTests } from "../prelaunchOrderMigration.js";
+process.env.DB_HOST ||= "127.0.0.1";
+process.env.DB_NAME ||= "sarine_test";
+process.env.DB_USER ||= "sarine_test";
+process.env.DB_PASSWORD ||= "test-only-placeholder";
+const { markNamedTestProductOrdersAsTests } = await import("../prelaunchOrderMigration.js");
 
 function fakeConnection({ alreadyApplied = false } = {}) {
   const calls = [];
