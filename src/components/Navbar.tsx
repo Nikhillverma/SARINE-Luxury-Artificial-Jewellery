@@ -323,7 +323,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Mobile Quick Search Button */}
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors lg:hidden cursor-pointer rounded-full hover:bg-white/60"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors lg:hidden cursor-pointer rounded-full hover:bg-[var(--white)]"
                 aria-label="Open search"
               >
                 <Search size={20} strokeWidth={1.5} />
@@ -356,7 +356,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {/* Mobile Account Icon Only */}
                 <Link
                   to="/account"
-                  className="sm:hidden inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors rounded-full hover:bg-white/60"
+                  className="sm:hidden inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors rounded-full hover:bg-[var(--white)]"
                   aria-label="My Account"
                 >
                   <User size={19} strokeWidth={1.5} className="text-[color:var(--plum)]" />
@@ -446,7 +446,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Wishlist Button with Label & Numeric Badge */}
               <button
                 onClick={openWishlist}
-                className="relative inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer group rounded-xs hover:bg-white/60"
+                className="relative inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer group rounded-xs hover:bg-[var(--white)]"
                 aria-label={`Wishlist with ${wishlistCount} saved pieces`}
                 title="View Wishlist"
               >
@@ -467,7 +467,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Bag Button with Label & Numeric Badge */}
               <button
                 onClick={openDrawer}
-                className="relative inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer group rounded-xs hover:bg-white/60"
+                className="relative inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer group rounded-xs hover:bg-[var(--white)]"
                 aria-label={`Shopping Bag with ${itemCount} items`}
                 title="Shopping Bag"
               >
