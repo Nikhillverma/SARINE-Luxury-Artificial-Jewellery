@@ -49,7 +49,7 @@ export const OrderConfirmationPage: React.FC = () => {
               `[OrderConfirmation] Could not find order: No order found matching reference "${orderNumber}" with authorization token.`
             );
           } else {
-            console.log('[OrderConfirmation] Order found and loaded successfully:', found);
+            console.info('[OrderConfirmation] Order loaded successfully:', orderNumber);
           }
           setOrder(found);
         }

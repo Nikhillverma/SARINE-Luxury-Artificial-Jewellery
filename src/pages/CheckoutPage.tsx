@@ -232,7 +232,7 @@ export const CheckoutPage: React.FC = () => {
         couponCode: activeCoupon?.code
       });
 
-      console.log('[Checkout] Order created on server:', order.orderNumber, order);
+      console.info('[Checkout] Order created on server:', order.orderNumber);
 
       // Online payment via Razorpay Checkout
       if (paymentMethod === 'online') {
@@ -264,7 +264,7 @@ export const CheckoutPage: React.FC = () => {
             contact: phone.replace(/\D/g, '')
           },
           theme: {
-            color: '#1C1917'
+            color: '#563568'
           },
           handler: async (response: {
             razorpay_order_id: string;
