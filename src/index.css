@@ -92,10 +92,11 @@
 
 /* SARINE homepage: tighter editorial rhythm and refined typography */
 .sarine-home {
-  --sarine-heading-font: "Playfair Display", Georgia, serif;
-  --sarine-body-font: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --sarine-heading-font: var(--font-serif, "Cormorant Garamond"), Georgia, serif;
+  --sarine-body-font: var(--font-sans, "Plus Jakarta Sans"), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: #fbf8f5;
   font-family: var(--sarine-body-font);
+  color: var(--color-text-primary, #302438);
 }
 .sarine-home .font-serif,
 .sarine-home h1,
@@ -188,8 +189,8 @@
    Typography and the hero's existing dimensions are intentionally untouched.
    ========================================================================== */
 .sarine-home {
-  --sarine-plum: #482048;
-  --sarine-plum-soft: #704048;
+  --sarine-plum: var(--color-brand-primary, #563568);
+  --sarine-plum-soft: var(--color-text-secondary, #6F6475);
   --sarine-ivory: #F8F0E8;
   --sarine-ivory-light: #FFF9F6;
   --sarine-blush: #F0D8D8;
@@ -247,7 +248,7 @@
 }
 .sarine-home > section .w-full.text-center.mb-4 p,
 .sarine-home > section .site-container > div > p {
-  color: #795F70;
+  color: var(--color-text-secondary, #6F6475);
 }
 
 /* Category tiles: jewellery-led square imagery with a soft blush title rail. */
@@ -343,10 +344,10 @@
   font-size: 14px;
 }
 .sarine-home .product-grid > article [class*="uppercase"] {
-  color: #946F83;
+  color: var(--color-text-secondary, #6F6475);
 }
 .sarine-home .product-grid > article [class*="line-through"] {
-  color: #9A8791;
+  color: var(--color-text-muted, #6F6475);
 }
 .sarine-home .product-grid > article .text-sm.font-sans {
   color: var(--sarine-plum);
