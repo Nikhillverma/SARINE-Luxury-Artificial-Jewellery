@@ -46,7 +46,7 @@ async function fetchActiveCampaigns(): Promise<FestivalCampaign[]> {
     heroPlacement: item.heroPlacement === "first" || item.heroPlacement === "normal" ? item.heroPlacement : "auto",
     heroDurationSeconds: Math.max(5, Math.min(20, Number(item.heroDurationSeconds) || 9)),
     countdownLabel: String(item.countdownLabel || ""),
-    countdownBackgroundColor: /^#[0-9a-f]{6}$/i.test(item.countdownBackgroundColor || "") ? item.countdownBackgroundColor : "#563568",
+    countdownBackgroundColor: /^#[0-9a-f]{6}$/i.test(item.countdownBackgroundColor || "") ? item.countdownBackgroundColor : "#4A1D5C",
     countdownTextColor: /^#[0-9a-f]{6}$/i.test(item.countdownTextColor || "") ? item.countdownTextColor : "#FFFFFF",
     countdownTimerColor: /^#[0-9a-f]{6}$/i.test(item.countdownTimerColor || "") ? item.countdownTimerColor : "#B3265C"
   }));
