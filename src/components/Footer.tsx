@@ -120,7 +120,7 @@ export const Footer: React.FC = () => {
               </span>
             </Link>
             <p className="text-xs text-[#E7DCEB] mt-2">
-              Timeless jewellery for every you.
+              {chrome.footer.tagline}
             </p>
 
             {/* Social Icons */}
