@@ -304,6 +304,7 @@ export const AdminProductsPage: React.FC = () => {
   };
 
   const toggleStatus = async (product: Product) => {
+    if (product.status !== 'active' && !window.confirm(`Publish "${product.name}" to the storefront?`)) return;
     try {
       await adminProductService.updateProduct(product.id, {
         status: product.status === 'active' ? 'draft' : 'active'
@@ -443,7 +444,7 @@ export const AdminProductsPage: React.FC = () => {
                   <tr key={product.id} className="hover:bg-[#FAF5FC]">
                     <td className="p-3"><input type="checkbox" aria-label={"Select " + product.name} checked={selectedIds.includes(product.id)} onChange={() => toggleProductSelection(product.id)} className="accent-[#563568]"/></td>
                     <td className="p-3"><div className="flex items-center gap-3">
-                      <img src={product.images?.[0] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=100&q=80'} alt="" className="w-11 h-11 rounded-lg object-cover"/>
+                      {product.images?.[0] ? <img src={product.images[0]} alt="" loading="lazy" className="w-11 h-11 rounded-lg object-cover"/> : <div role="img" aria-label="No product image uploaded" className="w-11 h-11 rounded-lg bg-[#F7F0FA] text-[#A58BB3] flex items-center justify-center"><ImageIcon size={16}/></div>}
                       <div><div className="font-semibold text-[#2C1838]">{product.name}</div><div className="text-[10px] text-[#8E769E] font-mono">{product.id}</div></div>
                     </div></td>
                     <td className="p-3 text-[#5D5068]">{categories.find(category => category.id === product.categoryId)?.name || product.categoryId}</td>
