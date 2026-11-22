@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 
 export const SustainabilityPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[var(--tint)] text-[var(--heading)] font-sans py-16 sm:py-24">
+    <div className="min-h-screen bg-white text-[var(--heading)] font-sans py-16 sm:py-24">
       <div className="site-container">
         <div className="max-w-[1000px] mx-auto bg-white p-8 sm:p-12 border border-[var(--border)] rounded-xs shadow-2xs">
           <span className="text-xs uppercase tracking-[0.25em] text-[var(--body)] font-medium block mb-2">
@@ -36,7 +36,7 @@ export const SustainabilityPage: React.FC = () => {
 
 export const BlogPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[var(--tint)] text-[var(--heading)] font-sans py-16 sm:py-24">
+    <div className="min-h-screen bg-white text-[var(--heading)] font-sans py-16 sm:py-24">
       <div className="site-container">
         <div className="max-w-[1000px] mx-auto bg-white p-8 sm:p-12 border border-[var(--border)] rounded-xs shadow-2xs">
           <span className="text-xs uppercase tracking-[0.25em] text-[var(--body)] font-medium block mb-2">
@@ -66,7 +66,7 @@ export const BlogPage: React.FC = () => {
 
 export const CareersPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[var(--tint)] text-[var(--heading)] font-sans py-16 sm:py-24">
+    <div className="min-h-screen bg-white text-[var(--heading)] font-sans py-16 sm:py-24">
       <div className="site-container">
         <div className="max-w-[1000px] mx-auto bg-white p-8 sm:p-12 border border-[var(--border)] rounded-xs shadow-2xs">
           <span className="text-xs uppercase tracking-[0.25em] text-[var(--body)] font-medium block mb-2">
@@ -92,7 +92,7 @@ export const CareersPage: React.FC = () => {
 
 export const CancellationPolicyPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[var(--tint)] text-[var(--heading)] font-sans py-16 sm:py-24">
+    <div className="min-h-screen bg-white text-[var(--heading)] font-sans py-16 sm:py-24">
       <div className="site-container">
         <div className="max-w-[1000px] mx-auto bg-white p-8 sm:p-12 border border-[var(--border)] rounded-xs shadow-2xs">
           <span className="text-xs uppercase tracking-[0.25em] text-[var(--body)] font-medium block mb-2">
