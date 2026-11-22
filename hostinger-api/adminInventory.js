@@ -29,28 +29,12 @@ router.get("/movements", async (req, res, next) => {
     const values = [];
     if (search) {
       conditions.push("(productName LIKE ? OR sku LIKE ? OR reason LIKE ? OR adminName LIKE ? OR adminEmail LIKE ? OR variantLabel LIKE ?)");
-      const term = "%" + search.replace(/[!%_]/g, "!// GET /api/admin/inventory/movements — newest audited stock changes.
-router.get("/movements", async (_req, res, next) => {
-  try {
-    await ensureInventoryTable();
-    const [rows] = await pool.execute(
-      `SELECT id, product_id AS productId, product_name AS productName, sku,
-              admin_name AS adminName, admin_email AS adminEmail,
-              previous_stock AS previousStock, quantity_delta AS quantityDelta,
-              new_stock AS newStock, reason, created_at AS createdAt
-       FROM inventory_movements
-       ORDER BY created_at DESC, id DESC
-       LIMIT 100`
-    );
-    res.set("Cache-Control", "no-store");
-    return res.json({ movements: rows });
-  } catch (error) { next(error); }
-});") + "%";
+      const term = "%" + search.replace(/[!%_]/g, "!$&") + "%";
       values.push(term, term, term, term, term, term);
     }
     const toSqlUtc = (date, nextDay = false) => {
-      if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) return null;
-      const parsed = new Date(date + (nextDay ? "T00:00:00+05:30" : "T00:00:00+05:30"));
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+      const parsed = new Date(date + "T00:00:00+05:30");
       if (!Number.isFinite(parsed.getTime())) return null;
       if (nextDay) parsed.setUTCDate(parsed.getUTCDate() + 1);
       return parsed.toISOString().slice(0, 19).replace("T", " ");
