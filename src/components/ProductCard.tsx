@@ -55,7 +55,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <article className="group flex flex-col w-full bg-[var(--white)] p-2 sm:p-2.5 border border-[var(--border)] rounded-md transition-all duration-300 hover:border-[var(--border)] hover:shadow-xs relative" style={{ "--tw-shadow-color": "var(--border)" } as React.CSSProperties}>
       {/* 3:4 Portrait Image Container */}
-      <div className="relative block w-full overflow-hidden bg-[var(--white)] aspect-[4/5] border border-[var(--border)] rounded-xs group-hover:border-[var(--border)] transition-colors">
+      <div className="relative block w-full overflow-hidden bg-[var(--white)] aspect-[4/5] border border-[var(--border)] rounded-xs group-hover:border-[var(--gold)] transition-colors">
         <Link to={`/product/${product.slug}`} className="block w-full h-full">
           <img
             src={primaryImage}
@@ -154,7 +154,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 <Star key={index} size={11} strokeWidth={1.8} fill={index < Math.round(reviewSummary.average) ? 'currentColor' : 'none'} />
               ))}
             </span>
-            <span className="!text-[color:var(--muted)]">{reviewSummary.average.toFixed(1)} ({reviewSummary.count})</span>
+            <span className="!text-[color:var(--body)]">{reviewSummary.average.toFixed(1)} ({reviewSummary.count})</span>
           </div>
         )}
 
