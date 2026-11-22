@@ -989,7 +989,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           7. EDITORIAL BANNER
           ========================================================================= */}
       {editorial.active && (
-        <section style={{ order: sectionOrder("editorial"), display: sectionVisible("editorial") ? undefined : "none" }} className="relative overflow-hidden bg-[#EBDFF2] border-b border-[#E7DCEB]">
+        <section style={{ order: sectionOrder("editorial"), display: sectionVisible("editorial") ? undefined : "none" }} className="sarine-editorial-banner relative overflow-hidden bg-[#2B1A33] border-b border-[#E7DCEB]">
           <img src={editorial.imageUrl || HOMEPAGE_IMAGES.editorialBanner} alt={editorial.title} loading="lazy" decoding="async" fetchPriority="low" className="absolute inset-0 w-full h-full object-cover object-center" />
           <div className="absolute inset-0 bg-[#2B1A33]/50" />
           <div className="site-container min-h-[200px] sm:min-h-[235px] lg:min-h-[270px] flex items-center justify-end relative z-10">
