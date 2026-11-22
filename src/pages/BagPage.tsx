@@ -162,7 +162,7 @@ export const BagPage: React.FC = () => {
               <div className="mt-6 flex justify-center">
                 <Link
                   to="/shop"
-                  className="px-8 py-3 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[var(--white)] rounded-xs transition-colors shadow-xs"
+                  className="px-8 py-3 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[var(--gold)] rounded-xs transition-colors shadow-xs"
                 >
                   Browse All Collections
                 </Link>
@@ -313,7 +313,7 @@ export const BagPage: React.FC = () => {
                         type="checkbox"
                         checked={isGift}
                         onChange={(e) => setIsGift(e.target.checked)}
-                        className="mt-0.5 accent-[#563568] rounded-xs cursor-pointer"
+                        className="mt-0.5 accent-[var(--plum)] rounded-xs cursor-pointer"
                       />
                       <div>
                         <span className="text-xs font-medium text-[var(--heading)] flex items-center gap-1.5">
@@ -397,7 +397,7 @@ export const BagPage: React.FC = () => {
                       <button
                         type="submit"
                         disabled={isApplyingCoupon || storewideDiscountPercent > 0}
-                        className="px-3.5 py-2 bg-[var(--plum)] text-white text-xs font-medium rounded-xs hover:bg-[var(--white)] transition-colors cursor-pointer disabled:opacity-60"
+                        className="px-3.5 py-2 bg-[var(--plum)] text-white text-xs font-medium rounded-xs hover:bg-[var(--gold)] transition-colors cursor-pointer disabled:opacity-60"
                       >
                         {isApplyingCoupon ? 'Checking...' : activeCoupon ? 'Replace' : 'Apply'}
                       </button>
@@ -441,7 +441,7 @@ export const BagPage: React.FC = () => {
                   <div className="pt-3">
                     <button
                       onClick={() => navigate('/checkout')}
-                      className="w-full py-3.5 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[var(--white)] transition-colors flex items-center justify-center gap-2 rounded-xs shadow-xs cursor-pointer"
+                      className="w-full py-3.5 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[var(--gold)] transition-colors flex items-center justify-center gap-2 rounded-xs shadow-xs cursor-pointer"
                     >
                       <span>Proceed to Checkout</span>
                       <ArrowRight size={14} />
