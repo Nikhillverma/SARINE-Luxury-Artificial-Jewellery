@@ -151,7 +151,7 @@ function validateHomepageContent(input) {
     return path;
   };
   const imagePath = text(input.story?.imageUrl, "Our Story image", 2048);
-  if (!imagePath.startsWith("/") && !/^https:\\/\\//i.test(imagePath)) throw new Error("Our Story image must be an uploaded site image or HTTPS URL.");
+  if (!imagePath.startsWith("/") && !imagePath.toLowerCase().startsWith("https://")) throw new Error("Our Story image must be an uploaded site image or HTTPS URL.");
   const list = (value, count, label, maxTitle, maxDescription) => {
     if (!Array.isArray(value) || value.length !== count) throw new Error(label + " must contain exactly " + count + " items.");
     return value.map((item, index) => ({
