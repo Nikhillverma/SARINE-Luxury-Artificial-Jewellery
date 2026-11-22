@@ -106,7 +106,6 @@ export const AdminInventoryPage: React.FC = () => {
   }, [products, searchTerm, selectedCategory, statusFilter, stockFilter, lowStockThreshold, productThresholds]);
 
   useEffect(() => { setPage(1); }, [searchTerm, selectedCategory, statusFilter, stockFilter]);
-  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
 
   const sortedProducts = useMemo(() => [...filteredProducts].sort((a, b) => {
     if (sortOrder === 'stock-low') return a.stock - b.stock || a.name.localeCompare(b.name);
@@ -115,6 +114,7 @@ export const AdminInventoryPage: React.FC = () => {
     return a.name.localeCompare(b.name);
   }), [filteredProducts, sortOrder]);
   const totalPages = Math.max(1, Math.ceil(sortedProducts.length / PAGE_SIZE));
+  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
   const visibleProducts = sortedProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const filteredMovements = useMemo(() => movements.filter((movement) => {
     const q = movementSearch.trim().toLowerCase();
