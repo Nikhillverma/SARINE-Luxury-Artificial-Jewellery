@@ -323,7 +323,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Mobile Quick Search Button */}
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="p-2 text-[#302438] hover:text-[#563568] transition-colors lg:hidden cursor-pointer rounded-full hover:bg-white/60"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[#563568] transition-colors lg:hidden cursor-pointer rounded-full hover:bg-white/60"
                 aria-label="Open search"
               >
                 <Search size={20} strokeWidth={1.5} />
@@ -356,7 +356,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {/* Mobile Account Icon Only */}
                 <Link
                   to="/account"
-                  className="sm:hidden p-2 text-[#302438] hover:text-[#563568] transition-colors rounded-full hover:bg-white/60 flex items-center"
+                  className="sm:hidden inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[#563568] transition-colors rounded-full hover:bg-white/60"
                   aria-label="My Account"
                 >
                   <User size={19} strokeWidth={1.5} className="text-[#563568]" />
@@ -467,7 +467,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Bag Button with Label & Numeric Badge */}
               <button
                 onClick={openDrawer}
-                className="relative flex items-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer group rounded-xs hover:bg-white/60"
+                className="relative inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer group rounded-xs hover:bg-white/60"
                 aria-label={`Shopping Bag with ${itemCount} items`}
                 title="Shopping Bag"
               >
