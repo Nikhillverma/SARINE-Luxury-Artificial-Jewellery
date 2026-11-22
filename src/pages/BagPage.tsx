@@ -110,21 +110,21 @@ export const BagPage: React.FC = () => {
   const amountToGift = Math.max(0, FREE_GIFT_BOX_THRESHOLD - subtotal);
 
   return (
-    <div className="min-h-screen bg-[#F7F0FA] pb-20 text-[#302438] font-sans">
+    <div className="min-h-screen bg-[var(--tint)] pb-20 text-[var(--heading)] font-sans">
       {/* Header */}
-      <section className="bg-[var(--tint)] border-b border-[#E7DCEB] py-8 sm:py-12 text-center">
+      <section className="bg-[var(--tint)] border-b border-[var(--border)] py-8 sm:py-12 text-center">
         <div className="site-container">
           <div className="flex items-center justify-center gap-2 mb-2">
             <span className="h-[1px] w-8 bg-[#FFFFFF]"></span>
-            <span className="text-xs uppercase tracking-[0.25em] text-[#563568] font-medium font-sans">
+            <span className="text-xs uppercase tracking-[0.25em] text-[var(--plum)] font-medium font-sans">
               Your Curated Bag
             </span>
             <span className="h-[1px] w-8 bg-[#FFFFFF]"></span>
           </div>
-          <h1 className="font-serif text-3xl sm:text-4xl text-[#302438] font-normal">
+          <h1 className="font-serif text-3xl sm:text-4xl text-[var(--heading)] font-normal">
             Shopping Bag
           </h1>
-          <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans">
+          <p className="mt-2 text-xs sm:text-sm text-[var(--body)] font-sans">
             {itemCount > 0
               ? `Review your ${itemCount} ${itemCount === 1 ? 'piece' : 'pieces'} before checkout.`
               : 'Your bag is currently waiting for your handcrafted selections.'}
@@ -137,14 +137,14 @@ export const BagPage: React.FC = () => {
         <div className="max-w-[1050px] mx-auto w-full">
           {/* Availability Notice */}
           {availabilityNotice && (
-            <div className="mb-6 bg-white border border-[#B69ACF] p-4 text-xs text-[#6F6475] flex items-center justify-between shadow-xs rounded-xs">
+            <div className="mb-6 bg-white border border-[var(--gold)] p-4 text-xs text-[var(--body)] flex items-center justify-between shadow-xs rounded-xs">
               <div className="flex items-center gap-2.5">
-                <AlertCircle size={16} className="text-[#563568] shrink-0" />
+                <AlertCircle size={16} className="text-[var(--plum)] shrink-0" />
                 <span>{availabilityNotice}</span>
               </div>
               <button
                 onClick={dismissNotice}
-                className="text-[#563568] hover:text-[#302438] font-semibold text-xs ml-4 cursor-pointer"
+                className="text-[var(--plum)] hover:text-[var(--heading)] font-semibold text-xs ml-4 cursor-pointer"
               >
                 Dismiss
               </button>
@@ -153,16 +153,16 @@ export const BagPage: React.FC = () => {
 
           {items.length === 0 ? (
             /* Empty Bag State */
-            <div className="bg-white border border-[#E7DCEB] p-12 sm:p-16 text-center max-w-xl mx-auto my-8 rounded-xs shadow-xs">
-              <ShoppingBag size={48} strokeWidth={1.2} className="mx-auto text-[#B69ACF] mb-4" />
-              <h2 className="font-serif text-2xl text-[#302438] font-medium">Your shopping bag is empty</h2>
-              <p className="text-xs text-[#6F6475] mt-2 font-sans leading-relaxed">
+            <div className="bg-white border border-[var(--border)] p-12 sm:p-16 text-center max-w-xl mx-auto my-8 rounded-xs shadow-xs">
+              <ShoppingBag size={48} strokeWidth={1.2} className="mx-auto text-[var(--gold)] mb-4" />
+              <h2 className="font-serif text-2xl text-[var(--heading)] font-medium">Your shopping bag is empty</h2>
+              <p className="text-xs text-[var(--body)] mt-2 font-sans leading-relaxed">
                 Explore our festive chokers, bell jhumkas, delicate cuffs, and cocktail rings.
               </p>
               <div className="mt-6 flex justify-center">
                 <Link
                   to="/shop"
-                  className="px-8 py-3 bg-[#563568] text-white text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[#A184BD] rounded-xs transition-colors shadow-xs"
+                  className="px-8 py-3 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[var(--white)] rounded-xs transition-colors shadow-xs"
                 >
                   Browse All Collections
                 </Link>
@@ -171,9 +171,9 @@ export const BagPage: React.FC = () => {
           ) : (
             <div className="space-y-6">
               {/* Free Gift Packaging Tracker Banner */}
-              <div className="bg-white p-4 border border-[#E7DCEB] rounded-xs shadow-2xs">
+              <div className="bg-white p-4 border border-[var(--border)] rounded-xs shadow-2xs">
                 <div className="flex items-center justify-between text-xs mb-1.5">
-                  <span className="text-[#563568] font-medium flex items-center gap-1.5">
+                  <span className="text-[var(--plum)] font-medium flex items-center gap-1.5">
                     <Sparkles size={14} className="text-[#FFFFFF]" />
                     {amountToGift > 0 ? (
                       <span>Add {formatInr(amountToGift)} more to receive Complimentary Velvet Presentation Box</span>
@@ -181,11 +181,11 @@ export const BagPage: React.FC = () => {
                       <span className="text-emerald-700">Congratulations! You unlocked Complimentary Luxury Velvet Presentation Box</span>
                     )}
                   </span>
-                  <span className="text-[#6F6475] font-mono">{progressPercent}%</span>
+                  <span className="text-[var(--body)] font-mono">{progressPercent}%</span>
                 </div>
-                <div className="w-full bg-[#F0E6F4] h-2 rounded-full overflow-hidden">
+                <div className="w-full bg-[var(--tint)] h-2 rounded-full overflow-hidden">
                   <div
-                    className="bg-[#563568] h-full transition-all duration-500 ease-out"
+                    className="bg-[var(--plum)] h-full transition-all duration-500 ease-out"
                     style={{ width: `${progressPercent}%` }}
                   ></div>
                 </div>
@@ -194,9 +194,9 @@ export const BagPage: React.FC = () => {
               {/* Two-column layout: Items List (Left 8 cols) & Order Summary (Right 4 cols) */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 {/* Items Table */}
-                <div className="lg:col-span-8 bg-white border border-[#E7DCEB] rounded-xs shadow-xs">
+                <div className="lg:col-span-8 bg-white border border-[var(--border)] rounded-xs shadow-xs">
                   {/* Header Row */}
-                  <div className="hidden sm:grid grid-cols-12 gap-4 p-4 border-b border-[#E7DCEB] text-xs uppercase tracking-wider text-[#6F6475] font-medium font-sans">
+                  <div className="hidden sm:grid grid-cols-12 gap-4 p-4 border-b border-[var(--border)] text-xs uppercase tracking-wider text-[var(--body)] font-medium font-sans">
                     <span className="col-span-6">Piece</span>
                     <span className="col-span-2 text-center">Unit Price</span>
                     <span className="col-span-2 text-center">Quantity</span>
@@ -204,7 +204,7 @@ export const BagPage: React.FC = () => {
                   </div>
 
                   {/* Line Items */}
-                  <div className="divide-y divide-[#E7DCEB]">
+                  <div className="divide-y divide-[var(--border)]">
                     {items.map((item) => {
                       const maxStock = item.variant?.stock ?? item.product.stock;
                       const isAtMax = item.quantity >= maxStock;
@@ -218,7 +218,7 @@ export const BagPage: React.FC = () => {
                           <div className="sm:col-span-6 flex gap-4">
                             <Link
                               to={`/product/${item.product.slug}`}
-                              className="w-20 h-24 bg-[#F7F0FA] border border-[#E7DCEB] shrink-0 overflow-hidden rounded-xs"
+                              className="w-20 h-24 bg-[var(--tint)] border border-[var(--border)] shrink-0 overflow-hidden rounded-xs"
                             >
                               <img
                                 src={item.product.images[0]}
@@ -230,14 +230,14 @@ export const BagPage: React.FC = () => {
                               <div>
                                 <Link
                                   to={`/product/${item.product.slug}`}
-                                  className="font-serif text-base sm:text-lg text-[#302438] hover:text-[#563568] font-medium transition-colors"
+                                  className="font-serif text-base sm:text-lg text-[var(--heading)] hover:text-[var(--plum)] font-medium transition-colors"
                                 >
                                   {item.product.name}
                                 </Link>
-                                <span className="text-[11px] text-[#6F6475] block mt-0.5 font-sans">
+                                <span className="text-[11px] text-[var(--body)] block mt-0.5 font-sans">
                                   SKU: {item.product.id.toUpperCase()}
                                 </span>
-                                {item.variant && <span className="text-[11px] text-[#563568] block mt-1">{item.variant.label} · SKU: {item.variant.sku}</span>}
+                                {item.variant && <span className="text-[11px] text-[var(--plum)] block mt-1">{item.variant.label} · SKU: {item.variant.sku}</span>}
                               </div>
                               <div className="flex items-center gap-3 mt-2">
                                 <button
@@ -249,7 +249,7 @@ export const BagPage: React.FC = () => {
                                 </button>
                                 <button
                                   onClick={() => handleSaveToWishlist(item)}
-                                  className="inline-flex items-center gap-1 text-xs text-[#563568] hover:underline cursor-pointer"
+                                  className="inline-flex items-center gap-1 text-xs text-[var(--plum)] hover:underline cursor-pointer"
                                 >
                                   <Heart size={12} />
                                   <span>Move to Wishlist</span>
@@ -259,44 +259,44 @@ export const BagPage: React.FC = () => {
                           </div>
 
                           {/* Unit Price (2 cols) */}
-                          <div className="sm:col-span-2 text-left sm:text-center text-xs sm:text-sm font-sans text-[#302438]">
-                            <span className="sm:hidden text-[#6F6475] mr-2">Price:</span>
-                            {storewideDiscountPercent > 0 ? <><span className="text-[#A43E55] font-semibold">{formatInr(item.discountedUnitPrice)}</span><span className="ml-1 text-[#6F6475] line-through">{formatInr(item.unitPrice)}</span></> : formatInr(item.unitPrice)}
+                          <div className="sm:col-span-2 text-left sm:text-center text-xs sm:text-sm font-sans text-[var(--heading)]">
+                            <span className="sm:hidden text-[var(--body)] mr-2">Price:</span>
+                            {storewideDiscountPercent > 0 ? <><span className="text-[#A43E55] font-semibold">{formatInr(item.discountedUnitPrice)}</span><span className="ml-1 text-[var(--body)] line-through">{formatInr(item.unitPrice)}</span></> : formatInr(item.unitPrice)}
                           </div>
 
                           {/* Quantity Stepper (2 cols) */}
                           <div className="sm:col-span-2 flex flex-col items-start sm:items-center">
-                            <div className="flex items-center border border-[#E7DCEB] bg-white rounded-xs">
+                            <div className="flex items-center border border-[var(--border)] bg-white rounded-xs">
                               <button
                                 onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variantId)}
                                 disabled={item.quantity <= 1}
-                                className="w-7 h-8 flex items-center justify-center text-xs text-[#302438] hover:bg-[#F7F0FA] disabled:opacity-30 transition-colors cursor-pointer"
+                                className="w-7 h-8 flex items-center justify-center text-xs text-[var(--heading)] hover:bg-[var(--tint)] disabled:opacity-30 transition-colors cursor-pointer"
                                 aria-label="Decrease quantity"
                               >
                                 -
                               </button>
-                              <span className="w-8 text-center text-xs font-semibold text-[#302438]">
+                              <span className="w-8 text-center text-xs font-semibold text-[var(--heading)]">
                                 {item.quantity}
                               </span>
                               <button
                                 onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variantId)}
                                 disabled={isAtMax}
-                                className="w-7 h-8 flex items-center justify-center text-xs text-[#302438] hover:bg-[#F7F0FA] disabled:opacity-30 transition-colors cursor-pointer"
+                                className="w-7 h-8 flex items-center justify-center text-xs text-[var(--heading)] hover:bg-[var(--tint)] disabled:opacity-30 transition-colors cursor-pointer"
                                 aria-label="Increase quantity"
                               >
                                 +
                               </button>
                             </div>
                             {isAtMax && (
-                              <span className="text-[10px] text-[#6F6475] mt-1 text-center">
+                              <span className="text-[10px] text-[var(--body)] mt-1 text-center">
                                 Max {maxStock} in stock
                               </span>
                             )}
                           </div>
 
                           {/* Line Total (2 cols) */}
-                          <div className="sm:col-span-2 text-left sm:text-right font-serif text-base sm:text-lg font-semibold text-[#302438]">
-                            <span className="sm:hidden text-xs text-[#6F6475] font-sans font-normal mr-2">
+                          <div className="sm:col-span-2 text-left sm:text-right font-serif text-base sm:text-lg font-semibold text-[var(--heading)]">
+                            <span className="sm:hidden text-xs text-[var(--body)] font-sans font-normal mr-2">
                               Total:
                             </span>
                             {formatInr(storewideDiscountPercent > 0 ? item.discountedLineTotal : item.lineTotal)}
@@ -307,7 +307,7 @@ export const BagPage: React.FC = () => {
                   </div>
 
                   {/* Gifting Section in Bag */}
-                  <div className="p-4 sm:p-5 bg-[#FAF5FC] border-t border-[#E7DCEB]">
+                  <div className="p-4 sm:p-5 bg-[var(--tint)] border-t border-[var(--border)]">
                     <label className="flex items-start gap-2.5 cursor-pointer">
                       <input
                         type="checkbox"
@@ -316,11 +316,11 @@ export const BagPage: React.FC = () => {
                         className="mt-0.5 accent-[#563568] rounded-xs cursor-pointer"
                       />
                       <div>
-                        <span className="text-xs font-medium text-[#302438] flex items-center gap-1.5">
-                          <Gift size={13} className="text-[#563568]" />
+                        <span className="text-xs font-medium text-[var(--heading)] flex items-center gap-1.5">
+                          <Gift size={13} className="text-[var(--plum)]" />
                           <span>This order is a gift (Complimentary packaging & message card)</span>
                         </span>
-                        <p className="text-[11px] text-[#6F6475] mt-0.5">
+                        <p className="text-[11px] text-[var(--body)] mt-0.5">
                           We will conceal prices on packing slips and pack your pieces in our signature satin-ribbon box.
                         </p>
                       </div>
@@ -333,9 +333,9 @@ export const BagPage: React.FC = () => {
                           onChange={(e) => setGiftNote(e.target.value.slice(0, 200))}
                           placeholder="Add your personalized message for the recipient..."
                           rows={2}
-                          className="w-full p-2.5 text-xs bg-white border border-[#E7DCEB] focus:border-[#563568] rounded-xs focus:outline-none resize-none"
+                          className="w-full p-2.5 text-xs bg-white border border-[var(--border)] focus:border-[var(--plum)] rounded-xs focus:outline-none resize-none"
                         />
-                        <div className="text-right text-[10px] text-[#6F6475] mt-1">
+                        <div className="text-right text-[10px] text-[var(--body)] mt-1">
                           {giftNote.length}/200 characters
                         </div>
                       </div>
@@ -343,10 +343,10 @@ export const BagPage: React.FC = () => {
                   </div>
 
                   {/* Actions Footer */}
-                  <div className="p-4 bg-[#F7F0FA] border-t border-[#E7DCEB] flex items-center justify-between">
+                  <div className="p-4 bg-[var(--tint)] border-t border-[var(--border)] flex items-center justify-between">
                     <Link
                       to="/shop"
-                      className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-[#6F6475] hover:text-[#563568] transition-colors"
+                      className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-[var(--body)] hover:text-[var(--plum)] transition-colors"
                     >
                       <ArrowLeft size={14} />
                       <span>Continue Shopping</span>
@@ -361,15 +361,15 @@ export const BagPage: React.FC = () => {
                 </div>
 
                 {/* Order Summary (Right 4 cols) */}
-                <div className="lg:col-span-4 bg-white border border-[#E7DCEB] p-6 space-y-4 rounded-xs shadow-xs">
-                  <h2 className="font-serif text-xl text-[#302438] font-medium border-b border-[#E7DCEB] pb-3">
+                <div className="lg:col-span-4 bg-white border border-[var(--border)] p-6 space-y-4 rounded-xs shadow-xs">
+                  <h2 className="font-serif text-xl text-[var(--heading)] font-medium border-b border-[var(--border)] pb-3">
                     Order Summary
                   </h2>
 
                   {/* Coupon Code Module */}
                   <div className="space-y-2">
                     {activeCoupon && (
-                      <div className="flex items-center justify-between bg-[#F7F0FA] p-2.5 border border-[#B69ACF] rounded-xs text-xs">
+                      <div className="flex items-center justify-between bg-[var(--tint)] p-2.5 border border-[var(--gold)] rounded-xs text-xs">
                         <span className="text-emerald-700 font-medium flex items-center gap-1.5">
                           <Tag size={13} />
                           <span>Applied: {activeCoupon.code} (-{formatInr(activeCoupon.discount)})</span>
@@ -377,7 +377,7 @@ export const BagPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={handleRemoveCoupon}
-                          className="text-[#6F6475] hover:text-[#DC2626] cursor-pointer"
+                          className="text-[var(--body)] hover:text-[#DC2626] cursor-pointer"
                           aria-label="Remove applied coupon"
                         >
                           Remove
@@ -392,12 +392,12 @@ export const BagPage: React.FC = () => {
                         placeholder={storewideDiscountPercent > 0 ? "Coupon unavailable during storewide sale" : activeCoupon ? "Enter a different coupon code" : "Enter coupon code"}
                         aria-label="Coupon code"
                         disabled={storewideDiscountPercent > 0}
-                        className="flex-1 min-w-0 p-2 bg-[#F7F0FA] border border-[#E7DCEB] text-xs uppercase rounded-xs focus:outline-none focus:border-[#563568]"
+                        className="flex-1 min-w-0 p-2 bg-[var(--tint)] border border-[var(--border)] text-xs uppercase rounded-xs focus:outline-none focus:border-[var(--plum)]"
                       />
                       <button
                         type="submit"
                         disabled={isApplyingCoupon || storewideDiscountPercent > 0}
-                        className="px-3.5 py-2 bg-[#563568] text-white text-xs font-medium rounded-xs hover:bg-[#A184BD] transition-colors cursor-pointer disabled:opacity-60"
+                        className="px-3.5 py-2 bg-[var(--plum)] text-white text-xs font-medium rounded-xs hover:bg-[var(--white)] transition-colors cursor-pointer disabled:opacity-60"
                       >
                         {isApplyingCoupon ? 'Checking...' : activeCoupon ? 'Replace' : 'Apply'}
                       </button>
@@ -406,10 +406,10 @@ export const BagPage: React.FC = () => {
                   </div>
 
                   {/* Price Breakdown */}
-                  <div className="space-y-2 pt-2 border-t border-[#E7DCEB] text-xs font-sans text-[#6F6475]">
+                  <div className="space-y-2 pt-2 border-t border-[var(--border)] text-xs font-sans text-[var(--body)]">
                     <div className="flex items-baseline justify-between">
                       <span>Subtotal ({itemCount} {itemCount === 1 ? 'item' : 'items'})</span>
-                      <span className="text-[#302438] font-medium">{formatInr(subtotal)}</span>
+                      <span className="text-[var(--heading)] font-medium">{formatInr(subtotal)}</span>
                     </div>
 
                     {promotionDiscount > 0 && (
@@ -427,12 +427,12 @@ export const BagPage: React.FC = () => {
 
                     <div className="flex items-baseline justify-between">
                       <span>Shipping (Pan-India)</span>
-                      <span className={shippingFee === 0 ? 'text-emerald-700 font-medium' : 'text-[#302438] font-medium'}>{shippingFee === 0 ? 'Complimentary' : formatInr(shippingFee)}</span>
+                      <span className={shippingFee === 0 ? 'text-emerald-700 font-medium' : 'text-[var(--heading)] font-medium'}>{shippingFee === 0 ? 'Complimentary' : formatInr(shippingFee)}</span>
                     </div>
 
-                    <div className="flex items-baseline justify-between pt-3 border-t border-[#E7DCEB] text-sm text-[#302438]">
+                    <div className="flex items-baseline justify-between pt-3 border-t border-[var(--border)] text-sm text-[var(--heading)]">
                       <span className="font-medium">Total Payable</span>
-                      <span className="font-serif text-2xl font-semibold text-[#302438]">
+                      <span className="font-serif text-2xl font-semibold text-[var(--heading)]">
                         {formatInr(finalTotal)}
                       </span>
                     </div>
@@ -441,7 +441,7 @@ export const BagPage: React.FC = () => {
                   <div className="pt-3">
                     <button
                       onClick={() => navigate('/checkout')}
-                      className="w-full py-3.5 bg-[#563568] text-white text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[#A184BD] transition-colors flex items-center justify-center gap-2 rounded-xs shadow-xs cursor-pointer"
+                      className="w-full py-3.5 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-semibold hover:bg-[var(--white)] transition-colors flex items-center justify-center gap-2 rounded-xs shadow-xs cursor-pointer"
                     >
                       <span>Proceed to Checkout</span>
                       <ArrowRight size={14} />
@@ -449,7 +449,7 @@ export const BagPage: React.FC = () => {
                   </div>
 
                   {/* Reassurance notes */}
-                  <div className="pt-4 border-t border-[#E7DCEB] text-[11px] text-[#6F6475] space-y-1.5 font-sans">
+                  <div className="pt-4 border-t border-[var(--border)] text-[11px] text-[var(--body)] space-y-1.5 font-sans">
                     <p>• Complimentary tamper-evident presentation packaging</p>
                     <p>• Verified Razorpay payments (UPI, Cards, NetBanking)</p>
                     <p>• Track your order anytime with live updates</p>
