@@ -2,13 +2,13 @@
  * Footer component for SARINE.
  * Matches the reference design with:
  * - Off-white #F8F6F2 background
- * - SARINE wordmark & "Timeless jewellery for every you." tagline
+ * - SARINE wordmark & "{chrome.footer.tagline}" tagline
  * - Instagram, Facebook, Pinterest, and YouTube social icons
  * - Shop, Customer Care, About, and Payment Methods columns (UPI, Visa, Mastercard, RuPay)
  * - Bottom copyright and Privacy Policy | Terms & Conditions
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Facebook,
@@ -21,9 +21,12 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { useCheckoutConfig } from '../hooks/useCheckoutConfig';
+import { DEFAULT_SITE_CHROME, siteChromeService, type SiteChromeSettings } from '../services/hostinger/siteChromeService';
 
 export const Footer: React.FC = () => {
   const { config } = useCheckoutConfig();
+  const [chrome, setChrome] = useState<SiteChromeSettings>(DEFAULT_SITE_CHROME);
+  useEffect(() => { let active = true; siteChromeService.getPublic().then(({ settings }) => { if (active) setChrome(settings); }).catch(() => undefined); return () => { active = false; }; }, []);
 
   return (
     <footer className="bg-[#563568] text-[#F7F0FA] border-t border-[#E7DCEB] font-sans">
@@ -123,7 +126,7 @@ export const Footer: React.FC = () => {
             {/* Social Icons */}
             <div className="flex items-center space-x-4 mt-5 text-[#E7DCEB]">
               <a
-                href="https://facebook.com"
+                href={chrome.footer.social.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-[#FFFFFF] transition-colors p-1"
@@ -133,7 +136,7 @@ export const Footer: React.FC = () => {
               </a>
               {/* Pinterest SVG */}
               <a
-                href="https://pinterest.com"
+                href={chrome.footer.social.pinterest}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-[#FFFFFF] transition-colors p-1"
@@ -144,7 +147,7 @@ export const Footer: React.FC = () => {
                 </svg>
               </a>
               <a
-                href="https://youtube.com"
+                href={chrome.footer.social.youtube}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-[#FFFFFF] transition-colors p-1"
@@ -272,7 +275,7 @@ export const Footer: React.FC = () => {
 
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#E7DCEB]/80 gap-4">
-          <p>© 2026 SARINE. All rights reserved.</p>
+          <p>{chrome.footer.copyright}</p>
           <div className="flex items-center space-x-3">
             <Link to="/privacy-policy" className="hover:text-[#FFFFFF] transition-colors">
               Privacy Policy
