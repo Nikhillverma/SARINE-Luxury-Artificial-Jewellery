@@ -81,8 +81,8 @@ export const SiteChromeManager: React.FC = () => {
         <p className="text-xs text-gray-500">Use full HTTPS URLs. Leave a network's default destination until your official profile is ready.</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <button type="button" disabled={busy || !formValid || !dirty} className="min-h-11 rounded-lg border border-[#563568] px-5 py-2 text-sm font-medium text-[#563568] disabled:opacity-50">Save draft</button>
-        <button type="button" disabled={busy || !formValid} className="min-h-11 rounded-lg bg-[#563568] px-5 py-2 text-sm font-medium text-white disabled:opacity-50">Save & publish</button>
+        <button type="button" disabled={busy || !formValid || !dirty} onClick={() => void save()} className="min-h-11 rounded-lg border border-[#563568] px-5 py-2 text-sm font-medium text-[#563568] disabled:opacity-50">Save draft</button>
+        <button type="button" disabled={busy || !formValid} onClick={() => void publish()} className="min-h-11 rounded-lg bg-[#563568] px-5 py-2 text-sm font-medium text-white disabled:opacity-50">Save & publish</button>
         <button type="button" disabled={busy} onClick={() => setSettings(saved)} className="min-h-11 rounded-lg border px-4 py-2 text-sm disabled:opacity-50">Discard edits</button>
       </div>
     </>}
