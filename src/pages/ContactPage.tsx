@@ -59,20 +59,20 @@ export const ContactPage: React.FC = () => {
             <p className="text-xs text-[var(--body)]">Fields marked with * are required. Your contact details are used only to review and respond to this enquiry.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label className="block text-xs text-[var(--body)]">Full name *
-                <input required minLength={2} maxLength={120} autoComplete="name" value={formData.name} onChange={e => update('name', e.target.value)} className="mt-1.5 w-full min-h-11 border border-[var(--border)] bg-[var(--tint)] px-3.5 text-sm text-[var(--heading)] focus:outline-none focus:border-[var(--plum)]" placeholder="Your name" />
+                <input required minLength={2} maxLength={120} autoComplete="name" value={formData.name} onChange={e => update('name', e.target.value)} className="mt-1.5 w-full min-h-11 border border-[var(--border)] bg-white px-3.5 text-sm text-[var(--heading)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--gold)]" placeholder="Your name" />
               </label>
               <label className="block text-xs text-[var(--body)]">Email address *
-                <input required type="email" maxLength={254} autoComplete="email" value={formData.email} onChange={e => update('email', e.target.value)} className="mt-1.5 w-full min-h-11 border border-[var(--border)] bg-[var(--tint)] px-3.5 text-sm text-[var(--heading)] focus:outline-none focus:border-[var(--plum)]" placeholder="you@example.com" />
+                <input required type="email" maxLength={254} autoComplete="email" value={formData.email} onChange={e => update('email', e.target.value)} className="mt-1.5 w-full min-h-11 border border-[var(--border)] bg-white px-3.5 text-sm text-[var(--heading)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--gold)]" placeholder="you@example.com" />
               </label>
               <label className="block text-xs text-[var(--body)]">Phone / WhatsApp (optional)
-                <input type="tel" maxLength={24} autoComplete="tel" value={formData.phone} onChange={e => update('phone', e.target.value)} className="mt-1.5 w-full min-h-11 border border-[var(--border)] bg-[var(--tint)] px-3.5 text-sm text-[var(--heading)] focus:outline-none focus:border-[var(--plum)]" placeholder="+91" />
+                <input type="tel" maxLength={24} autoComplete="tel" value={formData.phone} onChange={e => update('phone', e.target.value)} className="mt-1.5 w-full min-h-11 border border-[var(--border)] bg-white px-3.5 text-sm text-[var(--heading)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--gold)]" placeholder="+91" />
               </label>
               <label className="block text-xs text-[var(--body)]">Subject (optional)
-                <input maxLength={160} value={formData.subject} onChange={e => update('subject', e.target.value)} className="mt-1.5 w-full min-h-11 border border-[var(--border)] bg-[var(--tint)] px-3.5 text-sm text-[var(--heading)] focus:outline-none focus:border-[var(--plum)]" placeholder="Order, product, returns…" />
+                <input maxLength={160} value={formData.subject} onChange={e => update('subject', e.target.value)} className="mt-1.5 w-full min-h-11 border border-[var(--border)] bg-white px-3.5 text-sm text-[var(--heading)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--gold)]" placeholder="Order, product, returns…" />
               </label>
             </div>
             <label className="block text-xs text-[var(--body)]">Your message *
-              <textarea required minLength={10} maxLength={5000} rows={6} value={formData.message} onChange={e => update('message', e.target.value)} className="mt-1.5 w-full border border-[var(--border)] bg-[var(--tint)] p-3.5 text-sm text-[var(--heading)] focus:outline-none focus:border-[var(--plum)] resize-y" placeholder="How can we help?" />
+              <textarea required minLength={10} maxLength={5000} rows={6} value={formData.message} onChange={e => update('message', e.target.value)} className="mt-1.5 w-full border border-[var(--border)] bg-white p-3.5 text-sm text-[var(--heading)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--gold)] resize-y" placeholder="How can we help?" />
             </label>
             <label aria-hidden="true" className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden">
               Website
