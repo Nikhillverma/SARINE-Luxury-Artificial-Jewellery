@@ -115,7 +115,7 @@ export const AdminCustomersPage: React.FC = () => {
         <div className="bg-white border border-[#EADFF0] rounded-2xl p-3">
           <div className="relative">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8E769E]"/>
-            <input value={search} onChange={e => { setSearch(e.target.value); setOffset(0); }} placeholder="Search customer name, email or phone…" className="w-full pl-9 pr-3 py-2.5 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl text-xs outline-none focus:border-[#563568]"/>
+            <input aria-label="Search customers by name, email, or phone" value={search} onChange={e => { setSearch(e.target.value); setOffset(0); }} placeholder="Search customer name, email or phone…" className="w-full pl-9 pr-3 py-2.5 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl text-xs outline-none focus:border-[#563568]"/>
           </div>
         </div>
 

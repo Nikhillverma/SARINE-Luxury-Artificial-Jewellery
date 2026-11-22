@@ -209,6 +209,7 @@ export const AdminInventoryPage: React.FC = () => {
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6F6475]" />
             <input
               type="text"
+              aria-label="Search inventory by product, SKU, or category"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by piece title, SKU, or category..."
@@ -219,6 +220,7 @@ export const AdminInventoryPage: React.FC = () => {
           <div className="flex flex-wrap items-center gap-3 text-xs">
             {/* Category Select */}
             <select
+              aria-label="Filter inventory by category"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="py-2 px-3 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:outline-none text-[#302438]"
@@ -233,6 +235,7 @@ export const AdminInventoryPage: React.FC = () => {
 
             {/* Status Select */}
             <select
+              aria-label="Filter inventory by product status"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="py-2 px-3 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:outline-none text-[#302438]"
@@ -245,6 +248,7 @@ export const AdminInventoryPage: React.FC = () => {
 
             {/* Stock Level Select */}
             <select
+              aria-label="Filter inventory by stock level"
               value={stockFilter}
               onChange={(e) => setStockFilter(e.target.value)}
               className="py-2 px-3 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs focus:outline-none text-[#302438]"
