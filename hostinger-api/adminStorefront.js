@@ -332,8 +332,10 @@ adminOnly.get("/storefront/design",async(_req,res,next)=>{try{const draft=await 
 adminOnly.get("/design",async(_req,res,next)=>{try{const draft=await readGlobalDesign("global_design_draft");const published=await readGlobalDesign("global_design_published");res.set("Cache-Control","no-store").json({draft,published})}catch(e){next(e)}});
 adminOnly.put("/storefront/design",async(req,res,next)=>{try{const value=req.body?.design;const invalid=validateGlobalDesign(value);if(invalid)return res.status(400).json({error:invalid});const draft=await saveGlobalDesign(value);res.set("Cache-Control","no-store").json({success:true,draft})}catch(e){next(e)}});
 adminOnly.put("/design",async(req,res,next)=>{try{const value=req.body?.design;const invalid=validateGlobalDesign(value);if(invalid)return res.status(400).json({error:invalid});const draft=await saveGlobalDesign(value);res.set("Cache-Control","no-store").json({success:true,draft})}catch(e){next(e)}});
-adminOnly.post("/storefront/design/publish",async(_req,res,next)=>{try{const published=await readGlobalDesign("global_design_draft");await writeSetting("global_design_published",published);res.set("Cache-Control","no-store").json({success:true,published})}catch(e){next(e)}});
-adminOnly.post("/design/publish",async(_req,res,next)=>{try{const published=await readGlobalDesign("global_design_draft");await writeSetting("global_design_published",published);res.set("Cache-Control","no-store").json({success:true,published})}catch(e){next(e)}});
+adminOnly.post("/storefront/design/publish",async(_req,res,next)=>{try{const published=await readGlobalDesign("global_design_draft");await writeSetting("global_design_published",published);
+await writeLegacyGlobalDesignPart("published",published);res.set("Cache-Control","no-store").json({success:true,published})}catch(e){next(e)}});
+adminOnly.post("/design/publish",async(_req,res,next)=>{try{const published=await readGlobalDesign("global_design_draft");await writeSetting("global_design_published",published);
+await writeLegacyGlobalDesignPart("published",published);res.set("Cache-Control","no-store").json({success:true,published})}catch(e){next(e)}});
 publicRouter.get("/storefront/design",async(_req,res,next)=>{try{const design=await readGlobalDesign("global_design_published");res.set("Cache-Control","no-store").json({design})}catch(e){next(e)}});
 publicRouter.get("/design",async(_req,res,next)=>{try{const design=await readGlobalDesign("global_design_published");res.set("Cache-Control","no-store").json({design})}catch(e){next(e)}});
 
