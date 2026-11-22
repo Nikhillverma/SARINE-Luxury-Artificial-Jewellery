@@ -456,14 +456,6 @@ body.sarine-global-theme #main-content .sarine-home {
   background-color: var(--sarine-global-page, #FFFFFF) !important;
   color: var(--sarine-global-text, #302438) !important;
 }
-body.sarine-global-theme #main-content .sarine-home > section:not(:first-child) {
-  background-color: var(--sarine-global-surface, #F7F0FA) !important;
-}
-body.sarine-global-theme #main-content .sarine-home h1,
-body.sarine-global-theme #main-content .sarine-home h2,
-body.sarine-global-theme #main-content .sarine-home h3 {
-  color: var(--sarine-global-primary, #563568) !important;
-}
 /* Header and footer are intentionally styled only by their own components. */
 body.sarine-global-theme #main-content a[class*="bg-[#563568]"],
 body.sarine-global-theme #main-content button[class*="bg-[#563568]"] {
@@ -595,15 +587,7 @@ body.sarine-global-theme #main-content .sarine-home {
   color: var(--sarine-global-text, #5C5660);
 }
 
-body.sarine-global-theme #main-content .sarine-home > section:not(:first-child) {
-  background-color: var(--sarine-global-page, #FFFFFF);
-  border-color: #E9E5E9;
-}
 
-body.sarine-global-theme #main-content .sarine-home > section:nth-of-type(3n + 2):not(:first-child),
-body.sarine-global-theme #main-content .sarine-home > section:nth-of-type(3n + 3):not(:first-child) {
-  background-color: var(--sarine-global-surface, #F7F4F8);
-}
 
 body.sarine-global-theme #main-content .sarine-home > section:first-child h1,
 body.sarine-global-theme #main-content .sarine-home > section:first-child p,
@@ -714,4 +698,21 @@ body.sarine-global-theme #main-content li {
   body.sarine-global-theme #main-content h2 {
     font-size: clamp(1.7rem, 3.4vw, 2.2rem);
   }
+}
+
+/* Newsletter-style contact band: plum surface with high-contrast copy. */
+body.sarine-global-theme #main-content #stay-in-touch {
+  background-color: #563568;
+  color: #FFFFFF;
+}
+body.sarine-global-theme #main-content #stay-in-touch h2,
+body.sarine-global-theme #main-content #stay-in-touch p,
+body.sarine-global-theme #main-content #stay-in-touch span {
+  color: #FFFFFF;
+}
+body.sarine-global-theme #main-content #stay-in-touch a {
+  color: #E2C58D;
+}
+body.sarine-global-theme #main-content #stay-in-touch a:hover {
+  color: #FFFFFF;
 }
