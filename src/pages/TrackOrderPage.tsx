@@ -155,8 +155,8 @@ export const TrackOrderPage: React.FC = () => {
 
     if (isCod) {
       return (
-        <div className="flex items-center gap-2 text-xs text-[#6F6475]">
-          <span className="w-2 h-2 rounded-full bg-[#563568]"></span>
+        <div className="flex items-center gap-2 text-xs text-[var(--body)]">
+          <span className="w-2 h-2 rounded-full bg-[var(--plum)]"></span>
           <span>Cash on delivery</span>
         </div>
       );
@@ -170,7 +170,7 @@ export const TrackOrderPage: React.FC = () => {
             <span className="font-medium">Paid online via Razorpay</span>
           </div>
           {order.razorpayPaymentId && (
-            <p className="text-[11px] text-[#6F6475] font-mono">
+            <p className="text-[11px] text-[var(--body)] font-mono">
               Ref: {order.razorpayPaymentId}
             </p>
           )}
@@ -187,7 +187,7 @@ export const TrackOrderPage: React.FC = () => {
           </div>
           <Link
             to="/checkout"
-            className="text-xs text-[#563568] hover:text-[#A184BD] underline underline-offset-2 transition-colors font-medium inline-block"
+            className="text-xs text-[var(--plum)] hover:text-[var(--white)] underline underline-offset-2 transition-colors font-medium inline-block"
           >
             Retry checkout →
           </Link>
@@ -196,8 +196,8 @@ export const TrackOrderPage: React.FC = () => {
     }
 
     return (
-      <div className="flex items-center gap-2 text-xs text-[#563568]">
-        <Clock size={14} className="text-[#563568]" />
+      <div className="flex items-center gap-2 text-xs text-[var(--plum)]">
+        <Clock size={14} className="text-[var(--plum)]" />
         <span>Awaiting payment confirmation</span>
       </div>
     );
@@ -209,9 +209,9 @@ export const TrackOrderPage: React.FC = () => {
 
     if (order.orderStatus === 'needs_refund') {
       return (
-        <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-xs text-[#563568] leading-relaxed">
+        <div className="p-4 bg-[var(--tint)] border border-[var(--border)] rounded-xs text-xs text-[var(--plum)] leading-relaxed">
           <div className="flex items-start gap-2">
-            <AlertCircle size={16} className="text-[#563568] shrink-0 mt-0.5" />
+            <AlertCircle size={16} className="text-[var(--plum)] shrink-0 mt-0.5" />
             <p>Payment received, but an item went out of stock. A full refund will be processed.</p>
           </div>
         </div>
@@ -246,17 +246,17 @@ export const TrackOrderPage: React.FC = () => {
             const timestamp = latestFor(stage.key) || (stage.key === 'confirmed' ? order.createdAt : stage.key === 'shipped' ? order.shippedAt : stage.key === 'delivered' ? order.deliveredAt : undefined);
             return (
               <div key={stage.key} className="min-w-0 flex flex-col items-center">
-                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${done ? 'bg-[#563568] text-white' : 'bg-[#E7DCEB] text-[#6F6475]'}`}>
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${done ? 'bg-[var(--plum)] text-white' : 'bg-[var(--border)] text-[var(--body)]'}`}>
                   <Icon size={15} />
                 </div>
-                <span className={`mt-2 text-[9px] sm:text-[10px] leading-tight font-medium ${done ? 'text-[#302438]' : 'text-[#6F6475]'}`}>{stage.label}</span>
-                {timestamp && done && <span className="mt-1 text-[8px] sm:text-[9px] text-[#6F6475] leading-tight">{formatDate(timestamp)}</span>}
+                <span className={`mt-2 text-[9px] sm:text-[10px] leading-tight font-medium ${done ? 'text-[var(--heading)]' : 'text-[var(--body)]'}`}>{stage.label}</span>
+                {timestamp && done && <span className="mt-1 text-[8px] sm:text-[9px] text-[var(--body)] leading-tight">{formatDate(timestamp)}</span>}
               </div>
             );
           })}
         </div>
         {!hasShipped && (
-          <p className="text-center text-xs text-[#6F6475] font-sans pt-1">
+          <p className="text-center text-xs text-[var(--body)] font-sans pt-1">
             We&apos;ll update each stage as your order is prepared and dispatched.
           </p>
         )}
@@ -265,29 +265,29 @@ export const TrackOrderPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F0FA] text-[#302438] font-sans py-12 sm:py-16 lg:py-20">
+    <div className="min-h-screen bg-white text-[var(--heading)] font-sans py-12 sm:py-16 lg:py-20">
       <div className="site-container">
         <div className="max-w-xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8 sm:mb-10">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[var(--body)] font-medium block mb-2">
               DISPATCH & DELIVERY
             </span>
-            <h1 className="font-serif text-3xl sm:text-4xl text-[#302438] font-normal tracking-tight">
+            <h1 className="font-serif text-3xl sm:text-4xl text-[var(--heading)] font-normal tracking-tight">
               Track Your Order
             </h1>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] leading-relaxed max-w-md mx-auto">
+            <p className="mt-2 text-xs sm:text-sm text-[var(--body)] leading-relaxed max-w-md mx-auto">
               Check the live status of your jewellery shipment across India. No account required.
             </p>
           </div>
 
           {/* Lookup Form */}
-          <div className="bg-white p-6 sm:p-8 border border-[#E7DCEB] rounded-xs shadow-2xs mb-8">
+          <div className="bg-white p-6 sm:p-8 border border-[var(--border)] rounded-xs shadow-2xs mb-8">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label
                   htmlFor="orderNumber"
-                  className="block text-xs uppercase tracking-wider text-[#302438] font-medium mb-1.5"
+                  className="block text-xs uppercase tracking-wider text-[var(--heading)] font-medium mb-1.5"
                 >
                   Order Number
                 </label>
@@ -298,19 +298,19 @@ export const TrackOrderPage: React.FC = () => {
                   onChange={(e) => setOrderNumberInput(e.target.value)}
                   placeholder="SAR-000111"
                   required
-                  className="w-full px-4 py-2.5 bg-[#F7F0FA] border border-[#E7DCEB] text-xs sm:text-sm text-[#302438] placeholder-[#9E90A2] rounded-xs focus:outline-none focus:border-[#B69ACF] focus:ring-1 focus:ring-[#80609A] transition-colors font-mono uppercase"
+                  className="w-full px-4 py-2.5 bg-white border border-[var(--border)] text-xs sm:text-sm text-[var(--heading)] placeholder-[var(--muted)] rounded-xs focus:outline-none focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)] transition-colors font-mono uppercase"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="phone"
-                  className="block text-xs uppercase tracking-wider text-[#302438] font-medium mb-1.5"
+                  className="block text-xs uppercase tracking-wider text-[var(--heading)] font-medium mb-1.5"
                 >
                   Mobile Number
                 </label>
                 <div className="flex items-center">
-                  <span className="px-3 py-2.5 bg-[#F0E6F4] border border-r-0 border-[#E7DCEB] text-xs text-[#6F6475] rounded-l-xs font-sans">
+                  <span className="px-3 py-2.5 bg-[var(--tint)] border border-r-0 border-[var(--border)] text-xs text-[var(--body)] rounded-l-xs font-sans">
                     +91
                   </span>
                   <input
@@ -321,13 +321,13 @@ export const TrackOrderPage: React.FC = () => {
                     placeholder="9876543210"
                     maxLength={14}
                     required
-                    className="w-full px-4 py-2.5 bg-[#F7F0FA] border border-[#E7DCEB] text-xs sm:text-sm text-[#302438] placeholder-[#9E90A2] rounded-r-xs focus:outline-none focus:border-[#B69ACF] focus:ring-1 focus:ring-[#80609A] transition-colors font-sans"
+                    className="w-full px-4 py-2.5 bg-white border border-[var(--border)] text-xs sm:text-sm text-[var(--heading)] placeholder-[var(--muted)] rounded-r-xs focus:outline-none focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)] transition-colors font-sans"
                   />
                 </div>
               </div>
 
               {error && (
-                <div className="p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs flex items-start gap-2 text-xs text-[#DC2626] animate-fadeIn">
+                <div className="p-3 bg-[var(--tint)] border border-[var(--border)] rounded-xs flex items-start gap-2 text-xs text-[#DC2626] animate-fadeIn">
                   <AlertCircle size={15} className="shrink-0 mt-0.5" />
                   <p>{error}</p>
                 </div>
@@ -336,7 +336,7 @@ export const TrackOrderPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-[#563568] text-white text-xs sm:text-[13px] font-medium uppercase tracking-wider hover:bg-[#A184BD] transition-colors rounded-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                className="w-full py-3 bg-[var(--plum)] text-white text-xs sm:text-[13px] font-medium uppercase tracking-wider hover:bg-[var(--gold)] transition-colors rounded-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
               >
                 {loading ? (
                   <span>Checking status...</span>
@@ -350,40 +350,40 @@ export const TrackOrderPage: React.FC = () => {
             </form>
 
             {/* Trust-strip-style note under the form */}
-            <div className="mt-5 pt-4 border-t border-[#E7DCEB] flex items-center justify-center gap-2 text-[11px] sm:text-xs text-[#6F6475] font-sans">
-              <ShieldCheck size={14} className="text-[#563568] shrink-0" />
+            <div className="mt-5 pt-4 border-t border-[var(--border)] flex items-center justify-center gap-2 text-[11px] sm:text-xs text-[var(--body)] font-sans">
+              <ShieldCheck size={14} className="text-[var(--plum)] shrink-0" />
               <span>Use the mobile number you entered at checkout.</span>
             </div>
           </div>
 
           {/* Result Order Summary Card */}
           {order && (
-            <div className="bg-white border border-[#E7DCEB] rounded-xs shadow-xs p-6 sm:p-8 space-y-6 animate-fadeIn">
+            <div className="bg-white border border-[var(--border)] rounded-xs shadow-xs p-6 sm:p-8 space-y-6 animate-fadeIn">
               {/* Header Row */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-[#E7DCEB]">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-[var(--border)]">
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider text-[#6F6475] font-medium block">
+                  <span className="text-[10px] uppercase tracking-wider text-[var(--body)] font-medium block">
                     Order Reference
                   </span>
-                  <h3 className="font-serif text-xl sm:text-2xl text-[#302438] font-normal mt-0.5">
+                  <h3 className="font-serif text-xl sm:text-2xl text-[var(--heading)] font-normal mt-0.5">
                     {order.orderNumber}
                   </h3>
-                  <span className="text-xs text-[#6F6475] block mt-0.5">
+                  <span className="text-xs text-[var(--body)] block mt-0.5">
                     Placed on {formatDate(order.createdAt)}
                   </span>
                 </div>
 
                 <div className="text-right">
-                  <span className="text-[10px] uppercase tracking-wider text-[#6F6475] font-medium block">
+                  <span className="text-[10px] uppercase tracking-wider text-[var(--body)] font-medium block">
                     Destination
                   </span>
-                  <span className="text-xs text-[#302438] font-medium block mt-0.5">
+                  <span className="text-xs text-[var(--heading)] font-medium block mt-0.5">
                     {order.shippingAddress?.city && order.shippingAddress?.state
                       ? `${order.shippingAddress.city}, ${order.shippingAddress.state}`
                       : order.shippingAddress?.city || 'India'}
                   </span>
                   {order.shippingAddress?.pincode && (
-                    <span className="text-xs text-[#6F6475] font-mono block">
+                    <span className="text-xs text-[var(--body)] font-mono block">
                       PIN: {order.shippingAddress.pincode}
                     </span>
                   )}
@@ -395,24 +395,24 @@ export const TrackOrderPage: React.FC = () => {
 
               {/* Courier details if present */}
               {(order.courierName || order.trackingNumber || order.trackingUrl) && (
-                <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs space-y-2 text-xs">
+                <div className="p-4 bg-[var(--tint)] border border-[var(--border)] rounded-xs space-y-2 text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-[#6F6475]">Courier Partner:</span>
-                    <span className="font-medium text-[#302438]">{order.courierName || 'Domestic Courier'}</span>
+                    <span className="text-[var(--body)]">Courier Partner:</span>
+                    <span className="font-medium text-[var(--heading)]">{order.courierName || 'Domestic Courier'}</span>
                   </div>
                   {order.trackingNumber && (
                     <div className="flex items-center justify-between font-mono">
-                      <span className="text-[#6F6475] font-sans">Airway Bill (AWB):</span>
-                      <span className="font-medium text-[#302438]">{order.trackingNumber}</span>
+                      <span className="text-[var(--body)] font-sans">Airway Bill (AWB):</span>
+                      <span className="font-medium text-[var(--heading)]">{order.trackingNumber}</span>
                     </div>
                   )}
                   {order.trackingUrl && (
-                    <div className="pt-2 border-t border-[#E7DCEB]">
+                    <div className="pt-2 border-t border-[var(--border)]">
                       <a
                         href={order.trackingUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#563568] hover:text-[#A184BD] font-medium inline-flex items-center gap-1.5 transition-colors"
+                        className="text-[var(--plum)] hover:text-[var(--white)] font-medium inline-flex items-center gap-1.5 transition-colors"
                       >
                         <span>Open courier tracking</span>
                         <ExternalLink size={12} />
@@ -423,21 +423,21 @@ export const TrackOrderPage: React.FC = () => {
               )}
 
               {/* Payment Details */}
-              <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs flex items-center justify-between gap-4">
+              <div className="p-4 bg-[var(--tint)] border border-[var(--border)] rounded-xs flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2.5">
-                  <CreditCard size={18} className="text-[#6F6475]" />
+                  <CreditCard size={18} className="text-[var(--body)]" />
                   <div>
-                    <span className="text-[10px] uppercase tracking-wider text-[#6F6475] font-medium block">
+                    <span className="text-[10px] uppercase tracking-wider text-[var(--body)] font-medium block">
                       Payment
                     </span>
                     {renderPaymentStatus()}
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] uppercase tracking-wider text-[#6F6475] font-medium block">
+                  <span className="text-[10px] uppercase tracking-wider text-[var(--body)] font-medium block">
                     Total
                   </span>
-                  <span className="font-serif text-base text-[#302438] font-normal">
+                  <span className="font-serif text-base text-[var(--heading)] font-normal">
                     {formatInr(order.total)}
                   </span>
                 </div>
@@ -445,10 +445,10 @@ export const TrackOrderPage: React.FC = () => {
 
               {/* Itemized Lines */}
               <div className="space-y-3">
-                <h4 className="text-xs uppercase tracking-wider text-[#302438] font-medium">
+                <h4 className="text-xs uppercase tracking-wider text-[var(--heading)] font-medium">
                   Ordered Items ({order.lines.length})
                 </h4>
-                <div className="divide-y divide-[#E7DCEB]">
+                <div className="divide-y divide-[var(--border)]">
                   {order.lines.map((line, idx) => (
                     <div key={idx} className="py-2.5 flex items-center justify-between gap-3 text-xs">
                       <div className="flex items-center gap-3">
@@ -456,20 +456,20 @@ export const TrackOrderPage: React.FC = () => {
                           <img
                             src={line.image}
                             alt={line.name}
-                            className="w-11 h-11 object-cover rounded-xs border border-[#E7DCEB] bg-[#F7F0FA]"
+                            className="w-11 h-11 object-cover rounded-xs border border-[var(--border)] bg-[var(--tint)]"
                           />
                         ) : (
-                          <div className="w-11 h-11 rounded-xs border border-[#E7DCEB] bg-[#F7F0FA] flex items-center justify-center text-[#6F6475]">
+                          <div className="w-11 h-11 rounded-xs border border-[var(--border)] bg-[var(--tint)] flex items-center justify-center text-[var(--body)]">
                             <Package size={16} />
                           </div>
                         )}
                         <div>
-                          <p className="font-medium text-[#302438] line-clamp-1">{line.name}</p>
-                          {line.variantLabel && <p className="text-[11px] text-[#563568]">{line.variantLabel}{line.sku ? ` · ${line.sku}` : ''}</p>}
-                          <p className="text-[11px] text-[#6F6475]">Qty: {line.quantity}</p>
+                          <p className="font-medium text-[var(--heading)] line-clamp-1">{line.name}</p>
+                          {line.variantLabel && <p className="text-[11px] text-[var(--plum)]">{line.variantLabel}{line.sku ? ` · ${line.sku}` : ''}</p>}
+                          <p className="text-[11px] text-[var(--body)]">Qty: {line.quantity}</p>
                         </div>
                       </div>
-                      <span className="font-sans text-[#302438] tabular-nums shrink-0">
+                      <span className="font-sans text-[var(--heading)] tabular-nums shrink-0">
                         {formatInr(line.unitPrice * line.quantity)}
                       </span>
                     </div>
@@ -478,10 +478,10 @@ export const TrackOrderPage: React.FC = () => {
               </div>
 
               {/* Totals Breakdown */}
-              <div className="pt-3 border-t border-[#E7DCEB] space-y-1.5 text-xs text-[#6F6475]">
+              <div className="pt-3 border-t border-[var(--border)] space-y-1.5 text-xs text-[var(--body)]">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span className="tabular-nums text-[#302438]">{formatInr(order.subtotal)}</span>
+                  <span className="tabular-nums text-[var(--heading)]">{formatInr(order.subtotal)}</span>
                 </div>
                 {!!order.discountAmount && order.discountAmount > 0 && (
                   <div className="flex justify-between text-emerald-700">
@@ -491,11 +491,11 @@ export const TrackOrderPage: React.FC = () => {
                 )}
                 <div className="flex justify-between">
                   <span>Shipping across India</span>
-                  <span className="tabular-nums text-[#302438]">
+                  <span className="tabular-nums text-[var(--heading)]">
                     {order.shippingFee === 0 ? 'Complimentary (Free)' : formatInr(order.shippingFee)}
                   </span>
                 </div>
-                <div className="flex justify-between pt-2 border-t border-[#E7DCEB] font-medium text-sm text-[#302438]">
+                <div className="flex justify-between pt-2 border-t border-[var(--border)] font-medium text-sm text-[var(--heading)]">
                   <span>Total Amount</span>
                   <span className="tabular-nums font-serif text-base">{formatInr(order.total)}</span>
                 </div>
@@ -503,35 +503,35 @@ export const TrackOrderPage: React.FC = () => {
 
 
               {order.orderStatus === 'delivered' && order.deliveredAt && (
-                <div className="pt-3 border-t border-[#E7DCEB] space-y-3">
+                <div className="pt-3 border-t border-[var(--border)] space-y-3">
                   {returnSuccess ? (
                     <div role="status" className="rounded-xs border border-[#D8E8D7] bg-[#F2FAF1] p-3 text-xs text-[#27633A]">{returnSuccess}</div>
                   ) : (
                     <>
                       {!returnFormOpen ? (
-                        <button type="button" onClick={() => { setReturnFormOpen(true); setReturnError(null); }} className="w-full py-3 border border-[#563568] text-[#563568] text-xs font-medium rounded-xs hover:bg-[#FAF5FC]">
+                        <button type="button" onClick={() => { setReturnFormOpen(true); setReturnError(null); }} className="w-full py-3 border border-[var(--plum)] text-[var(--plum)] text-xs font-medium rounded-xs hover:bg-[var(--tint)]">
                           Request a return or exchange
                         </button>
                       ) : (
-                        <form onSubmit={handleReturnRequest} className="rounded-xs border border-[#E7DCEB] bg-[#FAF5FC] p-4 space-y-3">
-                          <div><h4 className="font-serif text-lg text-[#302438]">Return or exchange request</h4><p className="text-[11px] text-[#6F6475] mt-1">Requests must be submitted within 7 days of delivery. Your checkout mobile number is used to verify this order.</p></div>
-                          <label className="block text-xs text-[#302438]">Request type
-                            <select value={returnType} onChange={e => setReturnType(e.target.value as 'return' | 'exchange')} className="mt-1 w-full p-2.5 border border-[#E7DCEB] bg-white rounded-xs text-xs">
+                        <form onSubmit={handleReturnRequest} className="rounded-xs border border-[var(--border)] bg-[var(--tint)] p-4 space-y-3">
+                          <div><h4 className="font-serif text-lg text-[var(--heading)]">Return or exchange request</h4><p className="text-[11px] text-[var(--body)] mt-1">Requests must be submitted within 7 days of delivery. Your checkout mobile number is used to verify this order.</p></div>
+                          <label className="block text-xs text-[var(--heading)]">Request type
+                            <select value={returnType} onChange={e => setReturnType(e.target.value as 'return' | 'exchange')} className="mt-1 w-full p-2.5 border border-[var(--border)] bg-white rounded-xs text-xs">
                               <option value="return">Return</option><option value="exchange">Exchange</option>
                             </select>
                           </label>
-                          <label className="block text-xs text-[#302438]">Reason
-                            <select value={returnReason} onChange={e => setReturnReason(e.target.value)} className="mt-1 w-full p-2.5 border border-[#E7DCEB] bg-white rounded-xs text-xs">
+                          <label className="block text-xs text-[var(--heading)]">Reason
+                            <select value={returnReason} onChange={e => setReturnReason(e.target.value)} className="mt-1 w-full p-2.5 border border-[var(--border)] bg-white rounded-xs text-xs">
                               <option>Item arrived damaged or scratched</option><option>Received a different item than ordered</option><option>Manufacturing defect</option><option>Size or fit adjustment required</option><option>Finish or polish not as expected</option><option>Other reason</option>
                             </select>
                           </label>
-                          <label className="block text-xs text-[#302438]">Additional details (optional)
-                            <textarea value={returnNotes} onChange={e => setReturnNotes(e.target.value)} maxLength={2000} rows={3} placeholder="Describe the issue…" className="mt-1 w-full p-2.5 border border-[#E7DCEB] bg-white rounded-xs text-xs" />
+                          <label className="block text-xs text-[var(--heading)]">Additional details (optional)
+                            <textarea value={returnNotes} onChange={e => setReturnNotes(e.target.value)} maxLength={2000} rows={3} placeholder="Describe the issue…" className="mt-1 w-full p-2.5 border border-[var(--border)] bg-white rounded-xs text-xs" />
                           </label>
                           {returnError && <p role="alert" className="text-xs text-red-700">{returnError}</p>}
                           <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
-                            <button type="button" onClick={() => setReturnFormOpen(false)} disabled={returnLoading} className="px-4 py-2 text-xs border border-[#E7DCEB] rounded-xs">Cancel</button>
-                            <button type="submit" disabled={returnLoading} className="px-4 py-2 text-xs bg-[#563568] text-white rounded-xs disabled:opacity-50">{returnLoading ? 'Submitting…' : 'Submit request'}</button>
+                            <button type="button" onClick={() => setReturnFormOpen(false)} disabled={returnLoading} className="px-4 py-2 text-xs border border-[var(--border)] rounded-xs">Cancel</button>
+                            <button type="submit" disabled={returnLoading} className="px-4 py-2 text-xs bg-[var(--plum)] text-white rounded-xs disabled:opacity-50">{returnLoading ? 'Submitting…' : 'Submit request'}</button>
                           </div>
                         </form>
                       )}
@@ -545,7 +545,7 @@ export const TrackOrderPage: React.FC = () => {
                 <div className="pt-2">
                   <Link
                     to={`/order/${order.orderNumber}?t=${order.publicToken}`}
-                    className="w-full py-3 bg-transparent border border-[#563568] text-[#563568] text-xs font-sans font-medium hover:bg-[#F0E6F4] hover:border-[#563568] transition-colors rounded-xs flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-transparent border border-[var(--plum)] text-[var(--plum)] text-xs font-sans font-medium hover:bg-[var(--tint)] hover:border-[var(--plum)] transition-colors rounded-xs flex items-center justify-center gap-2"
                   >
                     <span>View full order details</span>
                     <ArrowRight size={13} />

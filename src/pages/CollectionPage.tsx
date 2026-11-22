@@ -298,28 +298,28 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
   const currentCategory = selectedCategorySlug ? categoryMap[selectedCategorySlug] : null;
 
   return (
-    <div className="min-h-screen bg-[#F7F0FA] pb-20 text-[#302438] font-sans">
+    <div className="min-h-screen bg-[var(--white)] pb-20 text-[color:var(--body)] font-sans">
       {/* Category Hero / Header */}
-      <section className="bg-white border-b border-[#E7DCEB] py-8 sm:py-12">
+      <section className="bg-white border-b border-[var(--border)] py-8 sm:py-12">
         <div className="site-container">
           <div className="max-w-3xl">
-            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#6F6475] mb-2">
-              <Link to="/" className="hover:text-[#563568]">Home</Link>
-              <span>/</span>
-              <span className="text-[#563568] font-medium">Catalogue</span>
+            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[color:var(--body)] mb-2">
+              <Link to="/" className="hover:text-[color:var(--plum)]">Home</Link>
+              <span className="text-[color:var(--border)]">/</span>
+              <span className={`font-medium ${currentCategory ? "text-[color:var(--body)]" : "text-[color:var(--heading)]"}`}>Catalogue</span>
               {currentCategory && (
                 <>
-                  <span>/</span>
-                  <span className="text-[#302438]">{currentCategory.name}</span>
+                  <span className="text-[color:var(--border)]">/</span>
+                  <span className="text-[color:var(--heading)]">{currentCategory.name}</span>
                 </>
               )}
             </div>
 
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-[40px] text-[#302438] font-normal leading-tight">
+            <h1 className="font-serif text-3xl sm:text-4xl lg:text-[40px] text-[color:var(--heading)] font-normal leading-tight">
               {currentCategory ? currentCategory.name : 'Handcrafted Jewellery Collections'}
             </h1>
 
-            <p className="mt-2.5 text-xs sm:text-sm text-[#6F6475] leading-relaxed font-sans max-w-2xl">
+            <p className="mt-2.5 text-xs sm:text-sm text-[color:var(--body)] leading-relaxed font-sans max-w-2xl">
               {currentCategory?.description ||
                 'Explore our full range of artisanal jewellery, designed for modern festivities and everyday elegance.'}
             </p>
@@ -330,10 +330,10 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
       {/* Main Discover Layout */}
       <div className="site-container pt-8">
         {/* Controls Bar: Search, Filter Toggle, Sort */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-white p-3.5 sm:p-4 border border-[#E7DCEB] rounded-xs shadow-2xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-white p-3.5 sm:p-4 border border-[var(--border)] rounded-xs shadow-2xs">
           {/* Search within collection */}
           <div className="relative flex-1 max-w-md">
-            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6F6475]" />
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[color:var(--body)]" />
             <input
               type="text"
               value={searchQuery}
@@ -342,7 +342,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                 updateFilter({ search: e.target.value });
               }}
               placeholder="Filter by title, style, or tag..."
-              className="w-full pl-9 pr-8 py-2 text-xs text-[#302438] placeholder-[#6F6475]/60 bg-[#F7F0FA] border border-[#E7DCEB] focus:border-[#B69ACF] rounded-xs focus:outline-none transition-colors"
+              className="w-full pl-9 pr-8 py-2 text-xs text-[color:var(--body)] placeholder-[color:var(--body)] bg-[var(--white)] border border-[var(--border)] focus:border-[var(--gold)] rounded-xs focus:outline-none transition-colors"
             />
             {searchQuery && (
               <button
@@ -350,7 +350,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                   setSearchQuery('');
                   updateFilter({ search: null });
                 }}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#6F6475] hover:text-[#302438]"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[color:var(--body)] hover:text-[color:var(--body)]"
               >
                 <X size={13} />
               </button>
@@ -361,33 +361,33 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
             {/* Mobile Filter Button */}
             <button
               onClick={() => setShowMobileFilters(!showMobileFilters)}
-              className="lg:hidden flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-[#563568] bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs cursor-pointer"
+              className="lg:hidden flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-[color:var(--plum)] bg-[var(--white)] border border-[var(--border)] hover:border-[var(--gold)] rounded-xs cursor-pointer"
             >
               <SlidersHorizontal size={14} />
               <span>Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}</span>
             </button>
 
             {/* In-Stock Toggle */}
-            <label className="hidden sm:flex items-center gap-2 text-xs text-[#6F6475] cursor-pointer select-none">
+            <label className="hidden sm:flex items-center gap-2 text-xs text-[color:var(--body)] cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={inStockOnly}
                 onChange={(e) => setInStockOnly(e.target.checked)}
-                className="accent-[#563568] rounded-xs cursor-pointer"
+                className="accent-[var(--plum)] rounded-xs cursor-pointer"
               />
               <span>In Stock Only</span>
             </label>
 
             {/* Sort Selector */}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-[#6F6475] hidden sm:inline">Sort:</span>
+              <span className="text-xs text-[color:var(--body)] hidden sm:inline">Sort:</span>
               <select
                 value={sortBy}
                 onChange={(e) => {
                   setSortBy(e.target.value);
                   updateFilter({ sort: e.target.value });
                 }}
-                className="text-xs bg-[#F7F0FA] border border-[#E7DCEB] text-[#302438] py-2 px-3 rounded-xs focus:outline-none cursor-pointer"
+                className="text-xs bg-[var(--white)] border border-[var(--border)] text-[color:var(--body)] py-2 px-3 rounded-xs focus:outline-none cursor-pointer"
               >
                 <option value="newest">Newest Additions</option>
                 <option value="price-asc">Price: Low to High</option>
@@ -400,11 +400,11 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
 
         {/* Active Filter Chips */}
         {activeFiltersCount > 0 && (
-          <div className="flex flex-wrap items-center gap-2 mb-6 p-3 bg-white border border-[#E7DCEB] rounded-xs text-xs font-sans">
-            <span className="text-[#6F6475] font-medium mr-1">Active Filters:</span>
+          <div className="flex flex-wrap items-center gap-2 mb-6 p-3 bg-white border border-[var(--border)] rounded-xs text-xs font-sans">
+            <span className="text-[color:var(--body)] font-medium mr-1">Active Filters:</span>
 
             {selectedCategorySlug && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F7F0FA] text-[#563568] border border-[#E7DCEB] rounded-xs">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[var(--pill)] text-[color:var(--plum)] border border-[var(--border)] rounded-xs">
                 <span>Category: {currentCategory?.name || selectedCategorySlug}</span>
                 <button
                   onClick={() => updateFilter({ category: null })}
@@ -416,7 +416,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
             )}
 
             {searchQuery && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F7F0FA] text-[#563568] border border-[#E7DCEB] rounded-xs">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[var(--pill)] text-[color:var(--plum)] border border-[var(--border)] rounded-xs">
                 <span>Keyword: "{searchQuery}"</span>
                 <button
                   onClick={() => {
@@ -431,7 +431,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
             )}
 
             {selectedType && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F7F0FA] text-[#563568] border border-[#E7DCEB] rounded-xs">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[var(--pill)] text-[color:var(--plum)] border border-[var(--border)] rounded-xs">
                 <span>Type: {JEWELLERY_TYPE_LABELS[selectedType as JewelleryType] || selectedType}</span>
                 <button
                   onClick={() => {
@@ -446,7 +446,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
             )}
 
             {selectedOccasion && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F7F0FA] text-[#563568] border border-[#E7DCEB] rounded-xs">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[var(--pill)] text-[color:var(--plum)] border border-[var(--border)] rounded-xs">
                 <span>Occasion: {OCCASIONS.find((o) => o.id === selectedOccasion)?.label || selectedOccasion}</span>
                 <button
                   onClick={() => {
@@ -460,12 +460,12 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
               </span>
             )}
 
-            {selectedMetal && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F7F0FA] text-[#563568] border border-[#E7DCEB] rounded-xs">Metal: {selectedMetal}<button onClick={() => { setSelectedMetal(''); updateFilter({ metal: null }); }}><X size={11}/></button></span>}
-            {selectedPlating && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F7F0FA] text-[#563568] border border-[#E7DCEB] rounded-xs">Finish: {selectedPlating}<button onClick={() => { setSelectedPlating(''); updateFilter({ plating: null }); }}><X size={11}/></button></span>}
-            {selectedStone && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F7F0FA] text-[#563568] border border-[#E7DCEB] rounded-xs">Stone: {selectedStone}<button onClick={() => { setSelectedStone(''); updateFilter({ stone: null }); }}><X size={11}/></button></span>}
+            {selectedMetal && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[var(--pill)] text-[color:var(--plum)] border border-[var(--border)] rounded-xs">Metal: {selectedMetal}<button onClick={() => { setSelectedMetal(''); updateFilter({ metal: null }); }}><X size={11}/></button></span>}
+            {selectedPlating && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[var(--pill)] text-[color:var(--plum)] border border-[var(--border)] rounded-xs">Finish: {selectedPlating}<button onClick={() => { setSelectedPlating(''); updateFilter({ plating: null }); }}><X size={11}/></button></span>}
+            {selectedStone && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[var(--pill)] text-[color:var(--plum)] border border-[var(--border)] rounded-xs">Stone: {selectedStone}<button onClick={() => { setSelectedStone(''); updateFilter({ stone: null }); }}><X size={11}/></button></span>}
 
             {pricePreset !== 'all' && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F7F0FA] text-[#563568] border border-[#E7DCEB] rounded-xs">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[var(--pill)] text-[color:var(--plum)] border border-[var(--border)] rounded-xs">
                 <span>Price: {pricePreset.replace('-', ' to ')}</span>
                 <button
                   onClick={() => {
@@ -480,7 +480,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
             )}
 
             {inStockOnly && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F7F0FA] text-[#563568] border border-[#E7DCEB] rounded-xs">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[var(--pill)] text-[color:var(--plum)] border border-[var(--border)] rounded-xs">
                 <span>In Stock Only</span>
                 <button
                   onClick={() => setInStockOnly(false)}
@@ -493,7 +493,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
 
             <button
               onClick={handleClearAll}
-              className="ml-auto text-xs text-[#563568] hover:underline font-medium cursor-pointer"
+              className="ml-auto text-xs text-[color:var(--plum)] hover:underline font-medium cursor-pointer"
             >
               Clear All ({activeFiltersCount})
             </button>
@@ -504,16 +504,16 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Desktop Filter Sidebar */}
           <aside className={`lg:col-span-3 space-y-6 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
-            <div className="bg-white p-5 border border-[#E7DCEB] rounded-xs space-y-6">
-              <div className="flex items-center justify-between pb-3 border-b border-[#E7DCEB]">
-                <h3 className="font-serif text-base text-[#302438] font-normal flex items-center gap-2">
-                  <SlidersHorizontal size={14} className="text-[#563568]" />
+            <div className="bg-white p-5 border border-[var(--border)] rounded-xs space-y-6">
+              <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+                <h3 className="font-serif text-base text-[color:var(--body)] font-normal flex items-center gap-2">
+                  <SlidersHorizontal size={14} className="text-[color:var(--plum)]" />
                   <span>Refine Catalogue</span>
                 </h3>
                 {activeFiltersCount > 0 && (
                   <button
                     onClick={handleClearAll}
-                    className="text-[11px] text-[#6F6475] hover:text-[#DC2626] cursor-pointer"
+                    className="text-[11px] text-[color:var(--body)] hover:text-[#DC2626] cursor-pointer"
                   >
                     Reset
                   </button>
@@ -522,14 +522,14 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
 
               {/* 1. Category Filter */}
               <div>
-                <span className="text-xs uppercase tracking-wider text-[#6F6475] font-medium block mb-2.5">
+                <span className="text-xs uppercase tracking-wider text-[color:var(--body)] font-medium block mb-2.5">
                   Category
                 </span>
                 <div className="space-y-1.5 text-xs font-sans">
                   <button
                     onClick={() => updateFilter({ category: null })}
                     className={`w-full text-left py-1 px-2 rounded-xs transition-colors flex items-center justify-between ${
-                      !selectedCategorySlug ? 'bg-[#F7F0FA] text-[#563568] font-medium' : 'text-[#6F6475] hover:text-[#302438]'
+                      !selectedCategorySlug ? 'bg-[var(--plum)] text-[color:var(--white)] font-medium' : 'text-[color:var(--body)] hover:text-[color:var(--body)]'
                     }`}
                   >
                     <span>All Categories</span>
@@ -543,7 +543,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                         key={cat.id}
                         onClick={() => updateFilter({ category: cat.slug })}
                         className={`w-full text-left py-1 px-2 rounded-xs transition-colors flex items-center justify-between ${
-                          active ? 'bg-[#F7F0FA] text-[#563568] font-medium' : 'text-[#6F6475] hover:text-[#302438]'
+                          active ? 'bg-[var(--plum)] text-[color:var(--white)] font-medium' : 'text-[color:var(--body)] hover:text-[color:var(--body)]'
                         }`}
                       >
                         <span>{cat.name}</span>
@@ -555,8 +555,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
               </div>
 
               {/* 2. Price Filter */}
-              <div className="pt-4 border-t border-[#E7DCEB]">
-                <span className="text-xs uppercase tracking-wider text-[#6F6475] font-medium block mb-2.5">
+              <div className="pt-4 border-t border-[var(--border)]">
+                <span className="text-xs uppercase tracking-wider text-[color:var(--body)] font-medium block mb-2.5">
                   Price
                 </span>
                 <div className="space-y-1.5 text-xs">
@@ -576,8 +576,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                       }}
                       className={`w-full text-left py-1 px-2 rounded-xs transition-colors ${
                         pricePreset === preset.id && !customMin && !customMax
-                          ? 'bg-[#F7F0FA] text-[#563568] font-medium'
-                          : 'text-[#6F6475] hover:text-[#302438]'
+                          ? 'bg-[var(--plum)] text-[color:var(--white)] font-medium'
+                          : 'text-[color:var(--body)] hover:text-[color:var(--body)]'
                       }`}
                     >
                       {preset.label}
@@ -586,28 +586,28 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                 </div>
 
                 {/* Custom Price Inputs */}
-                <div className="mt-3 pt-3 border-t border-[#E7DCEB]/60 flex items-center gap-2 text-xs">
+                <div className="mt-3 pt-3 border-t border-[var(--border)] flex items-center gap-2 text-xs">
                   <input
                     type="number"
                     placeholder="Min ₹"
                     value={customMin}
                     onChange={(e) => setCustomMin(e.target.value)}
-                    className="w-1/2 p-1.5 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs text-xs focus:outline-none"
+                    className="w-1/2 p-1.5 bg-[var(--white)] border border-[var(--border)] rounded-xs text-xs focus:outline-none focus:border-[var(--gold)]"
                   />
-                  <span className="text-[#6F6475]">-</span>
+                  <span className="text-[color:var(--body)]">-</span>
                   <input
                     type="number"
                     placeholder="Max ₹"
                     value={customMax}
                     onChange={(e) => setCustomMax(e.target.value)}
-                    className="w-1/2 p-1.5 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs text-xs focus:outline-none"
+                    className="w-1/2 p-1.5 bg-[var(--white)] border border-[var(--border)] rounded-xs text-xs focus:outline-none focus:border-[var(--gold)]"
                   />
                 </div>
               </div>
 
               {/* 3. Occasions Filter */}
-              <div className="pt-4 border-t border-[#E7DCEB]">
-                <span className="text-xs uppercase tracking-wider text-[#6F6475] font-medium block mb-2.5">
+              <div className="pt-4 border-t border-[var(--border)]">
+                <span className="text-xs uppercase tracking-wider text-[color:var(--body)] font-medium block mb-2.5">
                   Curated Occasion
                 </span>
                 <div className="space-y-1.5 text-xs">
@@ -617,7 +617,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                       updateFilter({ occasion: null });
                     }}
                     className={`w-full text-left py-1 px-2 rounded-xs transition-colors ${
-                      !selectedOccasion ? 'bg-[#F7F0FA] text-[#563568] font-medium' : 'text-[#6F6475] hover:text-[#302438]'
+                      !selectedOccasion ? 'bg-[var(--plum)] text-[color:var(--white)] font-medium' : 'text-[color:var(--body)] hover:text-[color:var(--body)]'
                     }`}
                   >
                     All Occasions
@@ -631,8 +631,8 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                       }}
                       className={`w-full text-left py-1 px-2 rounded-xs transition-colors ${
                         selectedOccasion === occ.id
-                          ? 'bg-[#F7F0FA] text-[#563568] font-medium'
-                          : 'text-[#6F6475] hover:text-[#302438]'
+                          ? 'bg-[var(--plum)] text-[color:var(--white)] font-medium'
+                          : 'text-[color:var(--body)] hover:text-[color:var(--body)]'
                       }`}
                     >
                       {occ.label}
@@ -643,11 +643,11 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
 
               {/* 4. Craftsmanship Filters */}
               {(availableMetals.length > 0 || availablePlatings.length > 0 || availableStones.length > 0) && (
-                <div className="pt-4 border-t border-[#E7DCEB] space-y-4">
-                  <span className="text-xs uppercase tracking-wider text-[#6F6475] font-medium block">Craftsmanship</span>
-                  {availableMetals.length > 0 && <label className="block text-xs text-[#6F6475]">Base metal<select value={selectedMetal} onChange={event => { setSelectedMetal(event.target.value); updateFilter({ metal: event.target.value || null }); }} className="mt-1.5 w-full min-h-10 rounded-lg border border-[#E7DCEB] bg-[#F7F0FA] px-3 text-xs text-[#302438]"><option value="">All metals</option>{availableMetals.map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
-                  {availablePlatings.length > 0 && <label className="block text-xs text-[#6F6475]">Plating / finish<select value={selectedPlating} onChange={event => { setSelectedPlating(event.target.value); updateFilter({ plating: event.target.value || null }); }} className="mt-1.5 w-full min-h-10 rounded-lg border border-[#E7DCEB] bg-[#F7F0FA] px-3 text-xs text-[#302438]"><option value="">All finishes</option>{availablePlatings.map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
-                  {availableStones.length > 0 && <label className="block text-xs text-[#6F6475]">Stones & embellishments<select value={selectedStone} onChange={event => { setSelectedStone(event.target.value); updateFilter({ stone: event.target.value || null }); }} className="mt-1.5 w-full min-h-10 rounded-lg border border-[#E7DCEB] bg-[#F7F0FA] px-3 text-xs text-[#302438]"><option value="">All stones</option>{availableStones.map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
+                <div className="pt-4 border-t border-[var(--border)] space-y-4">
+                  <span className="text-xs uppercase tracking-wider text-[color:var(--body)] font-medium block">Craftsmanship</span>
+                  {availableMetals.length > 0 && <label className="block text-xs text-[color:var(--body)]">Base metal<select value={selectedMetal} onChange={event => { setSelectedMetal(event.target.value); updateFilter({ metal: event.target.value || null }); }} className="mt-1.5 w-full min-h-10 rounded-lg border border-[var(--border)] bg-[var(--white)] px-3 text-xs text-[color:var(--body)]"><option value="">All metals</option>{availableMetals.map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
+                  {availablePlatings.length > 0 && <label className="block text-xs text-[color:var(--body)]">Plating / finish<select value={selectedPlating} onChange={event => { setSelectedPlating(event.target.value); updateFilter({ plating: event.target.value || null }); }} className="mt-1.5 w-full min-h-10 rounded-lg border border-[var(--border)] bg-[var(--white)] px-3 text-xs text-[color:var(--body)]"><option value="">All finishes</option>{availablePlatings.map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
+                  {availableStones.length > 0 && <label className="block text-xs text-[color:var(--body)]">Stones & embellishments<select value={selectedStone} onChange={event => { setSelectedStone(event.target.value); updateFilter({ stone: event.target.value || null }); }} className="mt-1.5 w-full min-h-10 rounded-lg border border-[var(--border)] bg-[var(--white)] px-3 text-xs text-[color:var(--body)]"><option value="">All stones</option>{availableStones.map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
                 </div>
               )}
             </div>
@@ -658,16 +658,16 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
             {loading ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 lg:gap-6">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className="animate-pulse bg-white p-2.5 border border-[#E7DCEB] rounded-xs">
-                    <div className="aspect-[3/4] bg-[#F7F0FA] rounded-xs w-full"></div>
-                    <div className="h-4 bg-[#F7F0FA] w-3/4 mt-3"></div>
-                    <div className="h-3 bg-[#F7F0FA] w-1/3 mt-2"></div>
+                  <div key={i} className="animate-pulse bg-white p-2.5 border border-[var(--border)] rounded-xs">
+                    <div className="aspect-[3/4] bg-[var(--pill)] rounded-xs w-full"></div>
+                    <div className="h-4 bg-[var(--pill)] w-3/4 mt-3"></div>
+                    <div className="h-3 bg-[var(--pill)] w-1/3 mt-2"></div>
                   </div>
                 ))}
               </div>
             ) : sortedProducts.length > 0 ? (
               <div>
-                <div className="flex items-center justify-between mb-4 text-xs text-[#6F6475]">
+                <div className="flex items-center justify-between mb-4 text-xs text-[color:var(--body)]">
                   <span>Showing {sortedProducts.length} handcrafted pieces</span>
                 </div>
 
@@ -679,24 +679,24 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
               </div>
             ) : (
               /* Empty Search / Filter State with Recovery */
-              <div className="bg-white border border-[#E7DCEB] p-10 sm:p-14 text-center rounded-xs shadow-2xs">
-                <Sparkles size={36} className="mx-auto text-[#B69ACF] mb-3" />
-                <h3 className="font-serif text-xl sm:text-2xl text-[#302438] font-normal">
+              <div className="bg-white border border-[var(--border)] p-10 sm:p-14 text-center rounded-xs shadow-2xs">
+                <Sparkles size={36} className="mx-auto text-[var(--gold)] mb-3" />
+                <h3 className="font-serif text-xl sm:text-2xl text-[color:var(--body)] font-normal">
                   No matching jewellery found
                 </h3>
-                <p className="text-xs text-[#6F6475] mt-2 max-w-md mx-auto leading-relaxed">
+                <p className="text-xs text-[color:var(--body)] mt-2 max-w-md mx-auto leading-relaxed">
                   We couldn't find any pieces matching your current filters. Try resetting your search or exploring our recommended bestsellers below.
                 </p>
                 <div className="mt-6 flex flex-wrap justify-center gap-3">
                   <button
                     onClick={handleClearAll}
-                    className="px-6 py-2.5 bg-[#563568] text-white hover:bg-[#A184BD] text-xs font-medium rounded-xs transition-colors cursor-pointer"
+                    className="px-6 py-2.5 bg-[var(--plum)] text-[color:var(--white)] hover:bg-[var(--gold)] active:bg-[var(--plum-dark)] text-xs font-medium rounded-xs transition-colors cursor-pointer"
                   >
                     Reset All Filters
                   </button>
                   <Link
                     to="/shop"
-                    className="px-6 py-2.5 bg-transparent border border-[#563568] text-[#563568] hover:bg-[#F7F0FA] text-xs font-medium rounded-xs transition-colors"
+                    className="px-6 py-2.5 bg-transparent border border-[var(--plum)] text-[color:var(--plum)] hover:bg-[var(--gold)] hover:text-[color:var(--white)] text-xs font-medium rounded-xs transition-colors"
                   >
                     Browse All Catalogue
                   </Link>
@@ -708,13 +708,13 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
 
         {/* Recently Viewed Products Shelf */}
         {recentlyViewed.length > 0 && (
-          <section className="mt-16 sm:mt-24 pt-10 border-t border-[#E7DCEB]">
+          <section className="mt-16 sm:mt-24 pt-10 border-t border-[var(--border)]">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block">
+                <span className="text-[10px] uppercase tracking-[0.25em] text-[color:var(--body)] font-medium block">
                   YOUR RECENT EXPLORATIONS
                 </span>
-                <h2 className="font-serif text-xl sm:text-2xl text-[#302438] font-normal mt-0.5">
+                <h2 className="font-serif text-xl sm:text-2xl text-[color:var(--body)] font-normal mt-0.5">
                   Recently Viewed Pieces
                 </h2>
               </div>

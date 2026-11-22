@@ -95,9 +95,9 @@
 .sarine-home {
   --sarine-heading-font: var(--font-serif, "Cormorant Garamond"), Georgia, serif;
   --sarine-body-font: var(--font-sans, "Plus Jakarta Sans"), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #fbf8f5;
+  background: var(--white);
   font-family: var(--sarine-body-font);
-  color: var(--color-text-primary, #302438);
+  color: var(--color-text-primary, var(--heading));
 }
 .sarine-home .font-serif,
 .sarine-home h1,
@@ -136,7 +136,7 @@
   .sarine-home .category-grid { gap: 18px; }
 }
 .sarine-home .product-grid > article {
-  border-color: #eee7e3;
+  border-color: var(--border);
   border-radius: 3px;
   padding: 6px;
   box-shadow: none;
@@ -190,13 +190,13 @@
    Typography and the hero's existing dimensions are intentionally untouched.
    ========================================================================== */
 .sarine-home {
-  --sarine-plum: var(--color-brand-primary, #563568);
-  --sarine-plum-soft: var(--color-text-secondary, #6F6475);
-  --sarine-ivory: #F8F0E8;
-  --sarine-ivory-light: #FFF9F6;
-  --sarine-blush: #F0D8D8;
-  --sarine-blush-deep: #E0B8C0;
-  --sarine-mauve: #D0A8C0;
+  --sarine-plum: var(--color-brand-primary, var(--plum));
+  --sarine-plum-soft: var(--color-text-secondary, var(--body));
+  --sarine-ivory: var(--ivory-text);
+  --sarine-ivory-light: var(--white);
+  --sarine-blush: var(--tint);
+  --sarine-blush-deep: var(--gold-light);
+  --sarine-mauve: var(--gold-light);
   --sarine-champagne: #FFFFFF;
   background: var(--sarine-ivory-light);
   color: var(--sarine-plum);
@@ -221,7 +221,7 @@
   background-color: var(--sarine-ivory-light);
 }
 .sarine-home > section:not(:first-child):nth-of-type(even) {
-  background-color: #FBF1F1;
+  background-color: var(--tint);
 }
 .sarine-home > section h2 {
   color: var(--sarine-plum);
@@ -242,14 +242,14 @@
   display: inline-block;
   width: clamp(28px, 5vw, 76px);
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--sarine-mauve));
+  background: linear-gradient(90deg, transparent, var(--tint));
 }
 .sarine-home > section .w-full.text-center.mb-4 h2::after {
   transform: scaleX(-1);
 }
 .sarine-home > section .w-full.text-center.mb-4 p,
 .sarine-home > section .site-container > div > p {
-  color: var(--color-text-secondary, #6F6475);
+  color: var(--color-text-secondary, var(--body));
 }
 
 /* Category tiles: jewellery-led square imagery with a soft blush title rail. */
@@ -262,7 +262,7 @@
   overflow: hidden;
   border: 1px solid rgba(72, 32, 72, .12);
   border-radius: 10px;
-  background: #F7E6E6;
+  background: var(--tint);
   box-shadow: 0 4px 14px rgba(72, 32, 72, .045);
   transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
 }
@@ -284,7 +284,7 @@
   width: 100%;
   min-height: 42px;
   padding: 9px 6px 10px;
-  background: linear-gradient(180deg, #F5E3E4, #F0D8D8);
+  background: linear-gradient(180deg, var(--tint), var(--tint));
 }
 .sarine-home .category-grid > a h3 {
   color: var(--sarine-plum);
@@ -319,7 +319,7 @@
   padding: 0;
   border: 1px solid rgba(72, 32, 72, .13);
   border-radius: 11px;
-  background: #FFFAF8;
+  background: var(--white);
   box-shadow: 0 3px 12px rgba(72, 32, 72, .035);
   transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
 }
@@ -332,7 +332,7 @@
   aspect-ratio: 1 / 1;
   border: 0;
   border-radius: 0;
-  background: linear-gradient(145deg, #F7E6E6, #EED4D8);
+  background: var(--tint);
 }
 .sarine-home .product-grid > article > div:first-child img {
   mix-blend-mode: normal;
@@ -345,10 +345,10 @@
   font-size: 14px;
 }
 .sarine-home .product-grid > article [class*="uppercase"] {
-  color: var(--color-text-secondary, #6F6475);
+  color: var(--color-text-secondary, var(--body));
 }
 .sarine-home .product-grid > article [class*="line-through"] {
-  color: var(--color-text-muted, #6F6475);
+  color: var(--color-text-muted, var(--body));
 }
 .sarine-home .product-grid > article .text-sm.font-sans {
   color: var(--sarine-plum);
@@ -363,10 +363,10 @@
 }
 .sarine-home a[class*="bg-[#563568]"]:hover,
 .sarine-home button[class*="bg-[#563568]"]:hover {
-  background-color: #704068;
+  background-color: var(--plum-dark);
 }
 .sarine-home .product-grid > article [class*="bg-[#A43E55]"] {
-  background-color: #8B315D;
+  background-color: var(--rose);
   border-radius: 999px;
 }
 .sarine-home .product-grid > article [class*="bg-[#563568]"] {
@@ -376,7 +376,7 @@
 
 /* The story area receives a more editorial blush/ivory treatment. */
 .sarine-home > section:has(img[alt="SARINE Craftsmanship and Jewellery Details"]) {
-  background: linear-gradient(115deg, #F1DCDD 0%, #FBF2EF 54%, #F8F0E8 100%);
+  background: linear-gradient(115deg, var(--tint) 0%, var(--tint) 54%, var(--white) 100%);
 }
 /* Collection grids adapt to the number of currently published products.
    auto-fit expands remaining cards when products are unpublished or removed. */
@@ -424,7 +424,7 @@
    ========================================================================== */
 body.sarine-global-theme #main-content {
   background: #FFFFFF;
-  color: #563568;
+  color: var(--plum);
   font-family: var(--sarine-global-body-font, "Plus Jakarta Sans"), sans-serif;
 }
 body.sarine-global-theme #main-content h1,
@@ -434,7 +434,7 @@ body.sarine-global-theme #main-content h4,
 body.sarine-global-theme #main-content h5,
 body.sarine-global-theme #main-content h6,
 body.sarine-global-theme #main-content .font-serif {
-  color: #563568;
+  color: var(--plum);
   font-family: var(--sarine-global-heading-font, "Cormorant Garamond"), Georgia, serif !important;
 }
 body.sarine-global-theme #main-content p,
@@ -445,56 +445,56 @@ body.sarine-global-theme #main-content input,
 body.sarine-global-theme #main-content textarea,
 body.sarine-global-theme #main-content select,
 body.sarine-global-theme #main-content .font-sans {
-  color: #563568;
+  color: var(--plum);
   font-family: var(--sarine-global-body-font, "Plus Jakarta Sans"), sans-serif;
 }
 body.sarine-global-theme #main-content section {
-  border-color: #B69ACF;
+  border-color: var(--gold-light);
 }
 body.sarine-global-theme #main-content [class*="bg-[#F7F0FA]"],
 body.sarine-global-theme #main-content [class*="bg-[#F7F4F8]"],
 body.sarine-global-theme #main-content [class*="bg-[#F0E6F4]"],
 body.sarine-global-theme #main-content [class*="bg-[#FAF5FC]"],
 body.sarine-global-theme #main-content [class*="bg-[#EBDFF2]"] {
-  background-color: #F7F0FA;
+  background-color: var(--tint);
 }
 body.sarine-global-theme #main-content [class*="bg-[#4A1D5C]"],
 body.sarine-global-theme #main-content [class*="bg-[#2B1A33]"] {
-  background-color: #563568;
+  background-color: var(--plum);
 }
 body.sarine-global-theme #main-content [class*="text-[#302438]"],
 body.sarine-global-theme #main-content [class*="text-[#1D1B1F]"],
 body.sarine-global-theme #main-content [class*="text-[#5C5660]"],
 body.sarine-global-theme #main-content [class*="text-[#6F6475]"],
 body.sarine-global-theme #main-content [class*="text-[#2B1A33]"] {
-  color: #563568;
+  color: var(--plum);
 }
 body.sarine-global-theme #main-content [class*="border-[#E7DCEB]"],
 body.sarine-global-theme #main-content [class*="border-[#E9E5E9]"] {
-  border-color: #B69ACF;
+  border-color: var(--gold-light);
 }
 body.sarine-global-theme #main-content a[class*="bg-[#563568]"],
 body.sarine-global-theme #main-content button[class*="bg-[#563568]"],
 body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]"],
 body.sarine-global-theme #main-content button[class*="bg-[#4A1D5C]"] {
-  background-color: #563568;
-  border-color: #563568;
+  background-color: var(--plum);
+  border-color: var(--plum);
   color: #FFFFFF;
 }
 body.sarine-global-theme #main-content a[class*="bg-[#563568]"]:hover,
 body.sarine-global-theme #main-content button[class*="bg-[#563568]"]:hover,
 body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]"]:hover,
 body.sarine-global-theme #main-content button[class*="bg-[#4A1D5C]"]:hover {
-  background-color: #B69ACF;
-  border-color: #B69ACF;
-  color: #563568;
+  background-color: var(--gold-light);
+  border-color: var(--gold-light);
+  color: var(--plum);
 }
 body.sarine-global-theme #main-content a:not([class*="bg-"]),
 body.sarine-global-theme #main-content button:not([class*="bg-"]) {
-  accent-color: #563568;
+  accent-color: var(--plum);
 }
 body.sarine-global-theme #main-content #stay-in-touch {
-  background-color: #563568;
+  background-color: var(--plum);
   color: #FFFFFF;
 }
 body.sarine-global-theme #main-content #stay-in-touch h2,
@@ -503,7 +503,7 @@ body.sarine-global-theme #main-content #stay-in-touch span {
   color: #FFFFFF;
 }
 body.sarine-global-theme #main-content #stay-in-touch a {
-  color: #B69ACF;
+  color: var(--gold-light);
 }
 body.sarine-global-theme #main-content #stay-in-touch a:hover {
   color: #FFFFFF;
@@ -528,35 +528,35 @@ body.sarine-global-theme #main-content li { font-size: clamp(0.875rem, 1.05vw, 1
 /* Keep homepage cards and editorial surfaces inside the approved palette. */
 body.sarine-global-theme #main-content .sarine-home {
   background: #FFFFFF;
-  color: #563568;
+  color: var(--plum);
 }
 body.sarine-global-theme #main-content .sarine-home > section:not(:first-child):nth-of-type(odd) {
   background-color: #FFFFFF;
 }
 body.sarine-global-theme #main-content .sarine-home > section:not(:first-child):nth-of-type(even) {
-  background-color: #F7F0FA;
+  background-color: var(--tint);
 }
 body.sarine-global-theme #main-content .sarine-home .category-grid > a,
 body.sarine-global-theme #main-content .sarine-home .category-grid > a > div:last-child,
 body.sarine-global-theme #main-content .sarine-home .product-grid > article > div:first-child,
 body.sarine-global-theme #main-content .sarine-home .occasion-grid > a > div:first-child {
-  background: #F7F0FA;
-  border-color: #B69ACF;
+  background: var(--tint);
+  border-color: var(--gold-light);
 }
 body.sarine-global-theme #main-content .sarine-home .product-grid > article {
   background: #FFFFFF;
-  border-color: #B69ACF;
+  border-color: var(--gold-light);
 }
 body.sarine-global-theme #main-content .sarine-home .category-grid > a:hover,
 body.sarine-global-theme #main-content .sarine-home .product-grid > article:hover {
-  border-color: #563568;
+  border-color: var(--plum);
 }
 body.sarine-global-theme #main-content .sarine-home > section:has(img[alt="SARINE Craftsmanship and Jewellery Details"]) {
-  background: #F7F0FA;
+  background: var(--tint);
 }
 body.sarine-global-theme #main-content .sarine-home .sarine-editorial-banner,
 body.sarine-global-theme #main-content .sarine-home .sarine-editorial-banner > div.absolute {
-  background-color: #563568;
+  background-color: var(--plum);
 }
 
 
@@ -567,7 +567,7 @@ body.sarine-global-theme #main-content .sarine-home .sarine-editorial-banner > d
    ========================================================================== */
 body.sarine-global-theme #main-content {
   background: var(--sarine-global-page, #FFFFFF);
-  color: var(--sarine-global-text, #563568);
+  color: var(--sarine-global-text, var(--plum));
   font-family: var(--sarine-global-body-font, "Plus Jakarta Sans"), sans-serif;
 }
 body.sarine-global-theme #main-content .site-container {
@@ -580,7 +580,7 @@ body.sarine-global-theme #main-content h4,
 body.sarine-global-theme #main-content h5,
 body.sarine-global-theme #main-content h6,
 body.sarine-global-theme #main-content .font-serif {
-  color: var(--sarine-global-primary, #563568);
+  color: var(--sarine-global-primary, var(--plum));
   font-family: var(--sarine-global-heading-font, "Cormorant Garamond"), Georgia, serif !important;
 }
 body.sarine-global-theme #main-content h1 {
@@ -600,7 +600,7 @@ body.sarine-global-theme #main-content input,
 body.sarine-global-theme #main-content textarea,
 body.sarine-global-theme #main-content select,
 body.sarine-global-theme #main-content .font-sans {
-  color: var(--sarine-global-text, #563568);
+  color: var(--sarine-global-text, var(--plum));
   font-family: var(--sarine-global-body-font, "Plus Jakarta Sans"), sans-serif;
 }
 body.sarine-global-theme #main-content p,
@@ -608,123 +608,123 @@ body.sarine-global-theme #main-content li {
   font-size: calc(clamp(0.875rem, 1.05vw, 1rem) * var(--sarine-global-body-scale, 1));
 }
 body.sarine-global-theme #main-content section {
-  border-color: var(--sarine-global-accent, #B69ACF);
+  border-color: var(--footer-line);
 }
 body.sarine-global-theme #main-content [class*="bg-[#F7F0FA]"],
 body.sarine-global-theme #main-content [class*="bg-[#F7F4F8]"],
 body.sarine-global-theme #main-content [class*="bg-[#F0E6F4]"],
 body.sarine-global-theme #main-content [class*="bg-[#FAF5FC]"],
 body.sarine-global-theme #main-content [class*="bg-[#EBDFF2]"] {
-  background-color: var(--sarine-global-surface, #F7F0FA);
+  background-color: var(--sarine-global-surface, var(--tint));
 }
 body.sarine-global-theme #main-content [class*="bg-[#4A1D5C]"],
 body.sarine-global-theme #main-content [class*="bg-[#2B1A33]"] {
-  background-color: var(--sarine-global-primary, #563568);
+  background-color: var(--sarine-global-primary, var(--plum));
 }
 body.sarine-global-theme #main-content [class*="text-[#302438]"],
 body.sarine-global-theme #main-content [class*="text-[#1D1B1F]"],
 body.sarine-global-theme #main-content [class*="text-[#5C5660]"],
 body.sarine-global-theme #main-content [class*="text-[#6F6475]"],
 body.sarine-global-theme #main-content [class*="text-[#2B1A33]"] {
-  color: var(--sarine-global-text, #563568);
+  color: var(--sarine-global-text, var(--plum));
 }
 body.sarine-global-theme #main-content [class*="border-[#E7DCEB]"],
 body.sarine-global-theme #main-content [class*="border-[#E9E5E9]"] {
-  border-color: var(--sarine-global-accent, #B69ACF);
+  border-color: var(--sarine-global-accent, var(--gold-light));
 }
 body.sarine-global-theme #main-content a[class*="bg-[#563568]"],
 body.sarine-global-theme #main-content button[class*="bg-[#563568]"],
 body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]"],
 body.sarine-global-theme #main-content button[class*="bg-[#4A1D5C]"] {
-  background-color: var(--sarine-global-primary, #563568);
-  border-color: var(--sarine-global-primary, #563568);
-  color: var(--sarine-global-surface, #F7F0FA);
+  background-color: var(--sarine-global-primary, var(--plum));
+  border-color: var(--sarine-global-primary, var(--plum));
+  color: var(--sarine-global-surface, var(--tint));
 }
 body.sarine-global-theme #main-content a[class*="bg-[#563568]"]:hover,
 body.sarine-global-theme #main-content button[class*="bg-[#563568]"]:hover,
 body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]"]:hover,
 body.sarine-global-theme #main-content button[class*="bg-[#4A1D5C]"]:hover {
-  background-color: var(--sarine-global-accent, #B69ACF);
-  border-color: var(--sarine-global-accent, #B69ACF);
-  color: var(--sarine-global-primary, #563568);
+  background-color: var(--sarine-global-accent, var(--gold-light));
+  border-color: var(--sarine-global-accent, var(--gold-light));
+  color: var(--sarine-global-primary, var(--plum));
 }
 body.sarine-global-theme #main-content a:not([class*="bg-"]),
 body.sarine-global-theme #main-content button:not([class*="bg-"]) {
-  accent-color: var(--sarine-global-primary, #563568);
+  accent-color: var(--sarine-global-primary, var(--plum));
 }
 body.sarine-global-theme #main-content #stay-in-touch {
-  background-color: var(--sarine-global-primary, #563568);
-  color: var(--sarine-global-surface, #F7F0FA);
+  background-color: var(--sarine-global-primary, var(--plum));
+  color: var(--sarine-global-surface, var(--tint));
 }
 body.sarine-global-theme #main-content #stay-in-touch h2,
 body.sarine-global-theme #main-content #stay-in-touch p,
 body.sarine-global-theme #main-content #stay-in-touch span {
-  color: var(--sarine-global-surface, #F7F0FA);
+  color: var(--sarine-global-surface, var(--tint));
 }
 body.sarine-global-theme #main-content #stay-in-touch a {
-  color: var(--sarine-global-accent, #B69ACF);
+  color: var(--sarine-global-accent, var(--gold-light));
 }
 body.sarine-global-theme #main-content #stay-in-touch a:hover {
-  color: var(--sarine-global-surface, #F7F0FA);
+  color: var(--sarine-global-surface, var(--tint));
 }
 body.sarine-global-theme #main-content .sarine-home {
   background: var(--sarine-global-page, #FFFFFF);
-  color: var(--sarine-global-text, #563568);
+  color: var(--sarine-global-text, var(--plum));
 }
 body.sarine-global-theme #main-content .sarine-home > section:not(:first-child):nth-of-type(odd) {
   background-color: var(--sarine-global-page, #FFFFFF);
 }
 body.sarine-global-theme #main-content .sarine-home > section:not(:first-child):nth-of-type(even) {
-  background-color: var(--sarine-global-surface, #F7F0FA);
+  background-color: var(--sarine-global-surface, var(--tint));
 }
 body.sarine-global-theme #main-content .sarine-home .category-grid > a,
 body.sarine-global-theme #main-content .sarine-home .category-grid > a > div:last-child,
 body.sarine-global-theme #main-content .sarine-home .product-grid > article > div:first-child,
 body.sarine-global-theme #main-content .sarine-home .occasion-grid > a > div:first-child {
-  background: var(--sarine-global-surface, #F7F0FA);
-  border-color: var(--sarine-global-accent, #B69ACF);
+  background: var(--sarine-global-surface, var(--tint));
+  border-color: var(--sarine-global-accent, var(--gold-light));
 }
 body.sarine-global-theme #main-content .sarine-home .product-grid > article {
   background: var(--sarine-global-page, #FFFFFF);
-  border-color: var(--sarine-global-accent, #B69ACF);
+  border-color: var(--sarine-global-accent, var(--gold-light));
 }
 body.sarine-global-theme #main-content .sarine-home .category-grid > a:hover,
 body.sarine-global-theme #main-content .sarine-home .product-grid > article:hover {
-  border-color: var(--sarine-global-primary, #563568);
+  border-color: var(--sarine-global-primary, var(--plum));
 }
 body.sarine-global-theme #main-content .sarine-home > section:has(img[alt="SARINE Craftsmanship and Jewellery Details"]) {
-  background: var(--sarine-global-surface, #F7F0FA);
+  background: var(--sarine-global-surface, var(--tint));
 }
 
 /* Header, announcement and footer are styled in place; navigation and content stay intact. */
 body.sarine-global-theme .sarine-global-header {
-  background-color: var(--sarine-global-header, #FFFFFF) !important;
-  color: var(--sarine-global-text, #563568);
-  border-color: var(--sarine-global-accent, #B69ACF);
+  background-color: var(--sarine-global-header, var(--white)) !important;
+  color: var(--sarine-global-text, var(--heading));
+  border-color: var(--sarine-global-accent, var(--border));
 }
 body.sarine-global-theme .sarine-global-header a,
 body.sarine-global-theme .sarine-global-header button,
 body.sarine-global-theme .sarine-global-header span,
 body.sarine-global-theme .sarine-global-header svg {
-  color: var(--sarine-global-text, #563568);
+  color: var(--sarine-global-text, var(--heading));
 }
 body.sarine-global-theme .sarine-global-announcement {
-  background-color: var(--sarine-global-primary, #563568) !important;
-  color: var(--sarine-global-surface, #F7F0FA) !important;
+  background-color: var(--sarine-global-primary, var(--plum)) !important;
+  color: #FFFFFF !important;
 }
 body.sarine-global-theme .sarine-global-announcement * {
-  color: var(--sarine-global-surface, #F7F0FA) !important;
+  color: var(--sarine-announcement-text, #FFFFFF) !important;
 }
 body.sarine-global-theme .sarine-global-footer {
-  background-color: var(--sarine-global-footer, #563568) !important;
-  color: var(--sarine-global-footer-text, #F7F0FA);
-  border-color: var(--sarine-global-accent, #B69ACF);
+  background-color: var(--plum) !important;
+  color: var(--ivory-text);
+  border-color: var(--sarine-global-accent, var(--gold-light));
 }
 body.sarine-global-theme .sarine-global-footer > div:last-child {
-  background-color: var(--sarine-global-footer, #563568);
+  background-color: var(--plum);
 }
 body.sarine-global-theme .sarine-global-footer > div:last-child :is(p, a, h1, h2, h3, h4, span) {
-  color: var(--sarine-global-footer-text, #F7F0FA) !important;
+  color: var(--footer-muted) !important;
 }
 
 /* Consistent corner treatment and the selected button variant. */
@@ -738,12 +738,39 @@ body.sarine-global-theme[data-sarine-button-style="outline"] #main-content butto
 body.sarine-global-theme[data-sarine-button-style="outline"] #main-content a[class*="bg-[#4A1D5C]"],
 body.sarine-global-theme[data-sarine-button-style="outline"] #main-content button[class*="bg-[#4A1D5C]"] {
   background: transparent !important;
-  color: var(--sarine-global-primary, #563568) !important;
-  border: 1px solid var(--sarine-global-primary, #563568) !important;
+  color: var(--sarine-global-primary, var(--plum)) !important;
+  border: 1px solid var(--sarine-global-primary, var(--plum)) !important;
 }
 
 /* The navigation's second tier is an independently painted child.
    Apply the published header surface to that visible tier as well as its wrapper. */
 body.sarine-global-theme .sarine-global-header > div:nth-child(2) {
   background-color: var(--sarine-global-header, #FFFFFF) !important;
+}
+
+
+/* Storefront primary CTA interaction states — palette tokens only. */
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#563568]"],
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#4A1D5C]"],
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[var(--plum)]"] {
+  background-color: var(--plum) !important;
+  color: #FFFFFF !important;
+}
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#563568]"]:hover,
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#4A1D5C]"]:hover,
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[var(--plum)]"]:hover {
+  background-color: var(--gold) !important;
+  color: #FFFFFF !important;
+}
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#563568]"]:active,
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#4A1D5C]"]:active,
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[var(--plum)]"]:active {
+  background-color: var(--plum-dark) !important;
+  color: #FFFFFF !important;
+}
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#563568]"]:focus-visible,
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#4A1D5C]"]:focus-visible,
+body.sarine-global-theme #main-content :is(a, button)[class*="bg-[var(--plum)]"]:focus-visible {
+  outline: 2px solid var(--gold) !important;
+  outline-offset: 3px;
 }

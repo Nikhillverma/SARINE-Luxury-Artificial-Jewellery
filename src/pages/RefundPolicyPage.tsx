@@ -17,25 +17,25 @@ export const RefundPolicyPage: React.FC = () => {
       subtitle="We want every experience with SARINE jewellery to be effortless and dependable. Here are our exact guidelines on cancellations, returns, and refunds."
       categoryName="Customer Satisfaction"
     >
-      <div className="space-y-10 text-xs sm:text-sm text-[#6F6475] leading-relaxed font-sans">
+      <div className="space-y-10 text-xs sm:text-sm text-[var(--body)] leading-relaxed font-sans">
         {/* Effective Date Note */}
-        <div className="bg-[#FAF5FC] border-l-2 border-[#563568] p-4 text-xs text-[#6F6475]">
-          <strong className="text-[#302438] font-medium">Effective Date:</strong> 21 October 2026 | Policy valid for all purchases made through SARINE.
+        <div className="bg-[var(--tint)] border-l-2 border-[var(--plum)] p-4 text-xs text-[var(--body)]">
+          <strong className="text-[var(--heading)] font-medium">Effective Date:</strong> 21 October 2026 | Policy valid for all purchases made through SARINE.
         </div>
 
         {/* Section 1: Cancellation Before Dispatch */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <RotateCcw size={16} className="text-[#563568]" />
-            <h2 className="font-serif text-lg sm:text-xl text-[#302438]">
+            <RotateCcw size={16} className="text-[var(--plum)]" />
+            <h2 className="font-serif text-lg sm:text-xl text-[var(--heading)]">
               1. Order Cancellation (Before Dispatch)
             </h2>
           </div>
           <p>
             You may cancel your order at any time <strong>before the parcel has been packaged and handed over to our courier partner</strong>.
           </p>
-          <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6F6475]">
-            <li>Sign in to <Link to="/account" className="text-[#563568] underline underline-offset-2">My Account</Link> and submit a cancellation request while the order is still eligible. If you cannot access your account, use the <Link to="/contact" className="text-[#563568] underline underline-offset-2">Contact page</Link> and include your order number.</li>
+          <ul className="list-disc pl-5 space-y-1.5 text-xs text-[var(--body)]">
+            <li>Sign in to <Link to="/account" className="text-[var(--plum)] underline underline-offset-2">My Account</Link> and submit a cancellation request while the order is still eligible. If you cannot access your account, use the <Link to="/contact" className="text-[var(--plum)] underline underline-offset-2">Contact page</Link> and include your order number.</li>
             <li>If a cancellation request is approved before dispatch, the order will be cancelled. Any eligible prepaid refund is initiated to the original payment method in line with the applicable payment-provider process.</li>
             <li>Once an order has been picked up by the courier and an AWB tracking number has been generated, it cannot be canceled in transit.</li>
           </ul>
@@ -44,8 +44,8 @@ export const RefundPolicyPage: React.FC = () => {
         {/* Section 2: Returns Window & Eligibility */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <AlertOctagon size={16} className="text-[#563568]" />
-            <h2 className="font-serif text-lg sm:text-xl text-[#302438]">
+            <AlertOctagon size={16} className="text-[var(--plum)]" />
+            <h2 className="font-serif text-lg sm:text-xl text-[var(--heading)]">
               2. 7-Day Return Eligibility (Damaged, Defective or Wrong Items)
             </h2>
           </div>
@@ -53,16 +53,16 @@ export const RefundPolicyPage: React.FC = () => {
             Due to the intimate and delicate nature of fashion jewellery, returns are accepted strictly within <strong>7 days of delivery</strong> exclusively for orders that meet one of the following criteria:
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-            <div className="p-3.5 bg-[#FAF5FC] border border-[#E7DCEB] text-xs rounded-xs">
-              <strong className="text-[#302438] block mb-1">Transit Damage</strong>
+            <div className="p-3.5 bg-[var(--tint)] border border-[var(--border)] text-xs rounded-xs">
+              <strong className="text-[var(--heading)] block mb-1">Transit Damage</strong>
               Item was physically damaged or broken during domestic courier transit.
             </div>
-            <div className="p-3.5 bg-[#FAF5FC] border border-[#E7DCEB] text-xs rounded-xs">
-              <strong className="text-[#302438] block mb-1">Manufacturing Defect</strong>
+            <div className="p-3.5 bg-[var(--tint)] border border-[var(--border)] text-xs rounded-xs">
+              <strong className="text-[var(--heading)] block mb-1">Manufacturing Defect</strong>
               Defective clasp, missing stones, or structural flaw evident upon opening.
             </div>
-            <div className="p-3.5 bg-[#FAF5FC] border border-[#E7DCEB] text-xs rounded-xs">
-              <strong className="text-[#302438] block mb-1">Incorrect Item</strong>
+            <div className="p-3.5 bg-[var(--tint)] border border-[var(--border)] text-xs rounded-xs">
+              <strong className="text-[var(--heading)] block mb-1">Incorrect Item</strong>
               An incorrect design, size, or category was shipped in error by our atelier.
             </div>
           </div>
@@ -71,44 +71,44 @@ export const RefundPolicyPage: React.FC = () => {
         {/* Section 3: Conditions & Unboxing Evidence */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <Video size={16} className="text-[#563568]" />
-            <h2 className="font-serif text-lg sm:text-xl text-[#302438]">
+            <Video size={16} className="text-[var(--plum)]" />
+            <h2 className="font-serif text-lg sm:text-xl text-[var(--heading)]">
               3. Condition of Items & Unboxing Video Requirement
             </h2>
           </div>
           <p>
             To prevent fraudulent claims and ensure fair verification:
           </p>
-          <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#6F6475]">
-            <li><strong className="text-[#302438]">Unboxing Video / Photos:</strong> For claims of damage or wrong items, a clear, continuous unboxing video or photographs taken immediately upon opening the outer package is mandatory.</li>
-            <li><strong className="text-[#302438]">Unused Condition:</strong> All returned jewellery must be completely unused, unworn, and free of perfume, makeup, moisture, or alterations.</li>
-            <li><strong className="text-[#302438]">Original Packaging:</strong> The item must be returned with all original tags, velvet pouch, gift box, and authenticity inserts intact.</li>
+          <ul className="list-disc pl-5 space-y-1.5 text-xs text-[var(--body)]">
+            <li><strong className="text-[var(--heading)]">Unboxing Video / Photos:</strong> For claims of damage or wrong items, a clear, continuous unboxing video or photographs taken immediately upon opening the outer package is mandatory.</li>
+            <li><strong className="text-[var(--heading)]">Unused Condition:</strong> All returned jewellery must be completely unused, unworn, and free of perfume, makeup, moisture, or alterations.</li>
+            <li><strong className="text-[var(--heading)]">Original Packaging:</strong> The item must be returned with all original tags, velvet pouch, gift box, and authenticity inserts intact.</li>
           </ul>
         </section>
 
         {/* Section 4: Refund Processing & Timelines */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <IndianRupee size={16} className="text-[#563568]" />
-            <h2 className="font-serif text-lg sm:text-xl text-[#302438]">
+            <IndianRupee size={16} className="text-[var(--plum)]" />
+            <h2 className="font-serif text-lg sm:text-xl text-[var(--heading)]">
               4. Refund Timelines & Payment Reversal
             </h2>
           </div>
           <p>
             Once our quality control team at the atelier receives and inspects your returned package:
           </p>
-          <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] space-y-3 text-xs rounded-xs">
+          <div className="p-4 bg-[var(--tint)] border border-[var(--border)] space-y-3 text-xs rounded-xs">
             <div className="flex items-start gap-2.5">
-              <CheckCircle2 size={16} className="text-[#563568] shrink-0 mt-0.5" />
+              <CheckCircle2 size={16} className="text-[var(--plum)] shrink-0 mt-0.5" />
               <div>
-                <strong className="text-[#302438] block">Online Prepaid Orders (Razorpay):</strong>
+                <strong className="text-[var(--heading)] block">Online Prepaid Orders (Razorpay):</strong>
                 Approved refunds are initiated back to the original source method (UPI account, Credit/Debit Card, or NetBanking) within <strong>5 to 7 business days</strong>. The time required for the credit to reflect on your card or bank statement depends on your issuing bank.
               </div>
             </div>
-            <div className="flex items-start gap-2.5 pt-2 border-t border-[#E7DCEB]">
-              <CheckCircle2 size={16} className="text-[#563568] shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2.5 pt-2 border-t border-[var(--border)]">
+              <CheckCircle2 size={16} className="text-[var(--plum)] shrink-0 mt-0.5" />
               <div>
-                <strong className="text-[#302438] block">Cash on Delivery (COD) Orders:</strong>
+                <strong className="text-[var(--heading)] block">Cash on Delivery (COD) Orders:</strong>
                 For verified COD returns, refunds are transferred via direct <strong>NEFT / IMPS bank transfer</strong> to the customer’s verified bank account within 5 to 7 business days following return approval.
               </div>
             </div>
@@ -118,16 +118,16 @@ export const RefundPolicyPage: React.FC = () => {
         {/* Section 5: How to Start a Return */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <Mail size={16} className="text-[#563568]" />
-            <h2 className="font-serif text-lg sm:text-xl text-[#302438]">
+            <Mail size={16} className="text-[var(--plum)]" />
+            <h2 className="font-serif text-lg sm:text-xl text-[var(--heading)]">
               5. How to Initiate a Return or Exchange
             </h2>
           </div>
           <p>
             To begin a return request within the 7-day delivery window:
           </p>
-          <ol className="list-decimal pl-5 space-y-2 text-xs text-[#6F6475]">
-            <li>Sign in to <Link to="/account" className="text-[#563568] underline underline-offset-2">My Account</Link>, open the delivered order and submit a return or exchange request with your order number and reason.</li>
+          <ol className="list-decimal pl-5 space-y-2 text-xs text-[var(--body)]">
+            <li>Sign in to <Link to="/account" className="text-[var(--plum)] underline underline-offset-2">My Account</Link>, open the delivered order and submit a return or exchange request with your order number and reason.</li>
             <li>Attach the unboxing video/photos clearly illustrating the damage, defect, or wrong item received.</li>
             <li>Provide a brief description of the issue along with your registered contact phone number.</li>
             <li>You can review the recorded request status in My Account. If you cannot submit a request online, use the Contact page and include your order number.</li>

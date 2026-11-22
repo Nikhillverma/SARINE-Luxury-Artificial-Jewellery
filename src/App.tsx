@@ -144,7 +144,7 @@ function MainAppShell() {
     <>
     <a href="#main-content" className="skip-link">Skip to main content</a>
     <RouteMetadata />
-    <div className="min-h-screen w-full flex flex-col bg-white text-[#563568] selection:bg-[#B69ACF]/30 selection:text-[#563568]">
+    <div className="min-h-screen w-full flex flex-col bg-white text-[var(--plum)] selection:bg-[var(--gold-light)] selection:text-[var(--plum)]">
       {/* Public Storefront Navigation & Slide-in Drawers */}
       {!isAdminRoute && (
         <>
@@ -160,7 +160,7 @@ function MainAppShell() {
 
       {/* Main Route View */}
       <div id="main-content" tabIndex={-1} className="flex-1 w-full">
-        <Suspense fallback={<div className="flex min-h-[50vh] items-center justify-center px-6 text-sm text-[#563568]" role="status" aria-live="polite">Loading SARINE…</div>}>
+        <Suspense fallback={<div className="flex min-h-[50vh] items-center justify-center px-6 text-sm text-[var(--plum)]" role="status" aria-live="polite">Loading SARINE…</div>}>
         <Routes>
           <Route
             path="/"

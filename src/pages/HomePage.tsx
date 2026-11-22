@@ -84,13 +84,13 @@ function CampaignCountdownStrip({ campaign }: { campaign: FestivalCampaign }) {
   const minutes = Math.floor((remaining % 3600000) / 60000);
   const seconds = Math.floor((remaining % 60000) / 1000);
   const label = campaign.countdownLabel?.trim() || campaign.offerLabel?.trim() || campaign.title;
-  const background = campaign.countdownBackgroundColor || "#563568";
-  const textColor = campaign.countdownTextColor || "#FFFFFF";
-  const timerColor = campaign.countdownTimerColor || "#FFE08A";
+  const background = "var(--rose-tint)";
+  const textColor = "var(--rose)";
+  const timerColor = "var(--rose)";
   if (remaining <= 0) return null;
   return (
-    <div className="inline-flex max-w-[calc(100vw-2rem)] items-center justify-center gap-2.5 sm:gap-3 rounded-full border border-white/35 px-3.5 sm:px-5 py-1.5 sm:py-2 text-[10px] sm:text-xs shadow-md backdrop-blur-md"
-      style={{ backgroundColor: `${background}CC`, color: textColor }}>
+    <div className="inline-flex max-w-[calc(100vw-2rem)] items-center justify-center gap-2.5 sm:gap-3 rounded-full border border-[var(--rose-border)] px-3.5 sm:px-5 py-1.5 sm:py-2 text-[10px] sm:text-xs shadow-md backdrop-blur-md"
+      style={{ backgroundColor: background, color: textColor }}>
       <span className="max-w-[42vw] truncate font-semibold uppercase tracking-[0.08em]">{label}</span>
       <span aria-hidden="true" className="opacity-60">|</span>
       <span className="whitespace-nowrap font-mono font-semibold tabular-nums" style={{ color: timerColor }}>
@@ -442,7 +442,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const currentHero = heroSlides[activeSlide] || heroSlides[0];
 
   return (
-    <div className="sarine-home w-full bg-[#FBF8F5] text-[#302438] font-sans selection:bg-[#B69ACF]/30 selection:text-[#302438]" style={{ display: "flex", flexDirection: "column" }}>
+    <div className="sarine-home w-full bg-[#FBF8F5] text-[#302438] font-sans selection:bg-[var(--pill)] selection:text-[#302438]" style={{ display: "flex", flexDirection: "column" }}>
       {/* =========================================================================
           3. HERO SLIDER
           Fixed responsive height: h-[420px] md:h-[520px] lg:h-[600px]
@@ -462,13 +462,13 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           const deltaX = endX - startX;
           if (Math.abs(deltaX) > 48) deltaX < 0 ? nextSlide() : prevSlide();
         }}
-        className="relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[#F0E6F4] border-b border-[#E7DCEB] touch-pan-y"
+        className="relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[var(--tint)] border-b border-[var(--border)] touch-pan-y"
       >
         {/* Stacked background slide images */}
         {heroSlides.map((slide, idx) => (
           <div
             key={slide.id}
-            className={`absolute inset-0 w-full h-full bg-[#F0E6F4] transition-opacity duration-700 ease-in-out ${
+            className={`absolute inset-0 w-full h-full bg-[var(--tint)] transition-opacity duration-700 ease-in-out ${
               activeSlide === idx ? 'opacity-100 z-0' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
@@ -501,7 +501,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         {/* Persistent offer badge: remains visible even when campaign artwork includes its own copy. */}
         {currentHero.campaign?.offerLabel && (
           <div className="absolute top-6 left-4 sm:left-8 lg:left-[max(2rem,calc((100vw-1200px)/2))] z-20 pointer-events-none">
-            <span className="inline-flex items-center rounded-full border border-white/60 bg-[#563568]/95 px-4 py-2 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-white shadow-lg backdrop-blur-sm">
+            <span className="inline-flex items-center rounded-full border border-[var(--white)] bg-[var(--plum)] px-4 py-2 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-white shadow-lg backdrop-blur-sm">
               {currentHero.campaign.offerLabel}
             </span>
           </div>
@@ -510,26 +510,26 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         <div className="site-container h-full flex flex-col justify-between py-8 md:py-12 pointer-events-none relative z-10">
           {/* Campaign artwork can be a complete clickable creative; editable campaigns use the normal hero overlay. */}
           {!currentHero.campaign?.artworkOnly && <div className="my-auto max-w-xl md:max-w-lg lg:max-w-xl pointer-events-auto">
-            <span className="text-[12px] sm:text-[13px] uppercase tracking-[0.2em] text-white font-medium block mb-2 sm:mb-3 [text-shadow:0_2px_8px_rgba(0,0,0,0.45)]">
+            <span className="text-[12px] sm:text-[13px] uppercase tracking-[0.2em] !text-[color:var(--gold-light)] font-medium block mb-2 sm:mb-3 [text-shadow:0_2px_8px_rgba(43,26,51,0.45)]">
               {currentHero.eyebrow}
             </span>
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-[46px] leading-[1.16] text-white font-normal tracking-tight [text-shadow:0_2px_12px_rgba(0,0,0,0.45)]">
+            <h1 className="font-serif text-3xl sm:text-4xl lg:text-[46px] leading-[1.16] !text-white font-normal tracking-tight [text-shadow:0_2px_12px_rgba(43,26,51,0.45)]">
               {currentHero.heading}
             </h1>
-            <p className="mt-2 sm:mt-3 text-[13px] sm:text-sm text-white leading-relaxed max-w-md font-sans [text-shadow:0_1px_8px_rgba(0,0,0,0.45)]">
+            <p className="mt-2 sm:mt-3 text-[13px] sm:text-sm !text-white leading-relaxed max-w-md font-sans [text-shadow:0_1px_8px_rgba(43,26,51,0.45)]">
               {currentHero.paragraph}
             </p>
             <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-3">
               <CampaignDestinationLink
                 to={currentHero.shopLink}
-                className="px-6 sm:px-7 py-3 min-h-11 bg-[#4A1D5C] text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[#B8893C] hover:text-[#2B1A33] transition-colors rounded-[6px] inline-flex items-center gap-2 shadow-xs"
+                className="px-6 sm:px-7 py-3 min-h-11 bg-[var(--gold)] text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[var(--white)] hover:text-[color:var(--plum)] transition-colors rounded-[6px] inline-flex items-center gap-2 shadow-xs"
               >
                 <span>{currentHero.ctaText}</span>
                 <ArrowRight size={13} />
               </CampaignDestinationLink>
               <a
                 href="#categories"
-                className="px-6 sm:px-7 py-3 min-h-11 bg-[#4A1D5C]/90 border border-white/80 text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[#B8893C] hover:text-[#2B1A33] transition-colors rounded-[6px]"
+                className="px-6 sm:px-7 py-3 min-h-11 bg-[var(--white)] border border-[var(--white)] text-[color:var(--plum)] text-xs sm:text-[13px] font-sans font-medium hover:bg-[var(--gold)] hover:text-white transition-colors rounded-[6px]"
               >
                 Explore Categories
               </a>
@@ -546,8 +546,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                   onClick={() => setActiveSlide(idx)}
                   className={`pb-1 transition-all cursor-pointer ${
                     activeSlide === idx
-                      ? 'text-[#563568] font-semibold border-b-2 border-[#B69ACF]'
-                      : 'hover:text-[#B69ACF]'
+                      ? 'text-[color:var(--gold-light)] font-semibold border-b-2 border-[var(--gold-light)]'
+                      : 'text-[color:var(--footer-muted)]'
                   }`}
                   aria-label={`Go to slide 0${idx + 1}`}
                 >
@@ -563,20 +563,20 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 onClick={() => setIsHeroPaused(paused => !paused)}
                 aria-label={isHeroPaused ? "Play automatic hero slides" : "Pause automatic hero slides"}
                 aria-pressed={isHeroPaused}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E7DCEB] bg-white/90 hover:bg-[#F0E6F4] hover:border-[#B69ACF] text-[#302438] hover:text-[#563568] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[var(--border)] bg-[var(--white)] hover:bg-[var(--gold)] hover:border-[var(--gold)] text-[color:var(--plum)] hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
               >
                 {isHeroPaused ? <Play size={16} /> : <Pause size={16} />}
               </button>
               <button
                 onClick={prevSlide}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E7DCEB] bg-white/90 hover:bg-[#F0E6F4] hover:border-[#B69ACF] text-[#302438] hover:text-[#563568] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[var(--border)] bg-[var(--white)] hover:bg-[var(--gold)] hover:border-[var(--gold)] text-[color:var(--plum)] hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
                 aria-label="Previous slide"
               >
                 <ChevronLeft size={18} />
               </button>
               <button
                 onClick={nextSlide}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#E7DCEB] bg-white/90 hover:bg-[#F0E6F4] hover:border-[#B69ACF] text-[#302438] hover:text-[#563568] flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[var(--border)] bg-[var(--white)] hover:bg-[var(--gold)] hover:border-[var(--gold)] text-[color:var(--plum)] hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
                 aria-label="Next slide"
               >
                 <ChevronRight size={18} />
@@ -604,14 +604,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       <section id="categories" style={{ order: sectionOrder("categories"), display: sectionVisible("categories") ? undefined : "none" }} className="w-full py-6 sm:py-7 lg:py-10">
         <div className="site-container">
           <div className="relative mb-5 flex items-center justify-center gap-4">
-            <h2 className="w-full text-center font-serif text-2xl font-normal text-[#302438] sm:text-3xl lg:text-4xl">Shop by Category</h2>
+            <h2 className="w-full text-center font-serif text-2xl font-normal !text-[color:var(--heading)] sm:text-3xl lg:text-4xl">Shop by Category</h2>
             <div className="absolute right-0 flex shrink-0 items-center gap-2">
-              <Link to="/shop" className="hidden items-center gap-1 text-xs font-medium text-[#563568] transition-colors hover:text-[#8A6AA0] sm:inline-flex">
+              <Link to="/shop" className="hidden items-center gap-1 text-xs font-medium !text-[color:var(--plum)] transition-colors hover:!text-[color:var(--plum)] sm:inline-flex">
                 View all <ArrowRight size={13} />
               </Link>
               {sectionCarouselEnabled("categories") && <>
-                <button type="button" onClick={() => scrollCategories('left')} aria-label="Scroll categories left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronLeft size={17} /></button>
-                <button type="button" onClick={() => scrollCategories('right')} aria-label="Scroll categories right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronRight size={17} /></button>
+                <button type="button" onClick={() => scrollCategories('left')} aria-label="Scroll categories left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white"><ChevronLeft size={17} /></button>
+                <button type="button" onClick={() => scrollCategories('right')} aria-label="Scroll categories right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white"><ChevronRight size={17} /></button>
               </>}
             </div>
           </div>
@@ -628,7 +628,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                   to={`/shop?category=${encodeURIComponent(cat.slug)}`}
                   className={sectionCarouselEnabled("categories") ? "group w-[72%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "group min-w-0"} style={sectionCarouselEnabled("categories") ? desktopCardStyle("categories", 20, 5) : undefined}
                 >
-                  <div className="relative aspect-[4/5] overflow-hidden rounded-sm border border-[#E7DCEB] bg-[#F0E6F4] transition-colors group-hover:border-[#B69ACF]">
+                  <div className="relative aspect-[4/5] overflow-hidden rounded-sm border border-[var(--border)] bg-[var(--pill)] transition-colors group-hover:border-[var(--gold)]">
                     <img
                       src={cat.image}
                       alt={cat.name}
@@ -638,7 +638,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                       referrerPolicy="no-referrer"
                       className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                     />
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#24162D]/75 via-[#24162D]/15 to-transparent px-4 pb-4 pt-12">
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#2B1A33]/75 via-[#2B1A33]/15 to-transparent px-4 pb-4 pt-12">
                       <h3 className="font-serif text-lg font-medium !text-white sm:text-xl [text-shadow:0_1px_5px_rgba(0,0,0,0.7)]" style={{ color: "#FFFFFF" }}>{cat.name}</h3>
                     </div>
                   </div>
@@ -646,12 +646,12 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               ))}
             </div>
           ) : (
-            <p className="rounded-lg border border-dashed border-[#E7DCEB] px-4 py-8 text-center text-sm text-[#746B75]">
+            <p className="rounded-lg border border-dashed border-[var(--border)] px-4 py-8 text-center text-sm !text-[color:var(--body)]">
               {loading ? "Loading categories…" : "Our jewellery collections will appear here soon."}
             </p>
           )}
           <div className="mt-1 text-center sm:hidden">
-            <Link to="/shop" className="inline-flex items-center gap-1 text-xs font-medium text-[#563568]">
+            <Link to="/shop" className="inline-flex items-center gap-1 text-xs font-medium !text-[color:var(--plum)]">
               View all categories <ArrowRight size={13} />
             </Link>
           </div>
@@ -663,23 +663,23 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 newest products (sorted by createdAt descending, else the last 4 in the list),
           same product card as Best Sellers, "View All" linking to /shop?sort=newest
           ========================================================================= */}
-      <section style={{ order: sectionOrder("new-arrivals"), display: sectionVisible("new-arrivals") ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E9E5E9] bg-white">
+      <section style={{ order: sectionOrder("new-arrivals"), display: sectionVisible("new-arrivals") ? undefined : "none", backgroundColor: "var(--white)" }} className="py-6 sm:py-8 lg:py-10 border-t border-[var(--border)] bg-white">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-4 sm:mb-4">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
+            <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">
               JUST ARRIVED
             </span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">
               New Arrivals
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
+            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed max-w-xl mx-auto">
               Discover our newest handcrafted pieces, designed with delicate craftsmanship for modern grace.
             </p>
             <div className="mt-3">
               <Link
                 to="/shop?sort=newest"
-                className="text-xs sm:text-[13px] text-[#302438] hover:text-[#563568] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
+                className="text-xs sm:text-[13px] !text-[color:var(--plum)] hover:!text-[color:var(--plum)] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
               >
                 <span>View All</span>
                 <ArrowRight size={13} />
@@ -689,10 +689,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
 {sectionCarouselEnabled("new-arrivals") && (
           <div className="mb-3 flex items-center justify-end gap-2" aria-label="New Arrivals carousel controls">
-            <button type="button" onClick={() => scrollProductTrack(newArrivalsCarouselRef.current, 'left')} aria-label="Scroll New Arrivals left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
+            <button type="button" onClick={() => scrollProductTrack(newArrivalsCarouselRef.current, 'left')} aria-label="Scroll New Arrivals left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white">
               <ChevronLeft size={17} />
             </button>
-            <button type="button" onClick={() => scrollProductTrack(newArrivalsCarouselRef.current, 'right')} aria-label="Scroll New Arrivals right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
+            <button type="button" onClick={() => scrollProductTrack(newArrivalsCarouselRef.current, 'right')} aria-label="Scroll New Arrivals right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white">
               <ChevronRight size={17} />
             </button>
           </div>
@@ -701,9 +701,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-[23%] xl:w-[19%] animate-pulse">
-                  <div className="bg-[#F7F0FA] aspect-[3/4] w-full border border-[#E7DCEB]" />
-                  <div className="h-4 bg-[#F7F0FA] w-2/3 mt-3" />
-                  <div className="h-3 bg-[#F7F0FA] w-1/3 mt-2" />
+                  <div className="bg-[var(--pill)] aspect-[3/4] w-full border border-[var(--border)]" />
+                  <div className="h-4 bg-[var(--pill)] w-2/3 mt-3" />
+                  <div className="h-3 bg-[var(--pill)] w-1/3 mt-2" />
                 </div>
               ))}
             </div>
@@ -716,7 +716,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               ))}
             </div>
           ) : (
-            <p className="col-span-full py-8 text-center text-xs text-[#6F6475]">
+            <p className="col-span-full py-8 text-center text-xs !text-[color:var(--body)]">
               {loadError ? 'We could not load new arrivals right now. Please try again shortly.' : 'New arrivals are on their way. Please explore the full collection.'}
             </p>
           )}
@@ -732,20 +732,20 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Arrows: absolute inside relative wrapper, never pushing or overflowing
           Consistent vertical spacing: py-6 sm:py-8 lg:py-10
           ========================================================================= */}
-      <section style={{ order: sectionOrder("best-sellers"), display: sectionVisible("best-sellers") && (loading || bestsellers.length > 0) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E9E5E9] bg-[#F7F4F8]">
+      <section style={{ order: sectionOrder("best-sellers"), display: sectionVisible("best-sellers") && (loading || bestsellers.length > 0) ? undefined : "none", backgroundColor: "var(--white)" }} className="py-6 sm:py-8 lg:py-10 border-t border-[var(--border)] bg-white">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-4 sm:mb-4">
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">
               Best Sellers
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
+            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed max-w-xl mx-auto">
               Our most cherished pieces, ranked by genuine customer purchases.
             </p>
             <div className="mt-3">
               <Link
                 to='/shop?sort=bestseller'
-                className="text-xs sm:text-[13px] text-[#302438] hover:text-[#563568] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
+                className="text-xs sm:text-[13px] !text-[color:var(--plum)] hover:!text-[color:var(--plum)] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
               >
                 <span>View All</span>
                 <ArrowRight size={13} />
@@ -755,10 +755,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
 {sectionCarouselEnabled("best-sellers") && (
           <div className="mb-3 flex items-center justify-end gap-2" aria-label="Best Sellers carousel controls">
-            <button type="button" onClick={() => scrollProductTrack(carouselRef.current, 'left')} aria-label="Scroll Best Sellers left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
+            <button type="button" onClick={() => scrollProductTrack(carouselRef.current, 'left')} aria-label="Scroll Best Sellers left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white">
               <ChevronLeft size={17} />
             </button>
-            <button type="button" onClick={() => scrollProductTrack(carouselRef.current, 'right')} aria-label="Scroll Best Sellers right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]">
+            <button type="button" onClick={() => scrollProductTrack(carouselRef.current, 'right')} aria-label="Scroll Best Sellers right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white">
               <ChevronRight size={17} />
             </button>
           </div>
@@ -767,9 +767,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-[23%] xl:w-[19%] animate-pulse">
-                  <div className="bg-[#F0E6F4] aspect-[3/4] w-full border border-[#E7DCEB]" />
-                  <div className="h-4 bg-[#F0E6F4] w-2/3 mt-3" />
-                  <div className="h-3 bg-[#F0E6F4] w-1/3 mt-2" />
+                  <div className="bg-[var(--pill)] aspect-[3/4] w-full border border-[var(--border)]" />
+                  <div className="h-4 bg-[var(--pill)] w-2/3 mt-3" />
+                  <div className="h-3 bg-[var(--pill)] w-1/3 mt-2" />
                 </div>
               ))}
             </div>
@@ -782,7 +782,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               ))}
             </div>
           ) : (
-            <p className="col-span-full py-8 text-center text-xs text-[#6F6475]">
+            <p className="col-span-full py-8 text-center text-xs !text-[color:var(--body)]">
               {loadError ? 'We could not load Best Sellers right now. Please try again shortly.' : 'Our Best Sellers will appear here as qualifying customer orders are completed.'}
             </p>
           )}
@@ -794,36 +794,36 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Manually selected and ordered in Storefront Studio. Automatic newest-product
           fallback remains in place until a manual collection has been published.
           ========================================================================= */}
-      <section style={{ order: sectionOrder("curated-favourites"), display: sectionVisible("curated-favourites") && (loading || (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0) ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("curated-favourites"), display: sectionVisible("curated-favourites") && (loading || (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0) ? undefined : "none", backgroundColor: "var(--tint)" }} className="py-6 sm:py-8 lg:py-10 border-t border-[var(--border)] bg-[var(--tint)]">
         <div className="site-container">
           <div className="w-full text-center mb-4 sm:mb-4">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">THE SARINE EDIT</span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">Curated Favourites</h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
+            <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">THE SARINE EDIT</span>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">Curated Favourites</h2>
+            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed max-w-xl mx-auto">
               A considered edit of beautiful pieces selected from the SARINE collection.
             </p>
             <div className="mt-3">
-              <Link to="/shop" className="text-xs sm:text-[13px] text-[#302438] hover:text-[#563568] font-sans font-medium inline-flex items-center gap-1.5 transition-colors">
+              <Link to="/shop" className="text-xs sm:text-[13px] !text-[color:var(--plum)] hover:!text-[color:var(--plum)] font-sans font-medium inline-flex items-center gap-1.5 transition-colors">
                 <span>View All</span><ArrowRight size={13} />
               </Link>
             </div>
           </div>
 {sectionCarouselEnabled("curated-favourites") && (
           <div className="mb-3 flex items-center justify-end gap-2" aria-label="Curated Favourites carousel controls">
-            <button type="button" onClick={() => scrollProductTrack(curatedCarouselRef.current, 'left')} aria-label="Scroll Curated Favourites left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronLeft size={17} /></button>
-            <button type="button" onClick={() => scrollProductTrack(curatedCarouselRef.current, 'right')} aria-label="Scroll Curated Favourites right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronRight size={17} /></button>
+            <button type="button" onClick={() => scrollProductTrack(curatedCarouselRef.current, 'left')} aria-label="Scroll Curated Favourites left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white"><ChevronLeft size={17} /></button>
+            <button type="button" onClick={() => scrollProductTrack(curatedCarouselRef.current, 'right')} aria-label="Scroll Curated Favourites right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white"><ChevronRight size={17} /></button>
           </div>
           )}
           {loading ? (
             <div className="flex gap-4 overflow-hidden pb-3">
-              {[...Array(4)].map((_, i) => <div key={i} className="w-[68%] shrink-0 sm:w-[42%] md:w-[30%] lg:w-1/4 animate-pulse"><div className="bg-[#F0E6F4] aspect-[3/4] w-full border border-[#E7DCEB]" /><div className="h-4 bg-[#F0E6F4] w-2/3 mt-3" /><div className="h-3 bg-[#F0E6F4] w-1/3 mt-2" /></div>)}
+              {[...Array(4)].map((_, i) => <div key={i} className="w-[68%] shrink-0 sm:w-[42%] md:w-[30%] lg:w-1/4 animate-pulse"><div className="bg-[var(--pill)] aspect-[3/4] w-full border border-[var(--border)]" /><div className="h-4 bg-[var(--pill)] w-2/3 mt-3" /><div className="h-3 bg-[var(--pill)] w-1/3 mt-2" /></div>)}
             </div>
           ) : (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0 ? (
             <div ref={curatedCarouselRef} className={sectionCarouselEnabled("curated-favourites") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"} aria-label="Curated Favourites products">
               {(hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).slice(0, 12).map(product => <div key={product.id} className={sectionCarouselEnabled("curated-favourites") ? "w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "min-w-0"} style={sectionCarouselEnabled("curated-favourites") ? desktopCardStyle("curated-favourites", 20, 5) : undefined}><ProductCard product={product} /></div>)}
             </div>
           ) : (
-            <p className="col-span-full py-8 text-center text-xs text-[#6F6475]">
+            <p className="col-span-full py-8 text-center text-xs !text-[color:var(--body)]">
               {hasPublishedCuratedFavourites ? "Our selected favourites are temporarily unavailable. Please check back soon." : "New collection pieces will be available soon. Please explore the full collection."}
             </p>
           )}
@@ -835,34 +835,34 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 cards: Daily Wear, Festive, Wedding, Gifting
           Using existing product images, linking to /shop with filter queries
           ========================================================================= */}
-      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") && occasions.some(item => item.active) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E9E5E9] bg-[#F7F4F8]">
+      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") && occasions.some(item => item.active) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[var(--border)] !bg-white">
         <div className="site-container">
           <div className="w-full text-center mb-4 sm:mb-4">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
+            <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">
               CURATED OCCASIONS
             </span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">
               Shop by Occasion
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
+            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed max-w-xl mx-auto">
               Adornments thoughtfully curated for festive splendour, sacred vows, and every day in between.
             </p>
           </div>
 
           {sectionCarouselEnabled("occasions") && <div className="mb-3 flex items-center justify-end gap-2" aria-label="Shop by Occasion carousel controls">
-            <button type="button" onClick={() => scrollProductTrack(occasionsCarouselRef.current, 'left')} aria-label="Scroll occasions left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronLeft size={17} /></button>
-            <button type="button" onClick={() => scrollProductTrack(occasionsCarouselRef.current, 'right')} aria-label="Scroll occasions right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronRight size={17} /></button>
+            <button type="button" onClick={() => scrollProductTrack(occasionsCarouselRef.current, 'left')} aria-label="Scroll occasions left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--gold)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--plum)] hover:bg-[var(--plum)] hover:!text-white"><ChevronLeft size={17} /></button>
+            <button type="button" onClick={() => scrollProductTrack(occasionsCarouselRef.current, 'right')} aria-label="Scroll occasions right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--gold)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--plum)] hover:bg-[var(--plum)] hover:!text-white"><ChevronRight size={17} /></button>
           </div>}
           <div ref={occasionsCarouselRef} className={sectionCarouselEnabled("occasions") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"} aria-label="Shop by Occasion cards">
             {occasions.filter(item => item.active).map((item) => (
               <Link key={item.id} to={item.link} className={sectionCarouselEnabled("occasions") ? "group flex w-[72%] shrink-0 snap-start flex-col items-center text-center sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "group flex min-w-0 flex-col items-center text-center"} style={sectionCarouselEnabled("occasions") ? desktopCardStyle("occasions", 20, 5) : undefined}>
-                <div className="aspect-[4/5] w-full overflow-hidden bg-[#F0E6F4] border border-[#E7DCEB] rounded-xs relative group-hover:border-[#B69ACF] transition-colors">
+                <div className="aspect-[4/5] w-full overflow-hidden bg-[#2B1A33] border border-[var(--border)] rounded-xs relative group-hover:border-[var(--gold)] transition-colors">
                   <img src={item.image} alt={item.title} loading="lazy" decoding="async" fetchPriority="low" referrerPolicy="no-referrer" className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out" />
                 </div>
                 <div className="pt-3 text-center flex flex-col items-center">
-                  <h3 className="text-sm sm:text-base font-normal text-[#302438] font-sans group-hover:text-[#563568] transition-colors">{item.title}</h3>
-                  <p className="text-[11px] sm:text-xs text-[#6F6475] font-sans mt-0.5">{item.subtitle}</p>
-                  <span className="text-xs text-[#6F6475] group-hover:text-[#563568] transition-colors inline-flex items-center justify-center gap-1 mt-1 font-sans"><span>Shop Now</span><ArrowRight size={11} /></span>
+                  <h3 className="text-sm sm:text-base font-normal !text-[color:var(--heading)] font-sans group-hover:!text-[color:var(--plum)] transition-colors">{item.title}</h3>
+                  <p className="text-[11px] sm:text-xs !text-[color:var(--body)] font-sans mt-0.5">{item.subtitle}</p>
+                  <span className="text-xs !text-[color:var(--plum)] group-hover:!text-[color:var(--plum)] transition-colors inline-flex items-center justify-center gap-1 mt-1 font-sans"><span>Shop Now</span><ArrowRight size={11} className="text-[color:var(--gold)]" /></span>
                 </div>
               </Link>
             ))}
@@ -872,12 +872,12 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
 
       {/* Explore Now is intentionally a regular grid, separate from Curated Favourites. */}
-      <section style={{ order: sectionOrder("explore-now"), display: sectionVisible("explore-now") && hasPublishedExploreNow && exploreProducts.length ? undefined : "none" }} className="border-t border-[#E7DCEB] bg-white py-7 sm:py-9 lg:py-11">
+      <section style={{ order: sectionOrder("explore-now"), display: sectionVisible("explore-now") && hasPublishedExploreNow && exploreProducts.length ? undefined : "none", backgroundColor: "var(--white)" }} className="border-t border-[var(--border)] bg-white py-7 sm:py-9 lg:py-11">
         <div className="site-container">
           <div className="mb-5 text-center sm:mb-6">
-            <span className="mb-2 block text-[10px] font-medium uppercase tracking-[0.25em] text-[#6F6475]">DISCOVER SOMETHING NEW</span>
-            <h2 className="font-serif text-2xl font-normal text-[#302438] sm:text-3xl lg:text-4xl">Explore Now</h2>
-            <p className="mx-auto mt-2 max-w-xl text-xs leading-relaxed text-[#6F6475] sm:text-sm">A fresh selection of pieces to inspire your next look.</p>
+            <span className="mb-2 block text-[10px] font-medium uppercase tracking-[0.25em] !text-[color:var(--gold-text)]">DISCOVER SOMETHING NEW</span>
+            <h2 className="font-serif text-2xl font-normal !text-[color:var(--heading)] sm:text-3xl lg:text-4xl">Explore Now</h2>
+            <p className="mx-auto mt-2 max-w-xl text-xs leading-relaxed !text-[color:var(--body)] sm:text-sm">A fresh selection of pieces to inspire your next look.</p>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
             {exploreProducts.slice(0, exploreDisplayCount).map(product => (
@@ -892,16 +892,16 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           SHOP BY PRICE — content managed in Storefront Studio
           ========================================================================= */}
-      <section style={{ order: sectionOrder("price"), display: sectionVisible("price") ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 border-t border-[#E7DCEB] bg-[#F7F0FA]">
+      <section style={{ order: sectionOrder("price"), display: sectionVisible("price") ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 border-t border-[var(--border)] !bg-white">
         <div className="site-container">
           <div className="w-full text-center mb-4">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">{homepageContent.price.eyebrow}</span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">{homepageContent.price.title}</h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">{homepageContent.price.description}</p>
+            <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">{homepageContent.price.eyebrow}</span>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">{homepageContent.price.title}</h2>
+            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed max-w-xl mx-auto">{homepageContent.price.description}</p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 max-w-2xl mx-auto">
             {homepageContent.price.links.map((item, index) => (
-              <Link key={index} to={item.href} className="px-6 sm:px-8 py-3 bg-white border border-[#E7DCEB] hover:border-[#B69ACF] hover:text-[#563568] hover:bg-[#F0E6F4] text-[#302438] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap">
+              <Link key={index} to={item.href} className="px-6 sm:px-8 py-3 bg-white border border-[var(--gold)] hover:border-[var(--plum)] hover:!text-white hover:bg-[var(--plum)] !text-[color:var(--heading)] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap">
                 {item.label}
               </Link>
             ))}
@@ -915,12 +915,12 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Centered container mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10
           Consistent vertical spacing: py-6 sm:py-8 lg:py-10
           ========================================================================= */}
-      <section style={{ order: sectionOrder("our-story"), display: sectionVisible("our-story") ? undefined : "none" }} className="bg-[#F7F4F8] border-y border-[#E9E5E9] py-6 sm:py-8 lg:py-10">
+      <section style={{ order: sectionOrder("our-story"), display: sectionVisible("our-story") ? undefined : "none" }} className="!bg-white border-y border-[var(--border)] py-6 sm:py-8 lg:py-10">
         <div className="site-container">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center">
             {/* Left: Large Jewellery Photo */}
             <div className="lg:col-span-5">
-              <div className="aspect-[4/3] sm:aspect-[1/1] bg-[#EBDFF2] overflow-hidden rounded-xs border border-[#E7DCEB]">
+              <div className="aspect-[4/3] sm:aspect-[1/1] bg-white overflow-hidden rounded-xs border border-[var(--border)]">
                 <img
                   src={homepageContent.story.imageUrl || HOMEPAGE_IMAGES.ourStory}
                   alt="SARINE Craftsmanship and Jewellery Details"
@@ -936,16 +936,16 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="lg:col-span-7 flex flex-col md:flex-row items-start gap-8 lg:gap-12">
               {/* Story Narrative */}
               <div className="flex-1">
-                <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
+                <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">
                   {homepageContent.story.eyebrow}
                 </span>
 
-                <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal leading-tight">
+                <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal leading-tight">
                   {homepageContent.story.title}
                 </h2>
 
                 {homepageContent.story.paragraphs.map((paragraph, index) => (
-                  <p key={index} className={index === 0 ? "mt-4 text-xs sm:text-sm text-[#6F6475] leading-relaxed font-sans" : "mt-3 text-xs sm:text-sm text-[#6F6475] leading-relaxed font-sans"}>
+                  <p key={index} className={index === 0 ? "mt-4 text-xs sm:text-sm !text-[color:var(--body)] leading-relaxed font-sans" : "mt-3 text-xs sm:text-sm !text-[color:var(--body)] leading-relaxed font-sans"}>
                     {paragraph}
                   </p>
                 ))}
@@ -953,7 +953,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 <div className="mt-7">
                   <Link
                     to={homepageContent.story.ctaLink}
-                    className="px-6 py-3 min-h-11 bg-[#4A1D5C] text-white text-xs font-sans font-medium hover:bg-[#B8893C] hover:text-[#2B1A33] transition-colors rounded-[6px] inline-flex items-center gap-2 shadow-xs"
+                    className="px-6 py-3 min-h-11 bg-[var(--plum)] text-white text-xs font-sans font-medium hover:bg-[var(--gold)] hover:text-white transition-colors rounded-[6px] inline-flex items-center gap-2 shadow-xs"
                   >
                     <span>{homepageContent.story.ctaText}</span>
                     <ArrowRight size={13} />
@@ -962,19 +962,19 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               </div>
 
               {/* Thin Vertical Divider (Desktop) */}
-              <div className="hidden md:block w-[1px] bg-[#E7DCEB] self-stretch"></div>
+              <div className="hidden md:block w-[1px] bg-[var(--border)] self-stretch"></div>
 
               {/* Three editable brand pillars */}
               <div className="w-full md:w-64 space-y-5 pt-2">
                 {homepageContent.story.pillars.map((pillar, index) => {
                   const PillarIcon = [Gem, Sparkles, ShieldCheck][index] || Gem;
                   return <div key={index} className="flex items-start gap-3">
-                    <div className="p-2 rounded-xs text-[#563568] shrink-0 bg-[#FAF5FC] border border-[#E7DCEB]">
+                    <div className="p-2 rounded-xs !text-[color:var(--gold)] shrink-0 bg-white border border-[var(--border)]">
                       <PillarIcon size={18} strokeWidth={1.5} />
                     </div>
                     <div>
-                      <h3 className="text-xs font-medium text-[#302438] leading-snug">{pillar.title}</h3>
-                      <p className="text-[11px] text-[#6F6475] leading-tight mt-0.5">{pillar.description}</p>
+                      <h3 className="text-xs font-medium !text-[color:var(--heading)] leading-snug">{pillar.title}</h3>
+                      <p className="text-[11px] !text-[color:var(--body)] leading-tight mt-0.5">{pillar.description}</p>
                     </div>
                   </div>;
                 })}
@@ -989,15 +989,15 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           7. EDITORIAL BANNER
           ========================================================================= */}
       {editorial.active && (
-        <section style={{ order: sectionOrder("editorial"), display: sectionVisible("editorial") ? undefined : "none" }} className="sarine-editorial-banner relative overflow-hidden bg-[#2B1A33] border-b border-[#E7DCEB]">
+        <section style={{ order: sectionOrder("editorial"), display: sectionVisible("editorial") ? undefined : "none" }} className="sarine-editorial-banner relative overflow-hidden bg-[var(--plum)] border-b border-[var(--border)]">
           <img src={editorial.imageUrl || HOMEPAGE_IMAGES.editorialBanner} alt={editorial.title} loading="lazy" decoding="async" fetchPriority="low" className="absolute inset-0 w-full h-full object-cover object-center" />
           <div className="absolute inset-0" style={{ backgroundColor: "transparent" }} aria-hidden="true" />
           <div className="site-container min-h-[200px] sm:min-h-[235px] lg:min-h-[270px] flex items-center justify-end relative z-10">
             <div className="w-full sm:w-2/3 lg:w-1/2 py-5 sm:py-6 text-left">
-              <span className="text-[12px] sm:text-[13px] uppercase tracking-[0.2em] text-white font-medium block mb-2 font-sans [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">{editorial.eyebrow}</span>
+              <span className="text-[12px] sm:text-[13px] uppercase tracking-[0.2em] !text-[color:var(--gold-light)] font-medium block mb-2 font-sans [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">{editorial.eyebrow}</span>
               <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-white font-normal leading-tight [text-shadow:0_2px_10px_rgba(0,0,0,0.5)]">{editorial.title}</h2>
-              <p className="mt-3 text-[13px] sm:text-sm text-[#563568] leading-relaxed max-w-md font-sans">{editorial.description}</p>
-              <div className="mt-6"><Link to={editorial.ctaLink} className="px-6 py-3 bg-[#563568] text-white text-xs font-sans font-medium hover:bg-[#A184BD] transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"><span>{editorial.ctaText}</span><ArrowRight size={13} /></Link></div>
+              <p className="mt-3 text-[13px] sm:text-sm !text-white leading-relaxed max-w-md font-sans">{editorial.description}</p>
+              <div className="mt-6"><Link to={editorial.ctaLink} className="px-6 py-3 bg-white !text-[color:var(--plum)] text-xs font-sans font-medium hover:bg-[var(--gold)] hover:!text-white transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"><span>{editorial.ctaText}</span><ArrowRight size={13} /></Link></div>
             </div>
           </div>
         </section>
@@ -1007,19 +1007,19 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           JEWELLERY CARE GUIDE — editable in Storefront Studio
           ========================================================================= */}
-      <section style={{ order: sectionOrder("care-guide"), display: sectionVisible("care-guide") ? undefined : "none" }} className="py-7 sm:py-9 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("care-guide"), display: sectionVisible("care-guide") ? undefined : "none" }} className="py-7 sm:py-9 border-t border-[var(--border)] !bg-[var(--surface)]">
         <div className="site-container">
           <div className="max-w-[720px] mx-auto text-center mb-6">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">{homepageContent.care.eyebrow}</span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">{homepageContent.care.title}</h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed">{homepageContent.care.description}</p>
+            <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">{homepageContent.care.eyebrow}</span>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">{homepageContent.care.title}</h2>
+            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed">{homepageContent.care.description}</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {homepageContent.care.steps.map((step, index) => (
-              <div key={index} className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-center space-y-2">
-                <span className="w-8 h-8 rounded-full bg-[#563568] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">{index + 1}</span>
-                <h3 className="font-serif text-base text-[#302438]">{step.title}</h3>
-                <p className="text-xs text-[#6F6475] leading-relaxed">{step.description}</p>
+              <div key={index} className="p-4 bg-white border border-[var(--border)] rounded-xs text-center space-y-2">
+                <span className="w-8 h-8 rounded-full bg-[var(--plum)] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">{index + 1}</span>
+                <h3 className="font-serif text-base !text-[color:var(--heading)]">{step.title}</h3>
+                <p className="text-xs !text-[color:var(--body)] leading-relaxed">{step.description}</p>
               </div>
             ))}
           </div>
@@ -1030,14 +1030,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           STAY IN TOUCH — editable in Storefront Studio
           ========================================================================= */}
-      <section style={{ order: sectionOrder("stay-in-touch"), display: sectionVisible("stay-in-touch") ? undefined : "none" }} id="stay-in-touch" className="py-7 sm:py-9 lg:py-11 bg-[#563568]">
+      <section style={{ order: sectionOrder("stay-in-touch"), display: sectionVisible("stay-in-touch") ? undefined : "none" }} id="stay-in-touch" className="py-7 sm:py-9 lg:py-11 !bg-white">
         <div className="site-container">
           <div className="max-w-[620px] mx-auto text-center">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">{homepageContent.contact.eyebrow}</span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">{homepageContent.contact.title}</h2>
-            <p className="mt-3 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed">
+            <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">{homepageContent.contact.eyebrow}</span>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">{homepageContent.contact.title}</h2>
+            <p className="mt-3 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed">
               {homepageContent.contact.description}{" "}
-              <Link to={homepageContent.contact.linkHref} className="text-[#563568] font-medium underline underline-offset-4 hover:text-[#B69ACF] transition-colors">
+              <Link to={homepageContent.contact.linkHref} className="!text-[color:var(--plum)] font-medium underline underline-offset-4 hover:!text-[color:var(--gold)] transition-colors">
                 {homepageContent.contact.linkText}
               </Link>.
             </p>
