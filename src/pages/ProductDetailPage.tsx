@@ -374,25 +374,25 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
         <div className="site-container flex items-center justify-between text-xs text-[color:var(--body)]">
           <div className="flex items-center gap-2">
             <Link to="/" className="hover:text-[color:var(--plum)]">Home</Link>
-            <span>/</span>
+            <span className="text-[color:var(--border)]">/</span>
             <Link to="/shop" className="hover:text-[color:var(--plum)]">Catalogue</Link>
             {category && (
               <>
-                <span>/</span>
+                <span className="text-[color:var(--border)]">/</span>
                 <Link to={`/shop?category=${category.slug}`} className="hover:text-[color:var(--plum)]">
                   {category.name}
                 </Link>
               </>
             )}
-            <span>/</span>
-            <span className="text-[color:var(--body)] font-medium truncate max-w-[200px] sm:max-w-xs">
+            <span className="text-[color:var(--border)]">/</span>
+            <span className="text-[color:var(--heading)] font-medium truncate max-w-[200px] sm:max-w-xs">
               {product.name}
             </span>
           </div>
 
           <button
             onClick={handleShare}
-            className="inline-flex items-center gap-1.5 text-xs text-[color:var(--plum)] hover:text-[#A184BD] cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-xs text-[color:var(--plum)] hover:text-[color:var(--gold)] cursor-pointer"
             title="Share piece"
           >
             <Share2 size={13} />
@@ -414,7 +414,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                     key={idx}
                     onClick={() => setActiveImageIndex(idx)}
                     className={`aspect-[3/4] w-16 sm:w-20 bg-white border rounded-xs overflow-hidden transition-all cursor-pointer ${
-                      activeImageIndex === idx ? 'border-[var(--plum)] ring-1 ring-[#563568]' : 'border-[var(--border)] opacity-70 hover:opacity-100'
+                      activeImageIndex === idx ? 'border-[var(--plum)] ring-1 ring-[var(--plum)]' : 'border-[var(--border)] opacity-70 hover:opacity-100'
                     }`}
                   >
                     <img src={img} alt={`${product.name} thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
@@ -471,7 +471,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               </div>
 
               {/* Product Title */}
-              <h1 className="font-serif text-2xl sm:text-3xl text-[color:var(--body)] font-normal leading-snug">
+              <h1 className="font-serif text-2xl sm:text-3xl text-[color:var(--heading)] font-normal leading-snug">
                 {product.name}
               </h1>
               {product.shortDescription && <p className="mt-2 text-sm leading-relaxed text-[color:var(--body)]">{product.shortDescription}</p>}
@@ -487,7 +487,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                     id="product-variant"
                     value={selectedVariantId}
                     onChange={(event) => { setSelectedVariantId(event.target.value); setQuantity(1); }}
-                    className="w-full min-h-11 rounded-lg border border-[#D9C8E2] bg-white px-3 text-sm text-[color:var(--body)] focus:border-[var(--plum)] focus:outline-none"
+                    className={`w-full min-h-11 rounded-lg border border-[var(--border)] hover:border-[var(--gold)] px-3 text-sm focus:border-[var(--gold)] focus:outline-none ${selectedVariantId ? "bg-[var(--plum)] text-[color:var(--white)]" : "bg-[var(--white)] text-[color:var(--body)]"}`}
                   >
                     <option value="">Select an available option</option>
                     {product.variants?.map((variant) => (
@@ -508,9 +508,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               {/* Customer Rating snippet */}
               {reviewCount > 0 && (
                 <div className="flex items-center gap-2 mt-2.5 text-xs text-[color:var(--body)]" aria-label={`Customer rating ${reviewAverage.toFixed(1)} out of 5`}>
-                  <div className="flex items-center text-[color:var(--plum)]" aria-hidden="true">
+                  <div className="flex items-center text-[color:var(--gold)]" aria-hidden="true">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={14} className="fill-[#563568] text-[color:var(--plum)]" />
+                      <Star key={i} size={14} className="fill-[var(--gold)] text-[color:var(--gold)]" />
                     ))}
                   </div>
                   <span className="font-medium text-[color:var(--body)]">{reviewAverage.toFixed(1)}/5</span>
@@ -519,17 +519,17 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
 
               {/* Pricing Display */}
               <div className="mt-4 pt-4 border-t border-[var(--border)] flex items-baseline gap-3">
-                <span className="font-serif text-3xl font-medium text-[color:var(--body)]">
+                <span className="font-serif text-3xl font-medium text-[color:var(--plum)]">
                   {formatInr(campaignPrice)}
                 </span>
-                {campaignDiscount > 0 && <span className="text-sm text-[color:var(--body)] line-through font-sans">{formatInr(currentPrice)}</span>}
+                {campaignDiscount > 0 && <span className="text-sm text-[color:var(--muted)] line-through font-sans">{formatInr(currentPrice)}</span>}
                 {currentCompareAtPrice && (
-                  <span className="text-sm text-[color:var(--body)] line-through font-sans">
+                  <span className="text-sm text-[color:var(--muted)] line-through font-sans">
                     {formatInr(currentCompareAtPrice)}
                   </span>
                 )}
-                {campaignDiscount > 0 && <span className="text-xs text-[#A43E55] font-medium bg-[#FDF1F3] px-2 py-0.5 rounded-xs border border-[#F2D7DD]">Save {formatInr(currentPrice - campaignPrice)} in sale</span>}
-                {discountPercent && <span className="text-xs text-[color:var(--plum)] font-medium bg-[var(--tint)] px-2 py-0.5 rounded-xs border border-[var(--border)]">Save {formatInr(currentCompareAtPrice! - currentPrice)}</span>}
+                {campaignDiscount > 0 && <span className="text-xs text-[color:var(--white)] font-medium bg-[var(--rose)] px-2 py-0.5 rounded-xs border border-[var(--rose)]">Save {formatInr(currentPrice - campaignPrice)} in sale</span>}
+                {discountPercent && <span className="text-xs text-[color:var(--white)] font-medium bg-[var(--rose)] px-2 py-0.5 rounded-xs border border-[var(--rose)]">Save {formatInr(currentCompareAtPrice! - currentPrice)}</span>}
               </div>
               <p className="text-[11px] text-[color:var(--body)] mt-1">Inclusive of all taxes. {checkoutConfig.shippingFlatFee === 0 ? 'Complimentary shipping on all orders.' : `Shipping ${formatInr(checkoutConfig.shippingFlatFee)}; free on orders of ${formatInr(checkoutConfig.freeShippingThreshold)} or more.`}</p>
             </div>
@@ -588,7 +588,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                   type="button"
                   onClick={handleAddToCart}
                   disabled={!inStock}
-                  className="flex-1 py-3 px-4 bg-[var(--plum)] text-[color:var(--white)] hover:bg-[var(--gold)] disabled:bg-[var(--muted)] text-xs uppercase tracking-[0.2em] font-medium rounded-xs transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                  className="flex-1 py-3 px-4 bg-[var(--plum)] text-[color:var(--white)] hover:bg-[var(--gold)] active:bg-[var(--plum-dark)] disabled:bg-[var(--muted)] text-xs uppercase tracking-[0.2em] font-medium rounded-xs transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
                 >
                   <ShoppingBag size={15} />
                   <span>{hasVariants && !selectedVariant ? 'Choose Option' : inStock ? 'Add to Bag' : 'Sold Out'}</span>
@@ -598,12 +598,12 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                 <button
                   type="button"
                   onClick={() => toggleWishlist(product)}
-                  className="p-3 border border-[var(--border)] hover:border-[var(--plum)] bg-white rounded-xs transition-colors cursor-pointer"
+                  className={`p-3 border ${wishlisted ? "border-[var(--rose)] bg-[var(--rose)]" : "border-[var(--plum)] bg-[var(--white)]"} hover:border-[var(--gold)] rounded-xs transition-colors cursor-pointer`}
                   title={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
                 >
                   <Heart
                     size={16}
-                    className={wishlisted ? 'fill-[#563568] text-[color:var(--plum)]' : 'text-[color:var(--body)]'}
+                    className={wishlisted ? 'fill-[var(--gold)] text-[color:var(--gold)]' : 'text-[color:var(--body)]'}
                   />
                 </button>
               </div>
@@ -612,7 +612,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                 <button
                   type="button"
                   onClick={handleBuyNow}
-                  className="w-full mt-3 py-3 bg-[#302438] hover:bg-[var(--plum)] text-[color:var(--white)] text-xs uppercase tracking-[0.2em] font-medium rounded-xs transition-colors shadow-xs cursor-pointer"
+                  className="w-full mt-3 py-3 bg-[var(--plum)] hover:bg-[var(--gold)] active:bg-[var(--plum-dark)] text-[color:var(--white)] text-xs uppercase tracking-[0.2em] font-medium rounded-xs transition-colors shadow-xs cursor-pointer"
                 >
                   Buy Now with Express Checkout
                 </button>
@@ -721,7 +721,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               onClick={() => setActiveTab('details')}
               className={`py-3.5 px-6 transition-colors border-b-2 cursor-pointer ${
                 activeTab === 'details'
-                  ? 'border-[var(--plum)] text-[color:var(--plum)] bg-white font-semibold'
+                  ? 'border-[var(--gold)] text-[color:var(--heading)] bg-[var(--white)] font-semibold'
                   : 'border-transparent text-[color:var(--body)] hover:text-[color:var(--body)]'
               }`}
             >
@@ -731,7 +731,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               onClick={() => setActiveTab('care')}
               className={`py-3.5 px-6 transition-colors border-b-2 cursor-pointer ${
                 activeTab === 'care'
-                  ? 'border-[var(--plum)] text-[color:var(--plum)] bg-white font-semibold'
+                  ? 'border-[var(--gold)] text-[color:var(--heading)] bg-[var(--white)] font-semibold'
                   : 'border-transparent text-[color:var(--body)] hover:text-[color:var(--body)]'
               }`}
             >
@@ -741,7 +741,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               onClick={() => setActiveTab('shipping')}
               className={`py-3.5 px-6 transition-colors border-b-2 cursor-pointer ${
                 activeTab === 'shipping'
-                  ? 'border-[var(--plum)] text-[color:var(--plum)] bg-white font-semibold'
+                  ? 'border-[var(--gold)] text-[color:var(--heading)] bg-[var(--white)] font-semibold'
                   : 'border-transparent text-[color:var(--body)] hover:text-[color:var(--body)]'
               }`}
             >
@@ -780,7 +780,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
 
             {activeTab === 'care' && (
               <div className="space-y-3">
-                <h4 className="font-serif text-base text-[color:var(--body)]">Maintaining Your SARINE Pieces</h4>
+                <h4 className="font-serif text-base text-[color:var(--heading)]">Maintaining Your SARINE Pieces</h4>
                 {product.careInstructions?.length ? (
                   <ul className="list-disc pl-5 space-y-2 text-[color:var(--body)]">{product.careInstructions.map((instruction, index) => <li key={index}>{instruction}</li>)}</ul>
                 ) : (
@@ -791,7 +791,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
 
             {activeTab === 'shipping' && (
               <div className="space-y-3">
-                <h4 className="font-serif text-base text-[color:var(--body)]">Authenticity Guarantee & Delivery Timeline</h4>
+                <h4 className="font-serif text-base text-[color:var(--heading)]">Authenticity Guarantee & Delivery Timeline</h4>
                 <p>
                   Every SARINE piece undergoes stringent quality checks to ensure premium polish, sturdy prongs, and skin-friendly hypoallergenic finishes.
                 </p>
@@ -814,7 +814,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               <span className="text-[10px] uppercase tracking-[0.25em] text-[color:var(--body)] font-medium block">
                 AUTHENTIC SOCIAL PROOF
               </span>
-              <h2 className="font-serif text-2xl text-[color:var(--body)] font-normal mt-0.5">
+              <h2 className="font-serif text-2xl text-[color:var(--heading)] font-normal mt-0.5">
                 Customer Reviews ({reviewCount})
               </h2>
             </div>
@@ -846,11 +846,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
 
                 <div className="flex items-center text-[#FFFFFF]">
                   {[...Array(rev.rating)].map((_, i) => (
-                    <Star key={i} size={13} className="fill-[#FFFFFF]" />
+                    <Star key={i} size={13} className="fill-[var(--gold)] text-[color:var(--gold)]" />
                   ))}
                 </div>
 
-                <h4 className="font-serif text-sm font-medium text-[color:var(--body)]">{rev.title}</h4>
+                <h4 className="font-serif text-sm font-medium text-[color:var(--heading)]">{rev.title}</h4>
                 <p className="text-xs sm:text-sm text-[color:var(--body)] leading-relaxed">{rev.comment}</p>
                 {rev.imageUrls?.length > 0 && <div className="flex flex-wrap gap-2 pt-2">{rev.imageUrls.map((url, index) => <a key={url} href={url} target="_blank" rel="noreferrer"><img src={url} alt={`Customer photo ${index + 1} of ${product.name}`} loading="lazy" className="h-20 w-20 sm:h-24 sm:w-24 rounded-md border border-[var(--border)] object-cover" /></a>)}</div>}
               </div>
@@ -866,7 +866,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                 <span className="text-[10px] uppercase tracking-[0.25em] text-[color:var(--body)] font-medium block">
                   COMPLETE YOUR ATTIRE
                 </span>
-                <h2 className="font-serif text-xl sm:text-2xl text-[color:var(--body)] font-normal mt-0.5">
+                <h2 className="font-serif text-xl sm:text-2xl text-[color:var(--heading)] font-normal mt-0.5">
                   Complementary Adornments
                 </h2>
               </div>

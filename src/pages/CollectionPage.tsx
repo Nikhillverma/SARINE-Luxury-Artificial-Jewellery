@@ -305,11 +305,11 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
           <div className="max-w-3xl">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[color:var(--body)] mb-2">
               <Link to="/" className="hover:text-[color:var(--plum)]">Home</Link>
-              <span>/</span>
-              <span className="text-[color:var(--plum)] font-medium">Catalogue</span>
+              <span className="text-[color:var(--border)]">/</span>
+              <span className="text-[color:var(--heading)] font-medium">Catalogue</span>
               {currentCategory && (
                 <>
-                  <span>/</span>
+                  <span className="text-[color:var(--border)]">/</span>
                   <span className="text-[color:var(--body)]">{currentCategory.name}</span>
                 </>
               )}
@@ -342,7 +342,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                 updateFilter({ search: e.target.value });
               }}
               placeholder="Filter by title, style, or tag..."
-              className="w-full pl-9 pr-8 py-2 text-xs text-[color:var(--body)] placeholder-[color:var(--body)] bg-[var(--pill)] border border-[var(--border)] focus:border-[var(--gold)] rounded-xs focus:outline-none transition-colors"
+              className="w-full pl-9 pr-8 py-2 text-xs text-[color:var(--body)] placeholder-[color:var(--body)] bg-[var(--white)] border border-[var(--border)] focus:border-[var(--gold)] rounded-xs focus:outline-none transition-colors"
             />
             {searchQuery && (
               <button
@@ -361,7 +361,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
             {/* Mobile Filter Button */}
             <button
               onClick={() => setShowMobileFilters(!showMobileFilters)}
-              className="lg:hidden flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-[color:var(--plum)] bg-[var(--pill)] border border-[var(--border)] rounded-xs cursor-pointer"
+              className="lg:hidden flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-[color:var(--plum)] bg-[var(--white)] border border-[var(--border)] hover:border-[var(--gold)] rounded-xs cursor-pointer"
             >
               <SlidersHorizontal size={14} />
               <span>Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}</span>
@@ -387,7 +387,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                   setSortBy(e.target.value);
                   updateFilter({ sort: e.target.value });
                 }}
-                className="text-xs bg-[var(--pill)] border border-[var(--border)] text-[color:var(--body)] py-2 px-3 rounded-xs focus:outline-none cursor-pointer"
+                className="text-xs bg-[var(--white)] border border-[var(--border)] text-[color:var(--body)] py-2 px-3 rounded-xs focus:outline-none cursor-pointer"
               >
                 <option value="newest">Newest Additions</option>
                 <option value="price-asc">Price: Low to High</option>
@@ -529,7 +529,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                   <button
                     onClick={() => updateFilter({ category: null })}
                     className={`w-full text-left py-1 px-2 rounded-xs transition-colors flex items-center justify-between ${
-                      !selectedCategorySlug ? 'bg-[var(--pill)] text-[color:var(--plum)] font-medium' : 'text-[color:var(--body)] hover:text-[color:var(--body)]'
+                      !selectedCategorySlug ? 'bg-[var(--plum)] text-[color:var(--white)] font-medium' : 'text-[color:var(--body)] hover:text-[color:var(--body)]'
                     }`}
                   >
                     <span>All Categories</span>
@@ -543,7 +543,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                         key={cat.id}
                         onClick={() => updateFilter({ category: cat.slug })}
                         className={`w-full text-left py-1 px-2 rounded-xs transition-colors flex items-center justify-between ${
-                          active ? 'bg-[var(--pill)] text-[color:var(--plum)] font-medium' : 'text-[color:var(--body)] hover:text-[color:var(--body)]'
+                          active ? 'bg-[var(--plum)] text-[color:var(--white)] font-medium' : 'text-[color:var(--body)] hover:text-[color:var(--body)]'
                         }`}
                       >
                         <span>{cat.name}</span>
@@ -576,7 +576,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                       }}
                       className={`w-full text-left py-1 px-2 rounded-xs transition-colors ${
                         pricePreset === preset.id && !customMin && !customMax
-                          ? 'bg-[var(--pill)] text-[color:var(--plum)] font-medium'
+                          ? 'bg-[var(--plum)] text-[color:var(--white)] font-medium'
                           : 'text-[color:var(--body)] hover:text-[color:var(--body)]'
                       }`}
                     >
@@ -592,7 +592,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                     placeholder="Min ₹"
                     value={customMin}
                     onChange={(e) => setCustomMin(e.target.value)}
-                    className="w-1/2 p-1.5 bg-[var(--pill)] border border-[var(--border)] rounded-xs text-xs focus:outline-none"
+                    className="w-1/2 p-1.5 bg-[var(--white)] border border-[var(--border)] rounded-xs text-xs focus:outline-none focus:border-[var(--gold)]"
                   />
                   <span className="text-[color:var(--body)]">-</span>
                   <input
@@ -600,7 +600,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                     placeholder="Max ₹"
                     value={customMax}
                     onChange={(e) => setCustomMax(e.target.value)}
-                    className="w-1/2 p-1.5 bg-[var(--pill)] border border-[var(--border)] rounded-xs text-xs focus:outline-none"
+                    className="w-1/2 p-1.5 bg-[var(--white)] border border-[var(--border)] rounded-xs text-xs focus:outline-none focus:border-[var(--gold)]"
                   />
                 </div>
               </div>
@@ -617,7 +617,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                       updateFilter({ occasion: null });
                     }}
                     className={`w-full text-left py-1 px-2 rounded-xs transition-colors ${
-                      !selectedOccasion ? 'bg-[var(--pill)] text-[color:var(--plum)] font-medium' : 'text-[color:var(--body)] hover:text-[color:var(--body)]'
+                      !selectedOccasion ? 'bg-[var(--plum)] text-[color:var(--white)] font-medium' : 'text-[color:var(--body)] hover:text-[color:var(--body)]'
                     }`}
                   >
                     All Occasions
@@ -631,7 +631,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                       }}
                       className={`w-full text-left py-1 px-2 rounded-xs transition-colors ${
                         selectedOccasion === occ.id
-                          ? 'bg-[var(--pill)] text-[color:var(--plum)] font-medium'
+                          ? 'bg-[var(--plum)] text-[color:var(--white)] font-medium'
                           : 'text-[color:var(--body)] hover:text-[color:var(--body)]'
                       }`}
                     >
@@ -645,9 +645,9 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
               {(availableMetals.length > 0 || availablePlatings.length > 0 || availableStones.length > 0) && (
                 <div className="pt-4 border-t border-[var(--border)] space-y-4">
                   <span className="text-xs uppercase tracking-wider text-[color:var(--body)] font-medium block">Craftsmanship</span>
-                  {availableMetals.length > 0 && <label className="block text-xs text-[color:var(--body)]">Base metal<select value={selectedMetal} onChange={event => { setSelectedMetal(event.target.value); updateFilter({ metal: event.target.value || null }); }} className="mt-1.5 w-full min-h-10 rounded-lg border border-[var(--border)] bg-[var(--pill)] px-3 text-xs text-[color:var(--body)]"><option value="">All metals</option>{availableMetals.map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
-                  {availablePlatings.length > 0 && <label className="block text-xs text-[color:var(--body)]">Plating / finish<select value={selectedPlating} onChange={event => { setSelectedPlating(event.target.value); updateFilter({ plating: event.target.value || null }); }} className="mt-1.5 w-full min-h-10 rounded-lg border border-[var(--border)] bg-[var(--pill)] px-3 text-xs text-[color:var(--body)]"><option value="">All finishes</option>{availablePlatings.map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
-                  {availableStones.length > 0 && <label className="block text-xs text-[color:var(--body)]">Stones & embellishments<select value={selectedStone} onChange={event => { setSelectedStone(event.target.value); updateFilter({ stone: event.target.value || null }); }} className="mt-1.5 w-full min-h-10 rounded-lg border border-[var(--border)] bg-[var(--pill)] px-3 text-xs text-[color:var(--body)]"><option value="">All stones</option>{availableStones.map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
+                  {availableMetals.length > 0 && <label className="block text-xs text-[color:var(--body)]">Base metal<select value={selectedMetal} onChange={event => { setSelectedMetal(event.target.value); updateFilter({ metal: event.target.value || null }); }} className="mt-1.5 w-full min-h-10 rounded-lg border border-[var(--border)] bg-[var(--white)] px-3 text-xs text-[color:var(--body)]"><option value="">All metals</option>{availableMetals.map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
+                  {availablePlatings.length > 0 && <label className="block text-xs text-[color:var(--body)]">Plating / finish<select value={selectedPlating} onChange={event => { setSelectedPlating(event.target.value); updateFilter({ plating: event.target.value || null }); }} className="mt-1.5 w-full min-h-10 rounded-lg border border-[var(--border)] bg-[var(--white)] px-3 text-xs text-[color:var(--body)]"><option value="">All finishes</option>{availablePlatings.map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
+                  {availableStones.length > 0 && <label className="block text-xs text-[color:var(--body)]">Stones & embellishments<select value={selectedStone} onChange={event => { setSelectedStone(event.target.value); updateFilter({ stone: event.target.value || null }); }} className="mt-1.5 w-full min-h-10 rounded-lg border border-[var(--border)] bg-[var(--white)] px-3 text-xs text-[color:var(--body)]"><option value="">All stones</option>{availableStones.map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
                 </div>
               )}
             </div>
@@ -690,13 +690,13 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                 <div className="mt-6 flex flex-wrap justify-center gap-3">
                   <button
                     onClick={handleClearAll}
-                    className="px-6 py-2.5 bg-[var(--plum)] text-white hover:bg-[#A184BD] text-xs font-medium rounded-xs transition-colors cursor-pointer"
+                    className="px-6 py-2.5 bg-[var(--plum)] text-[color:var(--white)] hover:bg-[var(--gold)] active:bg-[var(--plum-dark)] text-xs font-medium rounded-xs transition-colors cursor-pointer"
                   >
                     Reset All Filters
                   </button>
                   <Link
                     to="/shop"
-                    className="px-6 py-2.5 bg-transparent border border-[#563568] text-[color:var(--plum)] hover:bg-[var(--pill)] text-xs font-medium rounded-xs transition-colors"
+                    className="px-6 py-2.5 bg-transparent border border-[var(--plum)] text-[color:var(--plum)] hover:bg-[var(--gold)] hover:text-[color:var(--white)] text-xs font-medium rounded-xs transition-colors"
                   >
                     Browse All Catalogue
                   </Link>
