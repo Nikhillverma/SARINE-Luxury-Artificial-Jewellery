@@ -103,6 +103,17 @@ function mapCategory(row) {
   };
 }
 
+// Friendly root response for the public backend URL. API routes remain unchanged.
+app.get("/", (_req, res) => {
+  res.json({
+    status: "ok",
+    service: "SARINE Hostinger API",
+    message: "SARINE API is running.",
+    health: "/health",
+    databaseHealth: "/health/db"
+  });
+});
+
 app.get("/health", (_req, res) => {
   res.json({
     status: "ok",
