@@ -161,12 +161,12 @@ function WebhookEventCard({ item }: { item: AdminWebhookEvent }) {
 }
 function csvCell(value: unknown) {
   let text = String(value ?? '');
-  if (/^[\\s\\u0000-\\u001f]*[=+\\-@]/.test(text)) text = "'" + text;
+  if (/^[\s\u0000-\u001f]*[=+\-@]/.test(text)) text = "'" + text;
   return '"' + text.replace(/"/g, '""') + '"';
 }
 function exportCsv(filename: string, rows: unknown[][]) {
-  const csv = rows.map(row => row.map(csvCell).join(',')).join('\\r\\n');
-  const blob = new Blob(['\\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+  const csv = rows.map(row => row.map(csvCell).join(',')).join('\r\n');
+  const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url; anchor.download = filename;
