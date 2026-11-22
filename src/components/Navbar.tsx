@@ -214,11 +214,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <>
       <header
-        className="sticky top-0 z-40 bg-[#FAF5FC] border-b border-[#FFFFFF]/30 shadow-xs"
+        className="sarine-global-header sticky top-0 z-40 bg-[#FAF5FC] border-b border-[#FFFFFF]/30 shadow-xs"
         onMouseLeave={handleMouseLeave}
       >
         {/* TIER 1: Continuous, admin-managed announcement ticker */}
-        <div className="bg-[#563568] text-[#FAF5FC] text-[11px] sm:text-xs font-sans tracking-wide overflow-hidden">
+        <div className="sarine-global-announcement bg-[#563568] text-[#FAF5FC] text-[11px] sm:text-xs font-sans tracking-wide overflow-hidden">
           <div className="site-container flex items-center min-h-[36px] sm:min-h-[40px] gap-4">
             <div className="flex-1 min-w-0 overflow-hidden" aria-label="Store announcements">
               <div className="sarine-announcement-track flex w-max items-center">
