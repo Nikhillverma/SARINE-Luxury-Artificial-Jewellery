@@ -40,29 +40,74 @@ export const AdminStorefrontPage: React.FC = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const load = async () => {
-    setLoading(true); setError("");
+  const loadBanners = async () => {
+    setLoading(true);
+    setError("");
     try {
-      const [bannerResult, announcementResult, editorialResult] = await Promise.all([
-        hostingerStorefrontService.getBanners(),
-        hostingerStorefrontService.getAnnouncement(),
-        hostingerStorefrontService.getEditorial()
-      ]);
-      setBanners(bannerResult.banners);
-      setEditorial({ ...defaultEditorial, ...editorialResult.editorial });
-      setAnnouncement(announcementResult.announcement.message || "");
-      setAnnouncementActive(Boolean(announcementResult.announcement.active));
-      setTrustMessages(Array.isArray(announcementResult.announcement.trustMessages)
-        ? announcementResult.announcement.trustMessages
+      const result = await hostingerStorefrontService.getBanners();
+      setBanners(result.banners);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to load hero banners.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAnnouncement = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const result = await hostingerStorefrontService.getAnnouncement();
+      setAnnouncement(result.announcement.message || "");
+      setAnnouncementActive(Boolean(result.announcement.active));
+      setTrustMessages(Array.isArray(result.announcement.trustMessages)
+        ? result.announcement.trustMessages
         : ["Free Shipping Above ₹1,999", "7-Day Easy Returns", "Trusted by 1L+ Happy Customers"]);
-    } catch (e) { setError(e instanceof Error ? e.message : "Unable to load storefront content."); }
-    finally { setLoading(false); }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to load announcement settings.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const loadEditorial = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const result = await hostingerStorefrontService.getEditorial();
+      setEditorial({ ...defaultEditorial, ...result.editorial });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to load editorial settings.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadReviews = async (status = reviewStatus) => {
-    try { const result = await hostingerStorefrontService.getAdminReviews(status); setReviews(result.reviews); }
-    catch (e) { setError(e instanceof Error ? e.message : "Unable to load customer feedback."); }
+    try {
+      const result = await hostingerStorefrontService.getAdminReviews(status);
+      setReviews(result.reviews);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to load customer feedback.");
+    }
   };
-  useEffect(() => { void load(); void loadReviews("pending"); }, []);
+
+  useEffect(() => {
+    setError("");
+    setMessage("");
+    if (activeSection === "hero-banners") {
+      void loadBanners();
+    } else if (activeSection === "announcements") {
+      void loadAnnouncement();
+    } else if (activeSection === "editorial") {
+      void loadEditorial();
+    } else if (activeSection === "reviews") {
+      setLoading(false);
+      void loadReviews("pending");
+    } else {
+      setLoading(false);
+    }
+  }, [activeSection]);
 
   const beginAdd = () => { setEditingId(null); setForm(emptyForm); setFile(null); setMessage(""); setError(""); };
   const beginEdit = (banner: StorefrontBanner) => {
@@ -108,7 +153,7 @@ export const AdminStorefrontPage: React.FC = () => {
       else await hostingerStorefrontService.createBanner(payload);
       setForm(emptyForm); setEditingId(null); setFile(null);
       setMessage("Banner saved to MariaDB. Homepage content will use published slides.");
-      await load();
+      await loadBanners();
     } catch (e) { setError(e instanceof Error ? e.message : "Banner could not be saved."); }
     finally { setBusy(false); }
   };
@@ -120,14 +165,14 @@ export const AdminStorefrontPage: React.FC = () => {
     }
     if (!banner.active && !window.confirm(`Publish “${banner.title}” on the live SARINE homepage?`)) return;
     setBusy(true); setError("");
-    try { await hostingerStorefrontService.updateBanner(banner.id, { active: !banner.active }); await load(); }
+    try { await hostingerStorefrontService.updateBanner(banner.id, { active: !banner.active }); await loadBanners(); }
     catch (e) { setError(e instanceof Error ? e.message : "Could not update banner."); }
     finally { setBusy(false); }
   };
   const remove = async (banner: StorefrontBanner) => {
     if (!window.confirm(`Delete banner "${banner.title}"? This removes the banner record, not the stored media file.`)) return;
     setBusy(true); setError("");
-    try { await hostingerStorefrontService.deleteBanner(banner.id); setMessage("Banner deleted."); await load(); }
+    try { await hostingerStorefrontService.deleteBanner(banner.id); setMessage("Banner deleted."); await loadBanners(); }
     catch (e) { setError(e instanceof Error ? e.message : "Could not delete banner."); }
     finally { setBusy(false); }
   };
@@ -136,7 +181,7 @@ export const AdminStorefrontPage: React.FC = () => {
     if (target < 0 || target >= next.length) return;
     [next[index], next[target]] = [next[target], next[index]];
     setBusy(true); setError("");
-    try { await hostingerStorefrontService.reorderBanners(next.map(b => b.id)); await load(); }
+    try { await hostingerStorefrontService.reorderBanners(next.map(b => b.id)); await loadBanners(); }
     catch (e) { setError(e instanceof Error ? e.message : "Could not reorder banners."); }
     finally { setBusy(false); }
   };
@@ -237,7 +282,7 @@ export const AdminStorefrontPage: React.FC = () => {
           {announcementActive && /christmas|diwali|new year|black friday|sale|today|limited time|ends? (today|soon|on)/i.test(announcement) && <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">Time-sensitive promotion detected. Verify the offer, dates and eligibility before saving it live.</p>}
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={announcementActive} onChange={e => setAnnouncementActive(e.target.checked)} /> Publish promotional announcement</label>
         </div>
-        <button disabled={busy} onClick={() => void saveAnnouncement()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">Save ticker messages</button>
+        <button disabled={busy || loading} onClick={() => void saveAnnouncement()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">Save ticker messages</button>
       </section>
         </div>
       )}
@@ -254,7 +299,7 @@ export const AdminStorefrontPage: React.FC = () => {
           <label className="text-xs space-y-1"><span>Button destination</span><input value={editorial.ctaLink} maxLength={500} onChange={e=>setEditorial({...editorial,ctaLink:e.target.value})} placeholder="/shop" className="w-full border rounded-lg p-3 text-sm" /></label>
           <div className="md:col-span-2 space-y-2"><label className="block text-xs font-medium">Background artwork (JPEG, PNG or WebP)</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>setEditorialFile(e.target.files?.[0] || null)} className="block w-full text-sm" />{editorialFile && <button type="button" disabled={editorialUploading || busy} onClick={async()=>{setEditorialUploading(true);setError("");try{const imageUrl=await hostingerMediaService.uploadImage(editorialFile);setEditorial({...editorial,imageUrl});setEditorialFile(null);setMessage("Editorial artwork uploaded. Save changes to publish it.");}catch(e){setError(e instanceof Error?e.message:"Artwork upload failed.");}finally{setEditorialUploading(false);}}} className="px-3 py-2 rounded-lg bg-[#563568] text-white text-xs disabled:opacity-50">{editorialUploading?"Uploading…":"Upload artwork"}</button>}{editorial.imageUrl && <img src={editorial.imageUrl} alt="Editorial Collection preview" className="max-h-48 rounded-lg border object-contain" />}</div>
           <label className="flex items-center gap-2 text-sm md:col-span-2"><input type="checkbox" checked={editorial.active} onChange={e=>setEditorial({...editorial,active:e.target.checked})} /> Publish Editorial Collection on homepage</label>
-          <div className="flex gap-2 md:col-span-2"><button disabled={busy || editorialUploading} onClick={()=>void saveEditorial()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy?"Saving…":"Save Editorial Collection"}</button><a href="/" target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg border text-sm">Preview homepage</a></div>
+          <div className="flex gap-2 md:col-span-2"><button disabled={busy || loading || editorialUploading} onClick={()=>void saveEditorial()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy?"Saving…":"Save Editorial Collection"}</button><a href="/" target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg border text-sm">Preview homepage</a></div>
         </div>
       </section>
         </div>
@@ -272,7 +317,7 @@ export const AdminStorefrontPage: React.FC = () => {
       {activeSection === "hero-banners" && (
         <div className="space-y-5">
         <section id="banners" className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
-        <div className="flex justify-between items-center gap-3"><div><h2 className="font-semibold text-[#2C1838]">Homepage hero banners</h2><p className="text-xs text-gray-500">Changes are saved in MariaDB, not browser memory.</p></div><button onClick={beginAdd} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm">Add banner</button></div>
+        <div className="flex justify-between items-center gap-3"><div><h2 className="font-semibold text-[#2C1838]">Homepage hero banners</h2><p className="text-xs text-gray-500">Changes are saved in MariaDB, not browser memory.</p></div><button disabled={busy || loading} onClick={beginAdd} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">Add banner</button></div>
         {loading ? <p className="text-sm text-gray-500">Loading banners…</p> : banners.length === 0 ? <p className="text-sm text-gray-500">No banners created yet. Add a banner and publish it when ready.</p> :
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">{banners.map((banner, index) => <article key={banner.id} className="border rounded-xl overflow-hidden">
             <img src={banner.imageUrl} alt={banner.title} className="w-full aspect-[16/7] object-cover bg-gray-100" />
@@ -309,7 +354,7 @@ export const AdminStorefrontPage: React.FC = () => {
             <p className="text-xs text-gray-500">Choose an image, click Upload artwork, confirm the preview, then create or save the banner. Images are optimised and stored in Hostinger media storage.</p>
           </div>
           <label className="flex items-center gap-2 text-sm md:col-span-2"><input type="checkbox" checked={form.active} onChange={e => setForm({...form,active:e.target.checked})} /> Publish immediately after saving</label>
-          <div className="flex gap-2 md:col-span-2"><button disabled={busy || artworkUploading} type="submit" className="px-5 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy ? "Saving…" : editingId ? "Save changes" : "Create banner"}</button><button type="button" disabled={busy || artworkUploading} onClick={beginAdd} className="px-4 py-2 rounded-lg border text-sm disabled:opacity-50">Clear form</button></div>
+          <div className="flex gap-2 md:col-span-2"><button disabled={busy || loading || artworkUploading} type="submit" className="px-5 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy ? "Saving…" : editingId ? "Save changes" : "Create banner"}</button><button type="button" disabled={busy || artworkUploading} onClick={beginAdd} className="px-4 py-2 rounded-lg border text-sm disabled:opacity-50">Clear form</button></div>
         </form>
       </section>
         </div>
