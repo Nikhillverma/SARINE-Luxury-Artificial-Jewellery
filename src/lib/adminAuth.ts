@@ -34,7 +34,7 @@ async function authRequest<T>(
   let response: Response;
 
   try {
-    response = await fetch(\`\${API_BASE}/admin/auth/\${endpoint}\`, {
+    response = await fetch(API_BASE + '/admin/auth/' + endpoint, {
       ...options,
       credentials: 'include',
       cache: 'no-store',
