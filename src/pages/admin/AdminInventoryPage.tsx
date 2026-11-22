@@ -18,12 +18,8 @@ import { formatInr } from '../../utils/currency';
 import {
   Package,
   Search,
-  SlidersHorizontal,
-  AlertTriangle,
   CheckCircle2,
-  XCircle,
   Edit2,
-  RefreshCw,
   Plus,
   Minus
 } from 'lucide-react';
@@ -109,6 +105,9 @@ export const AdminInventoryPage: React.FC = () => {
     });
   }, [products, searchTerm, selectedCategory, statusFilter, stockFilter, lowStockThreshold, productThresholds]);
 
+  useEffect(() => { setPage(1); }, [searchTerm, selectedCategory, statusFilter, stockFilter]);
+  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
+
   const sortedProducts = useMemo(() => [...filteredProducts].sort((a, b) => {
     if (sortOrder === 'stock-low') return a.stock - b.stock || a.name.localeCompare(b.name);
     if (sortOrder === 'stock-high') return b.stock - a.stock || a.name.localeCompare(b.name);
@@ -128,7 +127,7 @@ export const AdminInventoryPage: React.FC = () => {
   const estimatedCostValue = products.reduce((sum, product) => sum + (Number.isFinite(product.costPrice) ? (product.costPrice || 0) * Math.max(0, product.stock) : 0), 0);
   const costCoverage = products.filter(product => Number.isFinite(product.costPrice) && (product.costPrice || 0) > 0).length;
   const exportInventoryCsv = () => {
-    const columns = ['Product ID', 'Product Name', 'SKU', 'Category ID', 'Jewellery Type', 'Status', 'Selling Price INR', 'Cost Price INR', 'Stock Units', 'Low Stock Threshold', 'Stock Value at Cost INR', 'Image URLs'];
+    const columns = ['Product ID (used as SKU)', 'Product Name', 'Catalogue ID', 'Category ID', 'Jewellery Type', 'Status', 'Selling Price INR', 'Cost Price INR', 'Stock Units', 'Low Stock Threshold', 'Stock Value at Cost INR', 'Image URLs'];
     const cell = (value: unknown) => {
       const raw = String(value ?? '');
       const safe = ['=', '+', '-', '@', String.fromCharCode(9), String.fromCharCode(13)].includes(raw.charAt(0)) ? `'${raw}` : raw;
@@ -327,11 +326,11 @@ export const AdminInventoryPage: React.FC = () => {
                         <td className="p-3">
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-14 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs overflow-hidden shrink-0">
-                              <img
-                                src={p.images[0] || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80'}
-                                alt={p.name}
-                                className="w-full h-full object-cover"
-                              />
+                              {p.images?.[0] ? (
+                                <img src={p.images[0]} alt={p.name} loading="lazy" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-[#B69ACF]" aria-label="No product image"><Package size={18} /></div>
+                              )}
                             </div>
                             <div className="min-w-0">
                               <span className="font-medium text-[#302438] block truncate max-w-[220px]">
