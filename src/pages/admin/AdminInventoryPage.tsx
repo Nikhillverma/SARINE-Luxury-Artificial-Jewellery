@@ -50,6 +50,12 @@ export const AdminInventoryPage: React.FC = () => {
   const [movementSearch, setMovementSearch] = useState('');
   const [movementFrom, setMovementFrom] = useState('');
   const [movementTo, setMovementTo] = useState('');
+  const [movementPage, setMovementPage] = useState(1);
+  const [movementTotal, setMovementTotal] = useState(0);
+  const [movementLoading, setMovementLoading] = useState(false);
+  const [movementError, setMovementError] = useState<string | null>(null);
+  const [movementRefreshKey, setMovementRefreshKey] = useState(0);
+  const MOVEMENT_PAGE_SIZE = 25;
   const PAGE_SIZE = 25;
 
   // Stock Adjustment Modal / State
@@ -64,15 +70,13 @@ export const AdminInventoryPage: React.FC = () => {
     async function loadData() {
       setLoading(true);
       try {
-        const [cats, prods, inventoryMovements, alertSettings] = await Promise.all([
+        const [cats, prods, alertSettings] = await Promise.all([
           categoryService.getCategories({ activeOnly: false }),
           adminProductService.getProducts(),
-          adminProductService.getInventoryMovements(),
           inventorySettingsService.get()
         ]);
         setCategories(cats);
         setProducts(prods);
-        setMovements(inventoryMovements);
         setLowStockThreshold(alertSettings.threshold);
         setProductThresholds(alertSettings.productThresholds || {});
       } catch (err) {
@@ -133,14 +137,56 @@ export const AdminInventoryPage: React.FC = () => {
   const totalPages = Math.max(1, Math.ceil(sortedProducts.length / PAGE_SIZE));
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
   const visibleProducts = sortedProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const filteredMovements = useMemo(() => movements.filter((movement) => {
-    const q = movementSearch.trim().toLowerCase();
-    const matchesText = !q || [movement.productName, movement.sku, movement.reason, movement.adminName, movement.adminEmail].some(value => String(value || '').toLowerCase().includes(q));
-    const stamp = new Date(movement.createdAt);
-    const valid = Number.isFinite(stamp.getTime());
-    const date = valid ? [stamp.getFullYear(), String(stamp.getMonth() + 1).padStart(2, '0'), String(stamp.getDate()).padStart(2, '0')].join('-') : '';
-    return matchesText && (!movementFrom || (valid && date >= movementFrom)) && (!movementTo || (valid && date <= movementTo));
-  }), [movements, movementSearch, movementFrom, movementTo]);
+  useEffect(() => {
+    setMovementPage(1);
+  }, [movementSearch, movementFrom, movementTo]);
+
+  useEffect(() => {
+    let active = true;
+    setMovementLoading(true);
+    setMovementError(null);
+    adminProductService.getInventoryMovements({
+      page: movementPage,
+      limit: MOVEMENT_PAGE_SIZE,
+      search: movementSearch,
+      from: movementFrom,
+      to: movementTo
+    }).then(result => {
+      if (!active) return;
+      setMovements(result.movements);
+      setMovementTotal(result.total);
+    }).catch(error => {
+      if (active) setMovementError(error instanceof Error ? error.message : 'Inventory history could not be loaded.');
+    }).finally(() => {
+      if (active) setMovementLoading(false);
+    });
+    return () => { active = false; };
+  }, [movementPage, movementSearch, movementFrom, movementTo, movementRefreshKey]);
+
+  const movementTotalPages = Math.max(1, Math.ceil(movementTotal / MOVEMENT_PAGE_SIZE));
+  const exportMovementCsv = () => {
+    const columns = ['Date & Time (IST)', 'Movement Type', 'Product', 'SKU', 'Variant', 'Previous Stock', 'Quantity Change', 'New Stock', 'Reason', 'Updated By', 'Admin Email', 'Unit Cost Snapshot INR', 'Previous Stock Cost INR', 'New Stock Cost INR'];
+    const cell = (value: unknown) => {
+      const raw = String(value ?? '');
+      const safe = ['=', '+', '-', '@', String.fromCharCode(9), String.fromCharCode(13)].includes(raw.charAt(0)) ? "'" + raw : raw;
+      return '"' + safe.replace(/"/g, '""') + '"';
+    };
+    const rows = movements.map(movement => [
+      new Date(movement.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      movement.movementType === 'variant' ? 'Variant' : 'Product',
+      movement.productName, movement.sku, movement.variantLabel || '',
+      movement.previousStock, movement.quantityDelta, movement.newStock,
+      movement.reason, movement.adminName, movement.adminEmail,
+      movement.costPriceSnapshot ?? '', movement.previousStockCostValue ?? '', movement.newStockCostValue ?? ''
+    ]);
+    const csv = [columns, ...rows].map(row => row.map(cell).join(',')).join('\r\n');
+    const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `sarine-inventory-movements-page-${movementPage}-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+  };
   const estimatedCostValue = products.reduce((sum, product) => sum + (Number.isFinite(product.costPrice) ? (product.costPrice || 0) * Math.max(0, product.stock) : 0), 0);
   const costCoverage = products.filter(product => Number.isFinite(product.costPrice) && (product.costPrice || 0) > 0).length;
   const exportInventoryCsv = () => {
@@ -183,7 +229,8 @@ export const AdminInventoryPage: React.FC = () => {
       setProducts((prev) => prev.map((product) =>
         product.id === movement.productId ? { ...product, stock: movement.newStock } : product
       ));
-      setMovements((prev) => [movement, ...prev].slice(0, 100));
+      setMovementPage(1);
+      setMovementRefreshKey(previous => previous + 1);
       setAdjustSuccess(`Recorded ${adjustingProduct.name} stock adjustment in inventory history: ${newStock} units.`);
       setAdjustingProduct(null);
       setStockDelta(0);
@@ -448,39 +495,54 @@ export const AdminInventoryPage: React.FC = () => {
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[#6F6475]"><span>Showing {sortedProducts.length ? (page - 1) * PAGE_SIZE + 1 : 0}–{Math.min(page * PAGE_SIZE, sortedProducts.length)} of {sortedProducts.length} matching designs</span><div className="flex items-center gap-2"><button type="button" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))} className="min-h-10 px-3 border border-[#E7DCEB] rounded-xs disabled:opacity-40">Previous</button><span>Page {page} of {totalPages}</span><button type="button" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))} className="min-h-10 px-3 border border-[#E7DCEB] rounded-xs disabled:opacity-40">Next</button></div></div>
 
-        {/* Inventory movement audit trail */}
+        {/* Complete inventory movement and cost-valuation history */}
         <section className="bg-white border border-[#E7DCEB] rounded-xs shadow-2xs overflow-hidden">
           <div className="p-4 border-b border-[#E7DCEB] space-y-3">
-            <div><h2 className="font-serif text-xl text-[#302438]">Inventory Movement History</h2><p className="text-[11px] text-[#6F6475] mt-1">Latest 100 recorded stock adjustments, including the admin and reason.</p></div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2"><input value={movementSearch} onChange={event => setMovementSearch(event.target.value)} placeholder="Search product, SKU, reason or admin" aria-label="Search inventory movements" className="min-h-10 px-3 border border-[#E7DCEB] bg-[#F7F0FA] rounded-xs text-xs"/><label className="text-[10px] text-[#6F6475]">From<input type="date" value={movementFrom} max={movementTo || undefined} onChange={event => setMovementFrom(event.target.value)} className="mt-1 block w-full min-h-10 px-3 border border-[#E7DCEB] bg-[#F7F0FA] rounded-xs text-xs"/></label><label className="text-[10px] text-[#6F6475]">To<input type="date" value={movementTo} min={movementFrom || undefined} onChange={event => setMovementTo(event.target.value)} className="mt-1 block w-full min-h-10 px-3 border border-[#E7DCEB] bg-[#F7F0FA] rounded-xs text-xs"/></label></div>
-            <p className="text-[10px] text-[#6F6475]">{filteredMovements.length} matching movements in the latest 100 loaded records.</p>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div><h2 className="font-serif text-xl text-[#302438]">Inventory Movement & Valuation History</h2><p className="text-[11px] text-[#6F6475] mt-1">Complete searchable product and variant stock ledger, including checkout deductions and admin adjustments.</p></div>
+              <button type="button" onClick={exportMovementCsv} disabled={movements.length === 0 || movementLoading} className="min-h-10 px-3 border border-[#563568] text-[#563568] rounded-xs text-xs font-medium disabled:opacity-40">Export current page CSV</button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2"><input value={movementSearch} onChange={event => setMovementSearch(event.target.value)} placeholder="Search product, SKU, variant, reason or admin" aria-label="Search inventory movements" className="min-h-10 px-3 border border-[#E7DCEB] bg-[#F7F0FA] rounded-xs text-xs"/><label className="text-[10px] text-[#6F6475]">From (IST)<input type="date" value={movementFrom} max={movementTo || undefined} onChange={event => setMovementFrom(event.target.value)} className="mt-1 block w-full min-h-10 px-3 border border-[#E7DCEB] bg-[#F7F0FA] rounded-xs text-xs"/></label><label className="text-[10px] text-[#6F6475]">To (IST)<input type="date" value={movementTo} min={movementFrom || undefined} onChange={event => setMovementTo(event.target.value)} className="mt-1 block w-full min-h-10 px-3 border border-[#E7DCEB] bg-[#F7F0FA] rounded-xs text-xs"/></label></div>
+            <p className="text-[10px] text-[#6F6475]">{movementTotal.toLocaleString('en-IN')} matching recorded movements · Page {movementPage} of {movementTotalPages} · 25 per page</p>
+            {movementError && <p role="alert" className="text-xs text-red-700">{movementError}</p>}
+            <p className="text-[10px] text-[#6F6475]">Cost snapshots are recorded from this upgrade onward using the unit cost stored at each movement. Older movements without a recorded cost remain marked unavailable; no historical cost is invented.</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-sans">
               <thead className="bg-[#F7F0FA] text-[#6F6475] uppercase tracking-wider text-[10px]">
                 <tr>
-                  <th className="p-3">Date & Time</th><th className="p-3">Piece</th>
+                  <th className="p-3">Date & Time (IST)</th><th className="p-3">Piece / Variant</th>
                   <th className="p-3">Previous</th><th className="p-3">Change</th>
-                  <th className="p-3">New Balance</th><th className="p-3">Reason</th>
-                  <th className="p-3">Updated By</th>
+                  <th className="p-3">New Balance</th><th className="p-3">Unit Cost Snapshot</th>
+                  <th className="p-3">Value Before</th><th className="p-3">Value After</th>
+                  <th className="p-3">Reason</th><th className="p-3">Updated By</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E7DCEB]">
-                {movements.length === 0 ? (
-                  <tr><td colSpan={7} className="p-6 text-center text-[#6F6475]">No stock adjustments have been recorded yet. Future adjustments will appear here.</td></tr>
-                ) : filteredMovements.map((movement) => (
-                  <tr key={movement.id}>
-                    <td className="p-3 whitespace-nowrap text-[#6F6475]">{new Date(movement.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</td>
-                    <td className="p-3"><span className="font-medium text-[#302438]">{movement.productName}</span><span className="block text-[10px] text-[#6F6475] font-mono">{movement.sku}</span></td>
+                {movementLoading ? (
+                  <tr><td colSpan={10} className="p-6 text-center text-[#6F6475]">Loading complete inventory history…</td></tr>
+                ) : movements.length === 0 ? (
+                  <tr><td colSpan={10} className="p-6 text-center text-[#6F6475]">No recorded movements match these filters.</td></tr>
+                ) : movements.map((movement) => (
+                  <tr key={movement.id + (movement.movementType || 'product')}>
+                    <td className="p-3 whitespace-nowrap text-[#6F6475]">{new Date(movement.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}</td>
+                    <td className="p-3"><span className="font-medium text-[#302438]">{movement.productName}</span><span className="block text-[10px] text-[#6F6475] font-mono">{movement.sku} · {movement.movementType === 'variant' ? movement.variantLabel || 'Variant' : 'Product'}</span></td>
                     <td className="p-3 font-mono">{movement.previousStock}</td>
                     <td className={`p-3 font-mono font-semibold ${movement.quantityDelta > 0 ? 'text-emerald-700' : 'text-red-700'}`}>{movement.quantityDelta > 0 ? '+' : ''}{movement.quantityDelta}</td>
                     <td className="p-3 font-mono font-semibold">{movement.newStock}</td>
-                    <td className="p-3">{movement.reason}</td>
+                    <td className="p-3 whitespace-nowrap">{movement.costPriceSnapshot == null ? <span className="text-amber-700">Not recorded</span> : formatInr(Number(movement.costPriceSnapshot))}</td>
+                    <td className="p-3 whitespace-nowrap">{movement.previousStockCostValue == null ? '—' : formatInr(Number(movement.previousStockCostValue))}</td>
+                    <td className="p-3 whitespace-nowrap">{movement.newStockCostValue == null ? '—' : formatInr(Number(movement.newStockCostValue))}</td>
+                    <td className="p-3 min-w-[180px]">{movement.reason}</td>
                     <td className="p-3"><span className="block">{movement.adminName}</span><span className="text-[10px] text-[#6F6475]">{movement.adminEmail}</span></td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3 border-t border-[#E7DCEB] text-xs text-[#6F6475]">
+            <span>Showing {movementTotal ? (movementPage - 1) * MOVEMENT_PAGE_SIZE + 1 : 0}–{Math.min(movementPage * MOVEMENT_PAGE_SIZE, movementTotal)} of {movementTotal} movements</span>
+            <div className="flex items-center gap-2"><button type="button" disabled={movementPage <= 1 || movementLoading} onClick={() => setMovementPage(page => Math.max(1, page - 1))} className="min-h-10 px-3 border border-[#E7DCEB] rounded-xs disabled:opacity-40">Previous</button><span>Page {movementPage} of {movementTotalPages}</span><button type="button" disabled={movementPage >= movementTotalPages || movementLoading} onClick={() => setMovementPage(page => Math.min(movementTotalPages, page + 1))} className="min-h-10 px-3 border border-[#E7DCEB] rounded-xs disabled:opacity-40">Next</button></div>
           </div>
         </section>
 

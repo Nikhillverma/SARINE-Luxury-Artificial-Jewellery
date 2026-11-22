@@ -50,6 +50,27 @@ export interface InventoryMovement {
   newStock: number;
   reason: string;
   createdAt: string;
+  movementType?: 'product' | 'variant';
+  variantLabel?: string | null;
+  costPriceSnapshot?: number | string | null;
+  previousStockCostValue?: number | string | null;
+  newStockCostValue?: number | string | null;
+}
+
+export interface InventoryMovementQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface InventoryMovementPage {
+  movements: InventoryMovement[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 export interface BulkProductUpdates { price?: number; compareAtPrice?: number | null; categoryId?: string; status?: "active" | "draft"; }
@@ -99,7 +120,7 @@ export interface IAdminProductService {
   getVariantInventoryMovements(productId: string): Promise<VariantInventoryMovement[]>;
   bulkUpdateProducts(productIds: string[], updates: BulkProductUpdates): Promise<BulkProductUpdateResult>;
   adjustStock(id: string, quantityDelta: number, reason: string): Promise<InventoryMovement>;
-  getInventoryMovements(): Promise<InventoryMovement[]>;
+  getInventoryMovements(options?: InventoryMovementQuery): Promise<InventoryMovementPage>;
   deleteProduct(id: string): Promise<boolean>;
   archiveProduct(id: string): Promise<Product>;
 }

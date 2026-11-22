@@ -110,7 +110,7 @@ export const adminProductService: IAdminProductService =
         reason, createdAt: new Date().toISOString()
       };
     },
-    getInventoryMovements: async () => [],
+    getInventoryMovements: async (options = {}) => ({ movements: [], total: 0, page: options.page ?? 1, limit: options.limit ?? 25, totalPages: 0 }),
 
     deleteProduct: async id => {
       const item = mockProductService._getAllInternal().find(p => p.id === id);

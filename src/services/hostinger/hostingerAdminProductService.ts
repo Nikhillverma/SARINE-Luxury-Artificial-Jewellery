@@ -1,5 +1,5 @@
 import type { Product, ProductVariant } from '../../types/product';
-import type { IAdminProductService, InventoryMovement, BulkProductUpdates, BulkProductUpdateResult, ProductVariantDraft, VariantInventoryMovement } from '../interfaces';
+import type { IAdminProductService, InventoryMovement, InventoryMovementQuery, InventoryMovementPage, BulkProductUpdates, BulkProductUpdateResult, ProductVariantDraft, VariantInventoryMovement } from '../interfaces';
 
 const API_BASE = (
   import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
@@ -87,9 +87,15 @@ export class HostingerAdminProductService implements IAdminProductService {
     return result.movement;
   }
 
-  async getInventoryMovements(): Promise<InventoryMovement[]> {
-    const result = await request<{ movements: InventoryMovement[] }>('/admin/inventory/movements');
-    return result.movements;
+  async getInventoryMovements(options: InventoryMovementQuery = {}): Promise<InventoryMovementPage> {
+    const params = new URLSearchParams();
+    if (options.page !== undefined) params.set('page', String(options.page));
+    if (options.limit !== undefined) params.set('limit', String(options.limit));
+    if (options.search?.trim()) params.set('search', options.search.trim());
+    if (options.from) params.set('from', options.from);
+    if (options.to) params.set('to', options.to);
+    const query = params.toString();
+    return request<InventoryMovementPage>(`/admin/inventory/movements${query ? `?${query}` : ''}`);
   }
 
   async deleteProduct(id: string): Promise<boolean> {
