@@ -100,7 +100,7 @@ publicRouter.get("/:slug", async (req,res,next) => {
     await ensureSchema();
     const slug = String(req.params.slug || "").toLowerCase();
     if (!slugPattern.test(slug)) return res.status(404).json({error:"Page not found."});
-    const [rows] = await pool.execute("SELECT published_json FROM cms_pages WHERE JSON_UNQUOTE(JSON_EXTRACT(published_json, "$.slug"))=? AND is_published=1 LIMIT 1",[slug]);
+    const [rows] = await pool.execute(`SELECT published_json FROM cms_pages WHERE JSON_UNQUOTE(JSON_EXTRACT(published_json, "$.slug"))=? AND is_published=1 LIMIT 1`, [slug]);
     if (!rows.length) return res.status(404).json({error:"Page not found."});
     const page = JSON.parse(rows[0].published_json);
     res.set("Cache-Control","public, max-age=60, stale-while-revalidate=300").json({page});
