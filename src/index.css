@@ -558,10 +558,16 @@ body.sarine-global-theme #main-content li {
   #sarine-mobile-navigation {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
+  #sarine-mobile-navigation .flex-1 a {
+    min-height: 40px;
+    align-items: center;
+  }
 }
 
 @media (hover: none) and (pointer: coarse) {
-  .product-grid > article .group-hover\\:opacity-100 {
+  .product-grid > article > div.relative > a.absolute {
+    min-height: 44px;
     opacity: 1;
   }
 }
