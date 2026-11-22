@@ -111,7 +111,7 @@ export const AccountPage: React.FC = () => {
   if (loading) return <main className="min-h-[60vh] flex items-center justify-center bg-[var(--tint)] text-[var(--plum)]">Loading your SARINE account…</main>;
 
   return (
-    <main className="min-h-screen bg-[var(--tint)] text-[var(--heading)] font-sans py-10 sm:py-14">
+    <main className="min-h-screen bg-white text-[var(--heading)] font-sans py-10 sm:py-14">
       <div className="site-container max-w-6xl">
         <div className="max-w-2xl mx-auto text-center mb-9">
           <span className="block text-[10px] uppercase tracking-[0.25em] text-[color:var(--body)] font-medium mb-2">YOUR SARINE SPACE</span>
