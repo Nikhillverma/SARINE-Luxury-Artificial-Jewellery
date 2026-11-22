@@ -442,8 +442,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
               </button>
 
               {/* Discount Tag */}
-              {campaignDiscount > 0 && <div className="absolute top-3 left-3 bg-[#A43E55] text-white text-[11px] font-sans font-semibold px-2.5 py-1 rounded-xs">{campaignDiscount}% SALE OFF</div>}
-              {discountPercent && <div className={campaignDiscount > 0 ? "absolute top-11 left-3 bg-[var(--plum)] text-[color:var(--white)] text-[11px] font-sans font-medium px-2.5 py-1 rounded-xs" : "absolute top-3 left-3 bg-[var(--plum)] text-[color:var(--white)] text-[11px] font-sans font-medium px-2.5 py-1 rounded-xs"}>{discountPercent}% OFF</div>}
+              {campaignDiscount > 0 && <div className="absolute top-3 left-3 bg-[var(--rose)] text-[color:var(--white)] text-[11px] font-sans font-semibold px-2.5 py-1 rounded-xs">{campaignDiscount}% SALE OFF</div>}
+              {discountPercent && <div className={campaignDiscount > 0 ? "absolute top-11 left-3 bg-[var(--rose)] text-[color:var(--white)] text-[11px] font-sans font-medium px-2.5 py-1 rounded-xs" : "absolute top-3 left-3 bg-[var(--rose)] text-[color:var(--white)] text-[11px] font-sans font-medium px-2.5 py-1 rounded-xs"}>{discountPercent}% OFF</div>}
             </div>
           </div>
 
@@ -603,7 +603,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                 >
                   <Heart
                     size={16}
-                    className={wishlisted ? 'fill-[var(--gold)] text-[color:var(--gold)]' : 'text-[color:var(--body)]'}
+                    className={wishlisted ? 'fill-[var(--white)] text-[color:var(--white)]' : 'text-[color:var(--plum)]'}
                   />
                 </button>
               </div>
