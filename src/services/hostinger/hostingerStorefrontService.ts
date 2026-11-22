@@ -33,7 +33,7 @@ export const DEFAULT_GLOBAL_DESIGN: GlobalDesignSettings = {
   version: 1,
   colors: {
     primary: "#563568", accent: "#B69ACF", surface: "#F7F0FA",
-    pageBackground: "#FFFFFF", text: "#302438", headerBackground: "#FFFFFF",
+    pageBackground: "#FFFFFF", text: "#563568", headerBackground: "#FFFFFF",
     footerBackground: "#563568", footerText: "#F7F0FA"
   },
   typography: {

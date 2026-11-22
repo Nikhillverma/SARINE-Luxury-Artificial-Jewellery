@@ -29,7 +29,7 @@ export const Footer: React.FC = () => {
   useEffect(() => { let active = true; siteChromeService.getPublic().then(({ settings }) => { if (active) setChrome(settings); }).catch(() => undefined); return () => { active = false; }; }, []);
 
   return (
-    <footer className="bg-[#563568] text-[#F7F0FA] border-t border-[#E7DCEB] font-sans">
+    <footer className="sarine-global-footer bg-[#563568] text-[#F7F0FA] border-t border-[#E7DCEB] font-sans">
       {/* Trust Strip */}
       <div className="w-full bg-[#F7F0FA] text-[#302438] border-b border-[#E7DCEB] py-8 sm:py-10">
         <div className="site-container">
