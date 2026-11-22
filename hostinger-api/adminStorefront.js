@@ -534,3 +534,89 @@ adminOnly.patch("/reviews/:id", async (req, res, next) => {
     res.json({ success: true });
   } catch (error) { next(error); }
 });
+
+
+// Global brand design settings: draft and published snapshots share the existing
+// storefront_settings table, so this feature does not require a database migration.
+const defaultGlobalDesign = {
+  version: 1,
+  colors: {
+    primary: "#563568", accent: "#B69ACF", surface: "#F7F0FA",
+    pageBackground: "#FFFFFF", text: "#302438", headerBackground: "#FFFFFF",
+    footerBackground: "#563568", footerText: "#F7F0FA"
+  },
+  typography: {
+    headingFont: "Cormorant Garamond", bodyFont: "Plus Jakarta Sans",
+    headingScale: 100, bodyScale: 100
+  },
+  layout: { contentWidth: 1280, cornerRadius: 8 },
+  components: { buttonStyle: "solid" }
+};
+function validateGlobalDesign(input) {
+  const value = input && typeof input === "object" ? input : {};
+  const colors = { ...defaultGlobalDesign.colors, ...(value.colors || {}) };
+  for (const [key, color] of Object.entries(colors)) {
+    if (!/^#[0-9a-f]{6}$/i.test(String(color))) throw new Error("Choose a valid six-digit hex colour for " + key + ".");
+    colors[key] = String(color).toUpperCase();
+  }
+  const typography = { ...defaultGlobalDesign.typography, ...(value.typography || {}) };
+  if (!["Cormorant Garamond", "Georgia", "Playfair Display"].includes(typography.headingFont)) throw new Error("Choose a supported heading font.");
+  if (!["Plus Jakarta Sans", "Arial", "DM Sans"].includes(typography.bodyFont)) throw new Error("Choose a supported body font.");
+  if (!Number.isInteger(typography.headingScale) || typography.headingScale < 90 || typography.headingScale > 120 || !Number.isInteger(typography.bodyScale) || typography.bodyScale < 90 || typography.bodyScale > 110) throw new Error("Typography scale is outside the allowed range.");
+  const layout = { ...defaultGlobalDesign.layout, ...(value.layout || {}) };
+  if (![1120, 1200, 1280, 1360].includes(layout.contentWidth)) throw new Error("Choose a supported content width.");
+  if (![0, 4, 8, 16].includes(layout.cornerRadius)) throw new Error("Choose a supported corner radius.");
+  const components = { ...defaultGlobalDesign.components, ...(value.components || {}) };
+  if (!["solid", "outline"].includes(components.buttonStyle)) throw new Error("Choose a supported button style.");
+  return { version: 1, colors, typography, layout, components };
+}
+async function readGlobalDesignRecord() {
+  await ensureSchema();
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='global_design' LIMIT 1");
+  if (!rows.length) return { draft: defaultGlobalDesign, published: defaultGlobalDesign };
+  try {
+    const saved = JSON.parse(rows[0].setting_value);
+    return {
+      draft: validateGlobalDesign(saved.draft || defaultGlobalDesign),
+      published: validateGlobalDesign(saved.published || defaultGlobalDesign)
+    };
+  } catch {
+    return { draft: defaultGlobalDesign, published: defaultGlobalDesign };
+  }
+}
+async function writeGlobalDesignRecord(record) {
+  await pool.execute(
+    "INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('global_design', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)",
+    [JSON.stringify(record)]
+  );
+}
+adminOnly.get("/design", async (_req, res, next) => {
+  try {
+    const record = await readGlobalDesignRecord();
+    res.set("Cache-Control", "no-store").json(record);
+  } catch (error) { next(error); }
+});
+adminOnly.put("/design", async (req, res, next) => {
+  try {
+    let draft;
+    try { draft = validateGlobalDesign(req.body?.design); }
+    catch (error) { return res.status(400).json({ error: error.message }); }
+    const record = await readGlobalDesignRecord();
+    await writeGlobalDesignRecord({ ...record, draft });
+    res.set("Cache-Control", "no-store").json({ success: true, draft });
+  } catch (error) { next(error); }
+});
+adminOnly.post("/design/publish", async (_req, res, next) => {
+  try {
+    const record = await readGlobalDesignRecord();
+    const published = validateGlobalDesign(record.draft);
+    await writeGlobalDesignRecord({ ...record, published });
+    res.set("Cache-Control", "no-store").json({ success: true, published });
+  } catch (error) { next(error); }
+});
+publicRouter.get("/design", async (_req, res, next) => {
+  try {
+    const { published } = await readGlobalDesignRecord();
+    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300").json({ design: published });
+  } catch (error) { next(error); }
+});
