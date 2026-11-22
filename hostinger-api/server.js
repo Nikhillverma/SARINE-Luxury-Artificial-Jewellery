@@ -3,7 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { pool, testDatabase } from "./db.js";
-import { markExistingOrdersAsPrelaunchTests } from "./prelaunchOrderMigration.js";
+import { markExistingOrdersAsPrelaunchTests, markNamedTestProductOrdersAsTests } from "./prelaunchOrderMigration.js";
 import adminAuthRouter from "./adminAuth.js";
 import { publicContactInquiriesRouter, adminContactInquiriesRouter } from "./contactInquiries.js";
 import { ensureContactInquiriesSchema } from "./contactInquirySchema.js";
@@ -437,6 +437,12 @@ app.use((error, _req, res, _next) => {
 async function startServer() {
   // Finish the one-time pre-launch order classification before accepting requests.
   await markExistingOrdersAsPrelaunchTests();
+  const migrationConnection = await pool.getConnection();
+  try {
+    await markNamedTestProductOrdersAsTests(migrationConnection);
+  } finally {
+    migrationConnection.release();
+  }
   await ensureProductVideoColumn();
   await ensureOrderStatusSchema();
   await ensureContactInquiriesSchema();
