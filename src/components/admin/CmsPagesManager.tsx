@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { cmsPagesService, type CmsPage, type CmsBlock, type CmsPageDraft } from "../../services/hostinger/cmsPagesService";
-import { hostingerMediaService } from "../../services/hostinger/hostingerMediaService";
+import { hostingerMediaService } from "../../services";
 
 const blank: CmsPageDraft = { title:"", slug:"", seoTitle:"", seoDescription:"", blocks:[] };
 export const CmsPagesManager: React.FC = () => {
