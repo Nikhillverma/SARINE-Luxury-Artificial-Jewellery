@@ -4,6 +4,7 @@ import { CuratedFavouritesManager } from "../../components/admin/CuratedFavourit
 import { ShopByOccasionManager } from "../../components/admin/ShopByOccasionManager";
 import { HomepageSectionManager } from "../../components/admin/HomepageSectionManager";
 import { HomepageContentManager } from "../../components/admin/HomepageContentManager";
+import { CmsPagesManager } from "../../components/admin/CmsPagesManager";
 import { hostingerMediaService } from "../../services";
 import { hostingerStorefrontService, type StorefrontBanner, type EditorialContent, type ProductReview } from "../../services/hostinger/hostingerStorefrontService";
 
@@ -161,6 +162,7 @@ export const AdminStorefrontPage: React.FC = () => {
       <ShopByOccasionManager />
       <HomepageSectionManager />
       <HomepageContentManager />
+      <CmsPagesManager />
       <CuratedFavouritesManager />
       {error && <div role="alert" className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>}
       {message && <div role="status" className="p-3 rounded-lg bg-green-50 text-green-800 text-sm">{message}</div>}
