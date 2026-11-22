@@ -21,7 +21,7 @@ test("describes a product update without retaining request secrets", () => {
   });
   assert.equal(event.entityType, "product");
   assert.equal(event.entityId, "product-123");
-  assert.equal(event.action, "put products");
+  assert.equal(event.action, "updated");
   assert.match(event.summary, /Pearl Necklace/);
   assert.doesNotMatch(JSON.stringify(event), /must-never-be-logged|customer@example.com|secret/);
   assert.equal(event.route, "/products/product-123");
@@ -53,5 +53,5 @@ test("does not invent a target identifier for bulk admin actions", () => {
   });
   assert.equal(event.entityType, "product");
   assert.equal(event.entityId, null);
-  assert.equal(event.summary, "product created");
+  assert.equal(event.summary, "product bulk updated");
 });
