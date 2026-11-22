@@ -109,6 +109,9 @@ export const AdminOrdersPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>(() => searchParams.get('search') || '');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest');
 
   // Selected Order for Detail Drawer
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
@@ -254,16 +257,50 @@ export const AdminOrdersPage: React.FC = () => {
 
   // 3. Client-side Search Filtering
   const filteredOrders = useMemo(() => {
-    if (!searchTerm.trim()) return orders;
     const term = searchTerm.toLowerCase().trim();
-    return orders.filter(
-      (o) =>
-        o.orderNumber.toLowerCase().includes(term) ||
-        o.customer.name.toLowerCase().includes(term) ||
-        o.customer.email.toLowerCase().includes(term) ||
-        o.customer.phone.includes(term)
-    );
-  }, [orders, searchTerm]);
+    return orders.filter((o) => {
+      const matchesSearch = !term || [o.orderNumber, o.customer?.name, o.customer?.email, o.customer?.phone, o.shippingAddress?.pincode, ...(o.lines || []).map((line) => line.name)].some((value) => String(value || '').toLowerCase().includes(term));
+      const orderDate = o.createdAt ? new Date(o.createdAt) : null;
+      const validDate = orderDate && Number.isFinite(orderDate.getTime());
+      const matchesFrom = !dateFrom || (validDate && orderDate!.toISOString().slice(0, 10) >= dateFrom);
+      const matchesTo = !dateTo || (validDate && orderDate!.toISOString().slice(0, 10) <= dateTo);
+      return matchesSearch && matchesFrom && matchesTo;
+    }).sort((a, b) => {
+      if (sortOrder === 'highest') return (Number(b.total) || 0) - (Number(a.total) || 0);
+      if (sortOrder === 'lowest') return (Number(a.total) || 0) - (Number(b.total) || 0);
+      const aDate = new Date(a.createdAt || 0).getTime() || 0;
+      const bDate = new Date(b.createdAt || 0).getTime() || 0;
+      return sortOrder === 'oldest' ? aDate - bDate : bDate - aDate;
+    });
+  }, [orders, searchTerm, dateFrom, dateTo, sortOrder]);
+
+  const orderMetrics = useMemo(() => ({
+    total: orders.length,
+    attention: orders.filter((order) => ['pending', 'placed', 'needs_refund'].includes(order.orderStatus?.toLowerCase()) || order.refundNeeded || (order.paymentStatus?.toLowerCase() === 'failed')).length,
+    inProgress: orders.filter((order) => ['confirmed', 'processing', 'packed', 'shipped', 'out_for_delivery'].includes(order.orderStatus?.toLowerCase())).length,
+    delivered: orders.filter((order) => order.orderStatus?.toLowerCase() === 'delivered').length,
+    refund: orders.filter((order) => order.refundNeeded || order.orderStatus?.toLowerCase() === 'needs_refund').length
+  }), [orders]);
+
+  const exportOrdersCsv = () => {
+    const columns = ['Order Number', 'Created At', 'Customer', 'Email', 'Phone', 'City', 'State', 'Pincode', 'Items', 'Subtotal', 'Shipping Fee', 'Total', 'Payment Method', 'Payment Status', 'Order Status', 'Courier', 'Tracking Number'];
+    const cell = (value: unknown) => {
+      const text = String(value ?? '');
+      const safe = /^[=+@\\-\\t\\r]/.test(text) ? `'${text}` : text;
+      return `"${safe.replace(/"/g, '""')}"`;
+    };
+    const rows = filteredOrders.map((order) => [order.orderNumber, order.createdAt, order.customer?.name, order.customer?.email, order.customer?.phone, order.shippingAddress?.city, order.shippingAddress?.state, order.shippingAddress?.pincode, (order.lines || []).map((line) => `${line.name} x${line.quantity}`).join('; '), order.subtotal, order.shippingFee, order.total, order.paymentMethod, order.paymentStatus, order.orderStatus, order.courierName, order.trackingNumber]);
+    const csv = [columns, ...rows].map((row) => row.map(cell).join(',')).join('\\r\\n');
+    const blob = new Blob(['\\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `sarine-orders-loaded-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
 
   // 4. Order Mutation Actions
   const handleUpdateOrder = async (action: string, extraPayload: Record<string, any> = {}) => {
@@ -508,8 +545,26 @@ export const AdminOrdersPage: React.FC = () => {
           </button>
         </div>
 
+        {/* Live ledger snapshot */}
+        <section aria-label="Order overview" className="grid grid-cols-2 xl:grid-cols-5 gap-3">
+          {[
+            { label: 'Loaded orders', value: orderMetrics.total, hint: 'Current fetched records' },
+            { label: 'Needs attention', value: orderMetrics.attention, hint: 'Pending, failed or refund' },
+            { label: 'In fulfilment', value: orderMetrics.inProgress, hint: 'Being prepared or delivered' },
+            { label: 'Delivered', value: orderMetrics.delivered, hint: 'Completed deliveries' },
+            { label: 'Refund flags', value: orderMetrics.refund, hint: 'Requires manual review' }
+          ].map((metric) => (
+            <div key={metric.label} className="bg-white border border-[#E7DCEB] rounded-xs p-4 min-w-0">
+              <p className="text-[10px] uppercase tracking-wider text-[#6F6475]">{metric.label}</p>
+              <p className="mt-1 font-serif text-2xl text-[#302438] tabular-nums">{loading && orders.length === 0 ? '—' : metric.value}</p>
+              <p className="mt-1 text-[10px] text-[#8A7C90]">{metric.hint}</p>
+            </div>
+          ))}
+        </section>
+        <p className="text-[11px] text-[#6F6475]">Overview counts reflect orders currently loaded in this ledger view, not the entire database. Use “Load more” to extend the snapshot.</p>
+
         {/* Filter Bar */}
-        <div className="bg-white p-4 border border-[#E7DCEB] rounded-xs shadow-2xs space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-4 sm:justify-between">
+        <div className="bg-white p-4 border border-[#E7DCEB] rounded-xs shadow-2xs space-y-3">
           {/* Client-side Search */}
           <div className="relative flex-1 max-w-sm">
             <input
@@ -568,6 +623,18 @@ export const AdminOrdersPage: React.FC = () => {
                 <option value="pending">Pending / COD</option>
                 <option value="failed">Failed</option>
               </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-[#E7DCEB]">
+            <label className="text-[11px] text-[#6F6475]">From date<input type="date" value={dateFrom} max={dateTo || undefined} onChange={(event) => setDateFrom(event.target.value)} className="mt-1 block w-full min-h-10 px-3 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs text-xs text-[#302438]" /></label>
+            <label className="text-[11px] text-[#6F6475]">To date<input type="date" value={dateTo} min={dateFrom || undefined} onChange={(event) => setDateTo(event.target.value)} className="mt-1 block w-full min-h-10 px-3 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs text-xs text-[#302438]" /></label>
+            <label className="text-[11px] text-[#6F6475]">Sort orders<select value={sortOrder} onChange={(event) => setSortOrder(event.target.value as typeof sortOrder)} className="mt-1 block w-full min-h-10 px-3 bg-[#F7F0FA] border border-[#E7DCEB] rounded-xs text-xs text-[#302438]"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="highest">Highest value</option><option value="lowest">Lowest value</option></select></label>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <p className="text-[11px] text-[#6F6475]">Showing {filteredOrders.length} matching orders from {orders.length} loaded.</p>
+            <div className="flex flex-wrap gap-2">
+              {(searchTerm || dateFrom || dateTo) && <button type="button" onClick={() => { setSearchTerm(''); setDateFrom(''); setDateTo(''); }} className="min-h-10 px-3 border border-[#E7DCEB] text-xs text-[#6F6475] rounded-xs hover:bg-[#FAF5FC]">Clear filters</button>}
+              <button type="button" onClick={exportOrdersCsv} disabled={!filteredOrders.length} className="min-h-10 px-4 bg-[#563568] text-white text-xs font-medium rounded-xs hover:bg-[#80609A] disabled:opacity-40">Export loaded results CSV</button>
             </div>
           </div>
         </div>
