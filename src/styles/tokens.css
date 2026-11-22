@@ -7,33 +7,33 @@
   /* Official Brand Palette */
   --color-brand-primary: #563568;    /* Deep Plum */
   --color-brand-accent: #B69ACF;     /* Lavender */
-  --color-brand-background: #F7F0FA; /* Soft Lavender Background */
-  --color-brand-gold: #FFFFFF;       /* Champagne Gold */
+  --color-brand-background: #F7F4F8; /* Soft Lavender Background */
+  --color-brand-gold: #B8893C;       /* Champagne Gold */
 
-  --color-text-primary: #302438;     /* Primary Text */
-  --color-text-secondary: #6F6475;   /* Secondary Text */
+  --color-text-primary: #1D1B1F;     /* Primary Text */
+  --color-text-secondary: #5C5660;   /* Secondary Text */
 
   --color-surface: #FFFFFF;          /* White */
-  --color-border: #E7DCEB;           /* Subtle Border */
-  --color-hover: #A184BD;            /* Hover Lavender */
-  --color-focus: #80609A;            /* Focus Ring */
+  --color-border: #E9E5E9;           /* Subtle Border */
+  --color-hover: #6B4A7D;            /* Hover Lavender */
+  --color-focus: #563568;            /* Focus Ring */
 
   /* Backgrounds & Surfaces */
-  --color-bg-primary: #F7F0FA;       /* Soft Lavender Background */
-  --color-bg-surface: #F0E6F4;       /* Subtle plum/lavender panel background */
+  --color-bg-primary: #FFFFFF;       /* Soft Lavender Background */
+  --color-bg-surface: #F7F4F8;       /* Subtle plum/lavender panel background */
   --color-bg-elevated: #FFFFFF;      /* Pure white content surface */
-  --color-bg-subtle: #EBE0F0;        /* Subtle lavender separator background */
+  --color-bg-subtle: #F7F4F8;        /* Subtle lavender separator background */
 
   /* Text & Contrast */
-  --color-text-muted: #6F6475;       /* Muted secondary text */
+  --color-text-muted: #5C5660;       /* Muted secondary text */
   --color-text-inverse: #FFFFFF;     /* White text on dark surfaces */
 
   /* Accents & Borders */
-  --color-accent-gold: #FFFFFF;      /* Champagne gold decorative details */
-  --color-accent-gold-hover: #C5A288;
-  --color-accent-gold-soft: #F8F1EB;
-  --color-border-subtle: #F0E8F3;    /* Faint separator lines */
-  --color-border-strong: #80609A;    /* Interactive borders and focus */
+  --color-accent-gold: #B8893C;      /* Champagne gold decorative details */
+  --color-accent-gold-hover: #9B7130;
+  --color-accent-gold-soft: #F7F4F8;
+  --color-border-subtle: #E9E5E9;    /* Faint separator lines */
+  --color-border-strong: #563568;    /* Interactive borders and focus */
 
   /* Status / Feedback */
   --color-status-success: #2E7D32;   /* Forest green */
