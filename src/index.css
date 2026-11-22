@@ -567,7 +567,7 @@ body.sarine-global-theme #main-content .sarine-home .sarine-editorial-banner > d
    ========================================================================== */
 body.sarine-global-theme #main-content {
   background: var(--sarine-global-page, #FFFFFF);
-  color: var(--sarine-global-text, var(--heading));
+  color: var(--sarine-global-text, #563568);
   font-family: var(--sarine-global-body-font, "Plus Jakarta Sans"), sans-serif;
 }
 body.sarine-global-theme #main-content .site-container {
@@ -706,7 +706,7 @@ body.sarine-global-theme .sarine-global-header a,
 body.sarine-global-theme .sarine-global-header button,
 body.sarine-global-theme .sarine-global-header span,
 body.sarine-global-theme .sarine-global-header svg {
-  color: var(--sarine-global-text, #563568);
+  color: var(--sarine-global-text, var(--heading));
 }
 body.sarine-global-theme .sarine-global-announcement {
   background-color: var(--sarine-global-primary, var(--plum)) !important;
