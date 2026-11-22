@@ -37,14 +37,14 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
       <section className="bg-[var(--tint)] border-b border-[var(--border)] py-10 sm:py-14 text-center">
         <div className="site-container">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <span className="h-[1px] w-8 bg-[#D9B8A0]"></span>
-            <span className="text-[11px] uppercase tracking-[0.28em] text-[#563568] font-medium font-sans">
+            <span className="h-[1px] w-8 bg-[var(--gold)]"></span>
+            <span className="text-[11px] uppercase tracking-[0.28em] text-[var(--plum)] font-medium font-sans">
               {categoryName}
             </span>
-            <span className="h-[1px] w-8 bg-[#D9B8A0]"></span>
+            <span className="h-[1px] w-8 bg-[var(--gold)]"></span>
           </div>
 
-          <h1 className="font-serif text-3xl sm:text-4xl text-[#302438] font-normal tracking-wide">
+          <h1 className="font-serif text-3xl sm:text-4xl text-[var(--heading)] font-normal tracking-wide">
             {title}
           </h1>
 
@@ -53,7 +53,7 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
           </p>
 
           <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-[color:var(--body)] font-sans">
-            <Clock size={12} className="text-[#563568]" />
+            <Clock size={12} className="text-[var(--plum)]" />
             <span>Last updated: 21 October 2026</span>
           </div>
         </div>
@@ -71,7 +71,7 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
                   to={link.path}
                   className={`whitespace-nowrap px-3.5 py-1.5 text-xs font-sans tracking-wider transition-colors uppercase rounded-xs ${
                     isActive
-                      ? 'bg-[#563568] text-white font-medium'
+                      ? 'bg-[var(--plum)] text-white font-medium'
                       : 'text-[color:var(--body)] hover:text-[color:var(--plum)] hover:bg-[var(--tint)]'
                   }`}
                 >
