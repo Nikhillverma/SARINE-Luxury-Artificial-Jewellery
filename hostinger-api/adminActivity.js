@@ -62,7 +62,7 @@ function cleanText(value, maxLength = 180) {
   return String(value).replace(/[\\u0000-\\u001f\\u007f]/g, " ").trim().slice(0, maxLength);
 }
 
-function describeActivity(req) {
+export function describeActivity(req) {
   const method = String(req.method || "POST").toUpperCase();
   const route = String(req.originalUrl || req.path || "").split("?")[0]
     .replace(/^\\/api\\/admin/, "").slice(0, 255);
@@ -104,29 +104,35 @@ export function captureAdminActivity(req, res, next) {
     if (res.statusCode < 200 || res.statusCode >= 400 || !req.admin?.id) return;
     const event = describeActivity(req);
     const admin = req.admin;
-    pool.execute(
+    void recordAdminActivity(admin, { ...event, statusCode: res.statusCode });
+  });
+
+  next();
+}
+
+export async function recordAdminActivity(admin, event) {
+  try {
+    await pool.execute(
       `INSERT INTO admin_activity_logs
        (admin_id, admin_name, admin_email, action, entity_type, entity_id,
         summary, http_method, route, status_code)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        cleanText(admin.id, 64),
-        cleanText(admin.name || admin.email, 160),
-        cleanText(admin.email, 254),
-        event.action,
-        event.entityType,
-        event.entityId,
-        event.summary,
-        event.method,
-        event.route,
-        res.statusCode
+        cleanText(admin?.id, 64),
+        cleanText(admin?.name || admin?.email, 160),
+        cleanText(admin?.email, 254),
+        cleanText(event?.action, 100),
+        cleanText(event?.entityType || "admin", 80),
+        cleanText(event?.entityId, 190) || null,
+        cleanText(event?.summary, 500),
+        cleanText(event?.method || "POST", 10),
+        cleanText(event?.route || "/auth", 255),
+        Math.max(200, Math.min(599, Number(event?.statusCode) || 200))
       ]
-    ).catch(error => {
-      console.error("Admin activity audit write failed:", error.message);
-    });
-  });
-
-  next();
+    );
+  } catch (error) {
+    console.error("Admin activity audit write failed:", error.message);
+  }
 }
 
 function dateBoundary(value, nextDay = false) {
