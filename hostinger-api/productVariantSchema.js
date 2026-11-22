@@ -179,7 +179,8 @@ export async function recordVariantInventoryMovement(connection, {
     [movement.id, movement.variantId, movement.productId, movement.productName,
      movement.variantSku, movement.variantLabel, movement.adminId, movement.adminName,
      movement.adminEmail, movement.previousStock, movement.quantityDelta,
-     movement.newStock, movement.reason]
+     movement.newStock, movement.reason, movement.costPriceSnapshot,
+     movement.previousStockCostValue, movement.newStockCostValue]
   );
   return movement;
 }
