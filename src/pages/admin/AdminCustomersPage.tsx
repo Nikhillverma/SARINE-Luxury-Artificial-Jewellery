@@ -32,7 +32,7 @@ function segmentLabel(segment: SegmentFilter) {
 
 function csvCell(value: unknown) {
   let text = String(value ?? '');
-  if (/^[\\s\\u0000-\\u001f]*[=+\\-@\\t\\r]/.test(text)) text = "'" + text;
+  if (/^[\\s\\u0000-\\u001f]*[-=+@]/.test(text)) text = "'" + text;
   return '"' + text.replace(/"/g, '""') + '"';
 }
 
