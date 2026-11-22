@@ -112,10 +112,10 @@ function MainAppShell() {
         if (!active || !design) return;
         const root = document.documentElement;
         root.style.setProperty('--sarine-global-primary', '#563568');
-        root.style.setProperty('--sarine-global-accent', '#B8893C');
-        root.style.setProperty('--sarine-global-surface', '#F7F4F8');
+        root.style.setProperty('--sarine-global-accent', '#B69ACF');
+        root.style.setProperty('--sarine-global-surface', '#F7F0FA');
         root.style.setProperty('--sarine-global-page', '#FFFFFF');
-        root.style.setProperty('--sarine-global-text', '#5C5660');
+        root.style.setProperty('--sarine-global-text', '#563568');
         root.style.setProperty('--sarine-global-header', design.colors.headerBackground);
         root.style.setProperty('--sarine-global-footer', design.colors.footerBackground);
         root.style.setProperty('--sarine-global-footer-text', design.colors.footerText);
@@ -144,7 +144,7 @@ function MainAppShell() {
     <>
     <a href="#main-content" className="skip-link">Skip to main content</a>
     <RouteMetadata />
-    <div className="min-h-screen w-full flex flex-col bg-white text-[#5C5660] selection:bg-[#563568]/15 selection:text-[#1D1B1F]">
+    <div className="min-h-screen w-full flex flex-col bg-white text-[#563568] selection:bg-[#B69ACF]/30 selection:text-[#563568]">
       {/* Public Storefront Navigation & Slide-in Drawers */}
       {!isAdminRoute && (
         <>
