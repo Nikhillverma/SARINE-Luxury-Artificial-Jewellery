@@ -579,3 +579,18 @@ body.sarine-global-theme #main-content li {
     transform: none !important;
   }
 }
+
+
+/* Restore the clean white storefront canvas requested for SARINE. */
+body.sarine-global-theme,
+body.sarine-global-theme #root,
+body.sarine-global-theme #main-content,
+body.sarine-global-theme #main-content .sarine-home {
+  background-color: #FFFFFF !important;
+}
+body.sarine-global-theme #main-content .sarine-home > section:not(:first-child) {
+  background: #FFFFFF !important;
+}
+body.sarine-global-theme #main-content .sarine-home > section:has(img[alt="SARINE Craftsmanship and Jewellery Details"]) {
+  background: #FFFFFF !important;
+}
