@@ -17,11 +17,10 @@ export const SiteChromeManager: React.FC = () => {
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
-  const update = (patch: Partial<SiteChromeSettings>) => setSettings(current => ({
+  const update = (patch: { header?: Partial<SiteChromeSettings["header"]>; footer?: { tagline?: string; copyright?: string; social?: Partial<SiteChromeSettings["footer"]["social"]>; headings?: Partial<SiteChromeSettings["footer"]["headings"]> } }) => setSettings(current => ({
     ...current,
-    ...patch,
     header: { ...current.header, ...(patch.header || {}) },
-    footer: { ...current.footer, ...(patch.footer || {}) }
+    footer: { ...current.footer, ...(patch.footer || {}), social: { ...current.footer.social, ...(patch.footer?.social || {}) }, headings: { ...current.footer.headings, ...(patch.footer?.headings || {}) } }
   }));
   const save = async () => {
     setBusy(true); setError(""); setMessage("");
