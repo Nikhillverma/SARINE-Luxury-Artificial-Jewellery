@@ -336,7 +336,7 @@ export const TrackOrderPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-[var(--plum)] text-white text-xs sm:text-[13px] font-medium uppercase tracking-wider hover:bg-[var(--white)] transition-colors rounded-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                className="w-full py-3 bg-[var(--plum)] text-white text-xs sm:text-[13px] font-medium uppercase tracking-wider hover:bg-[var(--gold)] transition-colors rounded-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
               >
                 {loading ? (
                   <span>Checking status...</span>
