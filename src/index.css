@@ -524,3 +524,37 @@ body.sarine-global-theme #main-content li { font-size: clamp(0.875rem, 1.05vw, 1
   body.sarine-global-theme #main-content h1 { font-size: clamp(2.2rem, 4.5vw, 3rem); }
   body.sarine-global-theme #main-content h2 { font-size: clamp(1.7rem, 3.4vw, 2.2rem); }
 }
+
+/* Keep homepage cards and editorial surfaces inside the approved palette. */
+body.sarine-global-theme #main-content .sarine-home {
+  background: #FFFFFF;
+  color: #563568;
+}
+body.sarine-global-theme #main-content .sarine-home > section:not(:first-child):nth-of-type(odd) {
+  background-color: #FFFFFF;
+}
+body.sarine-global-theme #main-content .sarine-home > section:not(:first-child):nth-of-type(even) {
+  background-color: #F7F0FA;
+}
+body.sarine-global-theme #main-content .sarine-home .category-grid > a,
+body.sarine-global-theme #main-content .sarine-home .category-grid > a > div:last-child,
+body.sarine-global-theme #main-content .sarine-home .product-grid > article > div:first-child,
+body.sarine-global-theme #main-content .sarine-home .occasion-grid > a > div:first-child {
+  background: #F7F0FA;
+  border-color: #B69ACF;
+}
+body.sarine-global-theme #main-content .sarine-home .product-grid > article {
+  background: #FFFFFF;
+  border-color: #B69ACF;
+}
+body.sarine-global-theme #main-content .sarine-home .category-grid > a:hover,
+body.sarine-global-theme #main-content .sarine-home .product-grid > article:hover {
+  border-color: #563568;
+}
+body.sarine-global-theme #main-content .sarine-home > section:has(img[alt="SARINE Craftsmanship and Jewellery Details"]) {
+  background: #F7F0FA;
+}
+body.sarine-global-theme #main-content .sarine-home .sarine-editorial-banner,
+body.sarine-global-theme #main-content .sarine-home .sarine-editorial-banner > div.absolute {
+  background-color: #563568;
+}
