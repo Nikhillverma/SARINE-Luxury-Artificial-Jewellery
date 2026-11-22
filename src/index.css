@@ -918,3 +918,22 @@ body.sarine-global-theme #main-content .sarine-editorial-banner span {
   body.sarine-global-theme #main-content h1 { font-size: clamp(2.2rem, 4.5vw, 3rem) !important; }
   body.sarine-global-theme #main-content h2 { font-size: clamp(1.7rem, 3.4vw, 2.2rem) !important; }
 }
+
+
+/* Remove legacy lavender utility fills across all customer-facing routes. */
+body.sarine-global-theme #main-content [class*="bg-[#F7F0FA]"],
+body.sarine-global-theme #main-content [class*="bg-[#F7F0FA]/"],
+body.sarine-global-theme #main-content [class*="bg-[#E7DCEB]"],
+body.sarine-global-theme #main-content [class*="bg-[#B69ACF]"],
+body.sarine-global-theme #main-content [class*="bg-[#B69ACF]/"] {
+  background-color: #FFFFFF !important;
+}
+body.sarine-global-theme #main-content [class*="border-[#E7DCEB]"],
+body.sarine-global-theme #main-content [class*="border-[#B69ACF]"] {
+  border-color: #E5E5E5 !important;
+}
+body.sarine-global-theme #main-content [class*="text-[#302438]"],
+body.sarine-global-theme #main-content [class*="text-[#6F6475]"],
+body.sarine-global-theme #main-content [class*="text-[#5A4F5E]"] {
+  color: #222222 !important;
+}
