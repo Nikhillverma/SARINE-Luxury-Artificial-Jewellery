@@ -50,7 +50,7 @@ function downloadReviews(reviews: ProductReview[]) {
 
 export const AdminReviewsPage: React.FC = () => {
   const [reviews, setReviews] = useState<ProductReview[]>([]);
-  const [filter, setFilter] = useState<ReviewFilter>('pending');
+  const [filter, setFilter] = useState<ReviewFilter>('all');
   const [replies, setReplies] = useState<Record<string, string>>({});
   const [search, setSearch] = useState('');
   const [ratingFilter, setRatingFilter] = useState('all');
