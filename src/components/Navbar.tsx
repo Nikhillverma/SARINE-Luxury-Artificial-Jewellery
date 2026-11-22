@@ -214,20 +214,20 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <>
       <header
-        className="sarine-global-header sticky top-0 z-40 bg-[#FAF5FC] border-b border-[#FFFFFF]/30 shadow-xs"
+        className="sarine-global-header sticky top-0 z-40 bg-[var(--white)] border-b border-[#FFFFFF]/30 shadow-xs"
         onMouseLeave={handleMouseLeave}
       >
         {/* TIER 1: Continuous, admin-managed announcement ticker */}
-        <div className="sarine-global-announcement bg-[#563568] text-[#FAF5FC] text-[11px] sm:text-xs font-sans tracking-wide overflow-hidden">
+        <div className="sarine-global-announcement bg-[var(--plum)] text-white text-[11px] sm:text-xs font-sans tracking-wide overflow-hidden">
           <div className="site-container flex items-center min-h-[36px] sm:min-h-[40px] gap-4">
             <div className="flex-1 min-w-0 overflow-hidden" aria-label="Store announcements">
               <div className="sarine-announcement-track flex w-max items-center">
                 {[...managedTrustMessages, ...(managedAnnouncement ? [managedAnnouncement] : [])].filter(Boolean).length > 0 ? (
                   [...managedTrustMessages, ...(managedAnnouncement ? [managedAnnouncement] : [])].filter(Boolean).map((item, index) => (
-                    <span key={index} className="inline-flex items-center gap-2 px-6 whitespace-nowrap text-[11px] sm:text-xs text-[#FAF5FC]/95">
+                    <span key={index} className="inline-flex items-center gap-2 px-6 whitespace-nowrap text-[11px] sm:text-xs text-white">
                       <Sparkles size={12} className="text-[#FFFFFF] shrink-0" />
                       {item}
-                      <span className="text-[#FFFFFF]/70 ml-4">✦</span>
+                      <span className="text-[color:var(--gold-light)] ml-4" style={{ "--sarine-announcement-text": "var(--gold-light)" } as React.CSSProperties}>✦</span>
                     </span>
                   ))
                 ) : (
@@ -238,10 +238,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 )}
                 {[...managedTrustMessages, ...(managedAnnouncement ? [managedAnnouncement] : [])].filter(Boolean).length > 0 && (
                   [...managedTrustMessages, ...(managedAnnouncement ? [managedAnnouncement] : [])].filter(Boolean).map((item, index) => (
-                    <span key={`repeat-${index}`} className="inline-flex items-center gap-2 px-6 whitespace-nowrap text-[11px] sm:text-xs text-[#FAF5FC]/95" aria-hidden="true">
+                    <span key={`repeat-${index}`} className="inline-flex items-center gap-2 px-6 whitespace-nowrap text-[11px] sm:text-xs text-white" aria-hidden="true">
                       <Sparkles size={12} className="text-[#FFFFFF] shrink-0" />
                       {item}
-                      <span className="text-[#FFFFFF]/70 ml-4">✦</span>
+                      <span className="text-[color:var(--gold-light)] ml-4" style={{ "--sarine-announcement-text": "var(--gold-light)" } as React.CSSProperties}>✦</span>
                     </span>
                   ))
                 )}
@@ -252,14 +252,14 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* TIER 2: MAIN BRAND HEADER (Warm Pale Ivory/Lavender #FAF5FC) */}
-        <div className="bg-[#FAF5FC]">
+        <div className="bg-[var(--white)]">
           <div className="site-container py-3 sm:py-4 flex items-center justify-between gap-4">
             {/* Left: SARINE Wordmark with Diamond Star Motif & Tagline */}
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="inline-flex min-h-11 min-w-11 items-center justify-center text-[#302438] hover:text-[#563568] transition-colors lg:hidden cursor-pointer rounded-xs"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center text-[#302438] hover:text-[color:var(--plum)] transition-colors lg:hidden cursor-pointer rounded-xs"
                 aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
                 aria-expanded={isMobileMenuOpen}
                 aria-controls="sarine-mobile-navigation"
@@ -268,7 +268,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               <Link to="/" className="flex flex-col items-center group">
-                <span className="font-serif text-[26px] sm:text-[34px] tracking-[0.24em] text-[#563568] uppercase font-normal leading-tight group-hover:text-[#80609A] transition-colors">
+                <span className="font-serif text-[26px] sm:text-[34px] tracking-[0.24em] text-[color:var(--heading)] uppercase font-normal leading-tight group-hover:text-[#80609A] transition-colors">
                   SARINE
                 </span>
                 <div className="flex items-center justify-center w-full my-0.5 gap-2 px-1">
@@ -283,7 +283,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </svg>
                   <div className="h-[1px] flex-1 bg-[#FFFFFF]/70" />
                 </div>
-                <span className="text-[8px] sm:text-[9px] tracking-[0.32em] text-[#563568]/80 uppercase font-sans font-medium whitespace-nowrap">
+                <span className="text-[8px] sm:text-[9px] tracking-[0.32em] text-[color:var(--body)] uppercase font-sans font-medium whitespace-nowrap">
                   {headerTagline || 'LUXURY ARTIFICIAL JEWELLERY'}
                 </span>
               </Link>
@@ -293,7 +293,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="hidden lg:flex flex-1 max-w-xl mx-4 xl:mx-8">
               <div
                 onClick={() => setIsSearchOpen(true)}
-                className="w-full flex items-center bg-white border border-[#FFFFFF] hover:border-[#563568] rounded-full px-4 py-2 cursor-pointer shadow-2xs transition-all group"
+                className="w-full flex items-center bg-white border border-[#FFFFFF] hover:border-[var(--plum)] rounded-full px-4 py-2 cursor-pointer shadow-2xs transition-all group"
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -304,14 +304,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
                 aria-label="Search for jewellery, collections, or more..."
               >
-                <Search size={16} className="text-[#563568] shrink-0 mr-3" strokeWidth={1.75} />
+                <Search size={16} className="text-[color:var(--plum)] shrink-0 mr-3" strokeWidth={1.75} />
                 <span className="text-[13px] text-[#6F6475] italic tracking-wide flex-1 select-none">
                   Search for jewellery, collections, or more...
                 </span>
                 <span className="w-[1px] h-4 bg-[#E7DCEB] mx-2.5 shrink-0" />
                 <span
                   title="Search Filters"
-                  className="p-1 text-[#563568] hover:text-[#80609A] transition-colors"
+                  className="p-1 text-[color:var(--plum)] hover:text-[#80609A] transition-colors"
                 >
                   <SlidersHorizontal size={15} strokeWidth={1.75} />
                 </span>
@@ -323,7 +323,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Mobile Quick Search Button */}
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[#563568] transition-colors lg:hidden cursor-pointer rounded-full hover:bg-white/60"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors lg:hidden cursor-pointer rounded-full hover:bg-white/60"
                 aria-label="Open search"
               >
                 <Search size={20} strokeWidth={1.5} />
@@ -337,17 +337,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <Link
                   to="/account"
-                  className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer group"
+                  className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer group"
                   aria-label="My Account"
                   title="My Account"
                 >
-                  <User size={19} strokeWidth={1.5} className="text-[#563568] shrink-0" />
-                  <span className="text-[13px] font-medium text-[#302438] group-hover:text-[#563568]">
+                  <User size={19} strokeWidth={1.5} className="text-[color:var(--plum)] shrink-0" />
+                  <span className="text-[13px] font-medium text-[#302438] group-hover:text-[color:var(--plum)]">
                     My Account
                   </span>
                   <ChevronDown
                     size={13}
-                    className={`text-[#563568] transition-transform duration-200 ${
+                    className={`text-[color:var(--plum)] transition-transform duration-200 ${
                       isAccountMenuOpen ? 'rotate-180' : ''
                     }`}
                   />
@@ -356,10 +356,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {/* Mobile Account Icon Only */}
                 <Link
                   to="/account"
-                  className="sm:hidden inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[#563568] transition-colors rounded-full hover:bg-white/60"
+                  className="sm:hidden inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors rounded-full hover:bg-white/60"
                   aria-label="My Account"
                 >
-                  <User size={19} strokeWidth={1.5} className="text-[#563568]" />
+                  <User size={19} strokeWidth={1.5} className="text-[color:var(--plum)]" />
                 </Link>
 
                 {/* Account & Orders Dropdown Menu */}
@@ -378,7 +378,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onMouseLeave={handleAccountMouseLeave}
                 >
                   <div className="px-4 py-2 border-b border-[#E7DCEB]">
-                    <p className="text-[10px] uppercase tracking-wider text-[#563568] font-semibold">
+                    <p className="text-[10px] uppercase tracking-wider text-[color:var(--plum)] font-semibold">
                       Customer Account & Orders
                     </p>
                     <p className="text-[11px] text-[#6F6475] mt-0.5">
@@ -391,11 +391,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <Link
                       to="/track-order"
                       onClick={() => setIsAccountMenuOpen(false)}
-                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
+                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[var(--tint)] hover:text-[color:var(--plum)] transition-colors group"
                     >
-                      <Truck size={15} className="text-[#563568] shrink-0" />
+                      <Truck size={15} className="text-[color:var(--plum)] shrink-0" />
                       <div>
-                        <span className="font-medium block text-xs group-hover:text-[#563568]">Track My Order</span>
+                        <span className="font-medium block text-xs group-hover:text-[color:var(--plum)]">Track My Order</span>
                         <span className="text-[10px] text-[#6F6475]">Check live delivery status</span>
                       </div>
                     </Link>
@@ -406,16 +406,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                         setIsAccountMenuOpen(false);
                         openWishlist();
                       }}
-                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors w-full text-left cursor-pointer group"
+                      className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[var(--tint)] hover:text-[color:var(--plum)] transition-colors w-full text-left cursor-pointer group"
                     >
-                      <Heart size={15} className="text-[#563568] shrink-0" />
+                      <Heart size={15} className="text-[color:var(--plum)] shrink-0" />
                       <div className="flex-1 flex items-center justify-between">
                         <div>
-                          <span className="font-medium block text-xs group-hover:text-[#563568]">Saved Wishlist</span>
+                          <span className="font-medium block text-xs group-hover:text-[color:var(--plum)]">Saved Wishlist</span>
                           <span className="text-[10px] text-[#6F6475]">All your favourite pieces</span>
                         </div>
                         {wishlistCount > 0 && (
-                          <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-[#B69ACF] text-[#302438]">
+                          <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-[var(--rose)] text-white" style={{ color: "var(--white)" }}>
                             {wishlistCount}
                           </span>
                         )}
@@ -427,11 +427,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <Link
                         to="/contact"
                         onClick={() => setIsAccountMenuOpen(false)}
-                        className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[#F7F0FA] hover:text-[#563568] transition-colors group"
+                        className="min-h-[44px] flex items-center gap-3 px-4 py-2 text-[#302438] hover:bg-[var(--tint)] hover:text-[color:var(--plum)] transition-colors group"
                       >
-                        <HelpCircle size={15} className="text-[#563568] shrink-0" />
+                        <HelpCircle size={15} className="text-[color:var(--plum)] shrink-0" />
                         <div>
-                          <span className="font-medium block text-xs group-hover:text-[#563568]">Help & Support</span>
+                          <span className="font-medium block text-xs group-hover:text-[color:var(--plum)]">Help & Support</span>
                           <span className="text-[10px] text-[#6F6475]">Help, inquiries & FAQs</span>
                         </div>
                       </Link>
@@ -446,17 +446,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Wishlist Button with Label & Numeric Badge */}
               <button
                 onClick={openWishlist}
-                className="relative inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer group rounded-xs hover:bg-white/60"
+                className="relative inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer group rounded-xs hover:bg-white/60"
                 aria-label={`Wishlist with ${wishlistCount} saved pieces`}
                 title="View Wishlist"
               >
                 <div className="relative">
-                  <Heart size={20} strokeWidth={1.5} className="text-[#563568]" />
-                  <span className="absolute -top-2 -right-2 min-w-4 h-4 px-1 bg-[#563568] text-white text-[10px] font-sans font-medium rounded-full flex items-center justify-center">
+                  <Heart size={20} strokeWidth={1.5} className="text-[color:var(--plum)]" />
+                  <span className="absolute -top-2 -right-2 min-w-4 h-4 px-1 bg-[var(--rose)] text-white text-[10px] font-sans font-medium rounded-full flex items-center justify-center" style={{ color: "var(--white)" }}>
                     {wishlistCount}
                   </span>
                 </div>
-                <span className="text-[13px] font-medium text-[#302438] group-hover:text-[#563568] hidden sm:inline">
+                <span className="text-[13px] font-medium text-[#302438] group-hover:text-[color:var(--plum)] hidden sm:inline">
                   Wishlist
                 </span>
               </button>
@@ -467,17 +467,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Bag Button with Label & Numeric Badge */}
               <button
                 onClick={openDrawer}
-                className="relative inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer group rounded-xs hover:bg-white/60"
+                className="relative inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer group rounded-xs hover:bg-white/60"
                 aria-label={`Shopping Bag with ${itemCount} items`}
                 title="Shopping Bag"
               >
                 <div className="relative">
-                  <ShoppingBag size={20} strokeWidth={1.5} className="text-[#563568]" />
-                  <span className="absolute -top-2 -right-2 min-w-4 h-4 px-1 bg-[#563568] text-white text-[10px] font-sans font-medium rounded-full flex items-center justify-center">
+                  <ShoppingBag size={20} strokeWidth={1.5} className="text-[color:var(--plum)]" />
+                  <span className="absolute -top-2 -right-2 min-w-4 h-4 px-1 bg-[var(--rose)] text-white text-[10px] font-sans font-medium rounded-full flex items-center justify-center" style={{ color: "var(--white)" }}>
                     {itemCount}
                   </span>
                 </div>
-                <span className="text-[13px] font-medium text-[#302438] group-hover:text-[#563568] hidden sm:inline">
+                <span className="text-[13px] font-medium text-[#302438] group-hover:text-[color:var(--plum)] hidden sm:inline">
                   Bag
                 </span>
               </button>
@@ -487,7 +487,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* TIER 3: SECONDARY NAVIGATION BAR (Pale Ivory/Lavender #FAF5FC with Delicate Champagne Gold Borders) */}
         <nav
-          className="hidden lg:block bg-[#FAF5FC] border-t border-[#FFFFFF]/30 border-b border-[#FFFFFF]/30"
+          className="hidden lg:block bg-[var(--white)] border-t border-[#FFFFFF]/30 border-b border-[#FFFFFF]/30"
           aria-label="Main Category Navigation"
         >
           <div className="site-container flex items-center justify-center space-x-6 xl:space-x-8 text-[13px] font-sans">
@@ -495,9 +495,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="py-3.5">
               <Link
                 to="/"
-                className={`relative inline-flex items-center pb-1 transition-colors hover:text-[#563568] ${
+                className={`relative inline-flex items-center pb-1 transition-colors hover:text-[color:var(--plum)] ${
                   location.pathname === '/' && !location.search
-                    ? 'text-[#563568] font-medium border-b-2 border-[#FFFFFF]'
+                    ? 'text-[color:var(--plum)] font-medium border-b-2 border-[#FFFFFF]'
                     : 'text-[#302438]'
                 }`}
               >
@@ -512,9 +512,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Link
                 to="/shop?sort=newest"
-                className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
+                className={`inline-flex items-center gap-1 transition-colors hover:text-[color:var(--plum)] ${
                   activeDropdown === 'new-arrivals' || location.search.includes('sort=newest')
-                    ? 'text-[#563568] font-medium'
+                    ? 'text-[color:var(--plum)] font-medium'
                     : 'text-[#302438]'
                 }`}
                 aria-expanded={activeDropdown === 'new-arrivals'}
@@ -523,7 +523,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>New Arrivals</span>
                 <ChevronDown
                   size={12}
-                  className={`transition-transform duration-200 text-[#563568] ${
+                  className={`transition-transform duration-200 text-[color:var(--plum)] ${
                     activeDropdown === 'new-arrivals' ? 'rotate-180' : ''
                   }`}
                 />
@@ -537,9 +537,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Link
                 to="/shop?sort=bestseller"
-                className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
+                className={`inline-flex items-center gap-1 transition-colors hover:text-[color:var(--plum)] ${
                   activeDropdown === 'bestsellers' || location.search.includes('sort=bestseller')
-                    ? 'text-[#563568] font-medium'
+                    ? 'text-[color:var(--plum)] font-medium'
                     : 'text-[#302438]'
                 }`}
                 aria-expanded={activeDropdown === 'bestsellers'}
@@ -548,7 +548,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>Bestsellers</span>
                 <ChevronDown
                   size={12}
-                  className={`transition-transform duration-200 text-[#563568] ${
+                  className={`transition-transform duration-200 text-[color:var(--plum)] ${
                     activeDropdown === 'bestsellers' ? 'rotate-180' : ''
                   }`}
                 />
@@ -562,9 +562,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Link
                 to="/shop"
-                className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
+                className={`inline-flex items-center gap-1 transition-colors hover:text-[color:var(--plum)] ${
                   activeDropdown === 'categories' || location.pathname === '/shop'
-                    ? 'text-[#563568] font-medium'
+                    ? 'text-[color:var(--plum)] font-medium'
                     : 'text-[#302438]'
                 }`}
                 aria-expanded={activeDropdown === 'categories'}
@@ -573,7 +573,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>Shop by Category</span>
                 <ChevronDown
                   size={12}
-                  className={`transition-transform duration-200 text-[#563568] ${
+                  className={`transition-transform duration-200 text-[color:var(--plum)] ${
                     activeDropdown === 'categories' ? 'rotate-180' : ''
                   }`}
                 />
@@ -587,9 +587,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Link
                 to="/shop"
-                className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
+                className={`inline-flex items-center gap-1 transition-colors hover:text-[color:var(--plum)] ${
                   activeDropdown === 'occasions' || location.search.includes('occasion=')
-                    ? 'text-[#563568] font-medium'
+                    ? 'text-[color:var(--plum)] font-medium'
                     : 'text-[#302438]'
                 }`}
                 aria-expanded={activeDropdown === 'occasions'}
@@ -598,7 +598,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>Shop by Occasion</span>
                 <ChevronDown
                   size={12}
-                  className={`transition-transform duration-200 text-[#563568] ${
+                  className={`transition-transform duration-200 text-[color:var(--plum)] ${
                     activeDropdown === 'occasions' ? 'rotate-180' : ''
                   }`}
                 />
@@ -612,9 +612,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Link
                 to="/shop?occasion=gifting"
-                className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
+                className={`inline-flex items-center gap-1 transition-colors hover:text-[color:var(--plum)] ${
                   activeDropdown === 'gifts' || location.search.includes('gifting')
-                    ? 'text-[#563568] font-medium'
+                    ? 'text-[color:var(--plum)] font-medium'
                     : 'text-[#302438]'
                 }`}
                 aria-expanded={activeDropdown === 'gifts'}
@@ -631,9 +631,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Link
                 to="/shop"
-                className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
+                className={`inline-flex items-center gap-1 transition-colors hover:text-[color:var(--plum)] ${
                   activeDropdown === 'collections'
-                    ? 'text-[#563568] font-medium'
+                    ? 'text-[color:var(--plum)] font-medium'
                     : 'text-[#302438]'
                 }`}
                 aria-expanded={activeDropdown === 'collections'}
@@ -650,9 +650,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Link
                 to="/about"
-                className={`inline-flex items-center gap-1 transition-colors hover:text-[#563568] ${
+                className={`inline-flex items-center gap-1 transition-colors hover:text-[color:var(--plum)] ${
                   activeDropdown === 'about' || location.pathname === '/about'
-                    ? 'text-[#563568] font-medium'
+                    ? 'text-[color:var(--plum)] font-medium'
                     : 'text-[#302438]'
                 }`}
                 aria-expanded={activeDropdown === 'about'}
@@ -689,17 +689,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="grid grid-cols-12 gap-8 items-start">
                 <div className="col-span-8 grid grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-xs uppercase tracking-wider text-[#563568] font-semibold mb-3">
+                    <h3 className="text-xs uppercase tracking-wider text-[color:var(--heading)] font-semibold mb-3">
                       Latest Additions
                     </h3>
                     <ul className="space-y-2.5 text-[13px]">
                       <li>
                         <Link
                           to="/shop?sort=newest"
-                          className="text-[#302438] hover:text-[#563568] transition-colors flex items-center justify-between group"
+                          className="text-[#302438] hover:text-[color:var(--plum)] transition-colors flex items-center justify-between group"
                         >
                           <span>Just Dropped This Week</span>
-                          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#F7F0FA] text-[#563568] rounded-xs font-medium">
+                          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[var(--pill)] text-[color:var(--body)] rounded-xs font-medium">
                             New
                           </span>
                         </Link>
@@ -707,7 +707,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?sort=newest&occasion=everyday"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Everyday Minimalist Silhouettes
                         </Link>
@@ -715,7 +715,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?sort=newest&occasion=festive"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Festive Heritage Accents
                         </Link>
@@ -723,7 +723,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?sort=newest"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Demi-Fine 18K Polish Additions
                         </Link>
@@ -732,14 +732,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
 
                   <div>
-                    <h3 className="text-xs uppercase tracking-wider text-[#563568] font-semibold mb-3">
+                    <h3 className="text-xs uppercase tracking-wider text-[color:var(--heading)] font-semibold mb-3">
                       Trending New Styles
                     </h3>
                     <ul className="space-y-2.5 text-[13px]">
                       <li>
                         <Link
                           to="/shop?category=earrings&sort=newest"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Sui Dhaga & Drop Earrings
                         </Link>
@@ -747,7 +747,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?category=necklaces&sort=newest"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Layered Coin & Choker Chains
                         </Link>
@@ -755,7 +755,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?category=bracelets&sort=newest"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Adjustable Demi-Fine Cuffs
                         </Link>
@@ -763,7 +763,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?category=rings&sort=newest"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Stackable Solitaire Bands
                         </Link>
@@ -773,14 +773,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
 
                 {/* Visual Feature Card */}
-                <div className="col-span-4 bg-[#F7F0FA] border border-[#E7DCEB] p-4 flex gap-4 items-center">
+                <div className="col-span-4 bg-[var(--white)] border border-[#E7DCEB] p-4 flex gap-4 items-center">
                   <img
                     src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=400&q=80"
                     alt="New arrival jewellery piece"
                     className="w-24 h-24 object-cover shrink-0"
                   />
                   <div>
-                    <span className="text-[10px] uppercase tracking-wider text-[#563568] font-semibold block mb-1">
+                    <span className="text-[10px] uppercase tracking-wider text-[color:var(--plum)] font-semibold block mb-1">
                       Autumn Atelier Drop
                     </span>
                     <h4 className="font-serif text-sm text-[#302438] mb-1 leading-snug">
@@ -791,7 +791,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </p>
                     <Link
                       to="/shop?sort=newest"
-                      className="text-xs text-[#563568] hover:text-[#80609A] font-medium inline-flex items-center gap-1 group"
+                      className="text-xs text-[color:var(--plum)] hover:text-[#80609A] font-medium inline-flex items-center gap-1 group"
                     >
                       <span>Explore all arrivals</span>
                       <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
@@ -808,17 +808,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="grid grid-cols-12 gap-8 items-start">
                 <div className="col-span-8 grid grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-xs uppercase tracking-wider text-[#563568] font-semibold mb-3">
+                    <h3 className="text-xs uppercase tracking-wider text-[color:var(--heading)] font-semibold mb-3">
                       Customer Favourites
                     </h3>
                     <ul className="space-y-2.5 text-[13px]">
                       <li>
                         <Link
                           to="/shop?sort=bestseller"
-                          className="text-[#302438] hover:text-[#563568] transition-colors flex items-center justify-between"
+                          className="text-[#302438] hover:text-[color:var(--plum)] transition-colors flex items-center justify-between"
                         >
                           <span>Most-Loved Pieces (Over 5,000+ Patrons)</span>
-                          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#FFFFFF]/25 text-[#563568] rounded-xs font-medium">
+                          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#FFFFFF]/25 text-[color:var(--plum)] rounded-xs font-medium">
                             Iconic
                           </span>
                         </Link>
@@ -826,7 +826,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?category=earrings&sort=bestseller"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Temple Coin & Kundan Chandbalis
                         </Link>
@@ -834,7 +834,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?category=necklaces&sort=bestseller"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Meera Royal Polki Choker Set
                         </Link>
@@ -842,7 +842,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?category=bracelets&sort=bestseller"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Zoya Open-Cuff Leaf Bangle
                         </Link>
@@ -851,14 +851,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
 
                   <div>
-                    <h3 className="text-xs uppercase tracking-wider text-[#563568] font-semibold mb-3">
+                    <h3 className="text-xs uppercase tracking-wider text-[color:var(--heading)] font-semibold mb-3">
                       Best-Rated Categories
                     </h3>
                     <ul className="space-y-2.5 text-[13px]">
                       <li>
                         <Link
                           to="/shop?category=rings&sort=bestseller"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Ananya Navratna Heritage Rings
                         </Link>
@@ -866,7 +866,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?type=anklet"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Payal & Ghungroo Silver Anklets
                         </Link>
@@ -874,7 +874,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?type=set"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Complete Festive & Bridal Sets
                         </Link>
@@ -882,7 +882,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?sort=bestseller&price=under-999"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Bestsellers Under ₹999
                         </Link>
@@ -892,14 +892,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
 
                 {/* Bestseller Visual Card */}
-                <div className="col-span-4 bg-[#F7F0FA] border border-[#E7DCEB] p-4 flex gap-4 items-center">
+                <div className="col-span-4 bg-[var(--white)] border border-[#E7DCEB] p-4 flex gap-4 items-center">
                   <img
                     src="https://images.unsplash.com/photo-1635767798638-3e25273a8236?auto=format&fit=crop&w=400&q=80"
                     alt="Bestselling earrings"
                     className="w-24 h-24 object-cover shrink-0"
                   />
                   <div>
-                    <span className="text-[10px] uppercase tracking-wider text-[#563568] font-semibold block mb-1">
+                    <span className="text-[10px] uppercase tracking-wider text-[color:var(--plum)] font-semibold block mb-1">
                       Highest Rated
                     </span>
                     <h4 className="font-serif text-sm text-[#302438] mb-1 leading-snug">
@@ -910,7 +910,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </p>
                     <Link
                       to="/shop?sort=bestseller"
-                      className="text-xs text-[#563568] hover:text-[#80609A] font-medium inline-flex items-center gap-1 group"
+                      className="text-xs text-[color:var(--plum)] hover:text-[#80609A] font-medium inline-flex items-center gap-1 group"
                     >
                       <span>Shop bestsellers</span>
                       <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
@@ -929,38 +929,38 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <div className="col-span-2">
                   <Link
                     to="/shop?category=earrings"
-                    className="text-xs uppercase tracking-wider text-[#563568] font-semibold mb-3 block hover:text-[#80609A]"
+                    className="text-xs uppercase tracking-wider text-[color:var(--plum)] font-semibold mb-3 block hover:text-[#80609A]"
                   >
                     Earrings
                   </Link>
                   <ul className="space-y-2 text-[13px] text-[#6F6475]">
                     <li>
-                      <Link to="/shop?category=earrings" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=earrings" className="hover:text-[color:var(--plum)] transition-colors">
                         All Earrings
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?category=earrings" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=earrings" className="hover:text-[color:var(--plum)] transition-colors">
                         Jhumkas & Chandbalis
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?category=earrings" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=earrings" className="hover:text-[color:var(--plum)] transition-colors">
                         Studs & Daily Tops
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?category=earrings" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=earrings" className="hover:text-[color:var(--plum)] transition-colors">
                         Drop & Dangler Earrings
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?category=earrings" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=earrings" className="hover:text-[color:var(--plum)] transition-colors">
                         Modern Hoops & Huggies
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?category=earrings" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=earrings" className="hover:text-[color:var(--plum)] transition-colors">
                         Sui Dhaga Threaders
                       </Link>
                     </li>
@@ -971,38 +971,38 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <div className="col-span-2">
                   <Link
                     to="/shop?category=necklaces"
-                    className="text-xs uppercase tracking-wider text-[#563568] font-semibold mb-3 block hover:text-[#80609A]"
+                    className="text-xs uppercase tracking-wider text-[color:var(--plum)] font-semibold mb-3 block hover:text-[#80609A]"
                   >
                     Necklaces & Chokers
                   </Link>
                   <ul className="space-y-2 text-[13px] text-[#6F6475]">
                     <li>
-                      <Link to="/shop?category=necklaces" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=necklaces" className="hover:text-[color:var(--plum)] transition-colors">
                         All Necklaces
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?category=necklaces" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=necklaces" className="hover:text-[color:var(--plum)] transition-colors">
                         Royal Chokers
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?category=necklaces" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=necklaces" className="hover:text-[color:var(--plum)] transition-colors">
                         Layered Gold Chains
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?category=necklaces" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=necklaces" className="hover:text-[color:var(--plum)] transition-colors">
                         Pendants & Lockets
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?category=necklaces" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=necklaces" className="hover:text-[color:var(--plum)] transition-colors">
                         Mangalsutra & Tanmaniya
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?type=set" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?type=set" className="hover:text-[color:var(--plum)] transition-colors">
                         Bridal Necklace Sets
                       </Link>
                     </li>
@@ -1013,33 +1013,33 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <div className="col-span-2">
                   <Link
                     to="/shop?category=bracelets"
-                    className="text-xs uppercase tracking-wider text-[#563568] font-semibold mb-3 block hover:text-[#80609A]"
+                    className="text-xs uppercase tracking-wider text-[color:var(--plum)] font-semibold mb-3 block hover:text-[#80609A]"
                   >
                     Bracelets & Cuffs
                   </Link>
                   <ul className="space-y-2 text-[13px] text-[#6F6475]">
                     <li>
-                      <Link to="/shop?category=bracelets" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=bracelets" className="hover:text-[color:var(--plum)] transition-colors">
                         All Bracelets & Cuffs
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?category=bracelets" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=bracelets" className="hover:text-[color:var(--plum)] transition-colors">
                         Open-Cuff Bangles
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?category=bracelets" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=bracelets" className="hover:text-[color:var(--plum)] transition-colors">
                         Temple Coin Kadas
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?category=bracelets" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=bracelets" className="hover:text-[color:var(--plum)] transition-colors">
                         Minimal Charm Chains
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?category=bracelets" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=bracelets" className="hover:text-[color:var(--plum)] transition-colors">
                         Festive Bridal Bangles
                       </Link>
                     </li>
@@ -1050,33 +1050,33 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <div className="col-span-2">
                   <Link
                     to="/shop?category=rings"
-                    className="text-xs uppercase tracking-wider text-[#563568] font-semibold mb-3 block hover:text-[#80609A]"
+                    className="text-xs uppercase tracking-wider text-[color:var(--plum)] font-semibold mb-3 block hover:text-[#80609A]"
                   >
                     Rings & Ornaments
                   </Link>
                   <ul className="space-y-2 text-[13px] text-[#6F6475]">
                     <li>
-                      <Link to="/shop?category=rings" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=rings" className="hover:text-[color:var(--plum)] transition-colors">
                         All Rings & Bands
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?category=rings" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=rings" className="hover:text-[color:var(--plum)] transition-colors">
                         Solitaire & Cocktail Rings
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?category=rings" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?category=rings" className="hover:text-[color:var(--plum)] transition-colors">
                         Adjustable Daily Bands
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?type=anklet" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?type=anklet" className="hover:text-[color:var(--plum)] transition-colors">
                         Traditional Payal & Anklets
                       </Link>
                     </li>
                     <li>
-                      <Link to="/shop?type=set" className="hover:text-[#563568] transition-colors">
+                      <Link to="/shop?type=set" className="hover:text-[color:var(--plum)] transition-colors">
                         Coordinated Jewellery Sets
                       </Link>
                     </li>
@@ -1084,11 +1084,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
 
                 {/* Col 5: Featured Category Showcase */}
-                <div className="col-span-4 bg-[#F7F0FA] border border-[#E7DCEB] p-4 flex flex-col justify-between">
+                <div className="col-span-4 bg-[var(--white)] border border-[#E7DCEB] p-4 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <Sparkles size={13} className="text-[#FFFFFF]" />
-                      <span className="text-[10px] uppercase tracking-wider text-[#563568] font-semibold">
+                      <span className="text-[10px] uppercase tracking-wider text-[color:var(--plum)] font-semibold">
                         SARINE Demi-Fine Promise
                       </span>
                     </div>
@@ -1104,7 +1104,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <div className="pt-3 border-t border-[#E7DCEB] flex items-center justify-between">
                     <Link
                       to="/shop"
-                      className="text-xs text-[#563568] hover:text-[#80609A] font-medium inline-flex items-center gap-1 group"
+                      className="text-xs text-[color:var(--plum)] hover:text-[#80609A] font-medium inline-flex items-center gap-1 group"
                     >
                       <span>Browse full catalogue</span>
                       <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
@@ -1124,12 +1124,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="grid grid-cols-5 gap-5">
                 <Link
                   to="/shop?occasion=everyday"
-                  className="p-4 border border-[#E7DCEB] bg-[#F7F0FA]/50 hover:bg-[#F7F0FA] hover:border-[#B69ACF] transition-all group"
+                  className="p-4 border border-[#E7DCEB] bg-[var(--tint)] hover:bg-[var(--tint)] hover:border-[var(--gold)] transition-all group"
                 >
-                  <span className="text-[10px] uppercase tracking-wider text-[#563568] font-semibold block mb-1">
+                  <span className="text-[10px] uppercase tracking-wider text-[color:var(--plum)] font-semibold block mb-1">
                     Daily Comfort
                   </span>
-                  <h4 className="font-serif text-sm text-[#302438] group-hover:text-[#563568] transition-colors mb-1.5">
+                  <h4 className="font-serif text-sm text-[#302438] group-hover:text-[color:var(--plum)] transition-colors mb-1.5">
                     Everyday Wear
                   </h4>
                   <p className="text-xs text-[#6F6475] leading-relaxed">
@@ -1139,12 +1139,12 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 <Link
                   to="/shop?occasion=everyday"
-                  className="p-4 border border-[#E7DCEB] bg-[#F7F0FA]/50 hover:bg-[#F7F0FA] hover:border-[#B69ACF] transition-all group"
+                  className="p-4 border border-[#E7DCEB] bg-[var(--tint)] hover:bg-[var(--tint)] hover:border-[var(--gold)] transition-all group"
                 >
-                  <span className="text-[10px] uppercase tracking-wider text-[#563568] font-semibold block mb-1">
+                  <span className="text-[10px] uppercase tracking-wider text-[color:var(--plum)] font-semibold block mb-1">
                     Professional
                   </span>
-                  <h4 className="font-serif text-sm text-[#302438] group-hover:text-[#563568] transition-colors mb-1.5">
+                  <h4 className="font-serif text-sm text-[#302438] group-hover:text-[color:var(--plum)] transition-colors mb-1.5">
                     Office & Workwear
                   </h4>
                   <p className="text-xs text-[#6F6475] leading-relaxed">
@@ -1154,12 +1154,12 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 <Link
                   to="/shop?occasion=festive"
-                  className="p-4 border border-[#E7DCEB] bg-[#F7F0FA]/50 hover:bg-[#F7F0FA] hover:border-[#B69ACF] transition-all group"
+                  className="p-4 border border-[#E7DCEB] bg-[var(--tint)] hover:bg-[var(--tint)] hover:border-[var(--gold)] transition-all group"
                 >
-                  <span className="text-[10px] uppercase tracking-wider text-[#563568] font-semibold block mb-1">
+                  <span className="text-[10px] uppercase tracking-wider text-[color:var(--plum)] font-semibold block mb-1">
                     Celebratory
                   </span>
-                  <h4 className="font-serif text-sm text-[#302438] group-hover:text-[#563568] transition-colors mb-1.5">
+                  <h4 className="font-serif text-sm text-[#302438] group-hover:text-[color:var(--plum)] transition-colors mb-1.5">
                     Festive & Party Wear
                   </h4>
                   <p className="text-xs text-[#6F6475] leading-relaxed">
@@ -1169,12 +1169,12 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 <Link
                   to="/shop?occasion=wedding"
-                  className="p-4 border border-[#E7DCEB] bg-[#F7F0FA]/50 hover:bg-[#F7F0FA] hover:border-[#B69ACF] transition-all group"
+                  className="p-4 border border-[#E7DCEB] bg-[var(--tint)] hover:bg-[var(--tint)] hover:border-[var(--gold)] transition-all group"
                 >
-                  <span className="text-[10px] uppercase tracking-wider text-[#563568] font-semibold block mb-1">
+                  <span className="text-[10px] uppercase tracking-wider text-[color:var(--plum)] font-semibold block mb-1">
                     Heirloom
                   </span>
-                  <h4 className="font-serif text-sm text-[#302438] group-hover:text-[#563568] transition-colors mb-1.5">
+                  <h4 className="font-serif text-sm text-[#302438] group-hover:text-[color:var(--plum)] transition-colors mb-1.5">
                     Regal Wedding
                   </h4>
                   <p className="text-xs text-[#6F6475] leading-relaxed">
@@ -1184,12 +1184,12 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 <Link
                   to="/shop?occasion=gifting"
-                  className="p-4 border border-[#E7DCEB] bg-[#F7F0FA]/50 hover:bg-[#F7F0FA] hover:border-[#B69ACF] transition-all group"
+                  className="p-4 border border-[#E7DCEB] bg-[var(--tint)] hover:bg-[var(--tint)] hover:border-[var(--gold)] transition-all group"
                 >
-                  <span className="text-[10px] uppercase tracking-wider text-[#563568] font-semibold block mb-1">
+                  <span className="text-[10px] uppercase tracking-wider text-[color:var(--plum)] font-semibold block mb-1">
                     Keepsake
                   </span>
-                  <h4 className="font-serif text-sm text-[#302438] group-hover:text-[#563568] transition-colors mb-1.5">
+                  <h4 className="font-serif text-sm text-[#302438] group-hover:text-[color:var(--plum)] transition-colors mb-1.5">
                     Gifting Edition
                   </h4>
                   <p className="text-xs text-[#6F6475] leading-relaxed">
@@ -1206,14 +1206,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="grid grid-cols-12 gap-8 items-start">
                 <div className="col-span-8 grid grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-xs uppercase tracking-wider text-[#563568] font-semibold mb-3">
+                    <h3 className="text-xs uppercase tracking-wider text-[color:var(--heading)] font-semibold mb-3">
                       Gift by Budget
                     </h3>
                     <ul className="space-y-2.5 text-[13px]">
                       <li>
                         <Link
                           to="/shop?price=under-999"
-                          className="text-[#302438] hover:text-[#563568] transition-colors flex items-center justify-between"
+                          className="text-[#302438] hover:text-[color:var(--plum)] transition-colors flex items-center justify-between"
                         >
                           <span>Gifts Under ₹999</span>
                           <span className="text-[11px] text-[#6F6475]">Pocket-Friendly</span>
@@ -1222,7 +1222,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?price=1000-2000"
-                          className="text-[#302438] hover:text-[#563568] transition-colors flex items-center justify-between"
+                          className="text-[#302438] hover:text-[color:var(--plum)] transition-colors flex items-center justify-between"
                         >
                           <span>Gifts Between ₹1,000 – ₹1,999</span>
                           <span className="text-[11px] text-[#6F6475]">Popular Choice</span>
@@ -1231,7 +1231,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?price=above-2000"
-                          className="text-[#302438] hover:text-[#563568] transition-colors flex items-center justify-between"
+                          className="text-[#302438] hover:text-[color:var(--plum)] transition-colors flex items-center justify-between"
                         >
                           <span>Luxury Gifts Above ₹2,000</span>
                           <span className="text-[11px] text-[#6F6475]">Statement Sets</span>
@@ -1240,7 +1240,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?occasion=gifting"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           All Curated Gifts
                         </Link>
@@ -1249,14 +1249,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
 
                   <div>
-                    <h3 className="text-xs uppercase tracking-wider text-[#563568] font-semibold mb-3">
+                    <h3 className="text-xs uppercase tracking-wider text-[color:var(--heading)] font-semibold mb-3">
                       Gift by Recipient
                     </h3>
                     <ul className="space-y-2.5 text-[13px]">
                       <li>
                         <Link
                           to="/shop?occasion=gifting"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Gifts for Her (Sister, Mother, Partner)
                         </Link>
@@ -1264,7 +1264,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?occasion=wedding"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Anniversary & Milestone Celebrations
                         </Link>
@@ -1272,7 +1272,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?occasion=festive"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Birthday Surprises & Tokens of Love
                         </Link>
@@ -1280,7 +1280,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?type=set"
-                          className="text-[#6F6475] hover:text-[#563568] transition-colors block"
+                          className="text-[#6F6475] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           Bridesmaid Keepsake Sets
                         </Link>
@@ -1290,10 +1290,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
 
                 {/* Complimentary Gifting Highlight */}
-                <div className="col-span-4 bg-[#F7F0FA] border border-[#E7DCEB] p-5">
+                <div className="col-span-4 bg-[var(--white)] border border-[#E7DCEB] p-5">
                   <div className="flex items-center gap-2 mb-2">
-                    <Gift size={16} className="text-[#563568]" />
-                    <span className="text-xs uppercase tracking-wider text-[#563568] font-semibold">
+                    <Gift size={16} className="text-[color:var(--plum)]" />
+                    <span className="text-xs uppercase tracking-wider text-[color:var(--plum)] font-semibold">
                       Complimentary Luxury Gifting
                     </span>
                   </div>
@@ -1303,7 +1303,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </p>
                   <Link
                     to="/shop?occasion=gifting"
-                    className="text-xs text-[#563568] hover:text-[#80609A] font-medium inline-flex items-center gap-1 group"
+                    className="text-xs text-[color:var(--plum)] hover:text-[#80609A] font-medium inline-flex items-center gap-1 group"
                   >
                     <span>Shop gift collection</span>
                     <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
@@ -1319,14 +1319,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="grid grid-cols-12 gap-8 items-start">
                 <div className="col-span-8 grid grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-xs uppercase tracking-wider text-[#563568] font-semibold mb-3">
+                    <h3 className="text-xs uppercase tracking-wider text-[color:var(--heading)] font-semibold mb-3">
                       Atelier Signature Lines
                     </h3>
                     <ul className="space-y-2.5 text-[13px]">
                       <li>
                         <Link
                           to="/shop?category=bracelets"
-                          className="text-[#302438] hover:text-[#563568] transition-colors block"
+                          className="text-[#302438] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           <span className="font-medium block">The Temple Coin Edit</span>
                           <span className="text-[11px] text-[#6F6475]">Sacred auspicious motifs in warm antique finish</span>
@@ -1335,7 +1335,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?category=necklaces"
-                          className="text-[#302438] hover:text-[#563568] transition-colors block"
+                          className="text-[#302438] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           <span className="font-medium block">Royal Kundan & Polki Collection</span>
                           <span className="text-[11px] text-[#6F6475]">Faceted glass stones & hand-enamelled meenakari</span>
@@ -1344,7 +1344,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?category=earrings"
-                          className="text-[#302438] hover:text-[#563568] transition-colors block"
+                          className="text-[#302438] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           <span className="font-medium block">Floral Filigree Line</span>
                           <span className="text-[11px] text-[#6F6475]">Intricate openwork petals & freshwater pearl drops</span>
@@ -1354,14 +1354,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
 
                   <div>
-                    <h3 className="text-xs uppercase tracking-wider text-[#563568] font-semibold mb-3">
+                    <h3 className="text-xs uppercase tracking-wider text-[color:var(--heading)] font-semibold mb-3">
                       Modern Aesthetics
                     </h3>
                     <ul className="space-y-2.5 text-[13px]">
                       <li>
                         <Link
                           to="/shop?category=rings"
-                          className="text-[#302438] hover:text-[#563568] transition-colors block"
+                          className="text-[#302438] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           <span className="font-medium block">Rose Gold Minimalist</span>
                           <span className="text-[11px] text-[#6F6475]">Subtle blushing hues for contemporary stylings</span>
@@ -1370,7 +1370,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?category=necklaces"
-                          className="text-[#302438] hover:text-[#563568] transition-colors block"
+                          className="text-[#302438] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           <span className="font-medium block">Sterling Silver Classics</span>
                           <span className="text-[11px] text-[#6F6475]">Pure 92.5 sterling motifs with rhodium polish</span>
@@ -1379,7 +1379,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <li>
                         <Link
                           to="/shop?type=set"
-                          className="text-[#302438] hover:text-[#563568] transition-colors block"
+                          className="text-[#302438] hover:text-[color:var(--plum)] transition-colors block"
                         >
                           <span className="font-medium block">Bridal Troussier Sets</span>
                           <span className="text-[11px] text-[#6F6475]">Curated pairings for the discerning bride</span>
@@ -1390,14 +1390,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
 
                 {/* Collections Visual Card */}
-                <div className="col-span-4 bg-[#F7F0FA] border border-[#E7DCEB] p-4 flex gap-4 items-center">
+                <div className="col-span-4 bg-[var(--white)] border border-[#E7DCEB] p-4 flex gap-4 items-center">
                   <img
                     src="https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=400&q=80"
                     alt="Atelier jewellery collection"
                     className="w-24 h-24 object-cover shrink-0"
                   />
                   <div>
-                    <span className="text-[10px] uppercase tracking-wider text-[#563568] font-semibold block mb-1">
+                    <span className="text-[10px] uppercase tracking-wider text-[color:var(--plum)] font-semibold block mb-1">
                       Curated Series
                     </span>
                     <h4 className="font-serif text-sm text-[#302438] mb-1 leading-snug">
@@ -1408,7 +1408,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </p>
                     <Link
                       to="/shop"
-                      className="text-xs text-[#563568] hover:text-[#80609A] font-medium inline-flex items-center gap-1 group"
+                      className="text-xs text-[color:var(--plum)] hover:text-[#80609A] font-medium inline-flex items-center gap-1 group"
                     >
                       <span>Explore all collections</span>
                       <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
@@ -1425,13 +1425,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="grid grid-cols-12 gap-8 items-start">
                 <div className="col-span-8 grid grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-xs uppercase tracking-wider text-[#563568] font-semibold mb-3">
+                    <h3 className="text-xs uppercase tracking-wider text-[color:var(--heading)] font-semibold mb-3">
                       Brand Philosophy
                     </h3>
                     <ul className="space-y-3 text-[13px]">
                       <li>
                         <Link to="/about" className="block group">
-                          <span className="font-medium text-[#302438] group-hover:text-[#563568] transition-colors">
+                          <span className="font-medium text-[#302438] group-hover:text-[color:var(--plum)] transition-colors">
                             Our Story & Heritage
                           </span>
                           <span className="text-[11px] text-[#6F6475] block mt-0.5">
@@ -1441,7 +1441,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </li>
                       <li>
                         <Link to="/about" className="block group">
-                          <span className="font-medium text-[#302438] group-hover:text-[#563568] transition-colors">
+                          <span className="font-medium text-[#302438] group-hover:text-[color:var(--plum)] transition-colors">
                             Atelier Craftsmanship
                           </span>
                           <span className="text-[11px] text-[#6F6475] block mt-0.5">
@@ -1451,7 +1451,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </li>
                       <li>
                         <Link to="/sustainability" className="block group">
-                          <span className="font-medium text-[#302438] group-hover:text-[#563568] transition-colors">
+                          <span className="font-medium text-[#302438] group-hover:text-[color:var(--plum)] transition-colors">
                             Sustainability & Sourcing
                           </span>
                           <span className="text-[11px] text-[#6F6475] block mt-0.5">
@@ -1463,13 +1463,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
 
                   <div>
-                    <h3 className="text-xs uppercase tracking-wider text-[#563568] font-semibold mb-3">
+                    <h3 className="text-xs uppercase tracking-wider text-[color:var(--heading)] font-semibold mb-3">
                       Customer Concierge
                     </h3>
                     <ul className="space-y-3 text-[13px]">
                       <li>
                         <Link to="/track-order" className="block group">
-                          <span className="font-medium text-[#302438] group-hover:text-[#563568] transition-colors">
+                          <span className="font-medium text-[#302438] group-hover:text-[color:var(--plum)] transition-colors">
                             Track Your Order
                           </span>
                           <span className="text-[11px] text-[#6F6475] block mt-0.5">
@@ -1479,7 +1479,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </li>
                       <li>
                         <Link to="/contact" className="block group">
-                          <span className="font-medium text-[#302438] group-hover:text-[#563568] transition-colors">
+                          <span className="font-medium text-[#302438] group-hover:text-[color:var(--plum)] transition-colors">
                             Styling Help & Concierge
                           </span>
                           <span className="text-[11px] text-[#6F6475] block mt-0.5">
@@ -1489,7 +1489,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </li>
                       <li>
                         <Link to="/shipping-policy" className="block group">
-                          <span className="font-medium text-[#302438] group-hover:text-[#563568] transition-colors">
+                          <span className="font-medium text-[#302438] group-hover:text-[color:var(--plum)] transition-colors">
                             Shipping & Easy Returns
                           </span>
                           <span className="text-[11px] text-[#6F6475] block mt-0.5">
@@ -1502,27 +1502,27 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
 
                 {/* Assurance Card */}
-                <div className="col-span-4 bg-[#F7F0FA] border border-[#E7DCEB] p-5">
-                  <span className="text-xs uppercase tracking-wider text-[#563568] font-semibold block mb-2">
+                <div className="col-span-4 bg-[var(--white)] border border-[#E7DCEB] p-5">
+                  <span className="text-xs uppercase tracking-wider text-[color:var(--plum)] font-semibold block mb-2">
                     The SARINE Assurance
                   </span>
                   <div className="space-y-2.5 text-xs text-[#6F6475] mb-4">
                     <div className="flex items-center gap-2">
-                      <ShieldCheck size={14} className="text-[#563568] shrink-0" />
+                      <ShieldCheck size={14} className="text-[color:var(--plum)] shrink-0" />
                       <span>Certified 18K Demi-Fine Gold Polish</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Truck size={14} className="text-[#563568] shrink-0" />
+                      <Truck size={14} className="text-[color:var(--plum)] shrink-0" />
                       <span>Complimentary Express Shipping Across India</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Gem size={14} className="text-[#563568] shrink-0" />
+                      <Gem size={14} className="text-[color:var(--plum)] shrink-0" />
                       <span>Hypoallergenic & Anti-Tarnish Guaranteed</span>
                     </div>
                   </div>
                   <Link
                     to="/about"
-                    className="text-xs text-[#563568] hover:text-[#80609A] font-medium inline-flex items-center gap-1 group"
+                    className="text-xs text-[color:var(--plum)] hover:text-[#80609A] font-medium inline-flex items-center gap-1 group"
                   >
                     <span>Read our full story</span>
                     <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
@@ -1550,13 +1550,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <Link
                   to="/"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="font-serif text-xl tracking-[0.2em] text-[#563568] font-normal uppercase"
+                  className="font-serif text-xl tracking-[0.2em] text-[color:var(--plum)] font-normal uppercase"
                 >
                   SARINE
                 </Link>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer"
                   aria-label="Close menu"
                 >
                   <X size={20} strokeWidth={1.5} />
@@ -1571,9 +1571,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setIsMobileMenuOpen(false);
                     setIsSearchOpen(true);
                   }}
-                  className="flex items-center bg-[#F7F0FA] border border-[#E7DCEB] rounded-full px-3.5 py-2.5 w-full text-xs text-[#6F6475] cursor-pointer"
+                  className="flex items-center bg-[var(--white)] border border-[#E7DCEB] rounded-full px-3.5 py-2.5 w-full text-xs text-[#6F6475] cursor-pointer"
                 >
-                  <Search size={14} className="text-[#563568] shrink-0 mr-2.5" />
+                  <Search size={14} className="text-[color:var(--plum)] shrink-0 mr-2.5" />
                   <span>Search earrings, chokers, bangles...</span>
                 </button>
 
@@ -1582,10 +1582,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <Link
                     to="/shop?sort=newest"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] hover:border-[#B69ACF] flex items-center justify-between transition-colors"
+                    className="p-2.5 bg-[var(--white)] border border-[#E7DCEB] hover:border-[var(--gold)] flex items-center justify-between transition-colors"
                   >
                     <span className="text-xs font-medium text-[#302438]">New Arrivals</span>
-                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-[#563568] text-white rounded-xs">
+                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-[var(--plum)] text-white rounded-xs" style={{ color: "var(--white)" }}>
                       New
                     </span>
                   </Link>
@@ -1593,10 +1593,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <Link
                     to="/shop?sort=bestseller"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="p-2.5 bg-[#F7F0FA] border border-[#E7DCEB] hover:border-[#B69ACF] flex items-center justify-between transition-colors"
+                    className="p-2.5 bg-[var(--white)] border border-[#E7DCEB] hover:border-[var(--gold)] flex items-center justify-between transition-colors"
                   >
                     <span className="text-xs font-medium text-[#302438]">Bestsellers</span>
-                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-[#FFFFFF]/30 text-[#563568] rounded-xs font-medium">
+                    <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-[#FFFFFF]/30 text-[color:var(--plum)] rounded-xs font-medium">
                       Hot
                     </span>
                   </Link>
@@ -1611,64 +1611,64 @@ export const Navbar: React.FC<NavbarProps> = ({
                       aria-expanded={mobileExpanded.categories}
                       aria-controls="mobile-nav-categories"
                       onClick={() => toggleMobileAccordion('categories')}
-                      className="w-full min-h-11 flex items-center justify-between py-2.5 text-[#302438] hover:text-[#563568] font-medium text-left cursor-pointer"
+                      className="w-full min-h-11 flex items-center justify-between py-2.5 text-[#302438] hover:text-[color:var(--plum)] font-medium text-left cursor-pointer"
                     >
                       <span>Shop by Category</span>
                       <ChevronDown
                         size={16}
                         className={`transition-transform duration-200 text-[#6F6475] ${
-                          mobileExpanded.categories ? 'rotate-180 text-[#563568]' : ''
+                          mobileExpanded.categories ? 'rotate-180 text-[color:var(--plum)]' : ''
                         }`}
                       />
                     </button>
                     {mobileExpanded.categories && (
-                      <div id="mobile-nav-categories" className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[#B69ACF]/40 ml-1 mt-1">
+                      <div id="mobile-nav-categories" className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[var(--border)] ml-1 mt-1">
                         <Link
                           to="/shop"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex min-h-10 items-center py-2 hover:text-[#563568] font-medium text-[#563568]"
+                          className="flex min-h-10 items-center py-2 hover:text-[color:var(--plum)] font-medium text-[color:var(--plum)]"
                         >
                           All Jewellery Catalogue
                         </Link>
                         <Link
                           to="/shop?category=earrings"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex min-h-10 items-center py-2 hover:text-[#563568]"
+                          className="flex min-h-10 items-center py-2 hover:text-[color:var(--plum)]"
                         >
                           Earrings & Chandbalis
                         </Link>
                         <Link
                           to="/shop?category=necklaces"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Chokers & Necklaces
                         </Link>
                         <Link
                           to="/shop?category=bracelets"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Bracelets, Bangles & Cuffs
                         </Link>
                         <Link
                           to="/shop?category=rings"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Rings & Bands
                         </Link>
                         <Link
                           to="/shop?type=anklet"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Traditional Anklets & Payal
                         </Link>
                         <Link
                           to="/shop?type=set"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Coordinated Jewellery Sets
                         </Link>
@@ -1683,50 +1683,50 @@ export const Navbar: React.FC<NavbarProps> = ({
                       aria-expanded={mobileExpanded.occasions}
                       aria-controls="mobile-nav-occasions"
                       onClick={() => toggleMobileAccordion('occasions')}
-                      className="w-full flex items-center justify-between py-2.5 text-[#302438] hover:text-[#563568] font-medium text-left cursor-pointer"
+                      className="w-full flex items-center justify-between py-2.5 text-[#302438] hover:text-[color:var(--plum)] font-medium text-left cursor-pointer"
                     >
                       <span>Shop by Occasion</span>
                       <ChevronDown
                         size={16}
                         className={`transition-transform duration-200 text-[#6F6475] ${
-                          mobileExpanded.occasions ? 'rotate-180 text-[#563568]' : ''
+                          mobileExpanded.occasions ? 'rotate-180 text-[color:var(--plum)]' : ''
                         }`}
                       />
                     </button>
                     {mobileExpanded.occasions && (
-                      <div id="mobile-nav-occasions" className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[#B69ACF]/40 ml-1 mt-1">
+                      <div id="mobile-nav-occasions" className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[var(--border)] ml-1 mt-1">
                         <Link
                           to="/shop?occasion=everyday"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Everyday Wear & Minimalist
                         </Link>
                         <Link
                           to="/shop?occasion=everyday"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Office & Professional Workwear
                         </Link>
                         <Link
                           to="/shop?occasion=festive"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Festive & Party Wear
                         </Link>
                         <Link
                           to="/shop?occasion=wedding"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Regal Wedding & Bridal
                         </Link>
                         <Link
                           to="/shop?occasion=gifting"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Gifting Edition
                         </Link>
@@ -1741,43 +1741,43 @@ export const Navbar: React.FC<NavbarProps> = ({
                       aria-expanded={mobileExpanded.gifts}
                       aria-controls="mobile-nav-gifts"
                       onClick={() => toggleMobileAccordion('gifts')}
-                      className="w-full flex items-center justify-between py-2.5 text-[#302438] hover:text-[#563568] font-medium text-left cursor-pointer"
+                      className="w-full flex items-center justify-between py-2.5 text-[#302438] hover:text-[color:var(--plum)] font-medium text-left cursor-pointer"
                     >
                       <span>Gifts</span>
                       <ChevronDown
                         size={16}
                         className={`transition-transform duration-200 text-[#6F6475] ${
-                          mobileExpanded.gifts ? 'rotate-180 text-[#563568]' : ''
+                          mobileExpanded.gifts ? 'rotate-180 text-[color:var(--plum)]' : ''
                         }`}
                       />
                     </button>
                     {mobileExpanded.gifts && (
-                      <div id="mobile-nav-gifts" className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[#B69ACF]/40 ml-1 mt-1">
+                      <div id="mobile-nav-gifts" className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[var(--border)] ml-1 mt-1">
                         <Link
                           to="/shop?price=under-999"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Gifts Under ₹999
                         </Link>
                         <Link
                           to="/shop?price=1000-2000"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Gifts ₹1,000 – ₹1,999
                         </Link>
                         <Link
                           to="/shop?price=above-2000"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Luxury Gifts Above ₹2,000
                         </Link>
                         <Link
                           to="/shop?occasion=gifting"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Gifts for Her & Milestones
                         </Link>
@@ -1792,43 +1792,43 @@ export const Navbar: React.FC<NavbarProps> = ({
                       aria-expanded={mobileExpanded.collections}
                       aria-controls="mobile-nav-collections"
                       onClick={() => toggleMobileAccordion('collections')}
-                      className="w-full flex items-center justify-between py-2.5 text-[#302438] hover:text-[#563568] font-medium text-left cursor-pointer"
+                      className="w-full flex items-center justify-between py-2.5 text-[#302438] hover:text-[color:var(--plum)] font-medium text-left cursor-pointer"
                     >
                       <span>Collections</span>
                       <ChevronDown
                         size={16}
                         className={`transition-transform duration-200 text-[#6F6475] ${
-                          mobileExpanded.collections ? 'rotate-180 text-[#563568]' : ''
+                          mobileExpanded.collections ? 'rotate-180 text-[color:var(--plum)]' : ''
                         }`}
                       />
                     </button>
                     {mobileExpanded.collections && (
-                      <div id="mobile-nav-collections" className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[#B69ACF]/40 ml-1 mt-1">
+                      <div id="mobile-nav-collections" className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[var(--border)] ml-1 mt-1">
                         <Link
                           to="/shop?category=bracelets"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           The Temple Coin Series
                         </Link>
                         <Link
                           to="/shop?category=necklaces"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Royal Kundan & Polki
                         </Link>
                         <Link
                           to="/shop?category=earrings"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Floral Filigree & Demi-Fine
                         </Link>
                         <Link
                           to="/shop?category=rings"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Rose Gold Minimalist
                         </Link>
@@ -1843,43 +1843,43 @@ export const Navbar: React.FC<NavbarProps> = ({
                       aria-expanded={mobileExpanded.about}
                       aria-controls="mobile-nav-about"
                       onClick={() => toggleMobileAccordion('about')}
-                      className="w-full flex items-center justify-between py-2.5 text-[#302438] hover:text-[#563568] font-medium text-left cursor-pointer"
+                      className="w-full flex items-center justify-between py-2.5 text-[#302438] hover:text-[color:var(--plum)] font-medium text-left cursor-pointer"
                     >
                       <span>About SARINE</span>
                       <ChevronDown
                         size={16}
                         className={`transition-transform duration-200 text-[#6F6475] ${
-                          mobileExpanded.about ? 'rotate-180 text-[#563568]' : ''
+                          mobileExpanded.about ? 'rotate-180 text-[color:var(--plum)]' : ''
                         }`}
                       />
                     </button>
                     {mobileExpanded.about && (
-                      <div id="mobile-nav-about" className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[#B69ACF]/40 ml-1 mt-1">
+                      <div id="mobile-nav-about" className="pl-3 pb-3 space-y-2 text-xs text-[#6F6475] border-l-2 border-[var(--border)] ml-1 mt-1">
                         <Link
                           to="/about"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Our Story & Atelier Legacy
                         </Link>
                         <Link
                           to="/contact"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Customer Concierge & Styling Help
                         </Link>
                         <Link
                           to="/sustainability"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Sustainability & Ethical Sourcing
                         </Link>
                         <Link
                           to="/shipping-policy"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="block py-1 hover:text-[color:var(--plum)]"
                         >
                           Shipping & Return Policy
                         </Link>
@@ -1893,9 +1893,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <Link
                     to="/account"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-2.5 text-xs text-[#302438] hover:text-[#563568] py-1 font-medium"
+                    className="flex items-center gap-2.5 text-xs text-[#302438] hover:text-[color:var(--plum)] py-1 font-medium"
                   >
-                    <User size={15} className="text-[#563568]" />
+                    <User size={15} className="text-[color:var(--plum)]" />
                     <span>My Account & Orders</span>
                   </Link>
                   <button
@@ -1903,14 +1903,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                       setIsMobileMenuOpen(false);
                       openWishlist();
                     }}
-                    className="flex items-center justify-between w-full text-xs text-[#302438] hover:text-[#563568] py-1 font-medium cursor-pointer"
+                    className="flex items-center justify-between w-full text-xs text-[#302438] hover:text-[color:var(--plum)] py-1 font-medium cursor-pointer"
                   >
                     <span className="flex items-center gap-2.5">
-                      <Heart size={15} className="text-[#563568]" />
+                      <Heart size={15} className="text-[color:var(--plum)]" />
                       <span>My Wishlist</span>
                     </span>
                     {wishlistCount > 0 && (
-                      <span className="text-[10px] px-2 py-0.5 bg-[#B69ACF] text-[#302438] font-bold rounded-full">
+                      <span className="text-[10px] px-2 py-0.5 bg-[var(--rose)] text-white font-bold rounded-full" style={{ color: "var(--white)" }}>
                         {wishlistCount}
                       </span>
                     )}
@@ -1920,13 +1920,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                       setIsMobileMenuOpen(false);
                       openDrawer();
                     }}
-                    className="flex items-center justify-between w-full text-xs text-[#302438] hover:text-[#563568] py-1 font-medium cursor-pointer"
+                    className="flex items-center justify-between w-full text-xs text-[#302438] hover:text-[color:var(--plum)] py-1 font-medium cursor-pointer"
                   >
                     <span className="flex items-center gap-2.5">
-                      <ShoppingBag size={15} className="text-[#563568]" />
+                      <ShoppingBag size={15} className="text-[color:var(--plum)]" />
                       <span>Shopping Bag</span>
                     </span>
-                    <span className="text-[10px] px-2 py-0.5 bg-[#563568] text-white font-medium rounded-full">
+                    <span className="text-[10px] px-2 py-0.5 bg-[var(--rose)] text-white font-medium rounded-full" style={{ color: "var(--white)" }}>
                       {itemCount}
                     </span>
                   </button>
@@ -1937,11 +1937,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <Link
                     to="/contact"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="block p-3 bg-[#F7F0FA] border border-[#E7DCEB] hover:border-[#B69ACF] transition-colors"
+                    className="block p-3 bg-[var(--white)] border border-[#E7DCEB] hover:border-[var(--gold)] transition-colors"
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      <Phone size={13} className="text-[#563568]" />
-                      <span className="text-[11px] font-semibold text-[#563568] uppercase tracking-wider">
+                      <Phone size={13} className="text-[color:var(--plum)]" />
+                      <span className="text-[11px] font-semibold text-[color:var(--body)] uppercase tracking-wider">
                         Jewellery Concierge
                       </span>
                     </div>
@@ -1956,7 +1956,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <div className="pt-3 border-t border-[#E7DCEB] flex items-center justify-between text-xs text-[#6F6475]">
                     <button
                       onClick={onToggleIncludeAll}
-                      className="text-[11px] uppercase tracking-wider underline hover:text-[#563568]"
+                      className="text-[11px] uppercase tracking-wider underline hover:text-[color:var(--plum)]"
                     >
                       includeAll: {includeAll ? 'ON' : 'OFF'}
                     </button>

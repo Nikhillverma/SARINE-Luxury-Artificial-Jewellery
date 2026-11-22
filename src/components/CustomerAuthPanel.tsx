@@ -154,38 +154,38 @@ export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, co
     setResetToken("");
     clearFeedback();
   };
-  const fieldClass = "mt-1 w-full min-h-11 px-3 border border-[#E7DCEB] bg-white text-sm text-[#302438] outline-none focus:border-[#563568]";
-  const buttonClass = "w-full min-h-12 bg-[#563568] text-white text-sm font-medium hover:bg-[#6E4682] disabled:opacity-60 transition-colors";
+  const fieldClass = "mt-1 w-full min-h-11 px-3 border border-[#E7DCEB] bg-white text-sm text-[#302438] outline-none focus:border-[var(--plum)]";
+  const buttonClass = "w-full min-h-12 bg-[var(--plum)] text-white text-sm font-medium hover:bg-[var(--plum-dark)] disabled:opacity-60 transition-colors";
   const labelClass = "block text-xs text-[#6F6475]";
 
   return (
     <div className="w-full">
       <div className="text-center mb-6">
         <span className="text-[10px] tracking-[0.25em] text-[#8A7B90]">WELCOME TO</span>
-        <div className="font-serif text-3xl tracking-[0.2em] text-[#563568] mt-1">SARINE</div>
+        <div className="font-serif text-3xl tracking-[0.2em] text-[color:var(--heading)] mt-1">SARINE</div>
         <p className="text-xs text-[#6F6475] mt-2">A little elegance, made personal.</p>
       </div>
       {mode !== "forgot" && (
         <div className="grid grid-cols-2 border-b border-[#E7DCEB] mb-5">
-          <button type="button" onClick={() => switchMode("otp")} className={`min-h-11 text-sm border-b-2 ${mode === "otp" ? "border-[#563568] text-[#563568] font-semibold" : "border-transparent text-[#8A7B90]"}`}>Continue with OTP</button>
-          <button type="button" onClick={() => switchMode("password")} className={`min-h-11 text-sm border-b-2 ${mode === "password" ? "border-[#563568] text-[#563568] font-semibold" : "border-transparent text-[#8A7B90]"}`}>Email & Password</button>
+          <button type="button" onClick={() => switchMode("otp")} className={`min-h-11 text-sm border-b-2 ${mode === "otp" ? "border-[var(--plum)] text-[color:var(--plum)] font-semibold" : "border-transparent text-[#8A7B90]"}`}>Continue with OTP</button>
+          <button type="button" onClick={() => switchMode("password")} className={`min-h-11 text-sm border-b-2 ${mode === "password" ? "border-[var(--plum)] text-[color:var(--plum)] font-semibold" : "border-transparent text-[#8A7B90]"}`}>Email & Password</button>
         </div>
       )}
       {error && <p role="alert" className="mb-4 p-3 bg-red-50 border border-red-200 text-xs text-red-700">{error}</p>}
-      {message && <p role="status" className="mb-4 p-3 bg-[#F7F0FA] border border-[#E7DCEB] text-xs text-[#563568]">{message}</p>}
+      {message && <p role="status" className="mb-4 p-3 bg-[var(--tint)] border border-[#E7DCEB] text-xs text-[color:var(--body)]">{message}</p>}
 
       {mode === "otp" && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-2">
-            <button type="button" onClick={() => { setMethod("phone"); setOtpSent(false); clearFeedback(); }} disabled={!methods.phone} className={`min-h-10 border text-xs disabled:opacity-40 ${method === "phone" ? "border-[#563568] bg-[#F7F0FA] text-[#563568]" : "border-[#E7DCEB] text-[#6F6475]"}`}>Mobile · unavailable</button>
-            <button type="button" onClick={() => { setMethod("email"); setOtpSent(false); clearFeedback(); }} disabled={!methods.email} className={`min-h-10 border text-xs disabled:opacity-40 ${method === "email" ? "border-[#563568] bg-[#F7F0FA] text-[#563568]" : "border-[#E7DCEB] text-[#6F6475]"}`}>Email address</button>
+            <button type="button" onClick={() => { setMethod("phone"); setOtpSent(false); clearFeedback(); }} disabled={!methods.phone} className={`min-h-10 border text-xs disabled:opacity-40 ${method === "phone" ? "border-[var(--plum)] bg-[var(--pill)] text-[color:var(--plum)]" : "border-[#E7DCEB] text-[#6F6475]"}`}>Mobile · unavailable</button>
+            <button type="button" onClick={() => { setMethod("email"); setOtpSent(false); clearFeedback(); }} disabled={!methods.email} className={`min-h-10 border text-xs disabled:opacity-40 ${method === "email" ? "border-[var(--plum)] bg-[var(--pill)] text-[color:var(--plum)]" : "border-[#E7DCEB] text-[#6F6475]"}`}>Email address</button>
           </div>
-          {!methods[method] && <p role="status" className="rounded-lg border border-[#E7DCEB] bg-[#F7F0FA] p-3 text-xs text-[#6F6475]">{methodReasons[method]} You can still use your existing email and password.</p>}
+          {!methods[method] && <p role="status" className="rounded-lg border border-[#E7DCEB] bg-[var(--tint)] p-3 text-xs text-[#6F6475]">{methodReasons[method]} You can still use your existing email and password.</p>}
           {!otpSent ? (
             <>
               <label className={labelClass}>{method === "phone" ? "Mobile number" : "Email address"}
                 <div className="flex mt-1">
-                  {method === "phone" && <span className="flex items-center px-3 border border-r-0 border-[#E7DCEB] bg-[#F7F0FA] text-sm text-[#563568]">+91</span>}
+                  {method === "phone" && <span className="flex items-center px-3 border border-r-0 border-[#E7DCEB] bg-[var(--tint)] text-sm text-[color:var(--body)]">+91</span>}
                   <input required type={method === "email" ? "email" : "tel"} autoComplete={method === "email" ? "email" : "tel"} value={identifier} onChange={event => setIdentifier(event.target.value)} placeholder={method === "phone" ? "10-digit mobile number" : "you@example.com"} className={fieldClass + (method === "phone" ? " mt-0" : "")} />
                 </div>
               </label>
@@ -204,7 +204,7 @@ export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, co
                 <input required inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp} onChange={event => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="••••••" className={fieldClass + " text-center tracking-[0.5em] text-lg"} />
               </label>
               <button type="submit" disabled={busy || otp.length !== 6} className={buttonClass}>{busy ? "Verifying…" : "Verify & continue"}</button>
-              <button type="button" disabled={busy} onClick={() => { setOtpSent(false); setOtp(""); clearFeedback(); }} className="w-full min-h-10 text-xs text-[#563568] underline">Change {method === "phone" ? "mobile number" : "email"}</button>
+              <button type="button" disabled={busy} onClick={() => { setOtpSent(false); setOtp(""); clearFeedback(); }} className="w-full min-h-10 text-xs text-[color:var(--plum)] underline">Change {method === "phone" ? "mobile number" : "email"}</button>
               <button type="button" disabled={busy} onClick={sendOtp} className="w-full min-h-10 text-xs text-[#6F6475] underline">Resend code</button>
             </form>
           )}
@@ -220,7 +220,7 @@ export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, co
             <input required type="password" autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} className={fieldClass} />
           </label>
           <button type="submit" disabled={busy || !identifier.trim() || !password} className={buttonClass}>{busy ? "Signing in…" : "Sign in securely"}</button>
-          <button type="button" onClick={() => switchMode("forgot")} className="w-full min-h-10 text-xs text-[#563568] underline">Forgot password?</button>
+          <button type="button" onClick={() => switchMode("forgot")} className="w-full min-h-10 text-xs text-[color:var(--plum)] underline">Forgot password?</button>
         </form>
       )}
 
@@ -229,12 +229,12 @@ export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, co
           {!resetToken ? (
             !otpSent ? (
               <form onSubmit={requestRecovery} className="space-y-4">
-                <h3 className="font-serif text-xl text-[#563568]">Recover your password</h3>
+                <h3 className="font-serif text-xl text-[color:var(--heading)]">Recover your password</h3>
                 <p className="text-xs text-[#6F6475]">Choose the email or mobile number registered to your account.</p>
-                {!methods[method] && <p role="status" className="rounded-lg border border-[#E7DCEB] bg-[#F7F0FA] p-3 text-xs text-[#6F6475]">{methodReasons[method]} Password recovery will become available when a verified delivery method is configured.</p>}
+                {!methods[method] && <p role="status" className="rounded-lg border border-[#E7DCEB] bg-[var(--tint)] p-3 text-xs text-[#6F6475]">{methodReasons[method]} Password recovery will become available when a verified delivery method is configured.</p>}
                 <div className="grid grid-cols-2 gap-2">
-                  <button type="button" onClick={() => { setMethod("email"); clearFeedback(); }} disabled={!methods.email} className={`min-h-10 border text-xs disabled:opacity-40 ${method === "email" ? "border-[#563568] bg-[#F7F0FA] text-[#563568]" : "border-[#E7DCEB]"}`}>Email</button>
-                  <button type="button" onClick={() => { setMethod("phone"); clearFeedback(); }} disabled={!methods.phone} className={`min-h-10 border text-xs disabled:opacity-40 ${method === "phone" ? "border-[#563568] bg-[#F7F0FA] text-[#563568]" : "border-[#E7DCEB]"}`}>Mobile · unavailable</button>
+                  <button type="button" onClick={() => { setMethod("email"); clearFeedback(); }} disabled={!methods.email} className={`min-h-10 border text-xs disabled:opacity-40 ${method === "email" ? "border-[var(--plum)] bg-[var(--pill)] text-[color:var(--plum)]" : "border-[#E7DCEB]"}`}>Email</button>
+                  <button type="button" onClick={() => { setMethod("phone"); clearFeedback(); }} disabled={!methods.phone} className={`min-h-10 border text-xs disabled:opacity-40 ${method === "phone" ? "border-[var(--plum)] bg-[var(--pill)] text-[color:var(--plum)]" : "border-[#E7DCEB]"}`}>Mobile · unavailable</button>
                 </div>
                 <label className={labelClass}>{method === "email" ? "Email address" : "Mobile number"}
                   <input required value={identifier} onChange={event => setIdentifier(event.target.value)} className={fieldClass} />
@@ -243,7 +243,7 @@ export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, co
               </form>
             ) : (
               <form onSubmit={verifyOtp} className="space-y-4">
-                <h3 className="font-serif text-xl text-[#563568]">Verify recovery code</h3>
+                <h3 className="font-serif text-xl text-[color:var(--heading)]">Verify recovery code</h3>
                 <label className={labelClass}>6-digit code
                   <input required inputMode="numeric" maxLength={6} value={otp} onChange={event => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))} className={fieldClass + " text-center tracking-[0.5em]"} />
                 </label>
@@ -252,14 +252,14 @@ export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, co
             )
           ) : (
             <form onSubmit={saveNewPassword} className="space-y-4">
-              <h3 className="font-serif text-xl text-[#563568]">Choose a new password</h3>
+              <h3 className="font-serif text-xl text-[color:var(--heading)]">Choose a new password</h3>
               <label className={labelClass}>New password
                 <input required type="password" minLength={8} maxLength={128} autoComplete="new-password" value={newPassword} onChange={event => setNewPassword(event.target.value)} className={fieldClass} />
               </label>
               <button type="submit" disabled={busy || newPassword.length < 8} className={buttonClass}>{busy ? "Updating…" : "Update password"}</button>
             </form>
           )}
-          <button type="button" onClick={() => switchMode("password")} className="w-full min-h-10 text-xs text-[#563568] underline">Back to sign in</button>
+          <button type="button" onClick={() => switchMode("password")} className="w-full min-h-10 text-xs text-[color:var(--plum)] underline">Back to sign in</button>
         </div>
       )}
 
@@ -269,7 +269,7 @@ export const CustomerAuthPanel: React.FC<Props> = ({ onAuthenticated, onSkip, co
           <div ref={googleButtonRef} className="flex justify-center min-h-10" />
         </div>
       )}
-      {onSkip && <button type="button" onClick={onSkip} className="w-full min-h-11 mt-4 text-xs tracking-wide text-[#6F6475] hover:text-[#563568]">Skip for now — continue browsing</button>}
+      {onSkip && <button type="button" onClick={onSkip} className="w-full min-h-11 mt-4 text-xs tracking-wide text-[#6F6475] hover:text-[color:var(--plum)]">Skip for now — continue browsing</button>}
       {!compact && <p className="mt-4 text-center text-[10px] text-[#A89BAE]">By continuing, you agree to SARINE's Terms & Privacy Policy.</p>}
     </div>
   );
