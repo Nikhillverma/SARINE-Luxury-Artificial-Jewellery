@@ -538,3 +538,43 @@ body.sarine-global-theme #main-content p,
 body.sarine-global-theme #main-content li {
   font-size: calc(var(--text-base, 1rem) * var(--sarine-global-body-scale, 1));
 }
+
+
+/* Mobile storefront usability: comfortable touch targets and safe scrolling. */
+@media (max-width: 767px) {
+  .product-grid > article {
+    min-width: 0;
+  }
+
+  .product-grid > article h3 {
+    overflow-wrap: anywhere;
+  }
+
+  .product-grid > article button,
+  .product-grid > article a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #sarine-mobile-navigation {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  #sarine-mobile-navigation .flex-1 a {
+    min-height: 40px;
+    align-items: center;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .product-grid > article > div.relative > a.absolute {
+    min-height: 44px;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sarine-announcement-track {
+    animation: none !important;
+    transform: none !important;
+  }
+}

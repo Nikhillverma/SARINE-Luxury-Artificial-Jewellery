@@ -257,9 +257,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Left: SARINE Wordmark with Diamond Star Motif & Tagline */}
             <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-1.5 text-[#302438] hover:text-[#563568] transition-colors lg:hidden cursor-pointer rounded-xs"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center text-[#302438] hover:text-[#563568] transition-colors lg:hidden cursor-pointer rounded-xs"
                 aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                aria-expanded={isMobileMenuOpen}
+                aria-controls="sarine-mobile-navigation"
               >
                 {isMobileMenuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
               </button>
@@ -320,7 +323,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Mobile Quick Search Button */}
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="p-2 text-[#302438] hover:text-[#563568] transition-colors lg:hidden cursor-pointer rounded-full hover:bg-white/60"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[#563568] transition-colors lg:hidden cursor-pointer rounded-full hover:bg-white/60"
                 aria-label="Open search"
               >
                 <Search size={20} strokeWidth={1.5} />
@@ -353,7 +356,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {/* Mobile Account Icon Only */}
                 <Link
                   to="/account"
-                  className="sm:hidden p-2 text-[#302438] hover:text-[#563568] transition-colors rounded-full hover:bg-white/60 flex items-center"
+                  className="sm:hidden inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[#563568] transition-colors rounded-full hover:bg-white/60"
                   aria-label="My Account"
                 >
                   <User size={19} strokeWidth={1.5} className="text-[#563568]" />
@@ -443,7 +446,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Wishlist Button with Label & Numeric Badge */}
               <button
                 onClick={openWishlist}
-                className="relative flex items-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer group rounded-xs hover:bg-white/60"
+                className="relative inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer group rounded-xs hover:bg-white/60"
                 aria-label={`Wishlist with ${wishlistCount} saved pieces`}
                 title="View Wishlist"
               >
@@ -464,7 +467,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Bag Button with Label & Numeric Badge */}
               <button
                 onClick={openDrawer}
-                className="relative flex items-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer group rounded-xs hover:bg-white/60"
+                className="relative inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer group rounded-xs hover:bg-white/60"
                 aria-label={`Shopping Bag with ${itemCount} items`}
                 title="Shopping Bag"
               >
@@ -1541,9 +1544,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             />
 
             {/* Slide-out Menu Panel */}
-            <div className="relative w-[85%] max-w-sm bg-white h-full shadow-2xl flex flex-col z-10 overflow-hidden">
+            <div id="sarine-mobile-navigation" role="dialog" aria-modal="true" aria-label="SARINE navigation" className="relative w-[88%] max-w-sm bg-white h-[100dvh] max-h-[100dvh] shadow-2xl flex flex-col z-10 overflow-hidden">
               {/* Drawer Header */}
-              <div className="h-16 border-b border-[#E7DCEB] px-5 flex items-center justify-between shrink-0 bg-white">
+              <div className="min-h-16 border-b border-[#E7DCEB] px-5 pt-[env(safe-area-inset-top)] flex items-center justify-between shrink-0 bg-white">
                 <Link
                   to="/"
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -1553,7 +1556,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </Link>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[#563568] transition-colors cursor-pointer"
                   aria-label="Close menu"
                 >
                   <X size={20} strokeWidth={1.5} />
@@ -1561,7 +1564,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
 
               {/* Drawer Body (Scrollable) */}
-              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-4">
                 {/* Mobile Search Button */}
                 <button
                   onClick={() => {
@@ -1608,7 +1611,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       aria-expanded={mobileExpanded.categories}
                       aria-controls="mobile-nav-categories"
                       onClick={() => toggleMobileAccordion('categories')}
-                      className="w-full flex items-center justify-between py-2.5 text-[#302438] hover:text-[#563568] font-medium text-left cursor-pointer"
+                      className="w-full min-h-11 flex items-center justify-between py-2.5 text-[#302438] hover:text-[#563568] font-medium text-left cursor-pointer"
                     >
                       <span>Shop by Category</span>
                       <ChevronDown
@@ -1623,14 +1626,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                         <Link
                           to="/shop"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568] font-medium text-[#563568]"
+                          className="flex min-h-10 items-center py-2 hover:text-[#563568] font-medium text-[#563568]"
                         >
                           All Jewellery Catalogue
                         </Link>
                         <Link
                           to="/shop?category=earrings"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="block py-1 hover:text-[#563568]"
+                          className="flex min-h-10 items-center py-2 hover:text-[#563568]"
                         >
                           Earrings & Chandbalis
                         </Link>

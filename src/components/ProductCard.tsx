@@ -84,7 +84,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <button
           onClick={handleWishlistClick}
           aria-label={wishlisted ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
-          className="absolute top-2.5 right-2.5 z-20 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-[#302438] flex items-center justify-center border border-[#E7DCEB] transition-all cursor-pointer shadow-2xs backdrop-blur-xs"
+          className="absolute top-1.5 right-1.5 z-20 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-white/95 hover:bg-white text-[#302438] flex items-center border border-[#E7DCEB] transition-all cursor-pointer shadow-2xs backdrop-blur-xs touch-manipulation"
         >
           <Heart
             size={16}
@@ -136,7 +136,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
 
         {/* Product Title */}
-        <h3 className="font-serif text-[15px] sm:text-base text-[#302438] font-normal leading-snug line-clamp-1 group-hover:text-[#563568] transition-colors">
+        <h3 className="min-h-[2.6em] font-serif text-[15px] sm:text-base text-[#302438] font-normal leading-snug line-clamp-2 group-hover:text-[#563568] transition-colors">
           <Link to={`/product/${product.slug}`}>
             {product.name}
           </Link>
