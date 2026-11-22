@@ -741,3 +741,9 @@ body.sarine-global-theme[data-sarine-button-style="outline"] #main-content butto
   color: var(--sarine-global-primary, #563568) !important;
   border: 1px solid var(--sarine-global-primary, #563568) !important;
 }
+
+/* The navigation's second tier is an independently painted child.
+   Apply the published header surface to that visible tier as well as its wrapper. */
+body.sarine-global-theme .sarine-global-header > div:nth-child(2) {
+  background-color: var(--sarine-global-header, #FFFFFF) !important;
+}
