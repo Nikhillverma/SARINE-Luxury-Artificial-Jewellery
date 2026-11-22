@@ -197,6 +197,7 @@ function MainAppShell() {
           <Route path="/admin/marketing" element={<AdminMarketingPage />} />
           <Route path="/admin/campaigns" element={<AdminCampaignsPage />} />
           <Route path="/admin/storefront" element={<AdminStorefrontPage />} />
+          <Route path="/admin/storefront/*" element={<AdminStorefrontPage />} />
           <Route path="/pages/:slug" element={<CmsPublicPage />} />
           <Route path="/admin/carousel-features" element={<AdminCarouselFeaturesPage />} />
           <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
