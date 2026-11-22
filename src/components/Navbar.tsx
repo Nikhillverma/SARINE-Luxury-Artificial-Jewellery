@@ -32,6 +32,7 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { SearchOverlay } from './SearchOverlay';
 import { hostingerStorefrontService } from '../services/hostinger/hostingerStorefrontService';
+import { DEFAULT_SITE_CHROME, siteChromeService } from '../services/hostinger/siteChromeService';
 
 interface NavbarProps {
   includeAll: boolean;
@@ -77,6 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [activeAnnouncement, setActiveAnnouncement] = useState(0);
   const [managedAnnouncement, setManagedAnnouncement] = useState('');
   const [managedTrustMessages, setManagedTrustMessages] = useState<string[]>([]);
+  const [headerTagline, setHeaderTagline] = useState(DEFAULT_SITE_CHROME.header.tagline);
 
   // Mobile Accordion state
   const [mobileExpanded, setMobileExpanded] = useState<Record<string, boolean>>({
@@ -270,7 +272,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <div className="h-[1px] flex-1 bg-[#FFFFFF]/70" />
                 </div>
                 <span className="text-[8px] sm:text-[9px] tracking-[0.32em] text-[#563568]/80 uppercase font-sans font-medium whitespace-nowrap">
-                  LUXURY ARTIFICIAL JEWELLERY
+                  {headerTagline || 'LUXURY ARTIFICIAL JEWELLERY'}
                 </span>
               </Link>
             </div>
