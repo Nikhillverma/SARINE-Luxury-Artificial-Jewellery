@@ -6,17 +6,17 @@ export interface SiteChromeSettings {
   footer: {
     tagline: string;
     copyright: string;
-    social: { instagram: string; facebook: string; pinterest: string; youtube: string };
+    social: { facebook: string; pinterest: string; youtube: string };
     headings: { shop: string; care: string; about: string; payments: string };
   };
 }
 export const DEFAULT_SITE_CHROME: SiteChromeSettings = {
   version: 1,
-  header: { tagline: "Timeless jewellery for every you." },
+  header: { tagline: "LUXURY ARTIFICIAL JEWELLERY" },
   footer: {
     tagline: "Timeless jewellery for every you.",
     copyright: "© 2026 SARINE. All rights reserved.",
-    social: { instagram: "https://instagram.com", facebook: "https://facebook.com", pinterest: "https://pinterest.com", youtube: "https://youtube.com" },
+    social: { facebook: "https://facebook.com", pinterest: "https://pinterest.com", youtube: "https://youtube.com" },
     headings: { shop: "Shop", care: "Customer Care", about: "About", payments: "Payment Methods" }
   }
 };
