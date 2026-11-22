@@ -12,7 +12,6 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Facebook,
-  Instagram,
   Youtube,
   ShieldCheck,
   Truck,
@@ -134,9 +133,6 @@ export const Footer: React.FC = () => {
                 aria-label="Facebook"
               >
                 <Facebook size={17} strokeWidth={1.5} />
-              </a>
-              <a href={chrome.footer.social.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-[#FFFFFF] transition-colors p-1" aria-label="Instagram">
-                <Instagram size={17} strokeWidth={1.5} />
               </a>
               {/* Pinterest SVG */}
               <a
