@@ -937,3 +937,61 @@ body.sarine-global-theme #main-content [class*="text-[#6F6475]"],
 body.sarine-global-theme #main-content [class*="text-[#5A4F5E]"] {
   color: #222222 !important;
 }
+
+
+/* Rebalance the neutral storefront: black is for readable text, not brand surfaces. */
+body.sarine-global-theme header.sticky > div:first-child,
+body.sarine-global-theme footer,
+body.sarine-global-theme footer > div:not(:first-child) {
+  background-color: #563568 !important;
+}
+body.sarine-global-theme #main-content a[class*="bg-[#563568]"],
+body.sarine-global-theme #main-content button[class*="bg-[#563568]"],
+body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]"],
+body.sarine-global-theme #main-content button[class*="bg-[#4A1D5C]"] {
+  background-color: #563568 !important;
+  border-color: #563568 !important;
+  color: #FFFFFF !important;
+}
+body.sarine-global-theme #main-content a[class*="bg-[#563568]"]:hover,
+body.sarine-global-theme #main-content button[class*="bg-[#563568]"]:hover,
+body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]"]:hover,
+body.sarine-global-theme #main-content button[class*="bg-[#4A1D5C]"]:hover {
+  background-color: #6B4A7D !important;
+  border-color: #6B4A7D !important;
+}
+body.sarine-global-theme #main-content,
+body.sarine-global-theme #main-content .sarine-home,
+body.sarine-global-theme #main-content .sarine-home > section {
+  background-color: #FFFFFF !important;
+}
+body.sarine-global-theme #main-content h1,
+body.sarine-global-theme #main-content h2,
+body.sarine-global-theme #main-content h3,
+body.sarine-global-theme #main-content h4,
+body.sarine-global-theme #main-content h5,
+body.sarine-global-theme #main-content h6 {
+  color: #1D1B1F !important;
+}
+body.sarine-global-theme #main-content p,
+body.sarine-global-theme #main-content li,
+body.sarine-global-theme #main-content label {
+  color: #454149 !important;
+}
+body.sarine-global-theme #main-content [class*="bg-[#F7F0FA]"],
+body.sarine-global-theme #main-content [class*="bg-[#F7F0FA]/"],
+body.sarine-global-theme #main-content [class*="bg-[#E7DCEB]"],
+body.sarine-global-theme #main-content [class*="bg-[#B69ACF]"],
+body.sarine-global-theme #main-content [class*="bg-[#B69ACF]/"] {
+  background-color: #FFFFFF !important;
+}
+body.sarine-global-theme #main-content [class*="border-[#E7DCEB]"],
+body.sarine-global-theme #main-content [class*="border-[#B69ACF]"] {
+  border-color: #E8E5E9 !important;
+}
+body.sarine-global-theme footer a,
+body.sarine-global-theme footer p,
+body.sarine-global-theme footer h4,
+body.sarine-global-theme footer span {
+  color: #FFFFFF !important;
+}
