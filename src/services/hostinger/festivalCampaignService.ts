@@ -48,7 +48,7 @@ async function fetchActiveCampaigns(): Promise<FestivalCampaign[]> {
     countdownLabel: String(item.countdownLabel || ""),
     countdownBackgroundColor: /^#[0-9a-f]{6}$/i.test(item.countdownBackgroundColor || "") ? item.countdownBackgroundColor : "#563568",
     countdownTextColor: /^#[0-9a-f]{6}$/i.test(item.countdownTextColor || "") ? item.countdownTextColor : "#FFFFFF",
-    countdownTimerColor: /^#[0-9a-f]{6}$/i.test(item.countdownTimerColor || "") ? item.countdownTimerColor : "#FFE08A"
+    countdownTimerColor: /^#[0-9a-f]{6}$/i.test(item.countdownTimerColor || "") ? item.countdownTimerColor : "#B3265C"
   }));
 }
 export const festivalCampaignService = {
