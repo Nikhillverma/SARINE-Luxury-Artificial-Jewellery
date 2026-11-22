@@ -52,9 +52,9 @@ export interface InventoryMovement {
   createdAt: string;
   movementType?: 'product' | 'variant';
   variantLabel?: string | null;
-  costPriceSnapshot?: number | null;
-  previousStockCostValue?: number | null;
-  newStockCostValue?: number | null;
+  costPriceSnapshot?: number | string | null;
+  previousStockCostValue?: number | string | null;
+  newStockCostValue?: number | string | null;
 }
 
 export interface InventoryMovementQuery {
