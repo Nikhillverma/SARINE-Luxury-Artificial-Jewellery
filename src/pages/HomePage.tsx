@@ -153,7 +153,6 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         if (!cancelled) {
           setExploreProducts(result.products || []);
           setExploreDisplayCount(result.displayCount || 8);
-          setExploreVisibleCount(result.displayCount || 8);
           setHasPublishedExploreNow(result.configured === true);
         }
       })
@@ -169,7 +168,6 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const [hasPublishedCuratedFavourites, setHasPublishedCuratedFavourites] = useState(false);
   const [exploreProducts, setExploreProducts] = useState<Product[]>([]);
   const [exploreDisplayCount, setExploreDisplayCount] = useState(8);
-  const [exploreVisibleCount, setExploreVisibleCount] = useState(8);
   const [hasPublishedExploreNow, setHasPublishedExploreNow] = useState(false);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -876,17 +874,11 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <p className="mx-auto mt-2 max-w-xl text-xs leading-relaxed text-[#6F6475] sm:text-sm">A fresh selection of pieces to inspire your next look.</p>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
-            {exploreProducts.slice(0, exploreVisibleCount).map(product => (
+            {exploreProducts.slice(0, exploreDisplayCount).map(product => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
-          {exploreVisibleCount < exploreProducts.length && (
-            <div className="mt-7 text-center">
-              <button type="button" onClick={() => setExploreVisibleCount(count => Math.min(count + exploreDisplayCount, exploreProducts.length))} className="inline-flex min-h-11 items-center justify-center gap-2 border border-[#563568] bg-white px-7 py-3 text-xs font-medium text-[#563568] transition-colors hover:bg-[#F7F0FA]">
-                View More <ArrowRight size={14} />
-              </button>
-            </div>
-          )}
+
         </div>
       </section>
 
