@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import rateLimit from "express-rate-limit";
 import { pool } from "./db.js";
 import { shouldUseSecureSessionCookie } from "./sessionCookiePolicy.js";
+import { recordAdminActivity } from "./adminActivity.js";
 
 const router = Router();
 
@@ -117,6 +118,10 @@ router.post("/login", loginLimiter, async (req, res) => {
   );
 
   setSessionCookie(res, token);
+  await recordAdminActivity(safeAdmin(admin), {
+    action: "login", entityType: "admin session", entityId: admin.id,
+    summary: "Administrator signed in", method: "POST", route: "/auth/login", statusCode: 200
+  });
 
   return res.json({
     success: true,
@@ -170,10 +175,21 @@ router.post("/logout", async (req, res) => {
   const token = readCookie(req, COOKIE_NAME);
 
   if (token && /^[a-f0-9]{64}$/i.test(token)) {
-    await pool.execute(
-      "DELETE FROM admin_sessions WHERE id = ?",
-      [hashToken(token)]
+    const sessionId = hashToken(token);
+    const [admins] = await pool.execute(
+      `SELECT a.id, a.email, a.name, a.role
+       FROM admin_sessions s
+       INNER JOIN admins a ON a.id = s.admin_id
+       WHERE s.id = ? LIMIT 1`,
+      [sessionId]
     );
+    await pool.execute("DELETE FROM admin_sessions WHERE id = ?", [sessionId]);
+    if (admins.length) {
+      await recordAdminActivity(safeAdmin(admins[0]), {
+        action: "logout", entityType: "admin session", entityId: admins[0].id,
+        summary: "Administrator signed out", method: "POST", route: "/auth/logout", statusCode: 200
+      });
+    }
   }
 
   clearSessionCookie(res);
