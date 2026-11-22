@@ -29,11 +29,21 @@ const defaultLayout: HomepageLayout = {
 
 function mergeKnownSections(layout: HomepageLayout): HomepageLayout {
   const existing = Array.isArray(layout?.sections) ? layout.sections : [];
-  const existingIds = new Set(existing.map(section => section.id));
-  const additions = defaultLayout.sections.filter(section => !existingIds.has(section.id));
-  const merged = [...existing.map(section => adjustableCarousels.has(section.id)
+  const knownOrder = new Map(defaultLayout.sections.map((section, index) => [section.id, index]));
+  const merged = existing.map(section => adjustableCarousels.has(section.id)
     ? { ...section, carouselEnabled: section.carouselEnabled !== false, cardsPerView: section.cardsPerView ?? 5 }
-    : section), ...additions];
+    : section);
+  const existingIds = new Set(merged.map(section => section.id));
+
+  // Add sections introduced by newer releases beside their canonical neighbours,
+  // without disturbing the order an administrator has already customised.
+  for (const addition of defaultLayout.sections.filter(section => !existingIds.has(section.id))) {
+    const canonicalIndex = knownOrder.get(addition.id) ?? Number.MAX_SAFE_INTEGER;
+    const insertAt = merged.findIndex(section => (knownOrder.get(section.id) ?? Number.MAX_SAFE_INTEGER) > canonicalIndex);
+    if (insertAt === -1) merged.push(addition);
+    else merged.splice(insertAt, 0, addition);
+  }
+
   return { version: 1, sections: merged.map((section, sortOrder) => ({ ...section, sortOrder })) };
 }
 
@@ -204,7 +214,7 @@ export const HomepageSectionManager: React.FC = () => {
         ))}
         {!products.some(p => p.status === "active" && p.stock > 0) && <p className="p-4 text-xs text-gray-500">No active, in-stock products are available to select.</p>}
       </div>
-      <p className="text-[11px] text-[#6F6475]">Only active, in-stock products are eligible. Up to 100 products can be selected. View More reveals the remaining selected products from that visit's randomized list.</p>
+      <p className="text-[11px] text-[#6F6475]">Only active, in-stock products are eligible. Up to 100 products can be selected. The homepage displays up to the configured count; there is no expand button.</p>
       <div className="flex flex-wrap gap-2">
         <button type="button" disabled={exploreBusy || loading} onClick={() => void saveExplore(false)} className="rounded-lg border border-[#DCCDE5] bg-white px-4 py-2 text-xs font-medium text-[#563568]">Save Explore Now draft</button>
         <button type="button" disabled={exploreBusy || loading} onClick={() => void saveExplore(true)} className="rounded-lg bg-[#563568] px-4 py-2 text-xs font-medium text-white">{exploreBusy ? "Saving…" : "Publish Explore Now"}</button>
