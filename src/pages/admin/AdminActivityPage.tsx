@@ -42,7 +42,7 @@ function formatTimestamp(value: string): string {
 }
 function csvCell(value: unknown): string {
   let text = String(value ?? "");
-  if (/^[=+@\-\t\r]/.test(text)) text = "'" + text;
+  if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
   return '"' + text.replace(/"/g, '""') + '"';
 }
 function exportCsv(rows: ActivityEntry[]) {
