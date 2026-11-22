@@ -228,8 +228,9 @@ export const AdminReturnsPage: React.FC = () => {
   const visibleReturns = useMemo(() => returns.filter(item => {
     if (!withinDateRange(item.createdAt, fromDate, toDate)) return false;
     if (statusFilter === 'open') return !['resolved', 'closed', 'rejected'].includes(item.status);
-    if (statusFilter !== 'all' && statusFilter !== 'open' && statusFilter !== 'refund-required' && statusFilter !== 'refund-processed' && statusFilter !== 'refund-pending' && statusFilter !== 'refund-failed') return item.status === statusFilter;
-    return statusFilter === 'all' || statusFilter === 'open';
+    if (statusFilter === 'all') return true;
+    if (statusFilter === 'refund-required' || statusFilter === 'refund-processed' || statusFilter === 'refund-pending' || statusFilter === 'refund-failed') return false;
+    return item.status === statusFilter;
   }).sort((a, b) => {
     const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
