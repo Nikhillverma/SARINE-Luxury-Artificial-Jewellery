@@ -306,7 +306,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--tint)] flex items-center justify-center p-8">
+      <div className="min-h-screen bg-[var(--white)] flex items-center justify-center p-8">
         <div className="text-center font-sans">
           <div className="w-8 h-8 border-2 border-[var(--plum)] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
           <p className="font-serif text-lg text-[color:var(--body)]">Preparing piece details...</p>
@@ -317,7 +317,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-[var(--tint)] flex items-center justify-center p-8">
+      <div className="min-h-screen bg-[var(--white)] flex items-center justify-center p-8">
         <div className="text-center max-w-md bg-white p-8 border border-[var(--border)] rounded-xs shadow-xs">
           <h2 className="font-serif text-2xl text-[color:var(--body)]">Piece Not Found</h2>
           <p className="text-xs text-[color:var(--body)] mt-2 leading-relaxed">
@@ -909,7 +909,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
                     >
                       <Star
                         size={20}
-                        className={star <= newReviewRating ? 'text-[color:var(--plum)] fill-[#563568]' : 'text-[color:var(--border)]'}
+                        className={star <= newReviewRating ? 'text-[color:var(--gold)] fill-[var(--gold)]' : 'text-[color:var(--border)]'}
                       />
                     </button>
                   ))}
