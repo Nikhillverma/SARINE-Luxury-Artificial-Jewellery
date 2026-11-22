@@ -514,6 +514,7 @@ export const AdminOrdersPage: React.FC = () => {
           <div className="relative flex-1 max-w-sm">
             <input
               type="text"
+              aria-label="Search orders by order number or customer"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by order # or customer..."
@@ -522,6 +523,8 @@ export const AdminOrdersPage: React.FC = () => {
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6F6475]" />
             {searchTerm && (
               <button
+                type="button"
+                aria-label="Clear order search"
                 onClick={() => setSearchTerm('')}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#6F6475] hover:text-[#302438]"
               >
@@ -536,6 +539,7 @@ export const AdminOrdersPage: React.FC = () => {
               <Filter size={13} />
               <span className="hidden sm:inline">Status:</span>
               <select
+                aria-label="Filter orders by status"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="bg-[#F7F0FA] border border-[#E7DCEB] text-xs text-[#302438] px-2.5 py-1.5 rounded-xs focus:outline-none focus:border-[#B69ACF]"
@@ -554,6 +558,7 @@ export const AdminOrdersPage: React.FC = () => {
             <div className="flex items-center gap-1.5 text-xs text-[#6F6475]">
               <span className="hidden sm:inline">Payment:</span>
               <select
+                aria-label="Filter orders by payment status"
                 value={paymentFilter}
                 onChange={(e) => setPaymentFilter(e.target.value)}
                 className="bg-[#F7F0FA] border border-[#E7DCEB] text-xs text-[#302438] px-2.5 py-1.5 rounded-xs focus:outline-none focus:border-[#B69ACF]"
