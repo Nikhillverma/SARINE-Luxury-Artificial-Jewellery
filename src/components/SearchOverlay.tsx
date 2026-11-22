@@ -152,12 +152,12 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
       />
 
       {/* Main Container */}
-      <div className="relative w-full bg-white border-b border-[#E7DCEB] shadow-2xl z-10 max-h-[85vh] flex flex-col animate-in slide-in-from-top duration-300">
+      <div className="relative w-full bg-white border-b border-[var(--border)] shadow-2xl z-10 max-h-[85vh] flex flex-col animate-in slide-in-from-top duration-300">
         {/* Search Input Bar */}
-        <div className="border-b border-[#E7DCEB] bg-white">
+        <div className="border-b border-[var(--border)] bg-white">
           <div className="site-container py-4 sm:py-5">
             <form onSubmit={handleSearchSubmit} className="flex items-center gap-3">
-              <Search size={22} className="text-[#563568] shrink-0" />
+              <Search size={22} className="text-[var(--plum)] shrink-0" />
               <input
                 ref={inputRef}
                 type="text"
@@ -165,13 +165,13 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search jewellery by piece, design, material, or occasion..."
-                className="w-full text-base sm:text-xl font-serif text-[#302438] placeholder-[color:var(--body)] focus:outline-none bg-transparent"
+                className="w-full text-base sm:text-xl font-serif text-[var(--heading)] placeholder-[color:var(--body)] focus:outline-none bg-transparent"
               />
               {query && (
                 <button
                   type="button"
                   onClick={() => setQuery('')}
-                  className="p-1.5 text-[#6F6475] hover:text-[#302438] transition-colors cursor-pointer"
+                  className="p-1.5 text-[var(--body)] hover:text-[var(--heading)] transition-colors cursor-pointer"
                   title="Clear input"
                   aria-label="Clear search input"
                 >
@@ -181,7 +181,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
               <button
                 type="button"
                 onClick={onClose}
-                className="px-3 py-1.5 text-xs text-[#6F6475] hover:text-[#563568] font-medium border border-[#E7DCEB] hover:border-[#B69ACF] rounded-xs transition-colors cursor-pointer"
+                className="px-3 py-1.5 text-xs text-[var(--body)] hover:text-[var(--plum)] font-medium border border-[var(--border)] hover:border-[var(--gold)] rounded-xs transition-colors cursor-pointer"
               >
                 ESC
               </button>
@@ -195,13 +195,13 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
             /* Autocomplete Results */
             <div>
               <div className="flex items-center justify-between mb-4">
-                <span className="text-xs uppercase tracking-wider text-[#6F6475] font-medium">
+                <span className="text-xs uppercase tracking-wider text-[var(--body)] font-medium">
                   {results.length > 0 ? `Matching Pieces (${results.length})` : 'No direct matches found'}
                 </span>
                 {results.length > 0 && (
                   <button
                     onClick={handleSearchSubmit}
-                    className="text-xs text-[#563568] hover:text-[#A184BD] font-medium inline-flex items-center gap-1 cursor-pointer"
+                    className="text-xs text-[var(--plum)] hover:text-[var(--white)] font-medium inline-flex items-center gap-1 cursor-pointer"
                   >
                     <span>View all results for "{query}"</span>
                     <ArrowRight size={13} />
@@ -219,9 +219,9 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
                         saveRecentSearch(product.name);
                         onClose();
                       }}
-                      className="group flex items-center gap-3.5 p-2.5 bg-[#FAF5FC] hover:bg-[#F0E6F4] border border-[#E7DCEB] hover:border-[#B69ACF] rounded-xs transition-all"
+                      className="group flex items-center gap-3.5 p-2.5 bg-[var(--tint)] hover:bg-[var(--tint)] border border-[var(--border)] hover:border-[var(--gold)] rounded-xs transition-all"
                     >
-                      <div className="w-16 h-20 bg-white border border-[#E7DCEB] shrink-0 overflow-hidden rounded-xs">
+                      <div className="w-16 h-20 bg-white border border-[var(--border)] shrink-0 overflow-hidden rounded-xs">
                         <img
                           src={product.images[0]}
                           alt={product.name}
@@ -229,18 +229,18 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="text-[10px] uppercase tracking-wider text-[#6F6475] font-medium block">
+                        <span className="text-[10px] uppercase tracking-wider text-[var(--body)] font-medium block">
                           {product.jewelleryType}
                         </span>
-                        <h4 className="font-serif text-sm text-[#302438] group-hover:text-[#563568] truncate transition-colors">
+                        <h4 className="font-serif text-sm text-[var(--heading)] group-hover:text-[var(--plum)] truncate transition-colors">
                           {product.name}
                         </h4>
                         <div className="flex items-baseline gap-2 mt-1">
-                          <span className="text-xs font-semibold text-[#302438]">
+                          <span className="text-xs font-semibold text-[var(--heading)]">
                             {formatInr(product.price)}
                           </span>
                           {product.compareAtPrice && (
-                            <span className="text-[10px] text-[#6F6475] line-through">
+                            <span className="text-[10px] text-[var(--body)] line-through">
                               {formatInr(product.compareAtPrice)}
                             </span>
                           )}
@@ -251,8 +251,8 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
                 </div>
               ) : (
                 <div className="py-8 text-center max-w-md mx-auto">
-                  <p className="font-serif text-lg text-[#302438]">We couldn't find matches for "{query}"</p>
-                  <p className="text-xs text-[#6F6475] mt-1.5 leading-relaxed">
+                  <p className="font-serif text-lg text-[var(--heading)]">We couldn't find matches for "{query}"</p>
+                  <p className="text-xs text-[var(--body)] mt-1.5 leading-relaxed">
                     Try browsing our curated collections below or searching for keywords like "earrings", "choker", or "bangle".
                   </p>
                 </div>
@@ -265,13 +265,13 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
               {recentSearches.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs uppercase tracking-wider text-[#6F6475] font-medium flex items-center gap-1.5">
+                    <span className="text-xs uppercase tracking-wider text-[var(--body)] font-medium flex items-center gap-1.5">
                       <Clock size={13} />
                       <span>Recent Searches</span>
                     </span>
                     <button
                       onClick={handleClearRecents}
-                      className="text-[11px] text-[#6F6475] hover:text-[#DC2626] cursor-pointer"
+                      className="text-[11px] text-[var(--body)] hover:text-[#DC2626] cursor-pointer"
                     >
                       Clear
                     </button>
@@ -281,7 +281,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
                       <button
                         key={term}
                         onClick={() => handleSelectTerm(term)}
-                        className="px-3 py-1.5 bg-[#F7F0FA] hover:bg-[#F0E6F4] text-xs text-[#302438] hover:text-[#563568] border border-[#E7DCEB] hover:border-[#B69ACF] rounded-xs transition-colors cursor-pointer"
+                        className="px-3 py-1.5 bg-[var(--tint)] hover:bg-[var(--tint)] text-xs text-[var(--heading)] hover:text-[var(--plum)] border border-[var(--border)] hover:border-[var(--gold)] rounded-xs transition-colors cursor-pointer"
                       >
                         {term}
                       </button>
@@ -292,8 +292,8 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
 
               {/* Column 2: Popular Searches */}
               <div>
-                <span className="text-xs uppercase tracking-wider text-[#6F6475] font-medium flex items-center gap-1.5 mb-3">
-                  <Sparkles size={13} className="text-[#563568]" />
+                <span className="text-xs uppercase tracking-wider text-[var(--body)] font-medium flex items-center gap-1.5 mb-3">
+                  <Sparkles size={13} className="text-[var(--plum)]" />
                   <span>Trending Collections</span>
                 </span>
                 <div className="flex flex-wrap gap-2">
@@ -301,7 +301,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
                     <button
                       key={term}
                       onClick={() => handleSelectTerm(term)}
-                      className="px-3 py-1.5 bg-[#FAF5FC] hover:bg-[#F0E6F4] text-xs text-[#563568] border border-[#E7DCEB] hover:border-[#B69ACF] rounded-xs transition-colors cursor-pointer"
+                      className="px-3 py-1.5 bg-[var(--tint)] hover:bg-[var(--tint)] text-xs text-[var(--plum)] border border-[var(--border)] hover:border-[var(--gold)] rounded-xs transition-colors cursor-pointer"
                     >
                       {term}
                     </button>
@@ -311,7 +311,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
 
               {/* Column 3: Category Shortcuts */}
               <div>
-                <span className="text-xs uppercase tracking-wider text-[#6F6475] font-medium flex items-center gap-1.5 mb-3">
+                <span className="text-xs uppercase tracking-wider text-[var(--body)] font-medium flex items-center gap-1.5 mb-3">
                   <Tag size={13} />
                   <span>Explore by Category</span>
                 </span>
@@ -319,35 +319,35 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
                   <Link
                     to="/shop?category=earrings"
                     onClick={onClose}
-                    className="p-2.5 bg-[#F7F0FA] hover:bg-[#F0E6F4] text-[#302438] hover:text-[#563568] border border-[#E7DCEB] rounded-xs transition-colors block text-center"
+                    className="p-2.5 bg-[var(--tint)] hover:bg-[var(--tint)] text-[var(--heading)] hover:text-[var(--plum)] border border-[var(--border)] rounded-xs transition-colors block text-center"
                   >
                     Earrings & Jhumkas
                   </Link>
                   <Link
                     to="/shop?category=necklaces"
                     onClick={onClose}
-                    className="p-2.5 bg-[#F7F0FA] hover:bg-[#F0E6F4] text-[#302438] hover:text-[#563568] border border-[#E7DCEB] rounded-xs transition-colors block text-center"
+                    className="p-2.5 bg-[var(--tint)] hover:bg-[var(--tint)] text-[var(--heading)] hover:text-[var(--plum)] border border-[var(--border)] rounded-xs transition-colors block text-center"
                   >
                     Necklaces & Chokers
                   </Link>
                   <Link
                     to="/shop?category=bracelets"
                     onClick={onClose}
-                    className="p-2.5 bg-[#F7F0FA] hover:bg-[#F0E6F4] text-[#302438] hover:text-[#563568] border border-[#E7DCEB] rounded-xs transition-colors block text-center"
+                    className="p-2.5 bg-[var(--tint)] hover:bg-[var(--tint)] text-[var(--heading)] hover:text-[var(--plum)] border border-[var(--border)] rounded-xs transition-colors block text-center"
                   >
                     Bangles & Cuffs
                   </Link>
                   <Link
                     to="/shop?category=rings"
                     onClick={onClose}
-                    className="p-2.5 bg-[#F7F0FA] hover:bg-[#F0E6F4] text-[#302438] hover:text-[#563568] border border-[#E7DCEB] rounded-xs transition-colors block text-center"
+                    className="p-2.5 bg-[var(--tint)] hover:bg-[var(--tint)] text-[var(--heading)] hover:text-[var(--plum)] border border-[var(--border)] rounded-xs transition-colors block text-center"
                   >
                     Cocktail Rings
                   </Link>
                   <Link
                     to="/shop?category=sets"
                     onClick={onClose}
-                    className="col-span-2 p-2.5 bg-[#563568] text-white hover:bg-[#A184BD] rounded-xs transition-colors text-center font-medium"
+                    className="col-span-2 p-2.5 bg-[var(--plum)] text-white hover:bg-[var(--white)] rounded-xs transition-colors text-center font-medium"
                   >
                     Curated Jewellery Sets
                   </Link>
