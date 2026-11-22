@@ -26,6 +26,7 @@ import adminMarketingRouter from "./adminMarketing.js";
 import publicCouponsRouter from "./publicCoupons.js";
 import adminStorefrontRouter, { publicStorefrontRouter } from "./adminStorefront.js";
 import adminHomepageLayoutRouter, { publicHomepageLayoutRouter } from "./homepageLayout.js";
+import adminCmsPagesRouter, { publicCmsPagesRouter } from "./cmsPages.js";
 import adminCuratedFavouritesRouter, { publicCuratedFavouritesRouter } from "./curatedFavourites.js";
 import adminExploreNowRouter, { publicExploreNowRouter } from "./exploreNow.js";
 import ordersRouter from "./orders.js";
@@ -305,6 +306,8 @@ app.use("/api/marketing/coupons", publicCouponsRouter);
 app.use("/api/admin/marketing", adminMarketingRouter);
 
 // Public storefront content managed from the admin panel.
+app.use("/api/pages", publicCmsPagesRouter);
+app.use("/api/admin/pages", adminCmsPagesRouter);
 app.use("/api/storefront", publicStorefrontRouter);
 app.use("/api/homepage-layout", publicHomepageLayoutRouter);
 app.use("/api/curated-favourites", publicCuratedFavouritesRouter);
