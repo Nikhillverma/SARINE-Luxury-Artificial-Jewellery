@@ -775,10 +775,23 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 </div>
               ))}
             </div>
+          ) : loadError ? (
+            <div className="rounded-xl border border-[#E7DCEB] bg-white/80 px-5 py-8 text-center">
+              <p className="text-sm text-[#6F6475]" role="status">We could not load Best Sellers right now. Please try again shortly.</p>
+            </div>
           ) : (
-            <p className="col-span-full py-8 text-center text-xs text-[#6F6475]">
-              {loadError ? 'We could not load Best Sellers right now. Please try again shortly.' : 'Our Best Sellers will appear here as qualifying customer orders are completed.'}
-            </p>
+            <div className="mx-auto flex max-w-2xl flex-col items-center rounded-xl border border-[#E7DCEB] bg-white/80 px-5 py-8 text-center sm:px-8 sm:py-10">
+              <span className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#F7F0FA] text-[#563568]" aria-hidden="true">
+                <Sparkles size={20} strokeWidth={1.6} />
+              </span>
+              <h3 className="font-serif text-xl text-[#563568] sm:text-2xl">Your next favourite awaits</h3>
+              <p className="mt-2 max-w-md text-xs leading-relaxed text-[#6F6475] sm:text-sm">
+                Our customer favourites will take shape as genuine orders come in. In the meantime, discover the pieces in our collection.
+              </p>
+              <Link to="/shop" className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#563568] px-5 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#563568] transition-colors hover:bg-[#563568] hover:text-white">
+                Explore the collection <ArrowRight size={14} />
+              </Link>
+            </div>
           )}
         </div>
       </section>
