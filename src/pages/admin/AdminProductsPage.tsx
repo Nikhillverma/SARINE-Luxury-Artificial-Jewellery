@@ -10,7 +10,7 @@ import { BulkProductEditor } from '../../components/admin/BulkProductEditor';
 import { ProductVariantsManager } from '../../components/admin/ProductVariantsManager';
 import type { BulkProductUpdates, BulkProductUpdateResult } from '../../services/interfaces';
 import { formatInr } from '../../utils/currency';
-import { Plus, Search, Edit2, Copy, Archive, X, RefreshCw, Upload, Trash2, ChevronUp, ChevronDown, Eye } from 'lucide-react';
+import { Plus, Search, Edit2, Copy, Archive, X, RefreshCw, Upload, Trash2, ChevronUp, ChevronDown, Eye, Download, Package, AlertTriangle, Image as ImageIcon, Filter } from 'lucide-react';
 
 const EMPTY_FORM = {
   name: '', price: '', compareAtPrice: '', costPrice: '', stock: '0', categoryId: '',
@@ -41,6 +41,9 @@ export const AdminProductsPage: React.FC = () => {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [search, setSearch] = useState(() => searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [stockFilter, setStockFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('name');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -72,13 +75,60 @@ export const AdminProductsPage: React.FC = () => {
 
   useEffect(() => { setSearch(searchParams.get('search') || ''); }, [searchParams]);
 
-  const visibleProducts = useMemo(() => products.filter(product => {
-    const term = search.trim().toLowerCase();
-    const matchesText = !term || product.name.toLowerCase().includes(term) ||
-      product.slug.toLowerCase().includes(term) || product.id.toLowerCase().includes(term);
-    const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
-    return matchesText && matchesStatus;
-  }), [products, search, statusFilter]);
+  const visibleProducts = useMemo(() => {
+    const filtered = products.filter(product => {
+      const term = search.trim().toLowerCase();
+      const matchesText = !term || product.name.toLowerCase().includes(term) ||
+        product.slug.toLowerCase().includes(term) || product.id.toLowerCase().includes(term);
+      const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
+      const matchesCategory = categoryFilter === 'all' || product.categoryId === categoryFilter;
+      const matchesStock = stockFilter === 'all' ||
+        (stockFilter === 'out' && product.stock <= 0) ||
+        (stockFilter === 'low' && product.stock > 0 && product.stock <= 5) ||
+        (stockFilter === 'available' && product.stock > 5) ||
+        (stockFilter === 'missing-image' && !(product.images || []).some(Boolean));
+      return matchesText && matchesStatus && matchesCategory && matchesStock;
+    });
+    return filtered.sort((a, b) => {
+      if (sortBy === 'price-low') return a.price - b.price;
+      if (sortBy === 'price-high') return b.price - a.price;
+      if (sortBy === 'stock-low') return a.stock - b.stock;
+      if (sortBy === 'stock-high') return b.stock - a.stock;
+      if (sortBy === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
+    });
+  }, [products, search, statusFilter, categoryFilter, stockFilter, sortBy]);
+
+  const catalogueStats = useMemo(() => ({
+    total: products.length,
+    active: products.filter(product => product.status === 'active').length,
+    drafts: products.filter(product => product.status === 'draft').length,
+    outOfStock: products.filter(product => product.stock <= 0 && product.status !== 'archived').length,
+    missingImages: products.filter(product => !(product.images || []).some(Boolean) && product.status !== 'archived').length
+  }), [products]);
+
+  const exportCsv = () => {
+    const headers = ['Product ID', 'Name', 'SKU / Slug', 'Category', 'Type', 'Price INR', 'Compare At INR', 'Cost INR', 'Stock', 'Status', 'Image URLs', 'Tags'];
+    const escapeCsv = (value: unknown) => '"' + String(value ?? '').replace(/"/g, '""') + '"';
+    const rows = visibleProducts.map(product => [
+      product.id, product.name, product.slug,
+      categories.find(category => category.id === product.categoryId)?.name || product.categoryId,
+      product.jewelleryType, product.price, product.compareAtPrice ?? '',
+      product.costPrice ?? '', product.stock, product.status,
+      (product.images || []).join(' | '), (product.tags || []).join(' | ')
+    ]);
+    const csv = [headers, ...rows].map(row => row.map(escapeCsv).join(',')).join('\\r\\n');
+    const blob = new Blob(['\\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'sarine-catalogue-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    setNotice('Exported ' + visibleProducts.length + ' filtered catalogue records to CSV.');
+  };
 
 
   const allVisibleSelected = visibleProducts.length > 0 && visibleProducts.every(product => selectedIds.includes(product.id));
@@ -306,22 +356,58 @@ export const AdminProductsPage: React.FC = () => {
             <p className="text-xs sm:text-sm text-[#705E7B] mt-1">Changes are saved directly to your Hostinger MariaDB database.</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => void load()} className="inline-flex items-center gap-2 px-3 py-2 border border-[#E7DCEB] rounded-xl text-xs"><RefreshCw size={14}/> Refresh</button>
-            <button onClick={openCreate} className="inline-flex items-center gap-2 px-4 py-2 bg-[#563568] text-white rounded-xl text-xs font-semibold"><Plus size={15}/> Add Product</button>
+            <button onClick={() => void load()} className="inline-flex min-h-10 items-center gap-2 px-3 py-2 border border-[#E7DCEB] rounded-xl text-xs"><RefreshCw size={14}/> Refresh</button>
+            <button onClick={openCreate} className="inline-flex min-h-10 items-center gap-2 px-4 py-2 bg-[#563568] text-white rounded-xl text-xs font-semibold"><Plus size={15}/> Add Product</button>
           </div>
         </div>
 
         {notice && <div className="p-3 rounded-xl bg-[#F2FBF5] text-[#166534] text-xs flex justify-between">{notice}<button onClick={() => setNotice('')}><X size={14}/></button></div>}
         {error && !modalOpen && <div className="p-3 rounded-xl bg-red-50 text-red-700 text-xs">{error}</div>}
 
-        <div className="bg-white rounded-2xl p-4 border border-[#EADFF0] flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 flex items-center gap-2">
-            <Search size={15} className="text-[#8E769E]"/>
-            <input aria-label="Search products by name or ID" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search product name or ID" className="w-full bg-transparent outline-none text-sm"/>
+        <div className="grid grid-cols-2 xl:grid-cols-5 gap-3">
+          {[
+            { label: 'Total products', value: catalogueStats.total, icon: Package, tone: 'text-[#563568] bg-[#F7F0FA]' },
+            { label: 'Published', value: catalogueStats.active, icon: Eye, tone: 'text-emerald-700 bg-emerald-50' },
+            { label: 'Drafts', value: catalogueStats.drafts, icon: Copy, tone: 'text-violet-700 bg-violet-50' },
+            { label: 'Out of stock', value: catalogueStats.outOfStock, icon: AlertTriangle, tone: 'text-amber-700 bg-amber-50' },
+            { label: 'Missing images', value: catalogueStats.missingImages, icon: ImageIcon, tone: 'text-rose-700 bg-rose-50' }
+          ].map(item => { const Icon = item.icon; return <div key={item.label} className="rounded-xl border border-[#EADFF0] bg-white p-4"><span className={'inline-flex h-8 w-8 items-center justify-center rounded-lg ' + item.tone}><Icon size={16}/></span><p className="mt-3 text-xl font-semibold text-[#2C1838]">{loading ? '—' : item.value.toLocaleString('en-IN')}</p><p className="mt-0.5 text-[10px] text-[#806B8D]">{item.label}</p></div>; })}
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 border border-[#EADFF0] space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex-1 flex items-center gap-2 min-w-0">
+              <Search size={15} className="text-[#8E769E]"/>
+              <input aria-label="Search products by name or ID" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search product name, slug or ID" className="w-full min-h-10 bg-transparent outline-none text-sm"/>
+            </div>
+            <button type="button" onClick={exportCsv} disabled={loading || visibleProducts.length === 0} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#E7DCEB] px-3 text-xs font-semibold text-[#563568] hover:bg-[#FAF5FC] disabled:opacity-50"><Download size={14}/> Export CSV ({visibleProducts.length})</button>
           </div>
-          <select aria-label="Filter products by status" value={statusFilter} onChange={event => setStatusFilter(event.target.value)} className="px-3 py-2 border border-[#E7DCEB] rounded-lg text-xs">
-            <option value="all">All statuses</option><option value="active">Active</option><option value="draft">Draft</option><option value="archived">Archived</option>
-          </select>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+            <label className="text-[10px] text-[#806B8D]">Status
+              <select aria-label="Filter products by status" value={statusFilter} onChange={event => setStatusFilter(event.target.value)} className="mt-1 w-full min-h-10 px-3 border border-[#E7DCEB] rounded-lg text-xs text-[#302438]">
+                <option value="all">All statuses</option><option value="active">Active</option><option value="draft">Draft</option><option value="archived">Archived</option>
+              </select>
+            </label>
+            <label className="text-[10px] text-[#806B8D]">Category
+              <select aria-label="Filter products by category" value={categoryFilter} onChange={event => setCategoryFilter(event.target.value)} className="mt-1 w-full min-h-10 px-3 border border-[#E7DCEB] rounded-lg text-xs text-[#302438]">
+                <option value="all">All categories</option>{categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
+              </select>
+            </label>
+            <label className="text-[10px] text-[#806B8D]">Stock status
+              <select aria-label="Filter products by stock status" value={stockFilter} onChange={event => setStockFilter(event.target.value)} className="mt-1 w-full min-h-10 px-3 border border-[#E7DCEB] rounded-lg text-xs text-[#302438]">
+                <option value="all">All stock levels</option><option value="out">Out of stock</option><option value="low">Low stock (1–5)</option><option value="available">Available (6+)</option><option value="missing-image">Missing product images</option>
+              </select>
+            </label>
+            <label className="text-[10px] text-[#806B8D]">Sort by
+              <select aria-label="Sort products" value={sortBy} onChange={event => setSortBy(event.target.value)} className="mt-1 w-full min-h-10 px-3 border border-[#E7DCEB] rounded-lg text-xs text-[#302438]">
+                <option value="name">Name (A–Z)</option><option value="newest">Newest first</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="stock-low">Stock: low to high</option><option value="stock-high">Stock: high to low</option>
+              </select>
+            </label>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-[#806B8D]">
+            <span><Filter size={12} className="inline mr-1"/>Showing <strong className="text-[#563568]">{visibleProducts.length}</strong> of {products.length} products</span>
+            {(search || statusFilter !== 'all' || categoryFilter !== 'all' || stockFilter !== 'all' || sortBy !== 'name') && <button type="button" onClick={() => { setSearch(''); setStatusFilter('all'); setCategoryFilter('all'); setStockFilter('all'); setSortBy('name'); }} className="min-h-9 px-2 font-semibold text-[#704A83] hover:underline">Clear filters</button>}
+          </div>
         </div>
 
 
