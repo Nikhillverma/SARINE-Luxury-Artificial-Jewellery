@@ -89,7 +89,13 @@ export const AdminStorefrontPage: React.FC = () => {
   };
 
   const saveBanner = async (event: React.FormEvent) => {
-    event.preventDefault(); setBusy(true); setError(""); setMessage("");
+    event.preventDefault();
+    if (form.active && (!form.title.trim() || !form.subtitle.trim() || !form.imageUrl && !file || !form.ctaLink.startsWith("/") || form.ctaLink.startsWith("//"))) {
+      setError("Before publishing, add a heading, description, artwork and a valid internal destination. You can save it as a draft first.");
+      return;
+    }
+    if (form.active && !window.confirm("Publish this hero banner on the live SARINE homepage?")) return;
+    setBusy(true); setError(""); setMessage("");
     try {
       let imageUrl = form.imageUrl;
       if (file) imageUrl = await hostingerMediaService.uploadImage(file);
@@ -105,6 +111,11 @@ export const AdminStorefrontPage: React.FC = () => {
   };
 
   const toggle = async (banner: StorefrontBanner) => {
+    if (!banner.active && (!banner.title.trim() || !banner.subtitle.trim() || !banner.imageUrl || !banner.ctaLink.startsWith("/") || banner.ctaLink.startsWith("//"))) {
+      setError("This banner needs a heading, description, artwork and a valid internal destination before it can be published.");
+      return;
+    }
+    if (!banner.active && !window.confirm(`Publish “${banner.title}” on the live SARINE homepage?`)) return;
     setBusy(true); setError("");
     try { await hostingerStorefrontService.updateBanner(banner.id, { active: !banner.active }); await load(); }
     catch (e) { setError(e instanceof Error ? e.message : "Could not update banner."); }
@@ -149,6 +160,7 @@ export const AdminStorefrontPage: React.FC = () => {
   };
 
   const saveAnnouncement = async () => {
+    if (announcementActive && /christmas|diwali|new year|black friday|sale|today|limited time|ends? (today|soon|on)/i.test(announcement) && !window.confirm("This announcement contains time-sensitive promotional wording. Have you checked that the offer and dates are currently valid?")) return;
     setBusy(true); setError(""); setMessage("");
     try { await hostingerStorefrontService.saveAnnouncement(announcement, announcementActive, trustMessages); setMessage("Announcement and trust ticker messages saved to MariaDB."); }
     catch (e) { setError(e instanceof Error ? e.message : "Announcement could not be saved."); }
@@ -191,6 +203,7 @@ export const AdminStorefrontPage: React.FC = () => {
         <div className="border-t pt-4 space-y-2">
           <label className="block text-xs font-medium">Promotional announcement</label>
           <input value={announcement} maxLength={300} onChange={e => setAnnouncement(e.target.value)} placeholder="e.g. Diwali Sale — Extra 10% Off Today" className="w-full border rounded-lg p-3 text-sm" />
+          {announcementActive && /christmas|diwali|new year|black friday|sale|today|limited time|ends? (today|soon|on)/i.test(announcement) && <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">Time-sensitive promotion detected. Verify the offer, dates and eligibility before saving it live.</p>}
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={announcementActive} onChange={e => setAnnouncementActive(e.target.checked)} /> Publish promotional announcement</label>
         </div>
         <button disabled={busy} onClick={() => void saveAnnouncement()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">Save ticker messages</button>
@@ -220,7 +233,7 @@ export const AdminStorefrontPage: React.FC = () => {
         {loading ? <p className="text-sm text-gray-500">Loading banners…</p> : banners.length === 0 ? <p className="text-sm text-gray-500">No banners created yet. Add a banner and publish it when ready.</p> :
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">{banners.map((banner, index) => <article key={banner.id} className="border rounded-xl overflow-hidden">
             <img src={banner.imageUrl} alt={banner.title} className="w-full aspect-[16/7] object-cover bg-gray-100" />
-            <div className="p-4 space-y-2"><div className="flex justify-between gap-2"><span className="text-xs text-purple-700">{banner.tagline || "HERO BANNER"}</span><span className={banner.active ? "text-xs text-green-700" : "text-xs text-gray-500"}>{banner.active ? "Published" : "Draft"}</span></div><h3 className="font-medium">{banner.title}</h3><p className="text-xs text-gray-500">{banner.subtitle}</p><p className="text-xs text-gray-500">CTA: {banner.ctaText} · {banner.ctaLink}</p>
+            <div className="p-4 space-y-2"><div className="flex justify-between gap-2"><span className="text-xs text-purple-700">{banner.tagline || "HERO BANNER"}</span><span className={banner.active ? "text-xs text-green-700" : "text-xs text-gray-500"}>{banner.active ? "Published" : "Draft"}</span></div>{/^(sddf|qwe|test|testing|new banner|untitled)$/i.test(banner.title.trim()) && <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">Draft quality check: this heading looks like placeholder text. Edit it before publishing.</p>}<h3 className="font-medium">{banner.title}</h3><p className="text-xs text-gray-500">{banner.subtitle}</p><p className="text-xs text-gray-500">CTA: {banner.ctaText} · {banner.ctaLink}</p>
               <div className="flex flex-wrap gap-2 pt-2"><button disabled={busy || index===0} onClick={() => void move(index,-1)} className="border rounded px-2 py-1 text-xs disabled:opacity-40">Move up</button><button disabled={busy || index===banners.length-1} onClick={() => void move(index,1)} className="border rounded px-2 py-1 text-xs disabled:opacity-40">Move down</button><button disabled={busy} onClick={() => beginEdit(banner)} className="border rounded px-2 py-1 text-xs">Edit</button><button disabled={busy} onClick={() => void toggle(banner)} className="border rounded px-2 py-1 text-xs">{banner.active ? "Unpublish" : "Publish"}</button><button disabled={busy} onClick={() => void remove(banner)} className="border border-red-200 text-red-700 rounded px-2 py-1 text-xs">Delete</button></div>
             </div></article>)}</div>}
       </section>
