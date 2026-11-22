@@ -462,13 +462,13 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           const deltaX = endX - startX;
           if (Math.abs(deltaX) > 48) deltaX < 0 ? nextSlide() : prevSlide();
         }}
-        className="relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[#F0E6F4] border-b border-[#E7DCEB] touch-pan-y"
+        className="relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[var(--tint)] border-b border-[var(--border)] touch-pan-y"
       >
         {/* Stacked background slide images */}
         {heroSlides.map((slide, idx) => (
           <div
             key={slide.id}
-            className={`absolute inset-0 w-full h-full bg-[#F0E6F4] transition-opacity duration-700 ease-in-out ${
+            className={`absolute inset-0 w-full h-full bg-[var(--tint)] transition-opacity duration-700 ease-in-out ${
               activeSlide === idx ? 'opacity-100 z-0' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
@@ -835,7 +835,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 cards: Daily Wear, Festive, Wedding, Gifting
           Using existing product images, linking to /shop with filter queries
           ========================================================================= */}
-      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") && occasions.some(item => item.active) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E9E5E9] !bg-white">
+      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") && occasions.some(item => item.active) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[var(--border)] !bg-white">
         <div className="site-container">
           <div className="w-full text-center mb-4 sm:mb-4">
             <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">
@@ -892,7 +892,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           SHOP BY PRICE — content managed in Storefront Studio
           ========================================================================= */}
-      <section style={{ order: sectionOrder("price"), display: sectionVisible("price") ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 border-t border-[#E7DCEB] !bg-white">
+      <section style={{ order: sectionOrder("price"), display: sectionVisible("price") ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 border-t border-[var(--border)] !bg-white">
         <div className="site-container">
           <div className="w-full text-center mb-4">
             <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">{homepageContent.price.eyebrow}</span>
@@ -989,7 +989,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           7. EDITORIAL BANNER
           ========================================================================= */}
       {editorial.active && (
-        <section style={{ order: sectionOrder("editorial"), display: sectionVisible("editorial") ? undefined : "none" }} className="sarine-editorial-banner relative overflow-hidden bg-[var(--plum)] border-b border-[#E7DCEB]">
+        <section style={{ order: sectionOrder("editorial"), display: sectionVisible("editorial") ? undefined : "none" }} className="sarine-editorial-banner relative overflow-hidden bg-[var(--plum)] border-b border-[var(--border)]">
           <img src={editorial.imageUrl || HOMEPAGE_IMAGES.editorialBanner} alt={editorial.title} loading="lazy" decoding="async" fetchPriority="low" className="absolute inset-0 w-full h-full object-cover object-center" />
           <div className="absolute inset-0" style={{ backgroundColor: "transparent" }} aria-hidden="true" />
           <div className="site-container min-h-[200px] sm:min-h-[235px] lg:min-h-[270px] flex items-center justify-end relative z-10">
