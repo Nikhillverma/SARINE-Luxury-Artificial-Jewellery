@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "./styles/global.css";
 
@@ -994,4 +994,146 @@ body.sarine-global-theme footer p,
 body.sarine-global-theme footer h4,
 body.sarine-global-theme footer span {
   color: #FFFFFF !important;
+}
+
+ 
+/* ==========================================================================
+   SARINE Modern Plum & Ivory Luxury — public content area only.
+   Header and footer are intentionally excluded: their current colours remain
+   controlled by Navbar, Footer and the existing published site-chrome settings.
+   No layout, route, data, payment, account or admin behaviour is changed.
+   ========================================================================== */
+body.sarine-global-theme #main-content {
+  --sarine-global-primary: #563568;
+  --sarine-global-accent: #B8893C;
+  --sarine-global-page: #FFFFFF;
+  --sarine-global-surface: #F7F4F8;
+  --sarine-global-text: #5C5660;
+  --sarine-global-heading: #1D1B1F;
+  --sarine-global-border: #E9E5E9;
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: #FFFFFF;
+  color: #5C5660;
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body.sarine-global-theme #main-content h1,
+body.sarine-global-theme #main-content h2,
+body.sarine-global-theme #main-content h3,
+body.sarine-global-theme #main-content h4,
+body.sarine-global-theme #main-content h5,
+body.sarine-global-theme #main-content h6,
+body.sarine-global-theme #main-content .font-serif {
+  color: #1D1B1F;
+  font-family: "Cormorant Garamond", Georgia, serif !important;
+  font-weight: 500;
+}
+
+body.sarine-global-theme #main-content .font-sans,
+body.sarine-global-theme #main-content button,
+body.sarine-global-theme #main-content input,
+body.sarine-global-theme #main-content textarea,
+body.sarine-global-theme #main-content select {
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Storefront sections use a clean white canvas; soft lavender is reserved
+   for selected editorial surfaces rather than repeated across every section. */
+body.sarine-global-theme #main-content .sarine-home {
+  background-color: #FFFFFF !important;
+  color: #5C5660 !important;
+}
+body.sarine-global-theme #main-content .sarine-home > section:not(:first-child) {
+  background-color: #FFFFFF !important;
+  border-color: #E9E5E9;
+}
+body.sarine-global-theme #main-content .sarine-home > section:has(.occasion-grid),
+body.sarine-global-theme #main-content .sarine-home > section:has(img[alt*="Craftsmanship"]) {
+  background-color: #F7F4F8 !important;
+}
+body.sarine-global-theme #main-content .sarine-home > section:has(input[type="email"]) {
+  background-color: #563568 !important;
+  color: #FFFFFF;
+}
+body.sarine-global-theme #main-content .sarine-home > section:has(input[type="email"]) h1,
+body.sarine-global-theme #main-content .sarine-home > section:has(input[type="email"]) h2,
+body.sarine-global-theme #main-content .sarine-home > section:has(input[type="email"]) h3,
+body.sarine-global-theme #main-content .sarine-home > section:has(input[type="email"]) p,
+body.sarine-global-theme #main-content .sarine-home > section:has(input[type="email"]) label {
+  color: #FFFFFF !important;
+}
+
+/* Editorial hierarchy and responsive type scale; existing section dimensions
+   and component arrangement are left intact. */
+body.sarine-global-theme #main-content .sarine-home h1 {
+  font-size: clamp(30px, 4.2vw, 60px) !important;
+  line-height: 1.08;
+}
+body.sarine-global-theme #main-content .sarine-home > section:not(:first-child) h2 {
+  font-size: clamp(26px, 3vw, 42px) !important;
+  line-height: 1.12;
+}
+body.sarine-global-theme #main-content .sarine-home > section:not(:first-child) p {
+  font-size: clamp(14px, 1.15vw, 16px);
+  line-height: 1.65;
+}
+
+/* Category and product cards: white surfaces, restrained borders and subtle
+   elevation. Product imagery, card dimensions and grid behaviour are untouched. */
+body.sarine-global-theme #main-content .sarine-home .category-grid > *,
+body.sarine-global-theme #main-content .sarine-home .product-grid > article {
+  border-color: #E9E5E9;
+}
+body.sarine-global-theme #main-content .sarine-home .product-grid > article {
+  background-color: #FFFFFF;
+  box-shadow: 0 3px 12px rgba(29, 27, 31, .045);
+}
+body.sarine-global-theme #main-content .sarine-home .product-grid > article h3 {
+  color: #1D1B1F;
+  font-size: clamp(14px, 1.15vw, 16px);
+}
+body.sarine-global-theme #main-content .sarine-home .product-grid > article .text-sm.font-sans {
+  color: #563568;
+}
+body.sarine-global-theme #main-content .sarine-home .product-grid > article [class*="line-through"] {
+  color: #5C5660;
+}
+
+/* Primary actions use deep plum; gold remains a small hover/detail accent. */
+body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]"],
+body.sarine-global-theme #main-content button[class*="bg-[#4A1D5C]"],
+body.sarine-global-theme #main-content a[class*="bg-[#563568]"],
+body.sarine-global-theme #main-content button[class*="bg-[#563568]"] {
+  background-color: #563568;
+  border-color: #563568;
+  color: #FFFFFF;
+}
+body.sarine-global-theme #main-content a[class*="bg-[#4A1D5C]"]:hover,
+body.sarine-global-theme #main-content button[class*="bg-[#4A1D5C]"]:hover,
+body.sarine-global-theme #main-content a[class*="bg-[#563568]"]:hover,
+body.sarine-global-theme #main-content button[class*="bg-[#563568]"]:hover {
+  background-color: #B8893C;
+  border-color: #B8893C;
+  color: #1D1B1F;
+}
+body.sarine-global-theme #main-content input,
+body.sarine-global-theme #main-content textarea,
+body.sarine-global-theme #main-content select {
+  border-color: #E9E5E9;
+}
+body.sarine-global-theme #main-content input:focus,
+body.sarine-global-theme #main-content textarea:focus,
+body.sarine-global-theme #main-content select:focus {
+  border-color: #563568;
+  outline-color: #563568;
+}
+
+@media (max-width: 767px) {
+  body.sarine-global-theme #main-content .sarine-home > section:not(:first-child) h2 {
+    font-size: clamp(26px, 6vw, 32px) !important;
+  }
+  body.sarine-global-theme #main-content .sarine-home > section:not(:first-child) p {
+    font-size: 14px;
+  }
 }
