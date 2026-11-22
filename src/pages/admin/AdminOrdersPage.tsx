@@ -291,8 +291,8 @@ export const AdminOrdersPage: React.FC = () => {
       return `"${safe.replace(/"/g, '""')}"`;
     };
     const rows = filteredOrders.map((order) => [order.orderNumber, order.createdAt, order.customer?.name, order.customer?.email, order.customer?.phone, order.shippingAddress?.city, order.shippingAddress?.state, order.shippingAddress?.pincode, (order.lines || []).map((line) => `${line.name} x${line.quantity}`).join('; '), order.subtotal, order.shippingFee, order.total, order.paymentMethod, order.paymentStatus, order.orderStatus, order.courierName, order.trackingNumber]);
-    const csv = [columns, ...rows].map((row) => row.map(cell).join(',')).join('\\r\\n');
-    const blob = new Blob(['\\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+    const csv = [columns, ...rows].map((row) => row.map(cell).join(',')).join('\r\n');
+    const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
