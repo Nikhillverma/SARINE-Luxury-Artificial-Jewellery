@@ -4,11 +4,13 @@ import { AdminLayout } from '../../components/admin/AdminLayout';
 import { formatInr } from '../../utils/currency';
 import {
   AlertTriangle,
+  BarChart3,
   Boxes,
   CheckCircle2,
   Clock3,
   IndianRupee,
   Package,
+  Tag,
   RefreshCw,
   ShoppingBag,
   TrendingUp,
@@ -109,6 +111,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -132,9 +135,11 @@ export const AdminDashboardPage: React.FC = () => {
         throw new Error('The dashboard API returned an unexpected response.');
       }
       setData(result as DashboardResponse);
+      setLastUpdated(new Date());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load dashboard data.');
-      setData(null);
+      // Keep the last successful snapshot visible during a refresh failure.
+      // The error banner makes its potentially stale status explicit.
     } finally {
       setLoading(false);
     }
@@ -168,6 +173,7 @@ export const AdminDashboardPage: React.FC = () => {
             <h1 className="font-serif text-2xl sm:text-3xl text-[#302438] mt-1">Dashboard Overview</h1>
             <p className="text-xs text-[#817487] mt-1">
               Live store information from your Hostinger MariaDB database.
+              {lastUpdated && <span className="block mt-1">Last updated {lastUpdated.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })} IST</span>}
             </p>
           </div>
           <button
@@ -206,13 +212,69 @@ export const AdminDashboardPage: React.FC = () => {
                   </span>
                 </div>
                 <p className="font-serif text-2xl text-[#302438] mt-4">
-                  {loading ? '—' : card.value}
+                  {loading && !data ? '—' : !data ? 'Unavailable' : card.value}
                 </p>
-                <p className="text-[11px] text-[#8B7598] mt-1">{loading ? 'Loading…' : card.note}</p>
+                <p className="text-[11px] text-[#8B7598] mt-1">{loading && !data ? 'Loading…' : !data ? 'No verified data' : card.note}</p>
               </div>
             );
           })}
         </div>
+
+        <section aria-labelledby="quick-actions-heading" className="space-y-3">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <h2 id="quick-actions-heading" className="font-serif text-lg text-[#302438]">Quick actions</h2>
+              <p className="text-[11px] text-[#8B7598] mt-1">Jump straight to the work that keeps your store moving.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+            {[
+              { label: 'Add product', detail: 'Catalogue', to: '/admin/products', icon: Package },
+              { label: 'Process orders', detail: 'Fulfilment', to: '/admin/orders', icon: ShoppingBag },
+              { label: 'Inventory', detail: 'Stock levels', to: '/admin/inventory', icon: Boxes },
+              { label: 'Promotions', detail: 'Marketing', to: '/admin/marketing', icon: Tag },
+              { label: 'Storefront', detail: 'Design & content', to: '/admin/storefront', icon: TrendingUp },
+              { label: 'Analytics', detail: 'Performance', to: '/admin/analytics', icon: BarChart3 }
+            ].map((action) => {
+              const Icon = action.icon;
+              return (
+                <Link key={action.label} to={action.to} className="group min-h-24 rounded-xl border border-[#EDE4F0] bg-white p-4 hover:border-[#B69ACF] hover:bg-[#FCFAFD] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#80609A]">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F7F0FA] text-[#704A83] group-hover:bg-[#EFE4F5]"><Icon size={17} /></span>
+                  <span className="mt-3 block text-xs font-semibold text-[#302438]">{action.label}</span>
+                  <span className="mt-0.5 block text-[10px] text-[#8B7598]">{action.detail}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
+        <section aria-labelledby="attention-heading" className="rounded-xl border border-[#EDE4F0] bg-white p-5">
+          <div className="mb-4">
+            <h2 id="attention-heading" className="font-serif text-lg text-[#302438]">Needs attention</h2>
+            <p className="mt-1 text-[11px] text-[#8B7598]">Prioritised from the live order and inventory snapshot.</p>
+          </div>
+          {data ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Link to="/admin/orders" className="flex items-center gap-3 rounded-lg border border-[#F0E8F3] bg-[#FAF7FB] p-3 hover:border-[#B69ACF]">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-800"><Clock3 size={17} /></span>
+                <span className="min-w-0 flex-1"><strong className="block text-xl font-serif text-[#302438]">{metrics.pendingOrders.toLocaleString('en-IN')}</strong><span className="block text-[10px] text-[#817487]">Pending orders</span></span>
+                <span className="text-[10px] font-semibold text-[#704A83]">Review</span>
+              </Link>
+              <Link to="/admin/inventory" className="flex items-center gap-3 rounded-lg border border-[#F0E8F3] bg-[#FAF7FB] p-3 hover:border-[#B69ACF]">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-100 text-rose-800"><AlertTriangle size={17} /></span>
+                <span className="min-w-0 flex-1"><strong className="block text-xl font-serif text-[#302438]">{metrics.lowStockProducts.toLocaleString('en-IN')}</strong><span className="block text-[10px] text-[#817487]">Low-stock products</span></span>
+                <span className="text-[10px] font-semibold text-[#704A83]">Review</span>
+              </Link>
+              <Link to="/admin/products" className="flex items-center gap-3 rounded-lg border border-[#F0E8F3] bg-[#FAF7FB] p-3 hover:border-[#B69ACF]">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#EFE4F5] text-[#704A83]"><Package size={17} /></span>
+                <span className="min-w-0 flex-1"><strong className="block text-xl font-serif text-[#302438]">{metrics.draftProducts.toLocaleString('en-IN')}</strong><span className="block text-[10px] text-[#817487]">Draft products</span></span>
+                <span className="text-[10px] font-semibold text-[#704A83]">Review</span>
+              </Link>
+            </div>
+          ) : (
+            <p className="rounded-lg bg-[#FAF7FB] p-4 text-xs text-[#817487]" role="status">Attention items will appear when live dashboard data is available.</p>
+          )}
+        </section>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
           <section className="xl:col-span-2 bg-white border border-[#EDE4F0] rounded-xl p-5">
@@ -229,7 +291,7 @@ export const AdminDashboardPage: React.FC = () => {
                 return (
                   <div key={item.label} className="rounded-lg bg-[#FAF7FB] border border-[#F0E8F3] p-3">
                     <Icon size={16} className="text-[#80609A]" />
-                    <p className="font-serif text-xl text-[#302438] mt-3">{loading ? '—' : item.value}</p>
+                    <p className="font-serif text-xl text-[#302438] mt-3">{loading && !data ? '—' : !data ? '—' : item.value}</p>
                     <p className="text-[10px] text-[#817487] mt-1">{item.label}</p>
                   </div>
                 );
@@ -276,6 +338,8 @@ export const AdminDashboardPage: React.FC = () => {
                 ))}
                 <Link to="/admin/products" className="inline-block text-[11px] font-semibold text-[#704A83] hover:underline pt-2">Manage products</Link>
               </div>
+            ) : !data ? (
+              <p className="py-6 text-center text-xs text-[#8B7598]">Inventory status unavailable.</p>
             ) : (
               <div className="py-6 text-center">
                 <CheckCircle2 size={22} className="mx-auto text-[#16A34A]" />
