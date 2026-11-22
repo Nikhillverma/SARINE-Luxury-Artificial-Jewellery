@@ -85,7 +85,7 @@ export async function markNamedTestProductOrdersAsTests(connection) {
     await connection.beginTransaction();
     await connection.execute(
       `UPDATE orders AS o
-       SET o.is_test = 1
+       SET is_test = 1
        WHERE o.is_test = 0
          AND EXISTS (
            SELECT 1 FROM order_items AS test_item
