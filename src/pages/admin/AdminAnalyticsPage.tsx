@@ -60,7 +60,7 @@ function Panel({ title, subtitle, children, className = "" }: { title: string; s
     <div className="mb-4"><h2 className="font-serif text-lg text-[#302438]">{title}</h2>{subtitle && <p className="text-[10px] text-[#8B7598] mt-1">{subtitle}</p>}</div>{children}
   </section>;
 }
-function Bars({ rows, label, value, money = false, empty }: { rows: { label: string; value: number }[]; label: string; value: string; money?: boolean; empty: string }) {
+function Bars({ rows, money = false, empty }: { rows: { label: string; value: number }[]; money?: boolean; empty: string }) {
   const max = Math.max(1, ...rows.map(row => row.value));
   return rows.length ? <div className="space-y-3">{rows.map((row,index)=><div key={row.label + index}>
     <div className="flex justify-between gap-3 text-[11px]"><span className="truncate text-[#514657]">{row.label}</span><strong className="shrink-0 text-[#302438]">{money ? formatInr(row.value) : row.value.toLocaleString("en-IN")}</strong></div>
@@ -208,8 +208,8 @@ export const AdminAnalyticsPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <Panel title="Category Performance" subtitle="Paid item sales, excluding shipping"><Bars rows={categoryRows} label="category" value="itemSales" money empty="No category sales in this period."/></Panel>
-          <Panel title="Order Status Mix" subtitle="Order counts in the selected period"><Bars rows={statusRows} label="status" value="count" empty="No order status data."/></Panel>
+          <Panel title="Category Performance" subtitle="Paid item sales, excluding shipping"><Bars rows={categoryRows} money empty="No category sales in this period."/></Panel>
+          <Panel title="Order Status Mix" subtitle="Order counts in the selected period"><Bars rows={statusRows} empty="No order status data."/></Panel>
         </div>
 
         <Table title="Top-Selling Products" headers={["Product","Units sold","Item sales"]} rows={report.topProducts.slice(0,10).map(x=>[x.productName,x.unitsSold.toLocaleString("en-IN"),formatInr(x.itemSales)])} empty="No paid product sales in this period."/>
