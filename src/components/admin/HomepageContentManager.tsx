@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { ArrowRight, Gem, ShieldCheck, Sparkles } from "lucide-react";
 import { hostingerMediaService } from "../../services";
 import {
   DEFAULT_HOMEPAGE_CONTENT,
@@ -18,6 +19,7 @@ export const HomepageContentManager: React.FC = () => {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [preview, setPreview] = useState(false);
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
 
   const load = async () => {
     setLoading(true); setError(""); setMessage("");
@@ -156,15 +158,87 @@ export const HomepageContentManager: React.FC = () => {
         </fieldset>
       </div>
 
-      {preview && <div className="space-y-3 rounded-xl border border-[#B69ACF] bg-[#F7F0FA] p-4">
-        <div className="flex items-center justify-between gap-2"><h3 className="font-semibold text-[#563568]">Draft content preview</h3><span className="text-[11px] text-[#6F6475]">Text and artwork preview · live styling remains on the storefront</span></div>
-        <div className="grid gap-3 md:grid-cols-2">
-          <article className="rounded-lg bg-white p-4"><p className="text-[10px] uppercase tracking-widest text-[#6F6475]">{draft.price.eyebrow}</p><h4 className="mt-1 font-serif text-2xl text-[#302438]">{draft.price.title}</h4><p className="mt-2 text-sm text-[#6F6475]">{draft.price.description}</p><div className="mt-3 flex flex-wrap gap-2">{draft.price.links.map((link,i)=><span key={i} className="rounded-full border px-3 py-2 text-xs">{link.label}</span>)}</div></article>
-          <article className="rounded-lg bg-white p-4"><p className="text-[10px] uppercase tracking-widest text-[#6F6475]">{draft.contact.eyebrow}</p><h4 className="mt-1 font-serif text-2xl text-[#302438]">{draft.contact.title}</h4><p className="mt-2 text-sm text-[#6F6475]">{draft.contact.description} <span className="font-medium underline">{draft.contact.linkText}</span>.</p></article>
-          <article className="rounded-lg bg-white p-4 md:col-span-2"><img src={draft.story.imageUrl} alt="" className="mb-3 h-36 w-full rounded-lg object-cover sm:h-48" /><p className="text-[10px] uppercase tracking-widest text-[#6F6475]">{draft.story.eyebrow}</p><h4 className="mt-1 font-serif text-2xl text-[#302438]">{draft.story.title}</h4>{draft.story.paragraphs.map((p,i)=><p key={i} className="mt-2 text-sm text-[#6F6475]">{p}</p>)}<div className="mt-3 grid gap-2 sm:grid-cols-3">{draft.story.pillars.map((p,i)=><div key={i} className="rounded-lg bg-[#F7F0FA] p-3 text-sm"><strong>{p.title}</strong><p className="text-xs text-[#6F6475]">{p.description}</p></div>)}</div></article>
-          <article className="rounded-lg bg-white p-4 md:col-span-2"><p className="text-[10px] uppercase tracking-widest text-[#6F6475]">{draft.care.eyebrow}</p><h4 className="mt-1 font-serif text-2xl text-[#302438]">{draft.care.title}</h4><p className="mt-2 text-sm text-[#6F6475]">{draft.care.description}</p><div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{draft.care.steps.map((step,i)=><div key={i} className="rounded-lg bg-[#F7F0FA] p-3"><strong className="text-sm">{i+1}. {step.title}</strong><p className="mt-1 text-xs text-[#6F6475]">{step.description}</p></div>)}</div></article>
+      {preview && <section className="space-y-4 rounded-2xl border border-[#DCCDE5] bg-[#F7F0FA] p-3 sm:p-5" aria-label="Responsive storefront draft preview">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-semibold text-[#563568]">Live-style homepage preview</h3>
+            <p className="mt-1 text-xs text-[#6F6475]">A visual rendering of your four edited sections using the storefront layout. Draft only — nothing is published.</p>
+          </div>
+          <div className="inline-flex rounded-lg border border-[#DCCDE5] bg-white p-1" role="group" aria-label="Preview screen size">
+            <button type="button" aria-pressed={previewDevice === "desktop"} onClick={() => setPreviewDevice("desktop")} className={previewDevice === "desktop" ? "min-h-10 rounded-md bg-[#563568] px-3 text-xs font-medium text-white" : "min-h-10 rounded-md px-3 text-xs text-[#563568]"}>Desktop</button>
+            <button type="button" aria-pressed={previewDevice === "mobile"} onClick={() => setPreviewDevice("mobile")} className={previewDevice === "mobile" ? "min-h-10 rounded-md bg-[#563568] px-3 text-xs font-medium text-white" : "min-h-10 rounded-md px-3 text-xs text-[#563568]"}>Mobile</button>
+          </div>
         </div>
-      </div>}
+        <div className="overflow-x-auto rounded-xl border border-[#DCCDE5] bg-[#EDE5F0] p-2 sm:p-4">
+          <div className={previewDevice === "mobile" ? "mx-auto w-[390px] max-w-full overflow-hidden rounded-xl border border-[#D8C9E0] bg-white shadow-xl" : "mx-auto w-full max-w-[1120px] overflow-hidden rounded-xl border border-[#D8C9E0] bg-white shadow-xl"}>
+            <div className="flex items-center justify-between border-b border-[#E7DCEB] bg-white px-4 py-3">
+              <div className="font-serif text-lg tracking-[0.18em] text-[#563568]">SARINE</div>
+              <div className="text-[9px] tracking-[0.12em] text-[#6F6475]">{previewDevice === "mobile" ? "MENU  ·  BAG" : "NEW ARRIVALS　 SHOP　 COLLECTIONS　 ABOUT"}</div>
+            </div>
+
+            <section className="border-b border-[#E7DCEB] bg-white px-4 py-7 text-center sm:px-8 sm:py-9">
+              <span className="mb-2 block text-[9px] font-medium uppercase tracking-[0.25em] text-[#6F6475]">{draft.price.eyebrow}</span>
+              <h4 className="font-serif text-2xl font-normal text-[#302438] sm:text-3xl">{draft.price.title}</h4>
+              <p className="mx-auto mt-2 max-w-xl text-xs leading-relaxed text-[#6F6475]">{draft.price.description}</p>
+              <div className="mx-auto mt-5 flex max-w-2xl flex-wrap items-center justify-center gap-2">
+                {draft.price.links.map((link, index) => <span key={index} className="rounded-full border border-[#E7DCEB] bg-white px-4 py-2.5 text-[10px] font-medium text-[#302438] shadow-sm">{link.label}</span>)}
+              </div>
+            </section>
+
+            <section className="border-y border-[#E7DCEB] bg-[#F0E6F4] px-4 py-6 sm:px-8 sm:py-9">
+              <div className="grid grid-cols-1 items-center gap-5 lg:grid-cols-12 lg:gap-8">
+                <div className="lg:col-span-5">
+                  <div className="aspect-[4/3] overflow-hidden border border-[#E7DCEB] bg-[#EBDFF2] sm:aspect-[1/1]">
+                    <img src={draft.story.imageUrl} alt="Our Story draft" className="h-full w-full object-cover" />
+                  </div>
+                </div>
+                <div className="flex flex-col items-start gap-6 md:flex-row lg:col-span-7 lg:gap-8">
+                  <div className="min-w-0 flex-1">
+                    <span className="mb-2 block text-[9px] font-medium uppercase tracking-[0.25em] text-[#6F6475]">{draft.story.eyebrow}</span>
+                    <h4 className="font-serif text-2xl font-normal leading-tight text-[#302438] sm:text-3xl">{draft.story.title}</h4>
+                    {draft.story.paragraphs.map((paragraph, index) => <p key={index} className="mt-3 text-xs leading-relaxed text-[#6F6475]">{paragraph}</p>)}
+                    <div className="mt-5 inline-flex items-center gap-2 rounded-sm bg-[#563568] px-5 py-3 text-[10px] font-medium text-white">{draft.story.ctaText}<ArrowRight size={13} /></div>
+                  </div>
+                  <div className="w-full space-y-4 border-t border-[#E7DCEB] pt-4 md:w-56 md:border-l md:border-t-0 md:pl-5 md:pt-1">
+                    {draft.story.pillars.map((pillar, index) => {
+                      const PillarIcon = [Gem, Sparkles, ShieldCheck][index] || Gem;
+                      return <div key={index} className="flex items-start gap-3">
+                        <span className="shrink-0 border border-[#E7DCEB] bg-[#FAF5FC] p-2 text-[#563568]"><PillarIcon size={16} strokeWidth={1.5} /></span>
+                        <div><h5 className="text-[11px] font-medium leading-snug text-[#302438]">{pillar.title}</h5><p className="mt-0.5 text-[10px] leading-tight text-[#6F6475]">{pillar.description}</p></div>
+                      </div>;
+                    })}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="border-t border-[#E7DCEB] bg-white px-4 py-7 sm:px-8 sm:py-9">
+              <div className="mx-auto mb-6 max-w-2xl text-center">
+                <span className="mb-2 block text-[9px] font-medium uppercase tracking-[0.25em] text-[#6F6475]">{draft.care.eyebrow}</span>
+                <h4 className="font-serif text-2xl font-normal text-[#302438] sm:text-3xl">{draft.care.title}</h4>
+                <p className="mt-2 text-xs leading-relaxed text-[#6F6475]">{draft.care.description}</p>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {draft.care.steps.map((step, index) => <div key={index} className="space-y-2 border border-[#E7DCEB] bg-[#FAF5FC] p-4 text-center">
+                  <span className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-[#563568] font-serif text-xs text-white">{index + 1}</span>
+                  <h5 className="font-serif text-base text-[#302438]">{step.title}</h5>
+                  <p className="text-[10px] leading-relaxed text-[#6F6475]">{step.description}</p>
+                </div>)}
+              </div>
+            </section>
+
+            <section className="bg-[#F7F0FA] px-4 py-7 text-center sm:px-8 sm:py-9">
+              <div className="mx-auto max-w-[620px]">
+                <span className="mb-2 block text-[9px] font-medium uppercase tracking-[0.25em] text-[#6F6475]">{draft.contact.eyebrow}</span>
+                <h4 className="font-serif text-2xl font-normal text-[#302438] sm:text-3xl">{draft.contact.title}</h4>
+                <p className="mt-3 text-xs leading-relaxed text-[#6F6475]">{draft.contact.description} <span className="font-medium text-[#563568] underline underline-offset-4">{draft.contact.linkText}</span>.</p>
+              </div>
+            </section>
+            <div className="border-t border-[#E7DCEB] px-4 py-3 text-center text-[9px] tracking-[0.12em] text-[#8B7C91]">SARINE · LUXURY ARTIFICIAL JEWELLERY</div>
+          </div>
+        </div>
+        <p className="text-[11px] text-[#6F6475]">Preview width: {previewDevice === "mobile" ? "390px mobile" : "fluid desktop (up to 1120px)"}. The customer-facing homepage remains unchanged until you choose Publish homepage content.</p>
+      </section>}
 
       <div className="flex flex-wrap items-center gap-2 border-t border-[#E7DCEB] pt-4">
         <button type="button" disabled={busy || uploading} onClick={() => void saveDraft()} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm font-medium text-[#563568] disabled:opacity-50">{busy ? "Saving…" : "Save draft"}</button>
