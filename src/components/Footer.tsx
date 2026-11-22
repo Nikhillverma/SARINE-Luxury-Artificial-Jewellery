@@ -31,43 +31,43 @@ export const Footer: React.FC = () => {
   return (
     <footer className="sarine-global-footer bg-[#563568] text-[#F7F0FA] border-t border-[#E7DCEB] font-sans">
       {/* Trust Strip */}
-      <div className="w-full bg-[#F7F0FA] text-[#302438] border-b border-[#E7DCEB] py-8 sm:py-10">
+      <div className="w-full !bg-white !text-[color:var(--heading)] border-b border-[var(--border)] py-8 sm:py-10">
         <div className="site-container">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
-            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[#E7DCEB] rounded-md shadow-xs">
-              <div className="p-2.5 bg-[#F0E6F4] rounded-md text-[#563568] shrink-0">
+            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[var(--border)] rounded-md shadow-xs">
+              <div className="p-2.5 bg-white rounded-md !text-[color:var(--gold)] shrink-0">
                 <ShieldCheck size={20} strokeWidth={1.5} />
               </div>
               <div>
-                <h4 className="text-xs sm:text-sm font-medium text-[#302438] leading-tight font-sans">
+                <h4 className="text-xs sm:text-sm font-medium !text-[color:var(--heading)] leading-tight font-sans">
                   Secure payments
                 </h4>
-                <p className="text-[11px] text-[#6F6475] font-sans mt-0.5">
+                <p className="text-[11px] !text-[color:var(--body)] font-sans mt-0.5">
                   via Razorpay
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[#E7DCEB] rounded-md shadow-xs">
-              <div className="p-2.5 bg-[#F0E6F4] rounded-md text-[#563568] shrink-0">
+            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[var(--border)] rounded-md shadow-xs">
+              <div className="p-2.5 bg-white rounded-md !text-[color:var(--gold)] shrink-0">
                 <Truck size={20} strokeWidth={1.5} />
               </div>
               <div>
-                <h4 className="text-xs sm:text-sm font-medium text-[#302438] leading-tight font-sans">
+                <h4 className="text-xs sm:text-sm font-medium !text-[color:var(--heading)] leading-tight font-sans">
                   Delivery across India
                 </h4>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[#E7DCEB] rounded-md shadow-xs">
-              <div className="p-2.5 bg-[#F0E6F4] rounded-md text-[#563568] shrink-0">
+            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[var(--border)] rounded-md shadow-xs">
+              <div className="p-2.5 bg-white rounded-md !text-[color:var(--gold)] shrink-0">
                 <RotateCcw size={20} strokeWidth={1.5} />
               </div>
               <div>
-                <h4 className="text-xs sm:text-sm font-medium text-[#302438] leading-tight font-sans">
+                <h4 className="text-xs sm:text-sm font-medium !text-[color:var(--heading)] leading-tight font-sans">
                   7-day returns
                 </h4>
-                <p className="text-[11px] text-[#6F6475] font-sans mt-0.5">
+                <p className="text-[11px] !text-[color:var(--body)] font-sans mt-0.5">
                   for damaged or wrong items
                 </p>
               </div>
@@ -75,32 +75,32 @@ export const Footer: React.FC = () => {
 
             <Link
               to="/contact"
-              className="group flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[#E7DCEB] hover:border-[#B69ACF] hover:bg-[#FAF5FC] rounded-md transition-colors shadow-xs"
+              className="group flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[var(--border)] hover:border-[var(--gold)] hover:bg-white rounded-md transition-colors shadow-xs"
             >
-              <div className="p-2.5 bg-[#F0E6F4] rounded-md text-[#563568] group-hover:bg-[#EBDFF2] shrink-0 transition-colors">
+              <div className="p-2.5 bg-[#F0E6F4] rounded-md text-[#563568] group-hover:bg-white shrink-0 transition-colors">
                 <Headphones size={20} strokeWidth={1.5} />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-xs sm:text-sm font-medium text-[#302438] group-hover:text-[#563568] transition-colors leading-tight font-sans inline-flex items-center gap-1">
+                <h4 className="text-xs sm:text-sm font-medium text-[#302438] group-hover:!text-[color:var(--gold)] transition-colors leading-tight font-sans inline-flex items-center gap-1">
                   <span>Help & Support</span>
-                  <ArrowRight size={12} className="opacity-0 group-hover:opacity-100 text-[#563568] transition-opacity" />
+                  <ArrowRight size={12} className="opacity-0 group-hover:opacity-100 !text-[color:var(--gold)] transition-opacity" />
                 </h4>
-                <p className="text-[11px] text-[#6F6475] font-sans mt-0.5 truncate">
+                <p className="text-[11px] !text-[color:var(--body)] font-sans mt-0.5 truncate">
                   Help when you need it
                 </p>
               </div>
             </Link>
 
             {config.codEnabled && (
-              <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[#E7DCEB] rounded-md shadow-xs col-span-2 md:col-span-1">
-                <div className="p-2.5 bg-[#F0E6F4] rounded-md text-[#563568] shrink-0">
+              <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[var(--border)] rounded-md shadow-xs col-span-2 md:col-span-1">
+                <div className="p-2.5 bg-white rounded-md !text-[color:var(--gold)] shrink-0">
                   <CheckCircle2 size={20} strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h4 className="text-xs sm:text-sm font-medium text-[#302438] leading-tight font-sans">
+                  <h4 className="text-xs sm:text-sm font-medium !text-[color:var(--heading)] leading-tight font-sans">
                     Cash on Delivery
                   </h4>
-                  <p className="text-[11px] text-[#6F6475] font-sans mt-0.5">
+                  <p className="text-[11px] !text-[color:var(--body)] font-sans mt-0.5">
                     Available on eligible orders
                   </p>
                 </div>

@@ -835,34 +835,34 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 cards: Daily Wear, Festive, Wedding, Gifting
           Using existing product images, linking to /shop with filter queries
           ========================================================================= */}
-      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") && occasions.some(item => item.active) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E9E5E9] bg-[#F7F4F8]">
+      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") && occasions.some(item => item.active) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[#E9E5E9] !bg-white">
         <div className="site-container">
           <div className="w-full text-center mb-4 sm:mb-4">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
+            <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">
               CURATED OCCASIONS
             </span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">
               Shop by Occasion
             </h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">
+            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed max-w-xl mx-auto">
               Adornments thoughtfully curated for festive splendour, sacred vows, and every day in between.
             </p>
           </div>
 
           {sectionCarouselEnabled("occasions") && <div className="mb-3 flex items-center justify-end gap-2" aria-label="Shop by Occasion carousel controls">
-            <button type="button" onClick={() => scrollProductTrack(occasionsCarouselRef.current, 'left')} aria-label="Scroll occasions left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronLeft size={17} /></button>
-            <button type="button" onClick={() => scrollProductTrack(occasionsCarouselRef.current, 'right')} aria-label="Scroll occasions right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2D6E8] bg-white text-[#563568] shadow-sm transition hover:border-[#B69ACF] hover:bg-[#F7F0FA]"><ChevronRight size={17} /></button>
+            <button type="button" onClick={() => scrollProductTrack(occasionsCarouselRef.current, 'left')} aria-label="Scroll occasions left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--gold)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--plum)] hover:bg-[var(--plum)] hover:!text-white"><ChevronLeft size={17} /></button>
+            <button type="button" onClick={() => scrollProductTrack(occasionsCarouselRef.current, 'right')} aria-label="Scroll occasions right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--gold)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--plum)] hover:bg-[var(--plum)] hover:!text-white"><ChevronRight size={17} /></button>
           </div>}
           <div ref={occasionsCarouselRef} className={sectionCarouselEnabled("occasions") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"} aria-label="Shop by Occasion cards">
             {occasions.filter(item => item.active).map((item) => (
               <Link key={item.id} to={item.link} className={sectionCarouselEnabled("occasions") ? "group flex w-[72%] shrink-0 snap-start flex-col items-center text-center sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "group flex min-w-0 flex-col items-center text-center"} style={sectionCarouselEnabled("occasions") ? desktopCardStyle("occasions", 20, 5) : undefined}>
-                <div className="aspect-[4/5] w-full overflow-hidden bg-[#F0E6F4] border border-[#E7DCEB] rounded-xs relative group-hover:border-[#B69ACF] transition-colors">
+                <div className="aspect-[4/5] w-full overflow-hidden bg-[#2B1A33] border border-[var(--border)] rounded-xs relative group-hover:border-[var(--gold)] transition-colors">
                   <img src={item.image} alt={item.title} loading="lazy" decoding="async" fetchPriority="low" referrerPolicy="no-referrer" className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out" />
                 </div>
                 <div className="pt-3 text-center flex flex-col items-center">
-                  <h3 className="text-sm sm:text-base font-normal text-[#302438] font-sans group-hover:text-[#563568] transition-colors">{item.title}</h3>
-                  <p className="text-[11px] sm:text-xs text-[#6F6475] font-sans mt-0.5">{item.subtitle}</p>
-                  <span className="text-xs text-[#6F6475] group-hover:text-[#563568] transition-colors inline-flex items-center justify-center gap-1 mt-1 font-sans"><span>Shop Now</span><ArrowRight size={11} /></span>
+                  <h3 className="text-sm sm:text-base font-normal !text-[color:var(--heading)] font-sans group-hover:!text-[color:var(--plum)] transition-colors">{item.title}</h3>
+                  <p className="text-[11px] sm:text-xs !text-[color:var(--body)] font-sans mt-0.5">{item.subtitle}</p>
+                  <span className="text-xs !text-[color:var(--plum)] group-hover:!text-[color:var(--plum)] transition-colors inline-flex items-center justify-center gap-1 mt-1 font-sans"><span>Shop Now</span><ArrowRight size={11} className="text-[color:var(--gold)]" /></span>
                 </div>
               </Link>
             ))}
@@ -892,16 +892,16 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           SHOP BY PRICE — content managed in Storefront Studio
           ========================================================================= */}
-      <section style={{ order: sectionOrder("price"), display: sectionVisible("price") ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 border-t border-[#E7DCEB] bg-[#F7F0FA]">
+      <section style={{ order: sectionOrder("price"), display: sectionVisible("price") ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 border-t border-[#E7DCEB] !bg-white">
         <div className="site-container">
           <div className="w-full text-center mb-4">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">{homepageContent.price.eyebrow}</span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">{homepageContent.price.title}</h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed max-w-xl mx-auto">{homepageContent.price.description}</p>
+            <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">{homepageContent.price.eyebrow}</span>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">{homepageContent.price.title}</h2>
+            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed max-w-xl mx-auto">{homepageContent.price.description}</p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 max-w-2xl mx-auto">
             {homepageContent.price.links.map((item, index) => (
-              <Link key={index} to={item.href} className="px-6 sm:px-8 py-3 bg-white border border-[#E7DCEB] hover:border-[#B69ACF] hover:text-[#563568] hover:bg-[#F0E6F4] text-[#302438] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap">
+              <Link key={index} to={item.href} className="px-6 sm:px-8 py-3 bg-white border border-[var(--gold)] hover:border-[var(--plum)] hover:!text-white hover:bg-[var(--plum)] !text-[color:var(--heading)] text-xs sm:text-sm font-sans font-medium rounded-full transition-all duration-200 shadow-2xs whitespace-nowrap">
                 {item.label}
               </Link>
             ))}
@@ -915,12 +915,12 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Centered container mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10
           Consistent vertical spacing: py-6 sm:py-8 lg:py-10
           ========================================================================= */}
-      <section style={{ order: sectionOrder("our-story"), display: sectionVisible("our-story") ? undefined : "none" }} className="bg-[#F7F4F8] border-y border-[#E9E5E9] py-6 sm:py-8 lg:py-10">
+      <section style={{ order: sectionOrder("our-story"), display: sectionVisible("our-story") ? undefined : "none" }} className="!bg-white border-y border-[var(--border)] py-6 sm:py-8 lg:py-10">
         <div className="site-container">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center">
             {/* Left: Large Jewellery Photo */}
             <div className="lg:col-span-5">
-              <div className="aspect-[4/3] sm:aspect-[1/1] bg-[#EBDFF2] overflow-hidden rounded-xs border border-[#E7DCEB]">
+              <div className="aspect-[4/3] sm:aspect-[1/1] bg-white overflow-hidden rounded-xs border border-[var(--border)]">
                 <img
                   src={homepageContent.story.imageUrl || HOMEPAGE_IMAGES.ourStory}
                   alt="SARINE Craftsmanship and Jewellery Details"
@@ -936,16 +936,16 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div className="lg:col-span-7 flex flex-col md:flex-row items-start gap-8 lg:gap-12">
               {/* Story Narrative */}
               <div className="flex-1">
-                <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">
+                <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">
                   {homepageContent.story.eyebrow}
                 </span>
 
-                <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal leading-tight">
+                <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal leading-tight">
                   {homepageContent.story.title}
                 </h2>
 
                 {homepageContent.story.paragraphs.map((paragraph, index) => (
-                  <p key={index} className={index === 0 ? "mt-4 text-xs sm:text-sm text-[#6F6475] leading-relaxed font-sans" : "mt-3 text-xs sm:text-sm text-[#6F6475] leading-relaxed font-sans"}>
+                  <p key={index} className={index === 0 ? "mt-4 text-xs sm:text-sm !text-[color:var(--body)] leading-relaxed font-sans" : "mt-3 text-xs sm:text-sm !text-[color:var(--body)] leading-relaxed font-sans"}>
                     {paragraph}
                   </p>
                 ))}
@@ -953,7 +953,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 <div className="mt-7">
                   <Link
                     to={homepageContent.story.ctaLink}
-                    className="px-6 py-3 min-h-11 bg-[#4A1D5C] text-white text-xs font-sans font-medium hover:bg-[#B8893C] hover:text-[#2B1A33] transition-colors rounded-[6px] inline-flex items-center gap-2 shadow-xs"
+                    className="px-6 py-3 min-h-11 bg-[var(--plum)] text-white text-xs font-sans font-medium hover:bg-[var(--gold)] hover:text-white transition-colors rounded-[6px] inline-flex items-center gap-2 shadow-xs"
                   >
                     <span>{homepageContent.story.ctaText}</span>
                     <ArrowRight size={13} />
@@ -962,19 +962,19 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               </div>
 
               {/* Thin Vertical Divider (Desktop) */}
-              <div className="hidden md:block w-[1px] bg-[#E7DCEB] self-stretch"></div>
+              <div className="hidden md:block w-[1px] bg-[var(--border)] self-stretch"></div>
 
               {/* Three editable brand pillars */}
               <div className="w-full md:w-64 space-y-5 pt-2">
                 {homepageContent.story.pillars.map((pillar, index) => {
                   const PillarIcon = [Gem, Sparkles, ShieldCheck][index] || Gem;
                   return <div key={index} className="flex items-start gap-3">
-                    <div className="p-2 rounded-xs text-[#563568] shrink-0 bg-[#FAF5FC] border border-[#E7DCEB]">
+                    <div className="p-2 rounded-xs !text-[color:var(--gold)] shrink-0 bg-white border border-[var(--border)]">
                       <PillarIcon size={18} strokeWidth={1.5} />
                     </div>
                     <div>
-                      <h3 className="text-xs font-medium text-[#302438] leading-snug">{pillar.title}</h3>
-                      <p className="text-[11px] text-[#6F6475] leading-tight mt-0.5">{pillar.description}</p>
+                      <h3 className="text-xs font-medium !text-[color:var(--heading)] leading-snug">{pillar.title}</h3>
+                      <p className="text-[11px] !text-[color:var(--body)] leading-tight mt-0.5">{pillar.description}</p>
                     </div>
                   </div>;
                 })}
@@ -989,7 +989,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           7. EDITORIAL BANNER
           ========================================================================= */}
       {editorial.active && (
-        <section style={{ order: sectionOrder("editorial"), display: sectionVisible("editorial") ? undefined : "none" }} className="sarine-editorial-banner relative overflow-hidden bg-[#2B1A33] border-b border-[#E7DCEB]">
+        <section style={{ order: sectionOrder("editorial"), display: sectionVisible("editorial") ? undefined : "none" }} className="sarine-editorial-banner relative overflow-hidden bg-[var(--plum)] border-b border-[#E7DCEB]">
           <img src={editorial.imageUrl || HOMEPAGE_IMAGES.editorialBanner} alt={editorial.title} loading="lazy" decoding="async" fetchPriority="low" className="absolute inset-0 w-full h-full object-cover object-center" />
           <div className="absolute inset-0" style={{ backgroundColor: "transparent" }} aria-hidden="true" />
           <div className="site-container min-h-[200px] sm:min-h-[235px] lg:min-h-[270px] flex items-center justify-end relative z-10">
@@ -1007,19 +1007,19 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           JEWELLERY CARE GUIDE — editable in Storefront Studio
           ========================================================================= */}
-      <section style={{ order: sectionOrder("care-guide"), display: sectionVisible("care-guide") ? undefined : "none" }} className="py-7 sm:py-9 border-t border-[#E7DCEB] bg-white">
+      <section style={{ order: sectionOrder("care-guide"), display: sectionVisible("care-guide") ? undefined : "none" }} className="py-7 sm:py-9 border-t border-[var(--border)] !bg-[var(--surface)]">
         <div className="site-container">
           <div className="max-w-[720px] mx-auto text-center mb-6">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">{homepageContent.care.eyebrow}</span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">{homepageContent.care.title}</h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed">{homepageContent.care.description}</p>
+            <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">{homepageContent.care.eyebrow}</span>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">{homepageContent.care.title}</h2>
+            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed">{homepageContent.care.description}</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {homepageContent.care.steps.map((step, index) => (
-              <div key={index} className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs text-center space-y-2">
-                <span className="w-8 h-8 rounded-full bg-[#563568] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">{index + 1}</span>
-                <h3 className="font-serif text-base text-[#302438]">{step.title}</h3>
-                <p className="text-xs text-[#6F6475] leading-relaxed">{step.description}</p>
+              <div key={index} className="p-4 bg-white border border-[var(--border)] rounded-xs text-center space-y-2">
+                <span className="w-8 h-8 rounded-full bg-[var(--plum)] text-white text-xs font-serif flex items-center justify-center mx-auto mb-3">{index + 1}</span>
+                <h3 className="font-serif text-base !text-[color:var(--heading)]">{step.title}</h3>
+                <p className="text-xs !text-[color:var(--body)] leading-relaxed">{step.description}</p>
               </div>
             ))}
           </div>
@@ -1030,14 +1030,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       {/* =========================================================================
           STAY IN TOUCH — editable in Storefront Studio
           ========================================================================= */}
-      <section style={{ order: sectionOrder("stay-in-touch"), display: sectionVisible("stay-in-touch") ? undefined : "none" }} id="stay-in-touch" className="py-7 sm:py-9 lg:py-11 bg-[#563568]">
+      <section style={{ order: sectionOrder("stay-in-touch"), display: sectionVisible("stay-in-touch") ? undefined : "none" }} id="stay-in-touch" className="py-7 sm:py-9 lg:py-11 !bg-white">
         <div className="site-container">
           <div className="max-w-[620px] mx-auto text-center">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475] font-medium block mb-2 font-sans">{homepageContent.contact.eyebrow}</span>
-            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#302438] font-normal">{homepageContent.contact.title}</h2>
-            <p className="mt-3 text-xs sm:text-sm text-[#6F6475] font-sans leading-relaxed">
+            <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">{homepageContent.contact.eyebrow}</span>
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">{homepageContent.contact.title}</h2>
+            <p className="mt-3 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed">
               {homepageContent.contact.description}{" "}
-              <Link to={homepageContent.contact.linkHref} className="text-[#563568] font-medium underline underline-offset-4 hover:text-[#B69ACF] transition-colors">
+              <Link to={homepageContent.contact.linkHref} className="!text-[color:var(--plum)] font-medium underline underline-offset-4 hover:!text-[color:var(--gold)] transition-colors">
                 {homepageContent.contact.linkText}
               </Link>.
             </p>

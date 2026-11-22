@@ -556,7 +556,7 @@ body.sarine-global-theme #main-content .sarine-home > section:has(img[alt="SARIN
 }
 body.sarine-global-theme #main-content .sarine-home .sarine-editorial-banner,
 body.sarine-global-theme #main-content .sarine-home .sarine-editorial-banner > div.absolute {
-  background-color: #563568;
+  background-color: var(--plum);
 }
 
 
