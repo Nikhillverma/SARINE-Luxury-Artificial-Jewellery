@@ -242,7 +242,7 @@
   display: inline-block;
   width: clamp(28px, 5vw, 76px);
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--sarine-mauve));
+  background: linear-gradient(90deg, transparent, var(--tint));
 }
 .sarine-home > section .w-full.text-center.mb-4 h2::after {
   transform: scaleX(-1);
@@ -376,7 +376,7 @@
 
 /* The story area receives a more editorial blush/ivory treatment. */
 .sarine-home > section:has(img[alt="SARINE Craftsmanship and Jewellery Details"]) {
-  background: linear-gradient(115deg, var(--tint) 0%, var(--tint) 54%, var(--ivory-text) 100%);
+  background: linear-gradient(115deg, var(--tint) 0%, var(--tint) 54%, var(--white) 100%);
 }
 /* Collection grids adapt to the number of currently published products.
    auto-fit expands remaining cards when products are unpublished or removed. */
