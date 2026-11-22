@@ -32,7 +32,7 @@ export const PolicyLayout: React.FC<PolicyLayoutProps> = ({
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-[var(--tint)] pb-20">
+    <div className="min-h-screen bg-white pb-20">
       {/* Editorial Header */}
       <section className="bg-[var(--tint)] border-b border-[var(--border)] py-10 sm:py-14 text-center">
         <div className="site-container">
