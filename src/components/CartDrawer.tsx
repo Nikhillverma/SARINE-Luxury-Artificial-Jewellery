@@ -220,7 +220,7 @@ export const CartDrawer: React.FC = () => {
                   closeDrawer();
                   navigate('/shop');
                 }}
-                className="mt-6 px-7 py-3 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-medium hover:bg-[var(--white)] rounded-xs transition-colors shadow-xs cursor-pointer"
+                className="mt-6 px-7 py-3 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-medium hover:bg-[var(--gold)] rounded-xs transition-colors shadow-xs cursor-pointer"
               >
                 Explore Pieces
               </button>
@@ -396,7 +396,7 @@ export const CartDrawer: React.FC = () => {
                   closeDrawer();
                   navigate('/checkout');
                 }}
-                className="w-full py-3 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-medium hover:bg-[var(--white)] transition-colors flex items-center justify-center gap-2 rounded-xs shadow-xs cursor-pointer"
+                className="w-full py-3 bg-[var(--plum)] text-white text-xs uppercase tracking-[0.2em] font-medium hover:bg-[var(--gold)] transition-colors flex items-center justify-center gap-2 rounded-xs shadow-xs cursor-pointer"
               >
                 <span>Proceed to Checkout</span>
                 <ArrowRight size={13} />
