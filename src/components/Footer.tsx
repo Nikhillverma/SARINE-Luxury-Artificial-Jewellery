@@ -77,11 +77,11 @@ export const Footer: React.FC = () => {
               to="/contact"
               className="group flex items-center gap-3 p-3.5 sm:p-4 bg-white border border-[var(--border)] hover:border-[var(--gold)] hover:bg-white rounded-md transition-colors shadow-xs"
             >
-              <div className="p-2.5 bg-[#F0E6F4] rounded-md text-[#563568] group-hover:bg-white shrink-0 transition-colors">
+              <div className="p-2.5 bg-white rounded-md !text-[color:var(--gold)] group-hover:bg-white shrink-0 transition-colors">
                 <Headphones size={20} strokeWidth={1.5} />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-xs sm:text-sm font-medium text-[#302438] group-hover:!text-[color:var(--gold)] transition-colors leading-tight font-sans inline-flex items-center gap-1">
+                <h4 className="text-xs sm:text-sm font-medium !text-[color:var(--heading)] group-hover:!text-[color:var(--gold)] transition-colors leading-tight font-sans inline-flex items-center gap-1">
                   <span>Help & Support</span>
                   <ArrowRight size={12} className="opacity-0 group-hover:opacity-100 !text-[color:var(--gold)] transition-opacity" />
                 </h4>
