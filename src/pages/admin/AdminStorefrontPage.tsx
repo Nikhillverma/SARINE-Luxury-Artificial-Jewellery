@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { AdminLayout } from "../../components/admin/AdminLayout";
 import { CuratedFavouritesManager } from "../../components/admin/CuratedFavouritesManager";
 import { ShopByOccasionManager } from "../../components/admin/ShopByOccasionManager";
@@ -14,6 +15,8 @@ const defaultEditorial: EditorialContent = { eyebrow: "EDITORIAL COLLECTION", ti
 const emptyForm = { tagline: "", title: "", subtitle: "", ctaText: "Shop now", ctaLink: "/shop", imageUrl: "", active: false };
 
 export const AdminStorefrontPage: React.FC = () => {
+  const location = useLocation();
+  const activeSection = location.pathname.split("/").filter(Boolean)[2] || "overview";
   const [banners, setBanners] = useState<StorefrontBanner[]>([]);
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [reviewStatus, setReviewStatus] = useState("pending");
@@ -170,28 +173,48 @@ export const AdminStorefrontPage: React.FC = () => {
   return <AdminLayout>
     <div className="space-y-6 max-w-6xl">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <div><h1 className="font-serif text-3xl text-[#2C1838]">Storefront Studio</h1><p className="text-sm text-[#705E7B] mt-1">Manage homepage sections, occasion cards, banners, editorial content and announcements.</p></div>
+        <div><h1 className="font-serif text-3xl text-[#2C1838]">Storefront Studio</h1><p className="text-sm text-[#705E7B] mt-1">Choose a workspace below. Each tool opens on its own page, with this menu always available.</p></div>
         <a href="/" target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg border text-sm">Preview storefront</a>
       </header>
-      <nav aria-label="Storefront Studio sections" className="sticky top-2 z-20 -mx-1 flex gap-2 overflow-x-auto rounded-xl border border-[#E7DCEB] bg-white/95 p-2 shadow-sm backdrop-blur">
+      <section aria-label="Storefront Studio menu" className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
         {[
-          ["design", "Brand design"], ["header-footer", "Header & footer"], ["occasions", "Occasions"],
-          ["homepage-sections", "Homepage layout"], ["homepage-content", "Homepage content"], ["pages", "Website pages"],
-          ["favourites", "Curated favourites"], ["announcements", "Announcements"], ["editorial", "Editorial"],
-          ["reviews", "Reviews"], ["banners", "Hero banners"]
-        ].map(([id, label]) => <a key={id} href={`#${id}`} className="shrink-0 rounded-lg border border-[#E7DCEB] px-3 py-2 text-xs font-medium text-[#563568] transition hover:bg-[#F7F0FA] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568]">{label}</a>)}
-      </nav>
-      <div id="design" className="scroll-mt-24"><GlobalDesignStudio /></div>
-      <div id="header-footer" className="scroll-mt-24"><SiteChromeManager /></div>
-      <div id="occasions" className="scroll-mt-24"><ShopByOccasionManager /></div>
-      <div id="homepage-sections" className="scroll-mt-24"><HomepageSectionManager /></div>
-      <div id="homepage-content" className="scroll-mt-24"><HomepageContentManager /></div>
-      <div id="pages" className="scroll-mt-24"><CmsPagesManager /></div>
-      <div id="favourites" className="scroll-mt-24"><CuratedFavouritesManager /></div>
+          ["design", "Brand design", "Colours, fonts and layout"],
+          ["header-footer", "Header & footer", "Shared brand messaging"],
+          ["occasions", "Occasions", "Homepage occasion cards"],
+          ["homepage-layout", "Homepage layout", "Section order and visibility"],
+          ["homepage-content", "Homepage content", "Story, price links and care guide"],
+          ["website-pages", "Website pages", "Campaigns, stories and FAQs"],
+          ["curated-favourites", "Curated favourites", "Choose featured products"],
+          ["announcements", "Announcements", "Trust ticker and promotions"],
+          ["editorial", "Editorial", "Editorial feature content"],
+          ["reviews", "Reviews", "Customer ratings and moderation"],
+          ["hero-banners", "Hero banners", "Homepage banner slides"]
+        ].map(([slug, label, description]) => (
+          <Link key={slug} to={`/admin/storefront/${slug}`} aria-current={activeSection === slug ? "page" : undefined}
+            className={`min-h-[92px] rounded-xl border p-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] ${activeSection === slug ? "border-[#563568] bg-[#F7F0FA] ring-1 ring-[#563568]" : "border-[#E7DCEB] bg-white hover:border-[#B69ACF] hover:bg-[#FCFAFD]"}`}>
+            <span className="block text-sm font-semibold text-[#563568]">{label}</span>
+            <span className="mt-1 block text-xs leading-5 text-[#705E7B]">{description}</span>
+          </Link>
+        ))}
+      </section>
+      {activeSection !== "overview" && <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs text-[#705E7B]">Storefront Studio / <span className="font-semibold text-[#563568]">{activeSection.replace(/-/g, " ")}</span></p>
+        <Link to="/admin/storefront" className="rounded-lg border border-[#E7DCEB] bg-white px-3 py-2 text-xs font-medium text-[#563568] hover:bg-[#F7F0FA]">← Storefront Studio menu</Link>
+      </div>}
+
+      {activeSection === "design" && <div id="design" className="scroll-mt-24"><GlobalDesignStudio /></div>}
+      {activeSection === "header-footer" && <div id="header-footer" className="scroll-mt-24"><SiteChromeManager /></div>}
+      {activeSection === "occasions" && <div id="occasions" className="scroll-mt-24"><ShopByOccasionManager /></div>}
+      {activeSection === "homepage-layout" && <div id="homepage-sections" className="scroll-mt-24"><HomepageSectionManager /></div>}
+      {activeSection === "homepage-content" && <div id="homepage-content" className="scroll-mt-24"><HomepageContentManager /></div>}
+      {activeSection === "website-pages" && <div id="pages" className="scroll-mt-24"><CmsPagesManager /></div>}
+      {activeSection === "curated-favourites" && <div id="favourites" className="scroll-mt-24"><CuratedFavouritesManager /></div>}
       {error && <div role="alert" className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>}
       {message && <div role="status" className="p-3 rounded-lg bg-green-50 text-green-800 text-sm">{message}</div>}
 
-      <section id="announcements" className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
+      {activeSection === "announcements" && (
+        <div className="space-y-5">
+        <section id="announcements" className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
         <div>
           <h2 className="font-semibold text-[#2C1838]">Announcement & Trust Ticker</h2>
           <p className="text-xs text-gray-500">Edit all three trust messages and your promotional announcement. Active messages scroll continuously across the top bar.</p>
@@ -216,8 +239,12 @@ export const AdminStorefrontPage: React.FC = () => {
         </div>
         <button disabled={busy} onClick={() => void saveAnnouncement()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">Save ticker messages</button>
       </section>
+        </div>
+      )}
 
-      <section id="editorial" className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
+      {activeSection === "editorial" && (
+        <div className="space-y-5">
+        <section id="editorial" className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
         <div><h2 className="font-semibold text-[#2C1838]">Homepage Sections · Editorial Collection</h2><p className="text-xs text-gray-500">Independent of hero banners. Edit the image, copy and destination shown in the Editorial Collection block.</p></div>
         <div className="grid md:grid-cols-2 gap-3">
           <label className="text-xs space-y-1"><span>Eyebrow</span><input value={editorial.eyebrow} maxLength={120} onChange={e=>setEditorial({...editorial,eyebrow:e.target.value})} className="w-full border rounded-lg p-3 text-sm" /></label>
@@ -230,13 +257,21 @@ export const AdminStorefrontPage: React.FC = () => {
           <div className="flex gap-2 md:col-span-2"><button disabled={busy || editorialUploading} onClick={()=>void saveEditorial()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy?"Saving…":"Save Editorial Collection"}</button><a href="/" target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg border text-sm">Preview homepage</a></div>
         </div>
       </section>
+        </div>
+      )}
 
-      <section id="reviews" className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
+      {activeSection === "reviews" && (
+        <div className="space-y-5">
+        <section id="reviews" className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold text-[#2C1838]">Customer Ratings & Feedback</h2><p className="text-xs text-gray-500">Only delivered-order reviews are accepted. Approve reviews before they appear publicly.</p></div><div className="flex gap-2"><select value={reviewStatus} onChange={e=>{setReviewStatus(e.target.value);void loadReviews(e.target.value);}} className="border rounded-lg p-2 text-xs"><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="all">All reviews</option></select><button onClick={()=>void loadReviews()} className="border rounded-lg px-3 py-2 text-xs">Refresh</button></div></div>
         {reviews.length===0 ? <p className="text-sm text-gray-500">No reviews found in this view.</p> : <div className="space-y-3">{reviews.map(review=><article key={review.id} className="border rounded-xl p-4 space-y-2"><div className="flex flex-wrap justify-between gap-2"><div><p className="font-medium text-sm">{review.productName || review.productId}</p><p className="text-xs text-gray-500">{review.name} · {review.email} · Order {review.orderNumber || "—"}</p></div><span className="text-xs capitalize">{review.status} · {"★".repeat(review.rating)}</span></div>{review.title && <p className="font-medium text-sm">{review.title}</p>}<p className="text-sm text-gray-700 whitespace-pre-wrap">{review.comment}</p>{review.imageUrls?.length > 0 && <div className="flex flex-wrap gap-2">{review.imageUrls.map((url,index)=><a key={url} href={url} target="_blank" rel="noreferrer"><img src={url} alt={`Customer review photo ${index+1}`} loading="lazy" className="h-20 w-20 rounded-lg border object-cover" /></a>)}</div>}<label className="block text-xs text-gray-500">Admin reply (optional)<textarea value={reviewReplies[review.id] ?? review.adminReply ?? ""} maxLength={1000} rows={2} onChange={e=>setReviewReplies({...reviewReplies,[review.id]:e.target.value})} className="mt-1 w-full border rounded-lg p-2 text-sm" placeholder="Write a response to the customer" /></label><div className="flex flex-wrap gap-2"><button disabled={busy || review.status==="approved"} onClick={()=>void moderateReview(review,"approved")} className="rounded-lg bg-[#563568] text-white px-3 py-2 text-xs disabled:opacity-50">Approve & publish</button><button disabled={busy || review.status==="rejected"} onClick={()=>void moderateReview(review,"rejected")} className="rounded-lg border border-red-200 text-red-700 px-3 py-2 text-xs disabled:opacity-50">Reject</button></div></article>)}</div>}
       </section>
+        </div>
+      )}
 
-      <section id="banners" className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
+      {activeSection === "hero-banners" && (
+        <div className="space-y-5">
+        <section id="banners" className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
         <div className="flex justify-between items-center gap-3"><div><h2 className="font-semibold text-[#2C1838]">Homepage hero banners</h2><p className="text-xs text-gray-500">Changes are saved in MariaDB, not browser memory.</p></div><button onClick={beginAdd} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm">Add banner</button></div>
         {loading ? <p className="text-sm text-gray-500">Loading banners…</p> : banners.length === 0 ? <p className="text-sm text-gray-500">No banners created yet. Add a banner and publish it when ready.</p> :
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">{banners.map((banner, index) => <article key={banner.id} className="border rounded-xl overflow-hidden">
@@ -245,8 +280,12 @@ export const AdminStorefrontPage: React.FC = () => {
               <div className="flex flex-wrap gap-2 pt-2"><button disabled={busy || index===0} onClick={() => void move(index,-1)} className="border rounded px-2 py-1 text-xs disabled:opacity-40">Move up</button><button disabled={busy || index===banners.length-1} onClick={() => void move(index,1)} className="border rounded px-2 py-1 text-xs disabled:opacity-40">Move down</button><button disabled={busy} onClick={() => beginEdit(banner)} className="border rounded px-2 py-1 text-xs">Edit</button><button disabled={busy} onClick={() => void toggle(banner)} className="border rounded px-2 py-1 text-xs">{banner.active ? "Unpublish" : "Publish"}</button><button disabled={busy} onClick={() => void remove(banner)} className="border border-red-200 text-red-700 rounded px-2 py-1 text-xs">Delete</button></div>
             </div></article>)}</div>}
       </section>
+        </div>
+      )}
 
-      <section className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
+      {activeSection === "hero-banners" && (
+        <div className="space-y-5">
+        <section className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
         <h2 className="font-semibold text-[#2C1838]">{editingId ? "Edit hero banner" : "Create hero banner"}</h2>
         <form onSubmit={saveBanner} className="grid md:grid-cols-2 gap-3">
           <input value={form.tagline} onChange={e => setForm({...form,tagline:e.target.value})} maxLength={120} placeholder="Tagline" className="border rounded-lg p-3 text-sm" />
@@ -273,6 +312,8 @@ export const AdminStorefrontPage: React.FC = () => {
           <div className="flex gap-2 md:col-span-2"><button disabled={busy || artworkUploading} type="submit" className="px-5 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy ? "Saving…" : editingId ? "Save changes" : "Create banner"}</button><button type="button" disabled={busy || artworkUploading} onClick={beginAdd} className="px-4 py-2 rounded-lg border text-sm disabled:opacity-50">Clear form</button></div>
         </form>
       </section>
+        </div>
+      )}
     </div>
   </AdminLayout>;
 };
