@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import rateLimit from "express-rate-limit";
 import { pool } from "./db.js";
 import { shouldUseSecureSessionCookie } from "./sessionCookiePolicy.js";
-import { recordAdminActivity } from "./adminActivity.js";
+import { recordAdminActivity } from "./adminActivityWriter.js";
 
 const router = Router();
 
