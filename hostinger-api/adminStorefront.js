@@ -173,6 +173,71 @@ const DEFAULT_CURATED={version:1,productIds:[],configured:false};
 const DEFAULT_EXPLORE={version:1,productIds:[],displayCount:8,configured:false};
 async function readSetting(key,fallback){await ensureSchema();const [rows]=await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1",[key]);if(!rows.length)return fallback;try{return JSON.parse(rows[0].setting_value)}catch{return fallback}}
 async function writeSetting(key,value){await ensureSchema();await pool.execute("INSERT INTO storefront_settings (setting_key,setting_value) VALUES (?,?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)",[key,JSON.stringify(value)])}
+const DEFAULT_GLOBAL_DESIGN = {"version":2,"colors":{"primary":"#4A1D5C","accent":"#B8893C","surface":"#FFFFFF","pageBackground":"#FFFFFF","text":"#2B1A33","headerBackground":"#FFFFFF","footerBackground":"#4A1D5C","footerText":"#F3E9DF"},"typography":{"headingFont":"Cormorant Garamond","bodyFont":"Plus Jakarta Sans","headingScale":100,"bodyScale":100},"layout":{"contentWidth":1280,"cornerRadius":8},"components":{"buttonStyle":"solid"},"elements":{"text":{"heading":"#2B1A33","body":"#5A4F5E","goldText":"#8A6120","muted":"#8E8392","link":"#4A1D5C","linkHover":"#B8893C"},"buttons":{"primaryBackground":"#4A1D5C","primaryText":"#FFFFFF","primaryHoverBackground":"#B8893C","primaryPressedBackground":"#36143F","secondaryBorder":"#B8893C","secondaryText":"#2B1A33"},"surfaces":{"alternateSection":"#F8F4FB","card":"#FFFFFF","border":"#ECE4F0","pill":"#F3ECF8"},"productCards":{"saleBadgeBackground":"#B3265C","saleBadgeText":"#FFFFFF","sellingPrice":"#4A1D5C","oldPrice":"#8E8392","starRating":"#B8893C","categoryLabel":"#8A6120"},"announcement":{"background":"#4A1D5C","text":"#FFFFFF","separator":"#E2C07A"},"hero":{"caption":"#E2C07A","heading":"#FFFFFF","paragraph":"#FFFFFF"},"countdown":{"background":"#FCE9F0","border":"#F3C6D6","text":"#B3265C"},"footer":{"background":"#4A1D5C","headings":"#FFFFFF","links":"#F3E9DF","linkHover":"#E2C07A","divider":"#7B4D8C","bottomText":"#CDB9D6"}},"fonts":{"logo":{"family":"Cormorant Garamond","sizeScale":100,"weight":600},"heading":{"family":"Cormorant Garamond","sizeScale":100,"weight":600},"body":{"family":"Plus Jakarta Sans","sizeScale":100,"weight":400},"buttonLabel":{"family":"Plus Jakarta Sans","sizeScale":100,"weight":600}}};
+const DESIGN_FONT_FAMILIES = new Set(["Cormorant Garamond","Plus Jakarta Sans","Playfair Display","DM Sans","Lato","Montserrat","Poppins","Inter","Roboto","Georgia","Arial"]);
+const DESIGN_WEIGHTS = new Set([300,400,500,600,700]);
+const DESIGN_HEX = /^#[0-9A-Fa-f]{6}$/;
+function mergeDesign(base,value) {
+  if (!base || typeof base !== "object" || Array.isArray(base)) return value === undefined ? base : value;
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const merged = { ...base };
+  for (const key of Object.keys(base)) merged[key] = mergeDesign(base[key],source[key]);
+  for (const key of Object.keys(source)) if (!(key in base)) merged[key] = source[key];
+  return merged;
+}
+function normalizeGlobalDesign(value) {
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const d = mergeDesign(DEFAULT_GLOBAL_DESIGN,source);
+  if (!source.elements?.announcement) d.elements.announcement.background = source.colors?.primary || d.elements.announcement.background;
+  if (!source.elements?.buttons) {
+    d.elements.buttons.primaryBackground = source.colors?.primary || d.elements.buttons.primaryBackground;
+    d.elements.buttons.primaryText = source.colors?.surface || d.elements.buttons.primaryText;
+    d.elements.buttons.primaryHoverBackground = source.colors?.accent || d.elements.buttons.primaryHoverBackground;
+  }
+  if (!source.elements?.footer) {
+    d.elements.footer.background = source.colors?.footerBackground || d.elements.footer.background;
+    d.elements.footer.links = source.colors?.footerText || d.elements.footer.links;
+  }
+  if (!source.elements?.text) {
+    d.elements.text.body = source.colors?.text || d.elements.text.body;
+    d.elements.text.link = source.colors?.primary || d.elements.text.link;
+    d.elements.text.linkHover = source.colors?.accent || d.elements.text.linkHover;
+  }
+  if (!source.fonts && source.typography) {
+    d.fonts.logo.family = source.typography.headingFont || d.fonts.logo.family;
+    d.fonts.heading.family = source.typography.headingFont || d.fonts.heading.family;
+    d.fonts.body.family = source.typography.bodyFont || d.fonts.body.family;
+    d.fonts.buttonLabel.family = source.typography.bodyFont || d.fonts.buttonLabel.family;
+    d.fonts.heading.sizeScale = Number(source.typography.headingScale) || 100;
+    d.fonts.body.sizeScale = Number(source.typography.bodyScale) || 100;
+  }
+  d.version = 2;
+  return d;
+}
+function validateGlobalDesign(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "Design settings must be an object.";
+  const d = normalizeGlobalDesign(value);
+  for (const group of ["text","buttons","surfaces","productCards","announcement","hero","countdown","footer"]) {
+    for (const [key,color] of Object.entries(d.elements[group] || {})) if (typeof color !== "string" || !DESIGN_HEX.test(color)) return `Invalid hex colour at elements.${group}.${key}; use #RRGGBB.`;
+  }
+  for (const [key,color] of Object.entries(d.colors || {})) if (typeof color !== "string" || !DESIGN_HEX.test(color)) return `Invalid legacy hex colour at colors.${key}; use #RRGGBB.`;
+  for (const role of ["logo","heading","body","buttonLabel"]) {
+    const f=d.fonts?.[role];
+    if (!f || !DESIGN_FONT_FAMILIES.has(f.family)) return `Invalid font family for ${role}.`;
+    if (!Number.isFinite(f.sizeScale) || f.sizeScale<70 || f.sizeScale>150) return `Font size scale for ${role} must be between 70 and 150.`;
+    if (!DESIGN_WEIGHTS.has(f.weight)) return `Invalid font weight for ${role}.`;
+  }
+  if (![1120,1200,1280,1360].includes(d.layout.contentWidth)) return "Invalid content width.";
+  if (![0,4,8,16].includes(d.layout.cornerRadius)) return "Invalid corner radius.";
+  if (!["solid","outline"].includes(d.components.buttonStyle)) return "Invalid button style.";
+  if (!["Cormorant Garamond","Georgia","Playfair Display"].includes(d.typography.headingFont)) return "Invalid legacy heading font.";
+  if (!["Plus Jakarta Sans","Arial","DM Sans"].includes(d.typography.bodyFont)) return "Invalid legacy body font.";
+  for (const n of [d.typography.headingScale,d.typography.bodyScale]) if (!Number.isFinite(n)||n<70||n>150) return "Legacy typography scale must be between 70 and 150.";
+  return null;
+}
+async function readGlobalDesign(key) { return normalizeGlobalDesign(await readSetting(key,null) || DEFAULT_GLOBAL_DESIGN); }
+async function saveGlobalDesign(value) { const d=normalizeGlobalDesign(value); await writeSetting("global_design_draft",d); return d; }
+
 function validProductIds(ids,max=100){return Array.isArray(ids)&&ids.length<=max&&ids.every(id=>typeof id==="string"&&id.length>0&&id.length<=191)&&new Set(ids).size===ids.length}
 function mapStorefrontProduct(row){const arr=value=>{try{const parsed=typeof value==="string"?JSON.parse(value):value;return Array.isArray(parsed)?parsed:[]}catch{return[]}};return{id:row.id,slug:row.slug,name:row.name,description:row.description||"",shortDescription:row.short_description||undefined,price:Number(row.price),...(row.compare_at_price==null?{}:{compareAtPrice:Number(row.compare_at_price)}),images:arr(row.images),categoryId:row.category_id||"",collectionSlugs:arr(row.collection_slugs),jewelleryType:row.jewellery_type||"necklace",stock:Number(row.stock),status:row.status,tags:arr(row.tags),createdAt:row.created_at?new Date(row.created_at).toISOString():new Date().toISOString()}}
 async function productsForIds(ids,randomize=false){if(!Array.isArray(ids)||!ids.length)return[];const safeIds=ids.filter(id=>typeof id==="string").slice(0,100);if(!safeIds.length)return[];const placeholders=safeIds.map(()=>" ?".trim()).join(",");const [rows]=await pool.execute("SELECT * FROM products WHERE status='active' AND stock>0 AND id IN ("+placeholders+")",safeIds);const byId=new Map(rows.map(row=>[row.id,row]));const ordered=safeIds.map(id=>byId.get(id)).filter(Boolean);if(randomize){for(let i=ordered.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ordered[i],ordered[j]]=[ordered[j],ordered[i]]}}return ordered.map(mapStorefrontProduct)}
@@ -188,6 +253,16 @@ adminOnly.get("/explore-now",async(_req,res,next)=>{try{const draft=await readSe
 adminOnly.put("/explore-now/draft",async(req,res,next)=>{try{const productIds=req.body?.productIds;const displayCount=Number(req.body?.displayCount);if(!validProductIds(productIds,100))return res.status(400).json({error:"Choose up to 100 unique eligible products."});if(!Number.isInteger(displayCount)||displayCount<2||displayCount>24)return res.status(400).json({error:"Display count must be between 2 and 24."});const draft={version:1,productIds,displayCount,configured:productIds.length>0};await writeSetting("explore_now_draft",draft);res.json({success:true,draft})}catch(e){next(e)}});
 adminOnly.post("/explore-now/publish",async(_req,res,next)=>{try{const draft=await readSetting("explore_now_draft",DEFAULT_EXPLORE);await writeSetting("explore_now_published",draft);res.json({success:true,published:draft})}catch(e){next(e)}});
 publicRouter.get("/explore-now",async(_req,res,next)=>{try{const config=await readSetting("explore_now_published",DEFAULT_EXPLORE);const products=config.configured===true?await productsForIds(config.productIds||[],true):[];const displayCount=Math.max(2,Math.min(24,Number(config.displayCount)||8));res.set("Cache-Control","no-store").json({products,displayCount,configured:config.configured===true&&products.length>0})}catch(e){next(e)}});
+
+
+adminOnly.get("/storefront/design",async(_req,res,next)=>{try{const draft=await readGlobalDesign("global_design_draft");const published=await readGlobalDesign("global_design_published");res.set("Cache-Control","no-store").json({draft,published})}catch(e){next(e)}});
+adminOnly.get("/design",async(_req,res,next)=>{try{const draft=await readGlobalDesign("global_design_draft");const published=await readGlobalDesign("global_design_published");res.set("Cache-Control","no-store").json({draft,published})}catch(e){next(e)}});
+adminOnly.put("/storefront/design",async(req,res,next)=>{try{const value=req.body?.design;const invalid=validateGlobalDesign(value);if(invalid)return res.status(400).json({error:invalid});const draft=await saveGlobalDesign(value);res.set("Cache-Control","no-store").json({success:true,draft})}catch(e){next(e)}});
+adminOnly.put("/design",async(req,res,next)=>{try{const value=req.body?.design;const invalid=validateGlobalDesign(value);if(invalid)return res.status(400).json({error:invalid});const draft=await saveGlobalDesign(value);res.set("Cache-Control","no-store").json({success:true,draft})}catch(e){next(e)}});
+adminOnly.post("/storefront/design/publish",async(_req,res,next)=>{try{const published=await readGlobalDesign("global_design_draft");await writeSetting("global_design_published",published);res.set("Cache-Control","no-store").json({success:true,published})}catch(e){next(e)}});
+adminOnly.post("/design/publish",async(_req,res,next)=>{try{const published=await readGlobalDesign("global_design_draft");await writeSetting("global_design_published",published);res.set("Cache-Control","no-store").json({success:true,published})}catch(e){next(e)}});
+publicRouter.get("/storefront/design",async(_req,res,next)=>{try{const design=await readGlobalDesign("global_design_published");res.set("Cache-Control","no-store").json({design})}catch(e){next(e)}});
+publicRouter.get("/design",async(_req,res,next)=>{try{const design=await readGlobalDesign("global_design_published");res.set("Cache-Control","no-store").json({design})}catch(e){next(e)}});
 
 publicRouter.get("/banners", async (_req, res, next) => {
   try {
