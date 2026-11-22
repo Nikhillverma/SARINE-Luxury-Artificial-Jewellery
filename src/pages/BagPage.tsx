@@ -110,7 +110,7 @@ export const BagPage: React.FC = () => {
   const amountToGift = Math.max(0, FREE_GIFT_BOX_THRESHOLD - subtotal);
 
   return (
-    <div className="min-h-screen bg-[var(--tint)] pb-20 text-[var(--heading)] font-sans">
+    <div className="min-h-screen bg-white pb-20 text-[var(--heading)] font-sans">
       {/* Header */}
       <section className="bg-[var(--tint)] border-b border-[var(--border)] py-8 sm:py-12 text-center">
         <div className="site-container">
@@ -333,7 +333,7 @@ export const BagPage: React.FC = () => {
                           onChange={(e) => setGiftNote(e.target.value.slice(0, 200))}
                           placeholder="Add your personalized message for the recipient..."
                           rows={2}
-                          className="w-full p-2.5 text-xs bg-white border border-[var(--border)] focus:border-[var(--plum)] rounded-xs focus:outline-none resize-none"
+                          className="w-full p-2.5 text-xs bg-white border border-[var(--border)] focus:border-[var(--gold)] rounded-xs focus:outline-none resize-none"
                         />
                         <div className="text-right text-[10px] text-[var(--body)] mt-1">
                           {giftNote.length}/200 characters
@@ -392,7 +392,7 @@ export const BagPage: React.FC = () => {
                         placeholder={storewideDiscountPercent > 0 ? "Coupon unavailable during storewide sale" : activeCoupon ? "Enter a different coupon code" : "Enter coupon code"}
                         aria-label="Coupon code"
                         disabled={storewideDiscountPercent > 0}
-                        className="flex-1 min-w-0 p-2 bg-[var(--tint)] border border-[var(--border)] text-xs uppercase rounded-xs focus:outline-none focus:border-[var(--plum)]"
+                        className="flex-1 min-w-0 p-2 bg-[var(--tint)] border border-[var(--border)] text-xs uppercase rounded-xs focus:outline-none focus:border-[var(--gold)]"
                       />
                       <button
                         type="submit"
