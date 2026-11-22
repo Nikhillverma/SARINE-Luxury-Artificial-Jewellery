@@ -10,9 +10,6 @@ import {
   Clock3,
   IndianRupee,
   Package,
-  MessageSquare,
-  RotateCcw,
-  Star,
   Tag,
   RefreshCw,
   ShoppingBag,
@@ -341,6 +338,8 @@ export const AdminDashboardPage: React.FC = () => {
                 ))}
                 <Link to="/admin/products" className="inline-block text-[11px] font-semibold text-[#704A83] hover:underline pt-2">Manage products</Link>
               </div>
+            ) : !data ? (
+              <p className="py-6 text-center text-xs text-[#8B7598]">Inventory status unavailable.</p>
             ) : (
               <div className="py-6 text-center">
                 <CheckCircle2 size={22} className="mx-auto text-[#16A34A]" />
