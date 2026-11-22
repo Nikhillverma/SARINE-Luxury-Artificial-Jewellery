@@ -46,7 +46,7 @@ const app = express();
 app.set("trust proxy", 1);
 const PORT = Number(process.env.PORT || 3000);
 
-const normalizeBrowserOrigin = (value) => String(value || "").trim().replace(/\\/+$/, "");
+const normalizeBrowserOrigin = (value) => String(value || "").trim().replace(/\/+$/, "");
 const allowedOrigins = new Set([
   "https://lavender-emu-732118.hostingersite.com",
   "https://www.lavender-emu-732118.hostingersite.com",
