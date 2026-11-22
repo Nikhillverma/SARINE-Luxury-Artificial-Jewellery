@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AdminLayout } from "../../components/admin/AdminLayout";
 const CuratedFavouritesManager = React.lazy(() => import("../../components/admin/CuratedFavouritesManager").then(module => ({ default: module.CuratedFavouritesManager })));
+const ExploreNowManager = React.lazy(() => import("../../components/admin/ExploreNowManager").then(module => ({ default: module.ExploreNowManager })));
 const ShopByOccasionManager = React.lazy(() => import("../../components/admin/ShopByOccasionManager").then(module => ({ default: module.ShopByOccasionManager })));
 const HomepageSectionManager = React.lazy(() => import("../../components/admin/HomepageSectionManager").then(module => ({ default: module.HomepageSectionManager })));
 const HomepageContentManager = React.lazy(() => import("../../components/admin/HomepageContentManager").then(module => ({ default: module.HomepageContentManager })));
@@ -230,6 +231,7 @@ export const AdminStorefrontPage: React.FC = () => {
           ["homepage-content", "Homepage content", "Story, price links and care guide"],
           ["website-pages", "Website pages", "Campaigns, stories and FAQs"],
           ["curated-favourites", "Curated favourites", "Choose featured products"],
+          ["explore-now", "Explore Now", "Randomized product grid and display count"],
           ["announcements", "Announcements", "Trust ticker and promotions"],
           ["editorial", "Editorial", "Editorial feature content"],
           ["reviews", "Reviews", "Customer ratings and moderation"],
@@ -255,6 +257,7 @@ export const AdminStorefrontPage: React.FC = () => {
         {activeSection === "homepage-content" && <div id="homepage-content" className="scroll-mt-24"><HomepageContentManager /></div>}
         {activeSection === "website-pages" && <div id="pages" className="scroll-mt-24"><CmsPagesManager /></div>}
         {activeSection === "curated-favourites" && <div id="favourites" className="scroll-mt-24"><CuratedFavouritesManager /></div>}
+        {activeSection === "explore-now" && <div id="explore-now" className="scroll-mt-24"><ExploreNowManager /></div>}
       </React.Suspense>
       {error && <div role="alert" className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>}
       {message && <div role="status" className="p-3 rounded-lg bg-green-50 text-green-800 text-sm">{message}</div>}
