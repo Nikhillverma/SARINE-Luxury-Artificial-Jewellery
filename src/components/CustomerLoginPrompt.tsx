@@ -52,18 +52,18 @@ export const CustomerLoginPrompt: React.FC = () => {
   return (
     <aside aria-label="SARINE account sign-in" className="fixed bottom-4 right-3 sm:bottom-6 sm:right-6 z-[100] w-[min(20rem,calc(100vw-1.5rem))] max-w-[320px]">
       {!expanded ? (
-        <div className="relative flex items-center gap-3 border border-[var(--gold)] bg-[#FBF7F2] px-4 py-3 shadow-xl">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#F4ECE4] text-[#4A1D5C]"><Sparkles size={18}/></div>
+        <div className="relative flex items-center gap-3 border border-[var(--gold)] bg-[var(--tint)] px-4 py-3 shadow-xl">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[var(--tint)] text-[var(--plum)]"><Sparkles size={18}/></div>
           <div className="min-w-0 flex-1">
-            <p className="font-serif text-base text-[#2B1A33]">A little more personal?</p>
-            <p className="mt-0.5 text-[12px] leading-snug text-[#5A4F5E]">Sign in to keep your SARINE moments and orders together.</p>
-            <button type="button" onClick={() => setExpanded(true)} className="mt-2 inline-flex min-h-11 items-center rounded-[6px] bg-[#4A1D5C] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#B8893C] hover:text-[#2B1A33]">Sign in or create an account</button>
+            <p className="font-serif text-base text-[var(--heading)]">A little more personal?</p>
+            <p className="mt-0.5 text-[12px] leading-snug text-[var(--body)]">Sign in to keep your SARINE moments and orders together.</p>
+            <button type="button" onClick={() => setExpanded(true)} className="mt-2 inline-flex min-h-11 items-center rounded-[6px] bg-[var(--plum)] px-3 text-xs font-semibold text-white transition-colors hover:bg-[var(--gold)] hover:text-[var(--heading)]">Sign in or create an account</button>
           </div>
-          <button type="button" onClick={dismiss} aria-label="Dismiss sign-in prompt" className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center text-[#5A4F5E] hover:text-[#4A1D5C]"><X size={16}/></button>
+          <button type="button" onClick={dismiss} aria-label="Dismiss sign-in prompt" className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center text-[var(--body)] hover:text-[var(--plum)]"><X size={16}/></button>
         </div>
       ) : (
-        <section aria-label="Sign in to SARINE" className="relative max-h-[70vh] overflow-y-auto border border-[var(--gold)] bg-[#FBF7F2] p-4 shadow-2xl sm:p-5">
-          <button type="button" onClick={() => setExpanded(false)} aria-label="Minimise sign-in panel" className="absolute right-2 top-2 z-10 flex h-11 w-11 items-center justify-center text-[#5A4F5E] hover:text-[#4A1D5C]"><X size={17}/></button>
+        <section aria-label="Sign in to SARINE" className="relative max-h-[70vh] overflow-y-auto border border-[var(--gold)] bg-[var(--tint)] p-4 shadow-2xl sm:p-5">
+          <button type="button" onClick={() => setExpanded(false)} aria-label="Minimise sign-in panel" className="absolute right-2 top-2 z-10 flex h-11 w-11 items-center justify-center text-[var(--body)] hover:text-[var(--plum)]"><X size={17}/></button>
           <CustomerAuthPanel onAuthenticated={handleAuthenticated} onSkip={dismiss} compact />
         </section>
       )}
