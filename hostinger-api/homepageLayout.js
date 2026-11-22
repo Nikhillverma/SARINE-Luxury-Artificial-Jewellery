@@ -147,7 +147,7 @@ function validateHomepageContent(input) {
   };
   const internalPath = (value, label) => {
     const path = text(value, label, 500);
-    if (!path.startsWith("/") || path.startsWith("//") || /[\\r\\n]/.test(path)) throw new Error(label + " must be an internal site path.");
+    if (!path.startsWith("/") || path.startsWith("//") || path.includes("\\n") || path.includes("\\r")) throw new Error(label + " must be an internal site path.");
     return path;
   };
   const imagePath = text(input.story?.imageUrl, "Our Story image", 2048);
