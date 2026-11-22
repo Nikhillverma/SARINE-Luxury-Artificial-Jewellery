@@ -179,7 +179,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     { id: "daily-wear", title: "Daily Wear", subtitle: "Effortless everyday minimalism", image: "/images/optimized/ananya-temple-coin-bracelet.webp", link: "/shop?search=everyday", active: true, sortOrder: 0 },
     { id: "festive", title: "Festive", subtitle: "Celebratory sparkle and classic motifs", image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=80", link: "/shop?search=festive", active: true, sortOrder: 1 },
     { id: "wedding", title: "Wedding", subtitle: "Regal bridal sets & heritage chokers", image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=80", link: "/shop?search=wedding", active: true, sortOrder: 2 },
-    { id: "gifting", title: "Gifting", subtitle: "Precious tokens of affection", image: "/images/optimized/zoya-open-cuff-leaf-bangle.webp", link: "/shop?category=bracelets", active: true, sortOrder: 3 }
+    { id: "gifting", title: "Gifting", subtitle: "Precious tokens of affection", image: "/images/optimized/zoya-open-cuff-leaf-bangle.webp", link: "/shop", active: true, sortOrder: 3 }
   ]);
 
   useEffect(() => {
