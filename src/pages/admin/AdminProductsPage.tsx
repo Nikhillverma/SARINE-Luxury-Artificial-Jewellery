@@ -317,9 +317,9 @@ export const AdminProductsPage: React.FC = () => {
         <div className="bg-white rounded-2xl p-4 border border-[#EADFF0] flex flex-col sm:flex-row gap-3">
           <div className="flex-1 flex items-center gap-2">
             <Search size={15} className="text-[#8E769E]"/>
-            <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search product name or ID" className="w-full bg-transparent outline-none text-sm"/>
+            <input aria-label="Search products by name or ID" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search product name or ID" className="w-full bg-transparent outline-none text-sm"/>
           </div>
-          <select value={statusFilter} onChange={event => setStatusFilter(event.target.value)} className="px-3 py-2 border border-[#E7DCEB] rounded-lg text-xs">
+          <select aria-label="Filter products by status" value={statusFilter} onChange={event => setStatusFilter(event.target.value)} className="px-3 py-2 border border-[#E7DCEB] rounded-lg text-xs">
             <option value="all">All statuses</option><option value="active">Active</option><option value="draft">Draft</option><option value="archived">Archived</option>
           </select>
         </div>
