@@ -164,7 +164,7 @@ export const Footer: React.FC = () => {
           {/* Column 1: Shop */}
           <div className="lg:col-span-2 col-span-1">
             <h4 className="text-xs uppercase tracking-wider text-[#FFFFFF] font-semibold mb-4">
-              Shop
+              {chrome.footer.headings.shop}
             </h4>
             <ul className="space-y-2.5 text-xs text-[#E7DCEB]">
               <li>
@@ -193,7 +193,7 @@ export const Footer: React.FC = () => {
           {/* Column 2: Customer Care */}
           <div className="lg:col-span-2 col-span-1">
             <h4 className="text-xs uppercase tracking-wider text-[#FFFFFF] font-semibold mb-4">
-              Customer Care
+              {chrome.footer.headings.care}
             </h4>
             <ul className="space-y-2.5 text-xs text-[#E7DCEB]">
               <li>
@@ -227,7 +227,7 @@ export const Footer: React.FC = () => {
           {/* Column 3: About */}
           <div className="lg:col-span-2 col-span-1">
             <h4 className="text-xs uppercase tracking-wider text-[#FFFFFF] font-semibold mb-4">
-              About
+              {chrome.footer.headings.about}
             </h4>
             <ul className="space-y-2.5 text-xs text-[#E7DCEB]">
               <li>
@@ -256,7 +256,7 @@ export const Footer: React.FC = () => {
           {/* Column 4: Payment Methods */}
           <div className="lg:col-span-2 col-span-1">
             <h4 className="text-xs uppercase tracking-wider text-[#FFFFFF] font-semibold mb-4">
-              Payment Methods
+              {chrome.footer.headings.payments}
             </h4>
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-1 text-[11px] font-bold tracking-wider uppercase border border-[#E7DCEB] bg-white text-[#302438] rounded-xs shadow-xs">
