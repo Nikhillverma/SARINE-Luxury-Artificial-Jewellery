@@ -27,8 +27,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const campaignDiscount = Math.max(0, Math.min(75, storewideDiscountPercent));
   const campaignPrice = Math.max(0, product.price - Math.floor(product.price * campaignDiscount / 100));
 
-  const primaryImage = product.images[0] || '/images/product-image-unavailable.svg';
-  const secondaryImage = product.images[1];
+  const usableImages = (product.images || []).filter((image): image is string =>
+    typeof image === 'string' && image.trim().length > 0 && !/(product-image-unavailable|placeholder|no[-_]?image)/i.test(image)
+  );
+  const primaryImage = usableImages[0] || '';
+  const secondaryImage = usableImages[1];
 
   const [reviewSummary, setReviewSummary] = React.useState<{ count: number; average: number } | null>(null);
 
@@ -41,6 +44,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     return () => { isCurrent = false; };
   }, [product.id]);
 
+  if (!primaryImage) return null;
+
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -50,11 +55,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <article className="group flex flex-col w-full bg-white p-2 sm:p-2.5 border border-[#E7DCEB] rounded-md transition-all duration-300 hover:border-[#B69ACF] hover:shadow-xs relative">
       {/* 3:4 Portrait Image Container */}
-      <div className="relative block w-full overflow-hidden bg-[#F7F0FA] aspect-[3/4] border border-[#E7DCEB] rounded-xs group-hover:border-[#B69ACF]/60 transition-colors">
+      <div className="relative block w-full overflow-hidden bg-[#FBF7F2] aspect-[4/5] border border-[#E8DED4] rounded-xs group-hover:border-[#B69ACF]/60 transition-colors">
         <Link to={`/product/${product.slug}`} className="block w-full h-full">
           <img
             src={primaryImage}
-            onError={(event) => { if (!event.currentTarget.src.endsWith("/images/product-image-unavailable.svg")) event.currentTarget.src = "/images/product-image-unavailable.svg"; }}
+            onError={(event) => { const article = event.currentTarget.closest('article'); if (article) article.style.display = 'none'; }}
             alt={product.name}
             loading="lazy"
             decoding="async"
@@ -105,7 +110,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {(campaignDiscount > 0 || discountPercent) && inStock && (
           <div className="absolute top-2.5 left-2.5 z-10 flex flex-col items-start gap-1">
-            {campaignDiscount > 0 && <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#A43E55] text-white font-sans font-semibold rounded-xs">{campaignDiscount}% SALE OFF</span>}
+            {campaignDiscount > 0 && <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#B3265C] text-white font-sans font-semibold rounded-xs">{campaignDiscount}% SALE OFF</span>}
             {discountPercent && <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#563568] text-white font-sans font-medium rounded-xs">{discountPercent}% OFF</span>}
           </div>
         )}
@@ -125,11 +130,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div className="pt-3 pb-1 flex flex-col flex-grow">
         {/* Category / Type Label */}
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-[#6F6475] font-sans font-medium">
+          <span className="text-[12px] uppercase tracking-[0.16em] text-[#5A4F5E] font-sans font-medium">
             {JEWELLERY_TYPE_LABELS[product.jewelleryType] || product.jewelleryType}
           </span>
           {product.collectionSlugs.length > 0 && (
-            <span className="text-[10px] tracking-wider text-[#563568] font-sans">
+            <span className="text-[12px] tracking-wider text-[#4A1D5C] font-sans">
               {product.collectionSlugs[0]}
             </span>
           )}
