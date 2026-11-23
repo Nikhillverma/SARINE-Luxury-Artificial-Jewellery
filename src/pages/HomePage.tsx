@@ -989,14 +989,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           7. EDITORIAL BANNER
           ========================================================================= */}
       {editorial.active && (
-        <section style={{ order: sectionOrder("editorial"), display: sectionVisible("editorial") ? undefined : "none" }} className="sarine-editorial-banner relative overflow-hidden bg-[var(--plum)] border-b border-[var(--border)]">
+        <section style={{ order: sectionOrder("editorial"), display: sectionVisible("editorial") ? undefined : "none" }} className="sarine-editorial-banner relative overflow-hidden border-b border-[var(--border)]">
           <img src={editorial.imageUrl || HOMEPAGE_IMAGES.editorialBanner} alt={editorial.title} loading="lazy" decoding="async" fetchPriority="low" className="absolute inset-0 w-full h-full object-cover object-center" />
-          <div className="absolute inset-0" style={{ backgroundColor: "transparent" }} aria-hidden="true" />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, transparent 35%, rgba(0, 0, 0, 0.42) 100%)" }} aria-hidden="true" />
           <div className="site-container min-h-[200px] sm:min-h-[235px] lg:min-h-[270px] flex items-center justify-end relative z-10">
-            <div className="w-full sm:w-2/3 lg:w-1/2 bg-[#4A1D5C] px-3 py-5 sm:py-6 text-left">
-              <span className="text-[12px] sm:text-[13px] uppercase tracking-[0.2em] !text-[color:var(--gold-light)] font-medium block mb-2 font-sans [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">{editorial.eyebrow}</span>
+            <div className="w-full sm:w-2/3 lg:w-1/2 text-left">
+              <span className="text-[12px] sm:text-[13px] uppercase tracking-[0.2em] !text-white font-medium block mb-2 font-sans [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">{editorial.eyebrow}</span>
               <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-white font-normal leading-tight [text-shadow:0_2px_10px_rgba(0,0,0,0.5)]">{editorial.title}</h2>
-              <p className="mt-3 text-[13px] sm:text-sm !text-white leading-relaxed max-w-md font-sans">{editorial.description}</p>
+              <p className="mt-3 text-[13px] sm:text-sm !text-white leading-relaxed max-w-md font-sans [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">{editorial.description}</p>
               <div className="mt-6"><Link to={editorial.ctaLink} className="px-6 py-3 bg-white !text-[color:var(--plum)] text-xs font-sans font-medium hover:bg-[var(--gold)] hover:!text-white transition-colors rounded-xs inline-flex items-center gap-2 shadow-xs"><span>{editorial.ctaText}</span><ArrowRight size={13} /></Link></div>
             </div>
           </div>
