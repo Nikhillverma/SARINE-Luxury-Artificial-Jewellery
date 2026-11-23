@@ -716,7 +716,7 @@ body.sarine-global-theme .sarine-global-announcement * {
   color: var(--sarine-announcement-text, #FFFFFF) !important;
 }
 body.sarine-global-theme .sarine-global-footer {
-  background-color: var(--plum) !important;
+  background-color: var(--footer-background, var(--plum)) !important;
   color: var(--ivory-text);
   border-color: var(--sarine-global-accent, var(--gold-light));
 }
@@ -727,7 +727,7 @@ body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div h
 }
 body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div ul,
 body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div ul a {
-  color: #F3E9DF !important;
+  color: var(--footer-text, #F3E9DF) !important;
 }
 body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div ul a:hover {
   color: var(--gold-light) !important;
@@ -736,7 +736,7 @@ body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div:l
   background-color: #FFFFFF !important;
 }
 body.sarine-global-theme .sarine-global-footer > div:last-child {
-  background-color: var(--plum);
+  background-color: var(--footer-background, var(--plum));
 }
 body.sarine-global-theme .sarine-global-footer > div:last-child :is(p, a, h1, h2, h3, h4, span) {
   color: var(--footer-muted) !important;
