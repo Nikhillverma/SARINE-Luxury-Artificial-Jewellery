@@ -97,7 +97,7 @@
   --sarine-body-font: var(--font-sans, "Plus Jakarta Sans"), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--white);
   font-family: var(--sarine-body-font);
-  color: var(--color-text-primary, var(--heading));
+  color: var(--heading);
 }
 .sarine-home .font-serif,
 .sarine-home h1,
@@ -199,7 +199,7 @@
   --sarine-mauve: var(--gold-light);
   --sarine-champagne: #FFFFFF;
   background: var(--sarine-ivory-light);
-  color: var(--sarine-plum);
+  color: var(--link);
 }
 
 /* Keep the hero height and layout exactly as defined in HomePage.tsx. */
@@ -215,7 +215,7 @@
 
 /* Section surfaces alternate between warm ivory and a barely-there blush. */
 .sarine-home > section:not(:first-child) {
-  border-color: rgba(72, 32, 72, .12);
+  border-color: var(--surface-border);
 }
 .sarine-home > section:not(:first-child):nth-of-type(odd) {
   background-color: var(--sarine-ivory-light);
@@ -224,7 +224,7 @@
   background-color: var(--tint);
 }
 .sarine-home > section h2 {
-  color: var(--sarine-plum);
+  color: var(--plum);
   letter-spacing: -0.035em;
 }
 .sarine-home > section .w-full.text-center.mb-4 {
@@ -260,7 +260,7 @@
 }
 .sarine-home .category-grid > a {
   overflow: hidden;
-  border: 1px solid rgba(72, 32, 72, .12);
+  border: 1px solid var(--surface-border);
   border-radius: 10px;
   background: var(--tint);
   box-shadow: 0 4px 14px rgba(72, 32, 72, .045);
@@ -268,7 +268,7 @@
 }
 .sarine-home .category-grid > a:hover {
   transform: translateY(-3px);
-  border-color: var(--sarine-mauve);
+  border-color: var(--gold-light);
   box-shadow: 0 12px 24px rgba(72, 32, 72, .10);
 }
 .sarine-home .category-grid > a > div:first-child {
@@ -287,7 +287,7 @@
   background: linear-gradient(180deg, var(--tint), var(--tint));
 }
 .sarine-home .category-grid > a h3 {
-  color: var(--sarine-plum);
+  color: var(--plum);
   font-size: 13px;
   font-weight: 500;
 }
@@ -317,7 +317,7 @@
 .sarine-home .product-grid > article {
   overflow: hidden;
   padding: 0;
-  border: 1px solid rgba(72, 32, 72, .13);
+  border: 1px solid var(--surface-border);
   border-radius: 11px;
   background: var(--white);
   box-shadow: 0 3px 12px rgba(72, 32, 72, .035);
@@ -325,7 +325,7 @@
 }
 .sarine-home .product-grid > article:hover {
   transform: translateY(-3px);
-  border-color: rgba(208, 168, 192, .9);
+  border-color: var(--gold);
   box-shadow: 0 14px 28px rgba(72, 32, 72, .10);
 }
 .sarine-home .product-grid > article > div:first-child {
@@ -341,14 +341,14 @@
   padding: 10px 11px 12px;
 }
 .sarine-home .product-grid > article h3 {
-  color: var(--sarine-plum);
+  color: var(--plum);
   font-size: 14px;
 }
 .sarine-home .product-grid > article [class*="uppercase"] {
   color: var(--color-text-secondary, var(--body));
 }
 .sarine-home .product-grid > article [class*="line-through"] {
-  color: var(--color-text-muted, var(--body));
+  color: var(--old-price);
 }
 .sarine-home .product-grid > article .text-sm.font-sans {
   color: var(--sarine-plum);
@@ -567,7 +567,7 @@ body.sarine-global-theme #main-content .sarine-home .sarine-editorial-banner > d
    ========================================================================== */
 body.sarine-global-theme #main-content {
   background: var(--sarine-global-page, #FFFFFF);
-  color: var(--sarine-global-text, var(--plum));
+  color: var(--sarine-global-text, var(--heading));
   font-family: var(--sarine-global-body-font, "Plus Jakarta Sans"), sans-serif;
 }
 body.sarine-global-theme #main-content .site-container {
@@ -600,7 +600,7 @@ body.sarine-global-theme #main-content input,
 body.sarine-global-theme #main-content textarea,
 body.sarine-global-theme #main-content select,
 body.sarine-global-theme #main-content .font-sans {
-  color: var(--sarine-global-text, var(--plum));
+  color: var(--sarine-global-text, var(--heading));
   font-family: var(--sarine-global-body-font, "Plus Jakarta Sans"), sans-serif;
 }
 body.sarine-global-theme #main-content p,
@@ -608,7 +608,7 @@ body.sarine-global-theme #main-content li {
   font-size: calc(clamp(0.875rem, 1.05vw, 1rem) * var(--sarine-global-body-scale, 1));
 }
 body.sarine-global-theme #main-content section {
-  border-color: var(--footer-line);
+  border-color: var(--surface-border);
 }
 body.sarine-global-theme #main-content [class*="bg-[#F7F0FA]"],
 body.sarine-global-theme #main-content [class*="bg-[#F7F4F8]"],
@@ -626,7 +626,7 @@ body.sarine-global-theme #main-content [class*="text-[#1D1B1F]"],
 body.sarine-global-theme #main-content [class*="text-[#5C5660]"],
 body.sarine-global-theme #main-content [class*="text-[#6F6475]"],
 body.sarine-global-theme #main-content [class*="text-[#2B1A33]"] {
-  color: var(--sarine-global-text, var(--plum));
+  color: var(--sarine-global-text, var(--heading));
 }
 body.sarine-global-theme #main-content [class*="border-[#E7DCEB]"],
 body.sarine-global-theme #main-content [class*="border-[#E9E5E9]"] {
@@ -669,7 +669,7 @@ body.sarine-global-theme #main-content #stay-in-touch a:hover {
 }
 body.sarine-global-theme #main-content .sarine-home {
   background: var(--sarine-global-page, #FFFFFF);
-  color: var(--sarine-global-text, var(--plum));
+  color: var(--sarine-global-text, var(--heading));
 }
 body.sarine-global-theme #main-content .sarine-home > section:not(:first-child):nth-of-type(odd) {
   background-color: var(--sarine-global-page, #FFFFFF);
@@ -716,8 +716,8 @@ body.sarine-global-theme .sarine-global-announcement * {
   color: var(--sarine-announcement-text, #FFFFFF) !important;
 }
 body.sarine-global-theme .sarine-global-footer {
-  background-color: var(--plum) !important;
-  color: var(--ivory-text);
+  background-color: var(--footer-background, var(--plum)) !important;
+  color: var(--footer-text, var(--ivory-text));
   border-color: var(--sarine-global-accent, var(--gold-light));
 }
 
@@ -727,7 +727,7 @@ body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div h
 }
 body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div ul,
 body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div ul a {
-  color: #F3E9DF !important;
+  color: var(--footer-text, #F3E9DF) !important;
 }
 body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div ul a:hover {
   color: var(--gold-light) !important;
@@ -736,7 +736,7 @@ body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div:l
   background-color: #FFFFFF !important;
 }
 body.sarine-global-theme .sarine-global-footer > div:last-child {
-  background-color: var(--plum);
+  background-color: var(--footer-background, var(--plum));
 }
 body.sarine-global-theme .sarine-global-footer > div:last-child :is(p, a, h1, h2, h3, h4, span) {
   color: var(--footer-muted) !important;

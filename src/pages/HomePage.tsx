@@ -84,12 +84,12 @@ function CampaignCountdownStrip({ campaign }: { campaign: FestivalCampaign }) {
   const minutes = Math.floor((remaining % 3600000) / 60000);
   const seconds = Math.floor((remaining % 60000) / 1000);
   const label = campaign.countdownLabel?.trim() || campaign.offerLabel?.trim() || campaign.title;
-  const background = "var(--rose-tint)";
-  const textColor = "var(--rose)";
-  const timerColor = "var(--rose)";
+  const background = "var(--countdown-background)";
+  const textColor = "var(--countdown-text)";
+  const timerColor = "var(--countdown-text)";
   if (remaining <= 0) return null;
   return (
-    <div className="inline-flex max-w-[calc(100vw-2rem)] items-center justify-center gap-2.5 sm:gap-3 rounded-full border border-[var(--rose-border)] px-3.5 sm:px-5 py-1.5 sm:py-2 text-[10px] sm:text-xs shadow-md backdrop-blur-md"
+    <div className="inline-flex max-w-[calc(100vw-2rem)] items-center justify-center gap-2.5 sm:gap-3 rounded-full border border-[var(--countdown-border)] px-3.5 sm:px-5 py-1.5 sm:py-2 text-[10px] sm:text-xs shadow-md backdrop-blur-md"
       style={{ backgroundColor: background, color: textColor }}>
       <span className="max-w-[42vw] truncate font-semibold uppercase tracking-[0.08em]">{label}</span>
       <span aria-hidden="true" className="opacity-60">|</span>

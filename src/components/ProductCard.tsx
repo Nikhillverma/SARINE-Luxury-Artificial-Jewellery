@@ -110,8 +110,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {(campaignDiscount > 0 || discountPercent) && inStock && (
           <div className="absolute top-2.5 left-2.5 z-10 flex flex-col items-start gap-1">
-            {campaignDiscount > 0 && <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[var(--rose)] !text-white font-sans font-semibold rounded-xs">{campaignDiscount}% SALE OFF</span>}
-            {discountPercent && <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[var(--rose)] !text-white font-sans font-medium rounded-xs">{discountPercent}% OFF</span>}
+            {campaignDiscount > 0 && <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[var(--sale-badge-background)] !text-[color:var(--sale-badge-text)] font-sans font-semibold rounded-xs">{campaignDiscount}% SALE OFF</span>}
+            {discountPercent && <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[var(--sale-badge-background)] !text-[color:var(--sale-badge-text)] font-sans font-medium rounded-xs">{discountPercent}% OFF</span>}
           </div>
         )}
 

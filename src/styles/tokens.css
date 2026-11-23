@@ -19,6 +19,68 @@
   --footer-muted: #CDB9D6;
   --footer-line: #7B4D8C;
   --green: #1F5E4B;
+
+  /* Page and header surfaces */
+  --page-background: var(--white);
+  --header-background: var(--white);
+
+  /* Typography roles */
+  --font-logo-family: 'Cormorant Garamond', Georgia, serif;
+  --font-logo-scale: 1;
+  --font-logo-weight: 600;
+
+  --font-heading-family: 'Cormorant Garamond', Georgia, serif;
+  --font-heading-scale: 1;
+  --font-heading-weight: 600;
+
+  --font-body-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body-scale: 1;
+  --font-body-weight: 400;
+
+  --font-button-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-button-scale: 1;
+  --font-button-weight: 600;
+  /* Semantic design tokens — defaults for the published per-element theme. */
+  --link: var(--plum);
+  --link-hover: var(--gold);
+
+  --button-primary-background: var(--plum);
+  --button-primary-text: var(--white);
+  --button-primary-hover: var(--gold);
+  --button-primary-pressed: var(--plum-dark);
+  --button-secondary-border: var(--gold);
+  --button-secondary-text: var(--heading);
+
+  --surface-alternate: var(--tint);
+  --card-background: var(--white);
+  --surface-border: var(--border);
+  --surface-pill: var(--pill);
+
+  --sale-badge-background: var(--rose);
+  --sale-badge-text: var(--white);
+  --selling-price: var(--plum);
+  --old-price: var(--muted);
+  --star-rating: var(--gold);
+  --category-label: var(--gold-text);
+
+  --announcement-background: var(--plum);
+  --announcement-text: var(--white);
+  --announcement-separator: var(--gold-light);
+
+  --hero-caption: var(--gold-light);
+  --hero-heading: var(--white);
+  --hero-paragraph: var(--white);
+
+  --countdown-background: var(--rose-tint);
+  --countdown-border: var(--rose-border);
+  --countdown-text: var(--rose);
+
+  --footer-background: var(--plum);
+  --footer-text: var(--ivory-text);
+  --footer-link: var(--ivory-text);
+  --footer-link-hover: var(--gold-light);
+  --footer-border: var(--footer-line);
+  --footer-muted-text: var(--footer-muted);
   color-scheme: light;
   --color-brand-primary: var(--plum);
   --color-brand-accent: var(--gold);

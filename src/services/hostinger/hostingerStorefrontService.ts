@@ -166,7 +166,11 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     credentials: "include",
     headers: { Accept: "application/json", "Content-Type": "application/json", ...init.headers }
   });
-  const body = await response.json().catch(() => ({}));
+  const body = await response.json().catch(error => {
+    // Preserve aborts so callers can distinguish a timed-out body read from invalid JSON.
+    if (init.signal?.aborted) throw error;
+    return {};
+  });
   if (!response.ok) throw new Error(typeof body.error === "string" ? body.error : `Request failed (${response.status}).`);
   return body as T;
 }
@@ -175,7 +179,8 @@ export const hostingerStorefrontService = {
   getGlobalDesign: () => request<{ draft: GlobalDesignSettings; published: GlobalDesignSettings }>("/admin/storefront/design"),
   saveGlobalDesign: (design: GlobalDesignSettings) => request<{ success: boolean; draft: GlobalDesignSettings }>("/admin/storefront/design", { method: "PUT", body: JSON.stringify({ design }) }),
   publishGlobalDesign: () => request<{ success: boolean; published: GlobalDesignSettings }>("/admin/storefront/design/publish", { method: "POST" }),
-  getPublicGlobalDesign: () => request<{ design: GlobalDesignSettings }>("/storefront/design"),
+  getPublicGlobalDesign: (options?: { signal?: AbortSignal }) =>
+    request<{ design: GlobalDesignSettings }>("/storefront/design", options?.signal ? { signal: options.signal } : undefined),
   getHomepageLayout: () => request<{ draft: HomepageLayout; published: HomepageLayout }>("/admin/homepage-layout"),
   getPublicHomepageLayout: () => request<{ layout: HomepageLayout }>("/homepage-layout"),
   getCuratedFavourites: () => request<{ draft: CuratedFavouritesConfig; published: CuratedFavouritesConfig; maxProducts: number }>("/admin/curated-favourites"),
