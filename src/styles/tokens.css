@@ -19,6 +19,47 @@
   --footer-muted: #CDB9D6;
   --footer-line: #7B4D8C;
   --green: #1F5E4B;
+  /* Semantic design tokens — defaults for the published per-element theme. */
+  --link: var(--plum);
+  --link-hover: var(--gold);
+
+  --button-primary-background: var(--plum);
+  --button-primary-text: var(--white);
+  --button-primary-hover: var(--gold);
+  --button-primary-pressed: var(--plum-dark);
+  --button-secondary-border: var(--gold);
+  --button-secondary-text: var(--heading);
+
+  --surface-alternate: var(--tint);
+  --card-background: var(--white);
+  --surface-border: var(--border);
+  --surface-pill: var(--pill);
+
+  --sale-badge-background: var(--rose);
+  --sale-badge-text: var(--white);
+  --selling-price: var(--plum);
+  --old-price: var(--muted);
+  --star-rating: var(--gold);
+  --category-label: var(--gold-text);
+
+  --announcement-background: var(--plum);
+  --announcement-text: var(--white);
+  --announcement-separator: var(--gold-light);
+
+  --hero-caption: var(--gold-light);
+  --hero-heading: var(--white);
+  --hero-paragraph: var(--white);
+
+  --countdown-background: var(--rose-tint);
+  --countdown-border: var(--rose-border);
+  --countdown-text: var(--rose);
+
+  --footer-background: var(--plum);
+  --footer-text: var(--white);
+  --footer-link: var(--ivory-text);
+  --footer-link-hover: var(--gold-light);
+  --footer-border: var(--footer-line);
+  --footer-muted-text: var(--footer-muted);
   color-scheme: light;
   --color-brand-primary: var(--plum);
   --color-brand-accent: var(--gold);
