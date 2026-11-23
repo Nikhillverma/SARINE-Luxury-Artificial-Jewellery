@@ -15,7 +15,7 @@ import { WishlistDrawer } from './components/WishlistDrawer';
 import { CustomerLoginPrompt } from './components/CustomerLoginPrompt';
 import { Footer } from './components/Footer';
 import { setPageMetadata } from './utils/seo';
-import type { GlobalDesignSettings } from './services/hostinger/hostingerStorefrontService';
+import { hostingerStorefrontService, type GlobalDesignSettings } from './services/hostinger/hostingerStorefrontService';
 
 /** Approved font catalogue. The v1 API currently supports only six of these names. */
 export const ALLOWED_FONTS = [
@@ -348,23 +348,8 @@ function MainAppShell() {
       controller.abort();
     }, 8000);
     const clearRequestTimer = () => window.clearTimeout(timeoutId);
-    const apiBase = (
-      import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
-      (import.meta.env.DEV ? '/api' : 'https://lavender-goldfish-844589.hostingersite.com/api')
-    ).replace(/\/+$/, '');
 
-    fetch(`${apiBase}/storefront/design`, {
-      credentials: 'include',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      signal: controller.signal
-    })
-      .then(async response => {
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(typeof body.error === 'string' ? body.error : `Request failed (${response.status}).`);
-        }
-        return body as { design: GlobalDesignSettings };
-      })
+    hostingerStorefrontService.getPublicGlobalDesign({ signal: controller.signal })
       .then(({ design }) => {
         clearRequestTimer();
         if (!active || timedOut) return;
@@ -398,6 +383,7 @@ function MainAppShell() {
 
     return () => {
       active = false;
+      clearPublishedDesignOverrides();
       clearRequestTimer();
       controller.abort();
     };
