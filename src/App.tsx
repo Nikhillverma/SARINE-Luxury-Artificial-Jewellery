@@ -5,7 +5,7 @@
  */
 
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { Navbar } from './components/Navbar';
@@ -313,18 +313,40 @@ function RouteMetadata() {
 
   useEffect(() => {
     const path = location.pathname;
+    const isKnownRoute = Object.prototype.hasOwnProperty.call(ROUTE_METADATA, path)
+      || path.startsWith('/product/')
+      || path.startsWith('/pages/')
+      || path.startsWith('/order/');
     const isPrivateRoute = path.startsWith('/admin')
       || ['/bag', '/checkout', '/account', '/track-order'].includes(path)
-      || path.startsWith('/order/');
+      || path.startsWith('/order/')
+      || !isKnownRoute;
     const metadata = ROUTE_METADATA[path]
       || (path.startsWith('/product/')
         ? { title: 'Jewellery Details | SARINE', description: 'Explore product details, styling information and availability from SARINE.' }
-        : { title: 'SARINE | Luxury Artificial Jewellery', description: 'Discover contemporary artificial and fashion jewellery at SARINE.' });
+        : path.startsWith('/pages/')
+          ? { title: 'SARINE | Editorial Page', description: 'Explore published stories and information from SARINE.' }
+          : { title: 'Page Not Found | SARINE', description: 'The page you requested could not be found on SARINE.' });
 
     setPageMetadata({ ...metadata, robots: isPrivateRoute ? 'noindex, nofollow' : 'index, follow' });
   }, [location.pathname]);
 
   return null;
+}
+
+function NotFoundPage() {
+  return (
+    <main className="min-h-[60vh] flex items-center justify-center px-4 py-20 text-center">
+      <div className="max-w-xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--body)]">404 · Page not found</p>
+        <h1 className="mt-4 font-serif text-3xl sm:text-4xl font-normal text-[var(--heading)]">This page could not be found</h1>
+        <p className="mt-4 text-sm leading-relaxed text-[var(--body)]">The link may be outdated or the page may have moved. You can return to the SARINE homepage and continue exploring.</p>
+        <Link to="/" className="mt-8 inline-flex min-h-11 items-center justify-center bg-[var(--plum)] px-6 py-3 text-xs font-semibold uppercase tracking-wider text-white transition-opacity hover:opacity-90">
+          Return to SARINE
+        </Link>
+      </div>
+    </main>
+  );
 }
 
 function MainAppShell() {
@@ -473,8 +495,8 @@ function MainAppShell() {
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/careers" element={<CareersPage />} />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Unknown URLs receive a real 404 page and noindex metadata. */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
         </Suspense>
       </div>

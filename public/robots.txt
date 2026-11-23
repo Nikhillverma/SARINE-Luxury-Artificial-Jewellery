@@ -2,7 +2,6 @@
 User-agent: *
 Allow: /
 Disallow: /admin
-Disallow: /admin/*
-Disallow: /.netlify/*
+Disallow: /admin/
 
 Sitemap: https://sarine.in/sitemap.xml

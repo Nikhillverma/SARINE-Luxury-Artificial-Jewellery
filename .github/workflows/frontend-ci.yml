@@ -6,6 +6,7 @@ on:
       - hostinger-migration
     paths:
       - "src/**"
+      - "public/**"
       - "package.json"
       - "package-lock.json"
       - "tsconfig.json"
