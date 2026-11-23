@@ -115,7 +115,7 @@ export const Footer: React.FC = () => {
           {/* Brand & Socials Column */}
           <div className="lg:col-span-4">
             <Link to="/" className="inline-block">
-              <span className="font-serif text-2xl tracking-[0.25em] text-white font-normal uppercase hover:!text-[color:var(--gold-light)] transition-colors">
+              <span className="font-serif text-2xl tracking-[0.25em] !text-white font-normal uppercase hover:!text-[color:var(--gold-light)] transition-colors">
                 SARINE
               </span>
             </Link>
