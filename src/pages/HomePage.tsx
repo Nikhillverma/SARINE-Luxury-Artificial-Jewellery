@@ -195,6 +195,15 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   // Hero Slider State
   const [activeSlide, setActiveSlide] = useState<number>(0);
   const [isHeroPaused, setIsHeroPaused] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+    const handlePreferenceChange = (event: MediaQueryListEvent) => setPrefersReducedMotion(event.matches);
+    mediaQuery.addEventListener('change', handlePreferenceChange);
+    return () => mediaQuery.removeEventListener('change', handlePreferenceChange);
+  }, []);
+
   const [managedHeroSlides, setManagedHeroSlides] = useState<Array<{id:string; tagline:string; title:string; subtitle:string; ctaText:string; ctaLink:string; imageUrl:string}>>([]);
   const [editorial, setEditorial] = useState<EditorialContent>({ eyebrow: 'EDITORIAL COLLECTION', title: 'The Art of Everyday Elegance', description: 'A curated collection that blends classic beauty with modern sensibilities.', ctaText: 'Explore the Collection', ctaLink: '/shop', imageUrl: HOMEPAGE_IMAGES.editorialBanner, active: true });
   const [homepageContent, setHomepageContent] = useState<HomepageContent>(DEFAULT_HOMEPAGE_CONTENT);
@@ -409,12 +418,12 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   // Regular slides use 5 seconds; campaign slides use their admin-configured hold time.
   // The timer restarts on every slide change so a featured offer gets its full viewing time.
   useEffect(() => {
-    if (slideCount <= 1 || isHeroPaused) return;
+    if (slideCount <= 1 || isHeroPaused || prefersReducedMotion) return;
     const timer = window.setTimeout(() => {
       setActiveSlide(prev => (prev + 1) % slideCount);
     }, activeSlideDuration);
     return () => window.clearTimeout(timer);
-  }, [activeSlide, activeSlideDuration, isHeroPaused, slideCount]);
+  }, [activeSlide, activeSlideDuration, isHeroPaused, prefersReducedMotion, slideCount]);
 
   const prevSlide = () => {
     setActiveSlide((prev) => (prev - 1 + slideCount) % slideCount);
