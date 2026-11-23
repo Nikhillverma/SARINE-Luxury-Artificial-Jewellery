@@ -335,7 +335,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       setLoading(true);
       setLoadError(false);
       try {
-        const [cats, bestSelling, curated, newest] = await Promise.all([
+        // Keep each homepage collection independent: one unavailable endpoint must
+        // not prevent the other sections from rendering their successfully loaded data.
+        const [catsResult, bestSellingResult, curatedResult, newestResult] = await Promise.allSettled([
           categoryService.getCategories({ activeOnly: true }),
           productService.getBestSellingProducts(10),
           productService.getFeaturedProducts(8),
@@ -343,36 +345,52 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         ]);
 
         if (!isCancelled) {
-          const sortPriority: Record<string, number> = {
-            earrings: 1,
-            necklaces: 2,
-            rings: 3,
-            bracelets: 4,
-            sets: 5
-          };
+          const failures = [catsResult, bestSellingResult, curatedResult, newestResult]
+            .filter(result => result.status === 'rejected');
+          if (failures.length) {
+            console.warn('[HomePage] One or more storefront collections could not be loaded.', failures);
+          }
 
-          const sortedCats = [...cats].sort((a, b) => {
-            const prioA = sortPriority[a.slug] || 99;
-            const prioB = sortPriority[b.slug] || 99;
-            return prioA - prioB;
-          });
+          if (catsResult.status === 'fulfilled') {
+            const sortPriority: Record<string, number> = {
+              earrings: 1,
+              necklaces: 2,
+              rings: 3,
+              bracelets: 4,
+              sets: 5
+            };
+            const sortedCats = [...catsResult.value].sort((a, b) => {
+              const prioA = sortPriority[a.slug] || 99;
+              const prioB = sortPriority[b.slug] || 99;
+              return prioA - prioB;
+            });
+            setCategories(sortedCats);
+          }
 
-          setCategories(sortedCats);
+          if (bestSellingResult.status === 'fulfilled') {
+            setBestsellers(bestSellingResult.value.filter(hasUsableProductImage));
+          }
+          if (curatedResult.status === 'fulfilled') {
+            setCuratedFavourites(curatedResult.value.filter(hasUsableProductImage));
+          }
 
-          setBestsellers(bestSelling.filter(hasUsableProductImage));
-          setCuratedFavourites(curated.filter(hasUsableProductImage));
+          if (newestResult.status === 'fulfilled') {
+            // 4 newest products sorted by createdAt descending.
+            const newest = newestResult.value;
+            const sortedNewest = [...newest].sort((a, b) => {
+              const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+              const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+              return dateB - dateA;
+            });
+            const arrivalList = sortedNewest.slice(0, 4);
+            setNewArrivals((arrivalList.length > 0 ? arrivalList : newest.slice(0, 5)).filter(hasUsableProductImage));
+          }
 
-          // 4 newest products sorted by createdAt descending
-          const sortedNewest = [...newest].sort((a, b) => {
-            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return dateB - dateA;
-          });
-          const arrivalList = sortedNewest.slice(0, 4);
-          setNewArrivals((arrivalList.length > 0 ? arrivalList : newest.slice(0, 5)).filter(hasUsableProductImage));
+          // Show the full error state only when every independent collection failed.
+          setLoadError(failures.length === 4);
         }
       } catch (err) {
-        console.error('[HomePage] Error loading storefront collections:', err);
+        console.error('[HomePage] Unexpected error loading storefront collections:', err);
         if (!isCancelled) setLoadError(true);
       } finally {
         if (!isCancelled) {
