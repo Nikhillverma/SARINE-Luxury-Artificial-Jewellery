@@ -15,17 +15,17 @@ export const SustainabilityPage: React.FC = () => {
             Responsibility
           </span>
           <h1 className="font-serif text-3xl sm:text-4xl text-[var(--heading)] font-normal mb-6">
-            Sustainability &amp; Conscious Craft
+            Sustainability &amp; Conscious Choices
           </h1>
           <p className="text-xs sm:text-sm text-[var(--body)] leading-relaxed mb-4">
-            At SARINE, thoughtful craftsmanship extends beyond aesthetics. We focus on mindful small-batch production, minimal packaging waste, and long-lasting wearable designs that transcend fleeting seasonal cycles.
+            We want information about materials, packaging and production to be specific and verifiable. We avoid making broad environmental claims where we cannot provide clear supporting details.
           </p>
           <p className="text-xs sm:text-sm text-[var(--body)] leading-relaxed">
-            Each order is shipped in reusable keepsake pouches and protective recyclable cardboard mailers designed to minimize single-use plastics.
+            If you have a question about the materials, care or packaging of a particular item, please contact our team and include the product name so we can help with the information available.
           </p>
           <div className="mt-8 pt-6 border-t border-[var(--border)]">
-            <Link to="/" className="text-xs uppercase tracking-wider text-[var(--plum)] hover:text-[var(--white)] transition-colors underline underline-offset-4">
-              ← Return to Home
+            <Link to="/contact" className="text-xs uppercase tracking-wider text-[var(--plum)] underline underline-offset-4">
+              Contact SARINE
             </Link>
           </div>
         </div>
@@ -102,19 +102,20 @@ export const CancellationPolicyPage: React.FC = () => {
             Cancellation Policy
           </h1>
           <p className="text-xs sm:text-sm text-[var(--body)] leading-relaxed mb-4">
-            You may request cancellation of your order at any time before it has been dispatched from our studio (typically within 24 hours of placement).
+            You may request cancellation before your parcel has been packaged and handed over to our courier partner. Cancellation requests are subject to confirmation by SARINE.
           </p>
           <p className="text-xs sm:text-sm text-[var(--body)] leading-relaxed mb-4">
-            Once an order has been dispatched and handed over to our courier partners, cancellation is no longer possible, but you may avail of our 7-day return assistance upon delivery in accordance with our{' '}
-            <Link to="/refund-policy" className="text-[var(--plum)] hover:text-[var(--white)] transition-colors underline">
+            Once the parcel has been handed over to the courier, it cannot be cancelled in transit. For eligible damaged, defective or incorrect items, you may request a return within 7 days of delivery in accordance with our{' '}
+            <Link to="/refund-policy" className="text-[var(--plum)] underline underline-offset-2">
               Refund &amp; Return Policy
             </Link>.
           </p>
           <p className="text-xs text-[var(--body)]">
-            Last updated: 21 October 2026. For cancellation requests, email{' '}
-            <a href="mailto:care@sarinejewelry.com" className="underline font-medium text-[var(--plum)] hover:text-[var(--white)] transition-colors">
-              care@sarinejewelry.com
-            </a>.
+            To request cancellation, use the{' '}
+            <Link to="/contact" className="text-[var(--plum)] underline underline-offset-2">
+              Contact page
+            </Link>{' '}
+            and include your order number.
           </p>
         </div>
       </div>
