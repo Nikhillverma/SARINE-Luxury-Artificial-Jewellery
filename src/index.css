@@ -554,10 +554,7 @@ body.sarine-global-theme #main-content .sarine-home .product-grid > article:hove
 body.sarine-global-theme #main-content .sarine-home > section:has(img[alt="SARINE Craftsmanship and Jewellery Details"]) {
   background: var(--tint);
 }
-body.sarine-global-theme #main-content .sarine-home .sarine-editorial-banner,
-body.sarine-global-theme #main-content .sarine-home .sarine-editorial-banner > div.absolute {
-  background-color: var(--plum);
-}
+/* Editorial banner imagery and its readability gradient are defined in HomePage.tsx. */
 
 
 /* ==========================================================================
