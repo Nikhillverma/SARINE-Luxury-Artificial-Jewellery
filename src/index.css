@@ -720,6 +720,21 @@ body.sarine-global-theme .sarine-global-footer {
   color: var(--ivory-text);
   border-color: var(--sarine-global-accent, var(--gold-light));
 }
+
+/* Footer column colours and payment marks are deliberately independent of CTA styling. */
+body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div h4 {
+  color: #FFFFFF !important;
+}
+body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div ul,
+body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div ul a {
+  color: #F3E9DF !important;
+}
+body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div ul a:hover {
+  color: var(--gold-light) !important;
+}
+body.sarine-global-theme .sarine-global-footer > .site-container > .grid > div:last-child > div > span {
+  background-color: #FFFFFF !important;
+}
 body.sarine-global-theme .sarine-global-footer > div:last-child {
   background-color: var(--plum);
 }
@@ -749,22 +764,23 @@ body.sarine-global-theme .sarine-global-header > div:nth-child(2) {
 }
 
 
-/* Storefront primary CTA interaction states — palette tokens only. */
-body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#563568]"],
-body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#4A1D5C]"],
-body.sarine-global-theme #main-content :is(a, button)[class*="bg-[var(--plum)]"] {
+/* Storefront primary CTA interaction states — match only actual base background tokens.
+   Exact class-token matching avoids treating hover:bg-* utilities as base backgrounds. */
+body.sarine-global-theme #main-content :is(a, button)[class~="bg-[#563568]"],
+body.sarine-global-theme #main-content :is(a, button)[class~="bg-[#4A1D5C]"],
+body.sarine-global-theme #main-content :is(a, button)[class~="bg-[var(--plum)]"] {
   background-color: var(--plum) !important;
   color: #FFFFFF !important;
 }
-body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#563568]"]:hover,
-body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#4A1D5C]"]:hover,
-body.sarine-global-theme #main-content :is(a, button)[class*="bg-[var(--plum)]"]:hover {
+body.sarine-global-theme #main-content :is(a, button):not([data-price-preset])[class~="bg-[#563568]"]:hover,
+body.sarine-global-theme #main-content :is(a, button):not([data-price-preset])[class~="bg-[#4A1D5C]"]:hover,
+body.sarine-global-theme #main-content :is(a, button):not([data-price-preset])[class~="bg-[var(--plum)]"]:hover {
   background-color: var(--gold) !important;
   color: #FFFFFF !important;
 }
-body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#563568]"]:active,
-body.sarine-global-theme #main-content :is(a, button)[class*="bg-[#4A1D5C]"]:active,
-body.sarine-global-theme #main-content :is(a, button)[class*="bg-[var(--plum)]"]:active {
+body.sarine-global-theme #main-content :is(a, button):not([data-price-preset])[class~="bg-[#563568]"]:active,
+body.sarine-global-theme #main-content :is(a, button):not([data-price-preset])[class~="bg-[#4A1D5C]"]:active,
+body.sarine-global-theme #main-content :is(a, button):not([data-price-preset])[class~="bg-[var(--plum)]"]:active {
   background-color: var(--plum-dark) !important;
   color: #FFFFFF !important;
 }

@@ -568,16 +568,17 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
                   ].map((preset) => (
                     <button
                       key={preset.id}
+                      data-price-preset={preset.id}
                       onClick={() => {
                         setPricePreset(preset.id);
                         setCustomMin('');
                         setCustomMax('');
                         updateFilter({ price: preset.id === 'all' ? null : preset.id });
                       }}
-                      className={`w-full text-left py-1 px-2 rounded-xs transition-colors ${
+                      className={`w-full text-left py-1 px-2 rounded-xs border transition-colors ${
                         pricePreset === preset.id && !customMin && !customMax
-                          ? 'bg-[var(--plum)] text-[color:var(--white)] font-medium'
-                          : 'text-[color:var(--body)] hover:text-[color:var(--body)]'
+                          ? 'bg-[var(--plum)] border-[var(--plum)] text-[color:var(--white)] font-medium'
+                          : 'bg-white border-[var(--gold)] text-[color:var(--heading)] hover:bg-[var(--plum)] hover:border-[var(--plum)] hover:text-white'
                       }`}
                     >
                       {preset.label}
