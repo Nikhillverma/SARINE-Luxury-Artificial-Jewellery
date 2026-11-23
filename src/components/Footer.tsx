@@ -29,7 +29,7 @@ export const Footer: React.FC = () => {
   useEffect(() => { let active = true; siteChromeService.getPublic().then(({ settings }) => { if (active) setChrome(settings); }).catch(() => undefined); return () => { active = false; }; }, []);
 
   return (
-    <footer className="sarine-global-footer bg-[var(--plum)] text-[color:var(--ivory-text)] border-t border-[var(--footer-line)] font-sans">
+    <footer className="sarine-global-footer bg-[var(--plum)] text-[color:var(--footer-text)] border-t border-[var(--footer-line)] font-sans">
       {/* Trust Strip */}
       <div className="w-full !bg-white !text-[color:var(--heading)] border-b border-[var(--border)] py-8 sm:py-10">
         <div className="site-container">
@@ -119,7 +119,7 @@ export const Footer: React.FC = () => {
                 SARINE
               </span>
             </Link>
-            <p className="text-xs !text-[color:var(--ivory-text)] mt-2">
+            <p className="text-xs !text-[color:var(--footer-text)] mt-2">
               {chrome.footer.tagline}
             </p>
 

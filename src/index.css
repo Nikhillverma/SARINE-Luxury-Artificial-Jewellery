@@ -717,7 +717,7 @@ body.sarine-global-theme .sarine-global-announcement * {
 }
 body.sarine-global-theme .sarine-global-footer {
   background-color: var(--footer-background, var(--plum)) !important;
-  color: var(--ivory-text);
+  color: var(--footer-text, var(--ivory-text));
   border-color: var(--sarine-global-accent, var(--gold-light));
 }
 
