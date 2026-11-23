@@ -210,7 +210,7 @@ function applyValidatedPublishedDesign(design: ValidatedPublishedDesign): void {
   root.style.setProperty('--sarine-global-accent', 'var(--gold)');
   root.style.setProperty('--sarine-global-surface', 'var(--card-background)');
   root.style.setProperty('--sarine-global-page', 'var(--page-background)');
-  root.style.setProperty('--sarine-global-text', 'var(--body)');
+  root.style.setProperty('--sarine-global-text', 'var(--heading)');
   root.style.setProperty('--sarine-global-header', 'var(--header-background)');
   root.style.setProperty('--sarine-global-footer', 'var(--footer-background)');
   root.style.setProperty('--sarine-global-footer-text', 'var(--footer-text)');
@@ -227,7 +227,11 @@ function applyValidatedPublishedDesign(design: ValidatedPublishedDesign): void {
 }
 
 function applyCachedPublishedDesignBeforeRender(): void {
-  if (typeof window === 'undefined' || window.location.pathname.startsWith('/admin')) return;
+  if (typeof window === 'undefined') return;
+  if (window.location.pathname.startsWith('/admin')) {
+    clearPublishedDesignOverrides();
+    return;
+  }
   try {
     const cached = window.localStorage.getItem(PUBLISHED_DESIGN_CACHE_KEY);
     if (!cached) return;
