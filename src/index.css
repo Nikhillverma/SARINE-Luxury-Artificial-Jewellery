@@ -1022,3 +1022,30 @@ body.sarine-global-theme #main-content .sarine-product-card__price > span:first-
   .sarine-home .sarine-section-heading--new h2 { font-size: clamp(1.55rem, 7vw, 2rem); }
   .sarine-home .sarine-section-heading--new a { font-size: 11px; white-space: nowrap; }
 }
+
+
+/* Curated Favourites: mirror the centred, button-free New Arrivals treatment.
+   Keep the configured carousel switch, swipe/trackpad scrolling and card-count settings. */
+.sarine-home .sarine-section-heading--curated {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .35rem;
+  margin-inline: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
+}
+.sarine-home .sarine-section-heading--curated h2 { text-align: center; }
+.sarine-home .sarine-section-heading--curated > div { margin-top: 0 !important; }
+.sarine-home .sarine-section-heading--curated a { min-height: 44px; }
+@media (max-width: 639px) {
+  .sarine-home .sarine-section-heading--curated { align-items: center; gap: .25rem; }
+  .sarine-home .sarine-section-heading--curated h2 { font-size: clamp(1.55rem, 7vw, 2rem); }
+  .sarine-home .sarine-section-heading--curated a { font-size: 11px; white-space: nowrap; }
+}
