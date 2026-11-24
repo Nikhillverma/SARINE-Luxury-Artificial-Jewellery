@@ -54,14 +54,14 @@ export const ShopByGenderManager: React.FC = () => {
   return <section className="space-y-5 rounded-2xl border bg-white p-5">
     <div>
       <h2 className="font-semibold text-[#2C1838]">Shop by Gender</h2>
-      <p className="mt-1 text-xs text-gray-500">Upload and manage each 3:1 homepage image independently. Images are stored through Hostinger; save the settings after uploading.</p>
+      <p className="mt-1 text-xs text-gray-500">Upload and manage each 4:1 homepage image independently. Images are stored through Hostinger; save the settings after uploading.</p>
     </div>
     {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     {message && <p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-800">{message}</p>}
     {loading ? <p className="text-sm text-gray-500">Loading Shop by Gender settings…</p> : <div className="grid gap-4 sm:grid-cols-2">
       {tiles.map(tile => <article key={tile.key} className="space-y-3 rounded-xl border p-4">
         <h3 className="text-sm font-semibold tracking-wide text-[#563568]">{tile.title}</h3>
-        <div className="aspect-[3/1] overflow-hidden rounded-lg bg-[#F7F0FA]">
+        <div className="aspect-[4/1] overflow-hidden rounded-lg bg-[#F7F0FA]">
           {tile.value ? <img src={tile.value} alt={tile.title + " homepage preview"} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-xs text-[#705E7B]">No image uploaded</div>}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -71,7 +71,7 @@ export const ShopByGenderManager: React.FC = () => {
           </label>
           <button type="button" disabled={busy || !tile.value} onClick={() => { setSettings(current => ({ ...current, [tile.key]: "" })); setMessage(""); }} className="min-h-11 rounded-lg border border-red-200 px-4 py-2 text-xs text-red-700 disabled:opacity-40">Remove image</button>
         </div>
-        <p className="text-[11px] text-gray-500">Recommended ratio: 3:1 landscape. JPEG, PNG or WebP.</p>
+        <p className="text-[11px] text-gray-500">Recommended ratio: 4:1 landscape. JPEG, PNG or WebP.</p>
       </article>)}
     </div>}
     <div className="flex flex-wrap gap-2">
