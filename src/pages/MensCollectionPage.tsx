@@ -6,7 +6,7 @@ import { hostingerStorefrontService, type MenStorefrontSettings, type MenStorefr
 const fallbackSettings: MenStorefrontSettings = {
   version: 1, enabled: true, heroImageUrl: "", eyebrow: "SARINE · MEN", title: "A New Standard of Style",
   description: "Modern essentials. Timeless details. Discover a considered edit of jewellery for him.",
-  comingSoon: true, comingSoonText: "Our men's edit is on its way. Be among the first to discover it.",
+  comingSoon: false, comingSoonText: "",
   categories: [], showProducts: false, productIds: [], featuredTitle: "The Men's Edit",
   bestSellerIds: [], showBestSellers: false, collections: [],
   offers: { enabled: false, label: "", description: "", ctaText: "Explore offers", ctaLink: "/men" },
@@ -69,22 +69,18 @@ export const MensCollectionPage: React.FC = () => {
           <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#563568] sm:text-xs">{settings.eyebrow}</p>
           <h1 className="mt-3 font-serif text-4xl font-normal leading-tight text-[#563568] sm:text-5xl lg:text-6xl">{settings.title}</h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-[#594A60] sm:text-base">{settings.description}</p>
-          {settings.comingSoon && <div className="mx-auto mt-6 max-w-2xl rounded-lg border border-[#D9C9E2] bg-white/80 px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#563568]">Coming Soon</p>
-            <p className="mt-1 text-sm leading-6 text-[#594A60]">{settings.comingSoonText}</p>
-          </div>}
         </div>
       </section>
 
       {liveCategories.length > 0 && <section className="mt-12 sm:mt-16">
-        <div className="mb-5 text-center"><p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#8B7299]">THE COLLECTION</p><h2 className="mt-2 font-serif text-3xl font-normal text-[#563568] sm:text-4xl">Discover What's Coming</h2></div>
+        <div className="mb-5 text-center"><p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#8B7299]">THE COLLECTION</p><h2 className="mt-2 font-serif text-3xl font-normal text-[#563568] sm:text-4xl">Explore Men's Categories</h2></div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-5">
-          {liveCategories.map(category => <a key={category.id} href="#launch-notification" className="group block min-w-0">
+          {liveCategories.map(category => <Link key={category.id} to={`/men/category/${encodeURIComponent(category.id)}`} className="group block min-w-0">
             <div className="aspect-[4/5] overflow-hidden rounded-xl bg-[#F7F0FA]">{category.imageUrl ? <img src={category.imageUrl} alt={category.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"/> : <div className="flex h-full items-center justify-center px-3 text-center font-serif text-2xl text-[#B69ACF]">{category.title}</div>}</div>
             <h3 className="mt-3 text-center font-serif text-xl text-[#563568]">{category.title}</h3>
             {category.description && <p className="mt-1 text-center text-xs leading-5 text-[#705E7B]">{category.description}</p>}
-            {settings.comingSoon && <p className="mt-2 text-center text-[9px] font-semibold uppercase tracking-[0.18em] text-[#8B7299]">Coming Soon</p>}
-          </a>)}
+            <p className="mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8B7299]">Explore collection</p>
+          </Link>)}
         </div>
       </section>}
 
@@ -92,7 +88,7 @@ export const MensCollectionPage: React.FC = () => {
         const collectionProducts = products.filter(product => collection.productIds.includes(product.id));
         return <section key={collection.id} className="mt-14 sm:mt-20">
           <div className="mb-5 text-center"><h2 className="font-serif text-3xl font-normal text-[#563568] sm:text-4xl">{collection.title}</h2>{collection.description && <p className="mt-2 text-sm text-[#705E7B]">{collection.description}</p>}</div>
-          {collectionProducts.length ? <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">{collectionProducts.map(product => <ProductTile key={product.id} product={product}/>)}</div> : <p className="rounded-xl bg-[#F7F0FA] p-6 text-center text-sm text-[#705E7B]">This edit is being curated. Coming Soon.</p>}
+          {collectionProducts.length ? <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">{collectionProducts.map(product => <ProductTile key={product.id} product={product}/>)}</div> : <p className="rounded-xl bg-[#F7F0FA] p-6 text-center text-sm text-[#705E7B]">No products have been assigned to this edit yet.</p>}
         </section>;
       })}
 
