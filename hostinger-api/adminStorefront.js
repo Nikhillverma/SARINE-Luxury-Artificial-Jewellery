@@ -506,7 +506,11 @@ adminOnly.post("/men-storefront/publish", async (_req, res, next) => {
 publicRouter.get("/men-storefront", async (_req, res, next) => {
   try {
     const { published } = await readMenStorefrontRecord();
-    const productIds = published.showProducts ? published.productIds : [];
+    const productIds = [...new Set([
+      ...(published.showProducts ? published.productIds : []),
+      ...(published.showBestSellers ? published.bestSellerIds : []),
+      ...published.collections.filter(item => item.active).flatMap(item => item.productIds)
+    ])];
     let products = [];
     if (productIds.length) {
       const placeholders = productIds.map(() => "?").join(",");
