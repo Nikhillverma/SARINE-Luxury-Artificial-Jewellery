@@ -53,7 +53,7 @@ export const MenStorefrontManager: React.FC = () => {
   useEffect(() => { void load(); }, []);
 
   const activeProducts = useMemo(() => products.filter(p => p.status === "active"), [products]);
-  const update = <K extends keyof MenStorefrontSettings>(key: K, value: MenStorefrontSettings[K]) => setSettings(current => ({ ...current, [key]: value }));
+  const update = <K extends keyof MenStorefrontSettings,>(key: K, value: MenStorefrontSettings[K]) => setSettings(current => ({ ...current, [key]: value }));
 
   const uploadImage = async (key: "heroImageUrl" | "category", file?: File, categoryId?: string) => {
     if (!file) return;
