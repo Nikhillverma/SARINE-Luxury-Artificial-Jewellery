@@ -49,6 +49,7 @@ interface OrderLine {
 
 interface AdminOrder {
   orderNumber: string;
+  isTest?: boolean;
   createdAt?: string;
   customer: {
     name: string;
@@ -101,6 +102,8 @@ export const AdminOrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [generatingTestOrders, setGeneratingTestOrders] = useState(false);
+  const [testOrderNotice, setTestOrderNotice] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [accessDenied, setAccessDenied] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -301,6 +304,28 @@ export const AdminOrdersPage: React.FC = () => {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+  };
+
+  const generateMenTestOrders = async () => {
+    if (!adminUser || generatingTestOrders) return;
+    if (!window.confirm("Create up to four clearly marked SARINE Men test orders using synthetic customer and delivery details? No payment will be taken and stock will not change.")) return;
+    setGeneratingTestOrders(true); setTestOrderNotice(null); setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/admin/orders/test`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({})
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401 || res.status === 403) {
+        setAdminUser(null); navigate("/admin/login", { replace: true }); return;
+      }
+      if (!res.ok) throw new Error(data.error || "Could not create test orders.");
+      setTestOrderNotice(`Created ${data.count} test orders: ${(data.testOrders || []).map((order: { orderNumber: string }) => order.orderNumber).join(", ")}. No payment or stock movement occurred.`);
+      await fetchOrders(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not create test orders.");
+    } finally { setGeneratingTestOrders(false); }
   };
 
   // 4. Order Mutation Actions
@@ -536,6 +561,13 @@ export const AdminOrdersPage: React.FC = () => {
             </p>
           </div>
 
+          <div className="flex flex-wrap gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => void generateMenTestOrders()}
+            disabled={generatingTestOrders || loading}
+            className="inline-flex min-h-10 items-center gap-2 rounded-xs border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 disabled:opacity-50"
+          >{generatingTestOrders ? "Creating tests…" : "＋ Generate Men Test Orders"}</button>
           <button
             onClick={() => fetchOrders(false)}
             disabled={loading}
@@ -544,7 +576,9 @@ export const AdminOrdersPage: React.FC = () => {
             <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
             <span>Refresh Ledger</span>
           </button>
+          </div>
         </div>
+        {testOrderNotice && <div role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">{testOrderNotice}</div>}
 
         {/* Live ledger snapshot */}
         <section aria-label="Order overview" className="grid grid-cols-2 xl:grid-cols-5 gap-3">
@@ -690,7 +724,7 @@ export const AdminOrdersPage: React.FC = () => {
                       order.refundNeeded || order.orderStatus === 'needs_refund';
                     return (
                       <tr
-                        key={order.orderNumber}
+                        key={order.orderNumber}{order.isTest && <span className="ml-2 inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-900">TEST</span>}
                         onClick={() => setSelectedOrder(order)}
                         className={`hover:bg-[#FAF5FC] transition-colors cursor-pointer ${
                           isRefundHighlight ? 'bg-[#FFFDF7] ring-1 ring-[#D9B8A0]' : ''
