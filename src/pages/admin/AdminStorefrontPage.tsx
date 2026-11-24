@@ -4,6 +4,7 @@ import { AdminLayout } from "../../components/admin/AdminLayout";
 const CuratedFavouritesManager = React.lazy(() => import("../../components/admin/CuratedFavouritesManager").then(module => ({ default: module.CuratedFavouritesManager })));
 const ExploreNowManager = React.lazy(() => import("../../components/admin/ExploreNowManager").then(module => ({ default: module.ExploreNowManager })));
 const ShopByOccasionManager = React.lazy(() => import("../../components/admin/ShopByOccasionManager").then(module => ({ default: module.ShopByOccasionManager })));
+const ShopByGenderManager = React.lazy(() => import("../../components/admin/ShopByGenderManager").then(module => ({ default: module.ShopByGenderManager })));
 const HomepageSectionManager = React.lazy(() => import("../../components/admin/HomepageSectionManager").then(module => ({ default: module.HomepageSectionManager })));
 const HomepageContentManager = React.lazy(() => import("../../components/admin/HomepageContentManager").then(module => ({ default: module.HomepageContentManager })));
 const CmsPagesManager = React.lazy(() => import("../../components/admin/CmsPagesManager").then(module => ({ default: module.CmsPagesManager })));
@@ -227,6 +228,7 @@ export const AdminStorefrontPage: React.FC = () => {
           ["design", "Brand design", "Colours, fonts and layout"],
           ["header-footer", "Header & footer", "Shared brand messaging"],
           ["occasions", "Occasions", "Homepage occasion cards"],
+          ["shop-by-gender", "Shop by Gender", "For Her and For Him images"],
           ["homepage-layout", "Homepage layout", "Section order and visibility"],
           ["homepage-content", "Homepage content", "Story, price links and care guide"],
           ["website-pages", "Website pages", "Campaigns, stories and FAQs"],
@@ -253,6 +255,7 @@ export const AdminStorefrontPage: React.FC = () => {
         {activeSection === "design" && <div id="design" className="scroll-mt-24"><GlobalDesignStudio /></div>}
         {activeSection === "header-footer" && <div id="header-footer" className="scroll-mt-24"><SiteChromeManager /></div>}
         {activeSection === "occasions" && <div id="occasions" className="scroll-mt-24"><ShopByOccasionManager /></div>}
+        {activeSection === "shop-by-gender" && <div id="shop-by-gender" className="scroll-mt-24"><ShopByGenderManager /></div>}
         {activeSection === "homepage-layout" && <div id="homepage-sections" className="scroll-mt-24"><HomepageSectionManager /></div>}
         {activeSection === "homepage-content" && <div id="homepage-content" className="scroll-mt-24"><HomepageContentManager /></div>}
         {activeSection === "website-pages" && <div id="pages" className="scroll-mt-24"><CmsPagesManager /></div>}

@@ -6,6 +6,7 @@ import type { Product } from "../../types/product";
 const sectionLabels: Record<string, { title: string; description: string }> = {
   hero: { title: "Hero Banner", description: "The first homepage feature. Banner artwork and slides are edited in the Hero Banners controls below." },
   categories: { title: "Shop by Category Carousel", description: "Swipe or tap through active jewellery categories. Adjust the number of cards shown on desktop." },
+  "shop-by-gender": { title: "Shop by Gender", description: "The two independently managed For Her and For Him image tiles." },
   "new-arrivals": { title: "New Arrivals Carousel", description: "Swipe, drag or use arrows to browse newest products. Adjust desktop card count." },
   "best-sellers": { title: "Best Sellers Carousel", description: "Swipe, drag or use arrows to browse genuine best sellers. Adjust desktop card count." },
   "curated-favourites": { title: "Curated Favourites Carousel", description: "Swipe, drag or use arrows through your manually selected products. Adjust desktop card count." },
