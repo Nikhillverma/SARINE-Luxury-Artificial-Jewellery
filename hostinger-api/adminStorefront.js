@@ -263,7 +263,7 @@ publicRouter.get("/banners", async (_req, res, next) => {
 });
 adminOnly.get("/checkout-config", async (_req, res, next) => {
   try {
-    res.set("Cache-Control", "no-store").json({ checkoutConfig: await getCheckoutConfig() });
+    res.set("Cache-Control", "no-store").json({ checkoutConfig: { ...await getCheckoutConfig(), razorpayMode: String(process.env.RAZORPAY_KEY_ID || "").startsWith("rzp_test_") ? "test" : "live" } });
   } catch (error) { next(error); }
 });
 adminOnly.put("/checkout-config", async (req, res, next) => {
