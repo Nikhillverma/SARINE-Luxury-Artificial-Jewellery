@@ -38,7 +38,7 @@ export const MenStorefrontManager: React.FC = () => {
   const [message, setMessage] = useState("");
   const [tab, setTab] = useState<"content" | "catalogue" | "marketing" | "signups">("content");
   const [addingProductTo, setAddingProductTo] = useState<string | null>(null);
-  const [newProduct, setNewProduct] = useState({ name: "", price: "", stock: "0", description: "", imageUrl: "" });
+  const [newProduct, setNewProduct] = useState({ name: "", price: "", stock: "0", description: "", imageUrl: "", status: "draft" as "draft" | "active" });
   const [savingNewProduct, setSavingNewProduct] = useState(false);
 
   const load = async () => {
@@ -124,11 +124,13 @@ export const MenStorefrontManager: React.FC = () => {
       const created = await adminProductService.createProduct({
         slug, name: newProduct.name.trim(), description: newProduct.description.trim(), shortDescription: "",
         price, images: [newProduct.imageUrl], categoryId: category.id, collectionSlugs: [],
-        jewelleryType: "necklace", stock, status: "draft", tags: [], gender: "men"
+        jewelleryType: "necklace", stock, status: newProduct.status, tags: [], gender: "men"
       });
       setProducts(current => [...current, { id: created.id, name: created.name, slug: created.slug, price: created.price, images: created.images, status: created.status, stock: created.stock }]);
-      updateCategory(category.id, { productIds: [...new Set([...(category.productIds || []), created.id])] });
-      setNewProduct({ name: "", price: "", stock: "0", description: "", imageUrl: "" });
+      const nextCategories = settings.categories.map(item => item.id === category.id ? { ...item, productIds: [...new Set([...(item.productIds || []), created.id])] } : item);
+      update("categories", nextCategories);
+      await hostingerStorefrontService.saveMenStorefrontDraft({ ...settings, categories: nextCategories });
+      setNewProduct({ name: "", price: "", stock: "0", description: "", imageUrl: "", status: "draft" });
       setAddingProductTo(null);
       setMessage("Product saved as a men's draft and assigned to " + category.title + ". Publish it when ready.");
     } catch (e) { setError(e instanceof Error ? e.message : "Could not create the men's product."); }
@@ -199,6 +201,7 @@ export const MenStorefrontManager: React.FC = () => {
               <label><span className={labelClass}>Product name *</span><input className={fieldClass} value={newProduct.name} maxLength={255} onChange={e => setNewProduct(current => ({ ...current, name: e.target.value }))} /></label>
               <label><span className={labelClass}>Selling price (₹) *</span><input className={fieldClass} type="number" min="0" step="1" value={newProduct.price} onChange={e => setNewProduct(current => ({ ...current, price: e.target.value }))} /></label>
               <label><span className={labelClass}>Opening stock</span><input className={fieldClass} type="number" min="0" step="1" value={newProduct.stock} onChange={e => setNewProduct(current => ({ ...current, stock: e.target.value }))} /></label>
+              <label><span className={labelClass}>Publishing status</span><select className={fieldClass} value={newProduct.status} onChange={e => setNewProduct(current => ({ ...current, status: e.target.value as "draft" | "active" }))}><option value="draft">Save as draft</option><option value="active">Publish when category is published</option></select></label>
               <label><span className={labelClass}>Product image *</span><input className="block w-full text-xs" type="file" accept="image/jpeg,image/png,image/webp" disabled={Boolean(uploading)} onChange={e => void uploadMenProductImage(e.target.files?.[0])}/>{uploading === "men-product" && <span className="text-xs text-[#705E7B]">Uploading image…</span>}{newProduct.imageUrl && <img src={newProduct.imageUrl} alt="Men's product preview" className="mt-2 h-20 w-20 rounded-lg object-cover"/>}</label>
               <label className="sm:col-span-2"><span className={labelClass}>Description</span><textarea className={fieldClass} rows={2} maxLength={5000} value={newProduct.description} onChange={e => setNewProduct(current => ({ ...current, description: e.target.value }))}/></label>
               <div className="sm:col-span-2 flex flex-wrap gap-2"><button type="button" disabled={savingNewProduct || Boolean(uploading)} onClick={() => void createMenProduct(item)} className="rounded-lg bg-[#563568] px-4 py-2.5 text-xs font-semibold text-white disabled:opacity-50">{savingNewProduct ? "Saving product…" : "Save product to this category"}</button><button type="button" onClick={() => setAddingProductTo(null)} className="rounded-lg border px-4 py-2.5 text-xs font-semibold text-[#563568]">Cancel</button></div>
