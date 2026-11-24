@@ -89,7 +89,7 @@ function valuesFromBody(body, existing = {}) {
     compare_at_price: get("compareAtPrice"),
     cost_price: get("costPrice"),
     images: JSON.stringify(get("images", [])),
-    category_id: get("categoryId"),
+    category_id: get("categoryId") || null,
     collection_slugs: JSON.stringify(normalizeStringList(get("collectionSlugs", []))),
     jewellery_type: get("jewelleryType"),
     stock: Number(get("stock", 0)),
