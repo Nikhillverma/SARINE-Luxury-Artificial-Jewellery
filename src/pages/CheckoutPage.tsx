@@ -658,6 +658,11 @@ export const CheckoutPage: React.FC = () => {
                         </div>
                         <p className="text-xs text-[var(--body)] mt-1 font-sans">
                           Pay securely via Credit/Debit Cards, UPI, or Netbanking powered by Razorpay.
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--tint)] px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--plum)]">Razorpay</span>
+                            {checkoutConfig.razorpayMode === "test" && <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-amber-800">Test Mode · No live charge</span>}
+                            {checkoutConfig.razorpayMode === "live" && <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-800">Live Payments</span>}
+                          </div>
                         </p>
                       </div>
                     </div>
