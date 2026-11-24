@@ -409,8 +409,9 @@ function normalizeMenStorefront(value) {
     title: text(item?.title, "Category", 80),
     description: text(item?.description, "", 180),
     imageUrl: safeImage(item?.imageUrl),
+    productIds: Array.isArray(item?.productIds) ? [...new Set(item.productIds.filter(id => typeof id === "string"))].slice(0, 100) : [],
     active: item?.active !== false,
-    sortOrder: index
+    sortOrder: Number.isInteger(item?.sortOrder) ? Math.max(0, item.sortOrder) : index
   })) : DEFAULT_MEN_STOREFRONT.categories;
   const collections = Array.isArray(input.collections) ? input.collections.slice(0, 20).map((item, index) => ({
     id: text(item?.id, "collection-" + index, 60).toLowerCase().replace(/[^a-z0-9-]/g, "-"),
@@ -430,7 +431,7 @@ function normalizeMenStorefront(value) {
     eyebrow: text(input.eyebrow, DEFAULT_MEN_STOREFRONT.eyebrow, 100),
     title: text(input.title, DEFAULT_MEN_STOREFRONT.title, 140),
     description: text(input.description, DEFAULT_MEN_STOREFRONT.description, 500),
-    comingSoon: input.comingSoon !== false,
+    comingSoon: false,
     comingSoonText: text(input.comingSoonText, DEFAULT_MEN_STOREFRONT.comingSoonText, 300),
     categories, showProducts: input.showProducts === true, productIds,
     featuredTitle: text(input.featuredTitle, DEFAULT_MEN_STOREFRONT.featuredTitle, 100),
@@ -509,6 +510,7 @@ publicRouter.get("/men-storefront", async (_req, res, next) => {
     const productIds = [...new Set([
       ...(published.showProducts ? published.productIds : []),
       ...(published.showBestSellers ? published.bestSellerIds : []),
+      ...published.categories.filter(item => item.active).flatMap(item => item.productIds || []),
       ...published.collections.filter(item => item.active).flatMap(item => item.productIds)
     ])];
     let products = [];
@@ -524,6 +526,32 @@ publicRouter.get("/men-storefront", async (_req, res, next) => {
     res.set("Cache-Control", "no-store").json({ settings: published, products });
   } catch (error) { next(error); }
 });
+publicRouter.get("/men-storefront/categories/:categoryId", async (req, res, next) => {
+  try {
+    const { published } = await readMenStorefrontRecord();
+    if (!published.enabled) return res.status(404).json({ error: "Men's storefront is unavailable." });
+    const category = published.categories.find(item => item.id === req.params.categoryId && item.active);
+    if (!category) return res.status(404).json({ error: "Men's category not found." });
+    const ids = Array.isArray(category.productIds) ? [...new Set(category.productIds)].slice(0, 100) : [];
+    let products = [];
+    if (ids.length) {
+      const placeholders = ids.map(() => "?").join(",");
+      const [rows] = await pool.execute(
+        `SELECT id, name, slug, price, compare_at_price, images, stock FROM products WHERE status='active' AND id IN (${placeholders})`,
+        ids
+      );
+      const byId = new Map(rows.map(row => [row.id, row]));
+      products = ids.map(id => byId.get(id)).filter(Boolean).map(row => {
+        let images = []; try { images = JSON.parse(row.images || "[]"); } catch {}
+        return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price),
+          compareAtPrice: row.compare_at_price == null ? null : Number(row.compare_at_price),
+          images: Array.isArray(images) ? images : [], stock: Number(row.stock) };
+      });
+    }
+    res.set("Cache-Control", "no-store").json({ category, products });
+  } catch (error) { next(error); }
+});
+
 publicRouter.post("/men-launch-signups", menSignupLimiter, async (req, res, next) => {
   try {
     const email = String(req.body?.email || "").trim().toLowerCase();
