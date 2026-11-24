@@ -5,7 +5,7 @@ import { DEFAULT_HOMEPAGE_LAYOUT, validateHomepageLayout } from "../homepageLayo
 test("default homepage layout contains each supported section once in order", () => {
   const layout = validateHomepageLayout(DEFAULT_HOMEPAGE_LAYOUT);
   assert.deepEqual(layout.sections.map((section) => section.id), [
-    "hero", "categories", "new-arrivals", "best-sellers", "curated-favourites",
+    "hero", "categories", "shop-by-gender", "new-arrivals", "best-sellers", "curated-favourites",
     "occasions", "explore-now", "price", "our-story", "editorial", "care-guide", "stay-in-touch"
   ]);
 });
