@@ -710,7 +710,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div ref={newArrivalsCarouselRef} className={`sarine-product-grid ${sectionCarouselEnabled("new-arrivals") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:gap-6" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`} aria-label="New Arrivals products">
               {newArrivals.slice(0, 8).map((product) => (
                 <div key={product.id} className={sectionCarouselEnabled("new-arrivals") ? "w-[37%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "min-w-0"} style={sectionCarouselEnabled("new-arrivals") ? desktopCardStyle("new-arrivals", 24, 5) : undefined}>
-                  <ProductCard product={product} />
+                  <ProductCard product={product} homepageWishlist />
                 </div>
               ))}
             </div>
@@ -773,7 +773,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <div ref={carouselRef} className={`sarine-product-grid ${sectionCarouselEnabled("best-sellers") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:gap-6" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`} aria-label="Best Sellers products">
               {bestsellers.slice(0, 12).map((product) => (
                 <div key={product.id} className={sectionCarouselEnabled("best-sellers") ? "w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "min-w-0"} style={sectionCarouselEnabled("best-sellers") ? desktopCardStyle("best-sellers", 24, 5) : undefined}>
-                  <ProductCard product={product} />
+                  <ProductCard product={product} homepageWishlist />
                 </div>
               ))}
             </div>
@@ -804,7 +804,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </div>
           ) : (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0 ? (
             <div ref={curatedCarouselRef} className={`sarine-product-grid ${sectionCarouselEnabled("curated-favourites") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`} aria-label="Curated Favourites products">
-              {(hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).slice(0, 12).map(product => <div key={product.id} className={sectionCarouselEnabled("curated-favourites") ? "w-[37%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "min-w-0"} style={sectionCarouselEnabled("curated-favourites") ? desktopCardStyle("curated-favourites", 20, 5) : undefined}><ProductCard product={product} /></div>)}
+              {(hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).slice(0, 12).map(product => <div key={product.id} className={sectionCarouselEnabled("curated-favourites") ? "w-[37%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "min-w-0"} style={sectionCarouselEnabled("curated-favourites") ? desktopCardStyle("curated-favourites", 20, 5) : undefined}><ProductCard product={product} homepageWishlist /></div>)}
             </div>
           ) : (
             <p className="col-span-full py-8 text-center text-xs !text-[color:var(--body)]">
@@ -853,7 +853,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           </div>
           <div className="sarine-product-grid grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
             {exploreProducts.slice(0, exploreDisplayCount).map(product => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} homepageWishlist />
             ))}
           </div>
 
