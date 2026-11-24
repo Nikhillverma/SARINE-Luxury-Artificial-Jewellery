@@ -827,7 +827,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </h2>
           </div>
 
-          <div ref={occasionsCarouselRef} className={sectionCarouselEnabled("occasions") ? "flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth pb-2 touch-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4" : "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"} aria-label="Shop by Occasion cards">
+          <div ref={occasionsCarouselRef} className={`sarine-occasion-track ${sectionCarouselEnabled("occasions") ? "flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth pb-2 touch-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4" : "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`} aria-label="Shop by Occasion cards">
             {occasions.filter(item => item.active).map((item) => (
               <Link key={item.id} to={item.link} className={sectionCarouselEnabled("occasions") ? "group flex w-[72%] shrink-0 snap-start flex-col items-center text-center sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "group flex min-w-0 flex-col items-center text-center"} style={sectionCarouselEnabled("occasions") ? desktopCardStyle("occasions", 20, 5) : undefined}>
                 <div className="aspect-[4/5] w-full overflow-hidden bg-[#2B1A33] border border-[var(--border)] rounded-xs relative group-hover:border-[var(--gold)] transition-colors">
