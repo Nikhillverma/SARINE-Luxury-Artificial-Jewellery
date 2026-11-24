@@ -49,6 +49,7 @@ interface OrderLine {
 
 interface AdminOrder {
   orderNumber: string;
+  isTest?: boolean;
   createdAt?: string;
   customer: {
     name: string;
@@ -101,6 +102,8 @@ export const AdminOrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [generatingTestOrders, setGeneratingTestOrders] = useState(false);
+  const [testOrderNotice, setTestOrderNotice] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [accessDenied, setAccessDenied] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -275,22 +278,26 @@ export const AdminOrdersPage: React.FC = () => {
     });
   }, [orders, searchTerm, dateFrom, dateTo, sortOrder]);
 
-  const orderMetrics = useMemo(() => ({
-    total: orders.length,
-    attention: orders.filter((order) => ['pending', 'placed', 'needs_refund'].includes(order.orderStatus?.toLowerCase()) || order.refundNeeded || (order.paymentStatus?.toLowerCase() === 'failed')).length,
-    inProgress: orders.filter((order) => ['confirmed', 'processing', 'packed', 'shipped', 'out_for_delivery'].includes(order.orderStatus?.toLowerCase())).length,
-    delivered: orders.filter((order) => order.orderStatus?.toLowerCase() === 'delivered').length,
-    refund: orders.filter((order) => order.refundNeeded || order.orderStatus?.toLowerCase() === 'needs_refund').length
-  }), [orders]);
+  const orderMetrics = useMemo(() => {
+    const genuine = orders.filter(order => !order.isTest);
+    return {
+      total: genuine.length,
+      test: orders.filter(order => order.isTest).length,
+      attention: genuine.filter((order) => ['pending', 'placed', 'needs_refund'].includes(order.orderStatus?.toLowerCase()) || order.refundNeeded || (order.paymentStatus?.toLowerCase() === 'failed')).length,
+      inProgress: genuine.filter((order) => ['confirmed', 'processing', 'packed', 'shipped', 'out_for_delivery'].includes(order.orderStatus?.toLowerCase())).length,
+      delivered: genuine.filter((order) => order.orderStatus?.toLowerCase() === 'delivered').length,
+      refund: genuine.filter((order) => order.refundNeeded || order.orderStatus?.toLowerCase() === 'needs_refund').length
+    };
+  }, [orders]);
 
   const exportOrdersCsv = () => {
-    const columns = ['Order Number', 'Created At', 'Customer', 'Email', 'Phone', 'City', 'State', 'Pincode', 'Items', 'Subtotal', 'Shipping Fee', 'Total', 'Payment Method', 'Payment Status', 'Order Status', 'Courier', 'Tracking Number'];
+    const columns = ['Order Number', 'Order Type', 'Created At', 'Customer', 'Email', 'Phone', 'City', 'State', 'Pincode', 'Items', 'Subtotal', 'Shipping Fee', 'Total', 'Payment Method', 'Payment Status', 'Order Status', 'Courier', 'Tracking Number'];
     const cell = (value: unknown) => {
       const text = String(value ?? '');
       const safe = ['=', '+', '-', '@', String.fromCharCode(9), String.fromCharCode(13)].includes(text.charAt(0)) ? `'${text}` : text;
       return `"${safe.replace(/"/g, '""')}"`;
     };
-    const rows = filteredOrders.map((order) => [order.orderNumber, order.createdAt, order.customer?.name, order.customer?.email, order.customer?.phone, order.shippingAddress?.city, order.shippingAddress?.state, order.shippingAddress?.pincode, (order.lines || []).map((line) => `${line.name} x${line.quantity}`).join('; '), order.subtotal, order.shippingFee, order.total, order.paymentMethod, order.paymentStatus, order.orderStatus, order.courierName, order.trackingNumber]);
+    const rows = filteredOrders.map((order) => [order.orderNumber, order.isTest ? 'TEST' : 'REAL', order.createdAt, order.customer?.name, order.customer?.email, order.customer?.phone, order.shippingAddress?.city, order.shippingAddress?.state, order.shippingAddress?.pincode, (order.lines || []).map((line) => `${line.name} x${line.quantity}`).join('; '), order.subtotal, order.shippingFee, order.total, order.paymentMethod, order.paymentStatus, order.orderStatus, order.courierName, order.trackingNumber]);
     const csv = [columns, ...rows].map((row) => row.map(cell).join(',')).join('\r\n');
     const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -301,6 +308,28 @@ export const AdminOrdersPage: React.FC = () => {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+  };
+
+  const generateMenTestOrders = async () => {
+    if (!adminUser || generatingTestOrders) return;
+    if (!window.confirm("Create up to four clearly marked SARINE Men test orders using synthetic customer and delivery details? No payment will be taken and stock will not change.")) return;
+    setGeneratingTestOrders(true); setTestOrderNotice(null); setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/admin/orders/test`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({})
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401 || res.status === 403) {
+        setAdminUser(null); navigate("/admin/login", { replace: true }); return;
+      }
+      if (!res.ok) throw new Error(data.error || "Could not create test orders.");
+      setTestOrderNotice(`Created ${data.count} test orders: ${(data.testOrders || []).map((order: { orderNumber: string }) => order.orderNumber).join(", ")}. No payment or stock movement occurred.`);
+      await fetchOrders(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not create test orders.");
+    } finally { setGeneratingTestOrders(false); }
   };
 
   // 4. Order Mutation Actions
@@ -536,6 +565,13 @@ export const AdminOrdersPage: React.FC = () => {
             </p>
           </div>
 
+          <div className="flex flex-wrap gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => void generateMenTestOrders()}
+            disabled={generatingTestOrders || loading}
+            className="inline-flex min-h-10 items-center gap-2 rounded-xs border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 disabled:opacity-50"
+          >{generatingTestOrders ? "Creating tests…" : "＋ Generate Men Test Orders"}</button>
           <button
             onClick={() => fetchOrders(false)}
             disabled={loading}
@@ -544,12 +580,15 @@ export const AdminOrdersPage: React.FC = () => {
             <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
             <span>Refresh Ledger</span>
           </button>
+          </div>
         </div>
+        {testOrderNotice && <div role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">{testOrderNotice}</div>}
 
         {/* Live ledger snapshot */}
         <section aria-label="Order overview" className="grid grid-cols-2 xl:grid-cols-5 gap-3">
           {[
-            { label: 'Loaded orders', value: orderMetrics.total, hint: 'Current fetched records' },
+            { label: 'Real orders', value: orderMetrics.total, hint: 'Excludes test orders' },
+            { label: 'Test orders', value: orderMetrics.test, hint: 'Excluded from sales totals' },
             { label: 'Needs attention', value: orderMetrics.attention, hint: 'Pending, failed or refund' },
             { label: 'In fulfilment', value: orderMetrics.inProgress, hint: 'Being prepared or delivered' },
             { label: 'Delivered', value: orderMetrics.delivered, hint: 'Completed deliveries' },
@@ -697,7 +736,7 @@ export const AdminOrdersPage: React.FC = () => {
                         }`}
                       >
                         <td className="py-3.5 px-4 font-mono font-medium text-[#563568]">
-                          {order.orderNumber}
+                          {order.orderNumber}{order.isTest && <span className="ml-2 inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-900">TEST</span>}
                         </td>
                         <td className="py-3.5 px-4 text-[#6F6475] whitespace-nowrap">
                           {formatDate(order.createdAt)}
@@ -746,7 +785,7 @@ export const AdminOrdersPage: React.FC = () => {
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-mono font-medium text-xs text-[#563568]">
-                        {order.orderNumber}
+                        {order.orderNumber}{order.isTest && <span className="ml-2 inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-900">TEST</span>}
                       </span>
                       {renderStatusBadge(order)}
                     </div>
@@ -809,7 +848,7 @@ export const AdminOrdersPage: React.FC = () => {
                     Order Details
                   </span>
                   <h2 className="font-serif text-2xl text-[#302438] font-normal mt-0.5">
-                    {selectedOrder.orderNumber}
+                    {selectedOrder.orderNumber}{selectedOrder.isTest && <span className="ml-2 inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-900">TEST</span>}
                   </h2>
                 </div>
                 <button

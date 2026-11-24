@@ -2,6 +2,7 @@ export interface CheckoutConfig {
   shippingFlatFee: number;
   freeShippingThreshold: number;
   codEnabled: boolean;
+  razorpayMode?: "test" | "live";
 }
 
 const API_BASE = (

@@ -11,12 +11,12 @@ const defaults: MenStorefrontSettings = {
   version: 1, enabled: true, heroImageUrl: "", eyebrow: "SARINE · MEN",
   title: "A New Standard of Style",
   description: "Modern essentials. Timeless details. Discover a considered edit of jewellery for him.",
-  comingSoon: true, comingSoonText: "Our men's edit is on its way. Be among the first to discover it.",
+  comingSoon: false, comingSoonText: "",
   categories: [
-    { id: "bracelets", title: "Bracelets", description: "Refined details for every day.", imageUrl: "", active: true, sortOrder: 0 },
-    { id: "chains", title: "Chains", description: "Understated pieces with presence.", imageUrl: "", active: true, sortOrder: 1 },
-    { id: "rings", title: "Rings", description: "A signature in the details.", imageUrl: "", active: true, sortOrder: 2 },
-    { id: "kada", title: "Kada", description: "Classic form, modern character.", imageUrl: "", active: true, sortOrder: 3 }
+    { id: "bracelets", title: "Bracelets", description: "Refined details for every day.", imageUrl: "", productIds: [], active: true, sortOrder: 0 },
+    { id: "chains", title: "Chains", description: "Understated pieces with presence.", imageUrl: "", productIds: [], active: true, sortOrder: 1 },
+    { id: "rings", title: "Rings", description: "A signature in the details.", imageUrl: "", productIds: [], active: true, sortOrder: 2 },
+    { id: "kada", title: "Kada", description: "Classic form, modern character.", imageUrl: "", productIds: [], active: true, sortOrder: 3 }
   ],
   showProducts: false, productIds: [], featuredTitle: "The Men's Edit",
   bestSellerIds: [], showBestSellers: false, collections: [],
@@ -42,7 +42,7 @@ export const MenStorefrontManager: React.FC = () => {
     setLoading(true); setError("");
     try {
       const result = await hostingerStorefrontService.getMenStorefront();
-      setSettings({ ...defaults, ...result.draft, offers: { ...defaults.offers, ...result.draft.offers }, notification: { ...defaults.notification, ...result.draft.notification } });
+      setSettings({ ...defaults, ...result.draft, comingSoon: false, categories: (result.draft.categories || defaults.categories).map((category, index) => ({ ...category, productIds: category.productIds || [], sortOrder: category.sortOrder ?? index })), offers: { ...defaults.offers, ...result.draft.offers }, notification: { ...defaults.notification, ...result.draft.notification } });
       setProducts(result.products || []);
       const signups = await hostingerStorefrontService.getMenLaunchSignups().catch(() => ({ subscribers: [] }));
       setSubscribers(signups.subscribers || []);
@@ -90,7 +90,7 @@ export const MenStorefrontManager: React.FC = () => {
   const addCategory = () => {
     if (settings.categories.length >= 12) return;
     const id = `category-${Date.now()}`;
-    update("categories", [...settings.categories, { id, title: "New category", description: "", imageUrl: "", active: true, sortOrder: settings.categories.length }]);
+    update("categories", [...settings.categories, { id, title: "New category", description: "", imageUrl: "", productIds: [], active: true, sortOrder: settings.categories.length }]);
   };
   const updateCategory = (id: string, patch: Partial<MenStorefrontSettings["categories"][number]>) =>
     update("categories", settings.categories.map(item => item.id === id ? { ...item, ...patch } : item));
@@ -140,8 +140,7 @@ export const MenStorefrontManager: React.FC = () => {
         {uploading === "heroImageUrl" && <p className="text-xs text-[#705E7B]">Uploading…</p>}
         {settings.heroImageUrl && <img src={settings.heroImageUrl} alt="Men's hero preview" className="max-h-56 w-full rounded-xl object-cover" />}
       </div>
-      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={settings.comingSoon} onChange={e => update("comingSoon", e.target.checked)} /> Show Coming Soon notice</label>
-      <label className="block"><span className={labelClass}>Coming Soon message</span><textarea className={fieldClass} rows={2} value={settings.comingSoonText} maxLength={300} onChange={e => update("comingSoonText", e.target.value)} /></label>
+      <p className="rounded-lg bg-[#F7F0FA] p-3 text-xs text-[#705E7B]">Coming Soon mode is retired. The men's storefront and category pages are managed as live catalogue pages.</p>
       <div className="flex flex-wrap gap-2"><button disabled={busy} onClick={() => void saveDraft()} className="rounded-lg border px-4 py-2.5 text-sm font-semibold text-[#563568] disabled:opacity-50">Save draft</button><button disabled={busy} onClick={() => void publish()} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy ? "Publishing…" : "Publish changes"}</button></div>
     </section>}
 
@@ -152,7 +151,8 @@ export const MenStorefrontManager: React.FC = () => {
           <label><span className={labelClass}>Category name</span><input className={fieldClass} value={item.title} onChange={e => updateCategory(item.id, { title: e.target.value })} /></label>
           <label><span className={labelClass}>Short description</span><input className={fieldClass} value={item.description} onChange={e => updateCategory(item.id, { description: e.target.value })} /></label>
           <div><span className={labelClass}>Image</span><input type="file" accept="image/jpeg,image/png,image/webp" disabled={Boolean(uploading)} onChange={e => void uploadImage("category", e.target.files?.[0], item.id)} className="w-full text-xs" />{item.imageUrl && <img src={item.imageUrl} alt={item.title} className="mt-2 h-16 w-24 rounded-lg object-cover" />}</div>
-          <div className="flex items-end gap-2"><label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={item.active} onChange={e => updateCategory(item.id, { active: e.target.checked })} /> Active</label><button type="button" onClick={() => removeCategory(item.id)} className="rounded-lg border px-2 py-2 text-xs text-red-600">Remove</button></div>
+          <div className="flex items-end gap-2"><label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={item.active} onChange={e => updateCategory(item.id, { active: e.target.checked })} /> Published</label><button type="button" onClick={() => updateCategory(item.id, { sortOrder: Math.max(0, index - 1) })} disabled={index === 0} className="rounded-lg border px-2 py-2 text-xs disabled:opacity-40" aria-label="Move category up">↑</button><button type="button" onClick={() => updateCategory(item.id, { sortOrder: index + 1 })} disabled={index === settings.categories.length - 1} className="rounded-lg border px-2 py-2 text-xs disabled:opacity-40" aria-label="Move category down">↓</button><button type="button" onClick={() => removeCategory(item.id)} className="rounded-lg border px-2 py-2 text-xs text-red-600">Remove</button></div>
+          <div className="sm:col-span-4 rounded-lg bg-[#FCFAFD] p-3"><p className={labelClass}>Assign men's catalogue products</p><div className="grid gap-2 sm:grid-cols-2">{products.map(product => <label key={product.id} className="flex items-center gap-2 text-xs"><input type="checkbox" checked={(item.productIds || []).includes(product.id)} onChange={e => updateCategory(item.id, { productIds: e.target.checked ? [...(item.productIds || []), product.id] : (item.productIds || []).filter(id => id !== product.id) })}/><span className="min-w-0 truncate">{product.name}</span><span className="text-[#8B7299]">₹{product.price.toLocaleString("en-IN")}</span></label>)}</div>{products.length === 0 && <p className="text-xs text-[#705E7B]">Add men's products to the catalogue, then assign them here.</p>}</div>
         </div>)}
       </section>
       <section className="space-y-3 rounded-2xl border border-[#E7DCEB] bg-white p-4 sm:p-5">

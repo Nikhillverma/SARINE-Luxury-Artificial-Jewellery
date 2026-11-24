@@ -150,7 +150,7 @@ export interface OccasionCard {
 
 export interface ShopByGenderSettings { version: 1; forHerImageUrl: string; forHimImageUrl: string; }
 
-export interface MenStorefrontCategory { id: string; title: string; description: string; imageUrl: string; active: boolean; sortOrder: number; }
+export interface MenStorefrontCategory { id: string; title: string; description: string; imageUrl: string; productIds: string[]; active: boolean; sortOrder: number; }
 export interface MenStorefrontCollection { id: string; title: string; description: string; productIds: string[]; active: boolean; sortOrder: number; }
 export interface MenStorefrontSettings {
   version: 1; enabled: boolean; heroImageUrl: string; eyebrow: string; title: string; description: string;
@@ -225,6 +225,7 @@ export const hostingerStorefrontService = {
   saveMenStorefrontDraft: (settings: MenStorefrontSettings) => request<{ success: boolean; draft: MenStorefrontSettings }>("/admin/storefront/men-storefront/draft", { method: "PUT", body: JSON.stringify({ settings }) }),
   publishMenStorefront: () => request<{ success: boolean; published: MenStorefrontSettings }>("/admin/storefront/men-storefront/publish", { method: "POST" }),
   getPublicMenStorefront: () => request<{ settings: MenStorefrontSettings; products: MenStorefrontProduct[] }>("/storefront/men-storefront"),
+  getPublicMenCategory: (categoryId: string) => request<{ category: MenStorefrontCategory; products: MenStorefrontProduct[] }>(`/storefront/men-storefront/categories/${encodeURIComponent(categoryId)}`),
   subscribeMenLaunch: (email: string, consent: boolean) => request<{ success: boolean; message: string }>("/storefront/men-launch-signups", { method: "POST", body: JSON.stringify({ email, consent }) }),
   getMenLaunchSignups: () => request<{ subscribers: MenLaunchSubscriber[] }>("/admin/storefront/men-launch-signups"),
   deleteMenLaunchSignup: (id: string) => request<{ success: boolean }>(`/admin/storefront/men-launch-signups/${encodeURIComponent(id)}`, { method: "DELETE" }),

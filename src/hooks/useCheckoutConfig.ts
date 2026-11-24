@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { DEFAULT_CHECKOUT_CONFIG } from '../config/store';
-import { checkoutSettingsService } from '../services/hostinger/checkoutSettingsService';
+import { checkoutSettingsService, type CheckoutConfig } from '../services/hostinger/checkoutSettingsService';
 
 export function useCheckoutConfig() {
-  const [config, setConfig] = useState(DEFAULT_CHECKOUT_CONFIG);
+  const [config, setConfig] = useState<CheckoutConfig>(DEFAULT_CHECKOUT_CONFIG);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
