@@ -1,5 +1,5 @@
 export const HOMEPAGE_SECTION_IDS = Object.freeze([
-  "hero", "categories", "new-arrivals", "best-sellers", "curated-favourites",
+  "hero", "categories", "shop-by-gender", "new-arrivals", "best-sellers", "curated-favourites",
   "occasions", "explore-now", "price", "our-story", "editorial", "care-guide", "stay-in-touch"
 ]);
 
