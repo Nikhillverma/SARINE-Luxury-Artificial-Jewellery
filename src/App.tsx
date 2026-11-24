@@ -253,6 +253,7 @@ const CmsPublicPage = lazy(() => import('./pages/CmsPublicPage').then((module) =
 const HomePage = lazy(() => import('./pages/HomePage').then((module) => ({ default: module.HomePage })));
 const CollectionPage = lazy(() => import('./pages/CollectionPage').then((module) => ({ default: module.CollectionPage })));
 const MensCollectionPage = lazy(() => import('./pages/MensCollectionPage').then((module) => ({ default: module.MensCollectionPage })));
+const MenCategoryPage = lazy(() => import('./pages/MenCategoryPage').then((module) => ({ default: module.MenCategoryPage })));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage').then((module) => ({ default: module.ProductDetailPage })));
 const BagPage = lazy(() => import('./pages/BagPage').then((module) => ({ default: module.BagPage })));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage').then((module) => ({ default: module.CheckoutPage })));
@@ -447,6 +448,7 @@ function MainAppShell() {
             element={<CollectionPage includeAll={includeAll} />}
           />
           <Route path="/men" element={<MensCollectionPage />} />
+          <Route path="/men/category/:categoryId" element={<MenCategoryPage />} />
           <Route
             path="/product/:slug"
             element={<ProductDetailPage includeAll={includeAll} />}
