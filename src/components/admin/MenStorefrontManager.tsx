@@ -123,8 +123,9 @@ export const MenStorefrontManager: React.FC = () => {
       const slug = newProduct.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       const created = await adminProductService.createProduct({
         slug, name: newProduct.name.trim(), description: newProduct.description.trim(), shortDescription: "",
-        price, images: [newProduct.imageUrl], categoryId: category.id, collectionSlugs: [],
-        jewelleryType: "necklace", stock, status: newProduct.status, tags: [], gender: "men"
+        price, images: [newProduct.imageUrl], categoryId: "", collectionSlugs: [],
+        jewelleryType: /ring/i.test(category.title) ? "ring" : /chain/i.test(category.title) ? "necklace" : "bracelet",
+        stock, status: newProduct.status, tags: [], gender: "men"
       });
       setProducts(current => [...current, { id: created.id, name: created.name, slug: created.slug, price: created.price, images: created.images, status: created.status, stock: created.stock }]);
       const nextCategories = settings.categories.map(item => item.id === category.id ? { ...item, productIds: [...new Set([...(item.productIds || []), created.id])] } : item);
