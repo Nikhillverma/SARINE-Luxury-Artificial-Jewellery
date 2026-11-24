@@ -830,7 +830,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 cards: Daily Wear, Festive, Wedding, Gifting
           Using existing product images, linking to /shop with filter queries
           ========================================================================= */}
-      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") && occasions.some(item => item.active) ? undefined : "none" }} className="py-4 sm:py-6 lg:py-7 border-t border-[var(--border)] !bg-white">
+      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") && occasions.some(item => item.active) ? undefined : "none" }} className="sarine-section-occasions py-4 sm:py-6 lg:py-7 border-t border-[var(--border)] !bg-white">
         <div className="site-container">
           <div className="w-full text-center mb-4 sm:mb-4">
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">
