@@ -79,12 +79,12 @@ export const MensCollectionPage: React.FC = () => {
       {liveCategories.length > 0 && <section className="mt-12 sm:mt-16">
         <div className="mb-5 text-center"><p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#8B7299]">THE COLLECTION</p><h2 className="mt-2 font-serif text-3xl font-normal text-[#563568] sm:text-4xl">Discover What's Coming</h2></div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-5">
-          {liveCategories.map(category => <Link key={category.id} to={`/shop?search=${encodeURIComponent(category.title)}`} className="group block min-w-0">
+          {liveCategories.map(category => <a key={category.id} href="#launch-notification" className="group block min-w-0">
             <div className="aspect-[4/5] overflow-hidden rounded-xl bg-[#F7F0FA]">{category.imageUrl ? <img src={category.imageUrl} alt={category.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"/> : <div className="flex h-full items-center justify-center px-3 text-center font-serif text-2xl text-[#B69ACF]">{category.title}</div>}</div>
             <h3 className="mt-3 text-center font-serif text-xl text-[#563568]">{category.title}</h3>
             {category.description && <p className="mt-1 text-center text-xs leading-5 text-[#705E7B]">{category.description}</p>}
             {settings.comingSoon && <p className="mt-2 text-center text-[9px] font-semibold uppercase tracking-[0.18em] text-[#8B7299]">Coming Soon</p>}
-          </Link>)}
+          </a>)}
         </div>
       </section>}
 
@@ -112,7 +112,7 @@ export const MensCollectionPage: React.FC = () => {
         <Link to={settings.offers.ctaLink} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg bg-white px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#563568]">{settings.offers.ctaText}<ArrowRight size={15}/></Link>
       </section>}
 
-      {settings.notification.enabled && <section className="mt-14 sm:mt-20">
+      {settings.notification.enabled && <section id="launch-notification" className="mt-14 scroll-mt-8 sm:mt-20">
         <div className="mx-auto max-w-2xl rounded-2xl border border-[#E7DCEB] bg-[#FCFAFD] px-5 py-8 text-center sm:px-10 sm:py-10">
           <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[#F0E7F5] text-[#563568]"><Mail size={19}/></div>
           <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#8B7299]">SARINE · FOR HIM</p>
