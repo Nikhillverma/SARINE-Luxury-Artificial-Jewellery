@@ -36,7 +36,7 @@ export const MenStorefrontManager: React.FC = () => {
   const [uploading, setUploading] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [tab, setTab] = useState<"content" | "catalogue" | "marketing" | "signups">("content");
+  const [tab, setTab] = useState<"content" | "catalogue" | "advanced">("content");
   const [addingProductTo, setAddingProductTo] = useState<string | null>(null);
   const [newProduct, setNewProduct] = useState({ name: "", price: "", stock: "0", description: "", imageUrl: "", status: "draft" as "draft" | "active" });
   const [savingNewProduct, setSavingNewProduct] = useState(false);
@@ -199,7 +199,7 @@ export const MenStorefrontManager: React.FC = () => {
         <a href="/men" target="_blank" rel="noreferrer" className="rounded-lg border px-3 py-2 text-xs font-semibold text-[#563568]">Preview men's page ↗</a>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        {(["content", "catalogue", "marketing", "signups"] as const).map(item => <button key={item} type="button" onClick={() => setTab(item)} className={`min-h-10 rounded-lg px-3 text-xs font-semibold capitalize ${tab === item ? "bg-[#563568] text-white" : "border border-[#E7DCEB] text-[#563568]"}`}>{item === "signups" ? `Launch signups (${subscribers.length})` : item}</button>)}
+        {(["content", "catalogue", "advanced"] as const).map(item => <button key={item} type="button" onClick={() => setTab(item)} className={`min-h-10 rounded-lg px-3 text-xs font-semibold ${tab === item ? "bg-[#563568] text-white" : "border border-[#E7DCEB] text-[#563568]"}`}>{item === "content" ? "Page" : item === "catalogue" ? "Products & categories" : "Advanced"}</button>)}
       </div>
     </header>
 
@@ -300,7 +300,7 @@ export const MenStorefrontManager: React.FC = () => {
       </section>
     </div>}
 
-    {tab === "marketing" && <section className="space-y-4 rounded-2xl border border-[#E7DCEB] bg-white p-4 sm:p-5">
+    {tab === "advanced" && <section className="space-y-4 rounded-2xl border border-[#E7DCEB] bg-white p-4 sm:p-5">
       <h3 className="font-semibold text-[#302438]">Offers & launch notifications</h3>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={settings.offers.enabled} onChange={e => update("offers", { ...settings.offers, enabled: e.target.checked })} /> Show men's offer panel</label>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -318,7 +318,7 @@ export const MenStorefrontManager: React.FC = () => {
       <div className="flex flex-wrap gap-2"><button disabled={busy} onClick={() => void saveDraft()} className="rounded-lg border px-4 py-2.5 text-sm font-semibold text-[#563568]">Save draft</button><button disabled={busy} onClick={() => void publish()} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-semibold text-white">Publish marketing settings</button></div>
     </section>}
 
-    {tab === "signups" && <section className="space-y-3 rounded-2xl border border-[#E7DCEB] bg-white p-4 sm:p-5">
+    {tab === "advanced" && <section className="space-y-3 rounded-2xl border border-[#E7DCEB] bg-white p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-semibold text-[#302438]">Launch notification signups</h3><p className="text-xs text-[#705E7B]">Emails are stored securely in your Hostinger database with signup consent.</p></div><button onClick={exportSubscribers} disabled={!subscribers.length} className="rounded-lg bg-[#563568] px-3 py-2 text-xs font-semibold text-white disabled:opacity-40">Export CSV</button></div>
       {subscribers.length ? <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead><tr className="border-b text-[#705E7B]"><th className="p-2">Email</th><th className="p-2">Consent</th><th className="p-2">Signed up</th><th className="p-2">Action</th></tr></thead><tbody>{subscribers.map(item => <tr key={item.id} className="border-b border-[#F0EAF2]"><td className="p-2">{item.email}</td><td className="p-2">{item.consent ? "Yes" : "No"}</td><td className="p-2">{new Date(item.createdAt).toLocaleDateString()}</td><td className="p-2"><button onClick={() => void removeSubscriber(item.id)} className="text-red-600 underline">Delete</button></td></tr>)}</tbody></table></div> : <p className="rounded-lg bg-[#F7F0FA] p-4 text-sm text-[#705E7B]">No signups yet. Once visitors subscribe, they will appear here.</p>}
       <button onClick={() => void load()} className="rounded-lg border px-3 py-2 text-xs font-semibold text-[#563568]">Refresh signups</button>
