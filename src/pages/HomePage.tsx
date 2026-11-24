@@ -501,7 +501,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           const deltaX = endX - startX;
           if (Math.abs(deltaX) > 48) deltaX < 0 ? nextSlide() : prevSlide();
         }}
-        className="relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[var(--tint)] border-b border-[var(--border)] touch-pan-y"
+        className="sarine-home-hero relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[var(--tint)] border-b border-[var(--border)] touch-pan-y"
       >
         {/* Stacked background slide images */}
         {heroSlides.map((slide, idx) => (
@@ -519,7 +519,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                   loading={activeSlide === idx ? "eager" : "lazy"}
                   fetchPriority={activeSlide === idx ? "high" : "low"}
                   decoding="async"
-                  className="absolute inset-0 w-full h-full object-cover object-center shadow-none"
+                  className="sarine-home-hero-image absolute inset-0 w-full h-full object-cover object-center shadow-none"
                 />
               </CampaignDestinationLink>
             ) : (
@@ -529,7 +529,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 loading={activeSlide === idx ? "eager" : "lazy"}
                 fetchPriority={activeSlide === idx ? "high" : "low"}
                 decoding="async"
-                className="absolute inset-0 w-full h-full object-cover object-[70%_center] shadow-none"
+                className="sarine-home-hero-image absolute inset-0 w-full h-full object-cover object-center shadow-none"
               />
             )}
           </div>
@@ -545,9 +545,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           </div>
         )}
         {/* Centered content overlay container */}
-        <div className="site-container h-full flex flex-col justify-between py-8 md:py-12 pointer-events-none relative z-10">
+        <div className="sarine-home-hero-content site-container h-full flex flex-col justify-between py-8 md:py-12 pointer-events-none relative z-10">
           {/* Campaign artwork can be a complete clickable creative; editable campaigns use the normal hero overlay. */}
-          {!currentHero.campaign?.artworkOnly && <div className="my-auto max-w-xl md:max-w-lg lg:max-w-xl pointer-events-auto">
+          {!currentHero.campaign?.artworkOnly && <div className="sarine-home-hero-copy my-auto max-w-xl md:max-w-lg lg:max-w-xl pointer-events-auto">
             <span className="text-[12px] sm:text-[13px] uppercase tracking-[0.2em] !text-[color:var(--gold-light)] font-medium block mb-2 sm:mb-3 [text-shadow:0_2px_8px_rgba(43,26,51,0.45)]">
               {currentHero.eyebrow}
             </span>
