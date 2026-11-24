@@ -1293,8 +1293,8 @@ body.sarine-global-theme #main-content .sarine-product-card__price > span:first-
   min-width: 0;
   max-width: 100%;
 }
-#root :where(h1, h2, h3, h4, p, a, button, label, span) {
-  overflow-wrap: anywhere;
+#root :where(h1, h2, h3, h4, p) {
+  overflow-wrap: break-word;
 }
 #root :where(.grid, [class*="grid-cols-"]) > *,
 #root :where(.flex, [class*="flex"]) > * {
