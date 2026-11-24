@@ -699,7 +699,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           {loading ? (
             <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-[23%] xl:w-[19%] animate-pulse">
+                <div key={i} className="w-[37%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-[23%] xl:w-[19%] animate-pulse">
                   <div className="bg-[var(--pill)] aspect-[3/4] w-full border border-[var(--border)]" />
                   <div className="h-4 bg-[var(--pill)] w-2/3 mt-3" />
                   <div className="h-3 bg-[var(--pill)] w-1/3 mt-2" />
@@ -709,7 +709,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           ) : newArrivals.length > 0 ? (
             <div ref={newArrivalsCarouselRef} className={`sarine-product-grid ${sectionCarouselEnabled("new-arrivals") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:gap-6" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`} aria-label="New Arrivals products">
               {newArrivals.slice(0, 8).map((product) => (
-                <div key={product.id} className={sectionCarouselEnabled("new-arrivals") ? "w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "min-w-0"} style={sectionCarouselEnabled("new-arrivals") ? desktopCardStyle("new-arrivals", 24, 5) : undefined}>
+                <div key={product.id} className={sectionCarouselEnabled("new-arrivals") ? "w-[37%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "min-w-0"} style={sectionCarouselEnabled("new-arrivals") ? desktopCardStyle("new-arrivals", 24, 5) : undefined}>
                   <ProductCard product={product} />
                 </div>
               ))}
