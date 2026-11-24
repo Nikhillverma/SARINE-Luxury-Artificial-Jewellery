@@ -371,7 +371,7 @@ interface NavItem {
   const adminEmail = user?.email || '';
 
   return (
-    <div className="min-h-screen bg-[#F8F3FA] text-[#302438] font-sans flex">
+    <div className="admin-workspace min-h-screen bg-[#F8F3FA] text-[#302438] font-sans flex">
       {/* 1. DESKTOP LEFT SIDEBAR (Dark Plum #201026, Fixed 260px) */}
       <aside className="hidden lg:flex w-64 bg-[#201026] text-[#E8DDF0] flex-col shrink-0 border-r border-[#381F43] min-h-screen sticky top-0 h-screen select-none z-30">
         {/* Brand Header */}
@@ -793,7 +793,7 @@ interface NavItem {
         </header>
 
         {/* MAIN BODY AREA */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           {quickActionSuccess && (
             <div className="mb-6 p-4 bg-[#F2FBF5] border border-[#A7E8BD] rounded-xl flex items-center justify-between text-xs text-[#166534]">
               <div className="flex items-center gap-2">
