@@ -729,7 +729,7 @@ export const AdminOrdersPage: React.FC = () => {
                       order.refundNeeded || order.orderStatus === 'needs_refund';
                     return (
                       <tr
-                        key={order.orderNumber}{order.isTest && <span className="ml-2 inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-900">TEST</span>}
+                        key={order.orderNumber}
                         onClick={() => setSelectedOrder(order)}
                         className={`hover:bg-[#FAF5FC] transition-colors cursor-pointer ${
                           isRefundHighlight ? 'bg-[#FFFDF7] ring-1 ring-[#D9B8A0]' : ''
@@ -775,7 +775,7 @@ export const AdminOrdersPage: React.FC = () => {
                   order.refundNeeded || order.orderStatus === 'needs_refund';
                 return (
                   <div
-                    key={order.orderNumber}{order.isTest && <span className="ml-2 inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-900">TEST</span>}
+                    key={order.orderNumber}
                     onClick={() => setSelectedOrder(order)}
                     className={`bg-white p-4 border rounded-xs shadow-2xs space-y-3 cursor-pointer ${
                       isRefundHighlight
