@@ -312,7 +312,7 @@ export const AdminOrdersPage: React.FC = () => {
 
   const generateMenTestOrders = async () => {
     if (!adminUser || generatingTestOrders) return;
-    if (!window.confirm("Create up to four clearly marked SARINE Men test orders using synthetic customer and delivery details? No payment will be taken and stock will not change.")) return;
+    if (!window.confirm("Create one clearly marked SARINE Men test order for every active published category (up to twelve) using synthetic customer and delivery details? No payment will be taken and stock will not change.")) return;
     setGeneratingTestOrders(true); setTestOrderNotice(null); setError(null);
     try {
       const res = await fetch(`${API_BASE}/admin/orders/test`, {
