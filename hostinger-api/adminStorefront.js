@@ -279,7 +279,8 @@ adminOnly.put("/checkout-config", async (req, res, next) => {
 });
 publicRouter.get("/checkout-config", async (_req, res, next) => {
   try {
-    res.set("Cache-Control", "no-store").json({ checkoutConfig: await getCheckoutConfig() });
+    const razorpayMode = String(process.env.RAZORPAY_KEY_ID || "").startsWith("rzp_test_") ? "test" : "live";
+    res.set("Cache-Control", "no-store").json({ checkoutConfig: { ...await getCheckoutConfig(), razorpayMode } });
   } catch (error) { next(error); }
 });
 
