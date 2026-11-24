@@ -861,6 +861,7 @@ export const AdminOrdersPage: React.FC = () => {
 
               {/* Drawer Body */}
               <div className="flex-1 overflow-y-auto p-6 space-y-6 text-xs">
+                {selectedOrder.isTest && <div role="alert" className="rounded-lg border-2 border-amber-300 bg-amber-50 p-4 text-amber-950"><p className="font-bold uppercase tracking-wider">TEST ORDER — DO NOT SHIP</p><p className="mt-1 text-[11px] leading-relaxed">Synthetic customer and delivery details. No payment was collected and no inventory was reserved. Fulfilment actions are disabled for this record.</p></div>}
                 {/* Gold Refund Callout if refundNeeded or needs_refund */}
                 {(selectedOrder.refundNeeded || selectedOrder.orderStatus === 'needs_refund') && (
                   <div className="p-4 bg-[#FFFBEB] border-2 border-[#D9B8A0] rounded-xs text-[#92400E] space-y-1 animate-fadeIn">
