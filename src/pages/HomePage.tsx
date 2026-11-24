@@ -18,7 +18,7 @@ import { Category } from '../types/category';
 import { ProductCard } from '../components/ProductCard';
 import { formatInr } from '../utils/currency';
 import { festivalCampaignService, type FestivalCampaign } from '../services/hostinger/festivalCampaignService';
-import { hostingerStorefrontService, DEFAULT_HOMEPAGE_CONTENT, type EditorialContent, type HomepageContent, type HomepageLayout } from '../services/hostinger/hostingerStorefrontService';
+import { hostingerStorefrontService, DEFAULT_HOMEPAGE_CONTENT, type EditorialContent, type HomepageContent, type HomepageLayout, type ShopByGenderSettings } from '../services/hostinger/hostingerStorefrontService';
 import {
   ArrowRight,
   ChevronLeft,
@@ -106,7 +106,7 @@ interface HomePageProps {
 
 const defaultHomepageLayout: HomepageLayout = {
   version: 1,
-  sections: ["hero", "categories", "new-arrivals", "best-sellers", "curated-favourites", "occasions", "explore-now", "price", "our-story", "editorial", "care-guide", "stay-in-touch"]
+  sections: ["hero", "categories", "shop-by-gender", "new-arrivals", "best-sellers", "curated-favourites", "occasions", "explore-now", "price", "our-story", "editorial", "care-guide", "stay-in-touch"]
     .map((id, sortOrder) => ({ id, enabled: true, sortOrder }))
 };
 
@@ -177,12 +177,23 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<boolean>(false);
 
+  const [shopByGender, setShopByGender] = useState<ShopByGenderSettings>({ version: 1, forHerImageUrl: "", forHimImageUrl: "" });
+  const [showMensComingSoon, setShowMensComingSoon] = useState(false);
+
   const [occasions, setOccasions] = useState([
     { id: "daily-wear", title: "Daily Wear", subtitle: "Effortless everyday minimalism", image: "/images/optimized/ananya-temple-coin-bracelet.webp", link: "/shop?search=everyday", active: true, sortOrder: 0 },
     { id: "festive", title: "Festive", subtitle: "Celebratory sparkle and classic motifs", image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=80", link: "/shop?search=festive", active: true, sortOrder: 1 },
     { id: "wedding", title: "Wedding", subtitle: "Regal bridal sets & heritage chokers", image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1000&q=80", link: "/shop?search=wedding", active: true, sortOrder: 2 },
     { id: "gifting", title: "Gifting", subtitle: "Precious tokens of affection", image: "/images/optimized/zoya-open-cuff-leaf-bangle.webp", link: "/shop", active: true, sortOrder: 3 }
   ]);
+
+  useEffect(() => {
+    let cancelled = false;
+    hostingerStorefrontService.getPublicShopByGender()
+      .then(result => { if (!cancelled && result.settings) setShopByGender(result.settings); })
+      .catch(error => console.warn("[HomePage] Shop by Gender settings unavailable; using empty image placeholders.", error));
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -641,6 +652,36 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </Link>
           </div>
         </div>
+      </section>
+
+      {/* =========================================================================
+          SHOP BY GENDER — two independently managed landscape image tiles
+          ========================================================================= */}
+      <section style={{ order: sectionOrder("shop-by-gender"), display: sectionVisible("shop-by-gender") ? undefined : "none" }} className="w-full border-t border-[var(--border)] bg-white py-5 sm:py-6 lg:py-7" aria-label="Shop by gender">
+        <div className="site-container">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5">
+            <Link to="/shop" className="group block min-w-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--plum)]" aria-label="Shop for her">
+              <div className="aspect-[2/1] w-full overflow-hidden rounded-[10px] bg-[var(--pill)]">
+                {shopByGender.forHerImageUrl && <img src={shopByGender.forHerImageUrl} alt="" aria-hidden="true" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />}
+              </div>
+              <p className="pt-2 text-center font-sans text-xs font-semibold tracking-[0.12em] text-black sm:pt-3 sm:text-sm">FOR HER</p>
+            </Link>
+            <button type="button" onClick={() => setShowMensComingSoon(true)} className="group block min-w-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--plum)]" aria-label="Shop for him — coming soon">
+              <div className="aspect-[2/1] w-full overflow-hidden rounded-[10px] bg-[var(--pill)]">
+                {shopByGender.forHimImageUrl && <img src={shopByGender.forHimImageUrl} alt="" aria-hidden="true" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />}
+              </div>
+              <p className="pt-2 text-center font-sans text-xs font-semibold tracking-[0.12em] text-black sm:pt-3 sm:text-sm">FOR HIM</p>
+            </button>
+          </div>
+        </div>
+        {showMensComingSoon && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 px-4 py-6" role="presentation" onClick={() => setShowMensComingSoon(false)}>
+          <div role="dialog" aria-modal="true" aria-labelledby="mens-coming-soon-title" className="w-full max-w-sm rounded-xl bg-white p-7 text-center shadow-2xl" onClick={event => event.stopPropagation()}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--plum)]">SARINE</p>
+            <h2 id="mens-coming-soon-title" className="mt-3 font-serif text-3xl font-normal text-[var(--heading)]">Coming Soon</h2>
+            <p className="mt-3 text-sm leading-relaxed text-[var(--body)]">Our collection for him is on its way. Stay tuned for the launch.</p>
+            <button type="button" autoFocus onClick={() => setShowMensComingSoon(false)} className="mt-6 inline-flex min-h-11 items-center justify-center rounded-md bg-[var(--plum)] px-6 text-xs font-semibold uppercase tracking-wider text-white">Close</button>
+          </div>
+        </div>}
       </section>
 
       {/* =========================================================================
