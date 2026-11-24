@@ -729,14 +729,14 @@ export const AdminOrdersPage: React.FC = () => {
                       order.refundNeeded || order.orderStatus === 'needs_refund';
                     return (
                       <tr
-                        key={order.orderNumber}
+                        key={order.orderNumber}{order.isTest && <span className="ml-2 inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-900">TEST</span>}
                         onClick={() => setSelectedOrder(order)}
                         className={`hover:bg-[#FAF5FC] transition-colors cursor-pointer ${
                           isRefundHighlight ? 'bg-[#FFFDF7] ring-1 ring-[#D9B8A0]' : ''
                         }`}
                       >
                         <td className="py-3.5 px-4 font-mono font-medium text-[#563568]">
-                          {order.orderNumber}{order.isTest && <span className="ml-2 inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-900">TEST</span>}{order.isTest && <span className="ml-2 inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-900">TEST</span>}
+                          {order.orderNumber}{order.isTest && <span className="ml-2 inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-900">TEST</span>}
                         </td>
                         <td className="py-3.5 px-4 text-[#6F6475] whitespace-nowrap">
                           {formatDate(order.createdAt)}
@@ -775,7 +775,7 @@ export const AdminOrdersPage: React.FC = () => {
                   order.refundNeeded || order.orderStatus === 'needs_refund';
                 return (
                   <div
-                    key={order.orderNumber}
+                    key={order.orderNumber}{order.isTest && <span className="ml-2 inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-900">TEST</span>}
                     onClick={() => setSelectedOrder(order)}
                     className={`bg-white p-4 border rounded-xs shadow-2xs space-y-3 cursor-pointer ${
                       isRefundHighlight
@@ -785,7 +785,7 @@ export const AdminOrdersPage: React.FC = () => {
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-mono font-medium text-xs text-[#563568]">
-                        {order.orderNumber}
+                        {order.orderNumber}{order.isTest && <span className="ml-2 inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-900">TEST</span>}
                       </span>
                       {renderStatusBadge(order)}
                     </div>
