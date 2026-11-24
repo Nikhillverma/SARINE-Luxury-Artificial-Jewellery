@@ -401,6 +401,13 @@ router.post("/update", async (req, res, next) => {
     const order = orderRows[0];
     const nowIso = new Date().toISOString();
 
+    if (Boolean(order.is_test) && !["add_note", "cancel"].includes(action)) {
+      await connection.rollback();
+      connection.release();
+      connection = null;
+      return res.status(400).json({ error: "This is a TEST order. Test orders cannot be packed, shipped, delivered or processed for payment." });
+    }
+
     // 1. Action: add_note
     if (action === "add_note") {
       const targetNote = typeof note === "string" ? note : typeof adminNote === "string" ? adminNote : "";
