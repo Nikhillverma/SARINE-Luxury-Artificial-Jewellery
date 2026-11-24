@@ -123,6 +123,7 @@ router.get("/", async (req, res, next) => {
          o.cancellation_reason,
          o.refund_needed,
          o.refund_amount,
+         o.is_test,
          o.created_at,
          o.updated_at
        FROM orders o
@@ -202,6 +203,7 @@ router.get("/", async (req, res, next) => {
 
       return {
         orderNumber: row.order_number,
+        isTest: Boolean(row.is_test),
         createdAt: toIsoString(row.created_at),
         customer: {
           name: row.customer_name || shipping.fullName || "",
@@ -243,6 +245,99 @@ router.get("/", async (req, res, next) => {
       nextStartAfter
     });
   } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/admin/orders/test
+ * Creates four synthetic COD test orders, one per published men's category.
+ * These orders never touch inventory or payment gateways and are excluded
+ * from revenue analytics by orders.is_test.
+ */
+router.post("/test", async (req, res, next) => {
+  let connection;
+  try {
+    res.set("Cache-Control", "no-store");
+    const [schemaColumns] = await pool.execute(
+      "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='orders' AND COLUMN_NAME='is_test' LIMIT 1"
+    );
+    if (!schemaColumns.length) return res.status(503).json({ error: "Test-order classification is not available. Apply the order test migration first." });
+
+    const [settingsRows] = await pool.execute(
+      "SELECT setting_value FROM storefront_settings WHERE setting_key='men_storefront' LIMIT 1"
+    );
+    let categories = [];
+    try {
+      const record = settingsRows[0]?.setting_value ? JSON.parse(settingsRows[0].setting_value) : {};
+      categories = Array.isArray(record.published?.categories) ? record.published.categories.filter(item => item?.active === true) : [];
+    } catch {}
+    if (!categories.length) {
+      return res.status(400).json({ error: "Publish at least one men's category before generating test orders." });
+    }
+
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    await connection.execute(
+      "INSERT INTO counters (counter_key, counter_value, updated_at) VALUES ('orders', 0, UTC_TIMESTAMP(3)) ON DUPLICATE KEY UPDATE counter_key=counter_key"
+    );
+    const [counterRows] = await connection.execute("SELECT counter_value FROM counters WHERE counter_key='orders' FOR UPDATE");
+    const [maxRows] = await connection.execute(
+      "SELECT COALESCE(MAX(CAST(SUBSTRING(order_number,5) AS UNSIGNED)),0) AS max_seq FROM orders WHERE order_number LIKE 'SAR-%'"
+    );
+    let sequence = Math.max(Number(counterRows[0]?.counter_value || 0), Number(maxRows[0]?.max_seq || 0), 124);
+    const created = [];
+    const selectedCategories = categories.slice(0, 4);
+    for (let index = 0; index < selectedCategories.length; index++) {
+      const category = selectedCategories[index];
+      let orderNumber;
+      do {
+        sequence += 1;
+        orderNumber = `SAR-${String(sequence).padStart(6, "0")}`;
+        const [exists] = await connection.execute("SELECT id FROM orders WHERE order_number=? LIMIT 1", [orderNumber]);
+        if (!exists.length) break;
+      } while (sequence < 999999999);
+      const fullName = `SARINE Test Customer ${String(index + 1).padStart(2, "0")}`;
+      const email = `sarine.test.customer.${String(index + 1).padStart(2, "0")}@example.invalid`;
+      const phone = "0000000000";
+      const line1 = "TEST ADDRESS — DO NOT SHIP";
+      const city = "Kanpur";
+      const state = "Uttar Pradesh";
+      const pincode = "000000";
+      const unitPrice = 1299 + index * 250;
+      const shippingFee = unitPrice >= 1999 ? 0 : 99;
+      const address = JSON.stringify({ fullName, phone, line1, line2: "Synthetic admin test data — no delivery", city, state, pincode });
+      await connection.execute(
+        `INSERT INTO orders (
+          id, order_number, customer_id, customer_name, customer_email, customer_phone,
+          shipping_address, subtotal, shipping_fee, total, coupon_code, discount_amount,
+          payment_method, payment_status, order_status, public_token_hash, source_document,
+          is_test, created_at, updated_at
+        ) VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, NULL, 0, 'cod', 'pending', 'placed', NULL, ?, 1, UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
+        [orderNumber, orderNumber, fullName, email, phone, address, unitPrice, shippingFee, unitPrice + shippingFee,
+         JSON.stringify({ source: "admin_test_order_generator", isTest: true, categoryId: String(category.id || "").slice(0,80) })]
+      );
+      const productName = `[TEST ONLY] SARINE Men — ${String(category.title || "Category").slice(0, 100)} sample piece`;
+      await connection.execute(
+        `INSERT INTO order_items
+          (order_id, product_id, product_name, sku, unit_price, quantity, image, source_line, variant_id, variant_sku, variant_label, variant_options)
+         VALUES (?, NULL, ?, ?, ?, 1, '', 0, NULL, NULL, NULL, NULL)`,
+        [orderNumber, productName, `TEST-MEN-${String(category.id || index + 1).slice(0,32)}`, unitPrice]
+      );
+      await connection.execute(
+        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
+         VALUES (?, NULL, 'placed', ?, ?, UTC_TIMESTAMP(3))`,
+        [orderNumber, `TEST ORDER — synthetic customer and address; no payment, shipping or stock movement. Category: ${String(category.title || "Men's category").slice(0,100)}`, req.admin?.email || "admin"]
+      );
+      created.push({ orderNumber, category: String(category.title || "Men's category"), customer: fullName, email, phone, address: line1, city, state, pincode, subtotal: unitPrice, shippingFee, total: unitPrice + shippingFee, paymentMethod: "cod", paymentStatus: "pending", isTest: true });
+    }
+    await connection.execute("UPDATE counters SET counter_value=?, updated_at=UTC_TIMESTAMP(3) WHERE counter_key='orders'", [sequence]);
+    await connection.commit();
+    connection.release();
+    connection = null;
+    return res.status(201).json({ success: true, testOrders: created, count: created.length, note: "Synthetic test orders created. No inventory was changed and no payment gateway was called." });
+  } catch (error) {
+    if (connection) { await connection.rollback(); connection.release(); }
     next(error);
   }
 });
