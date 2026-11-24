@@ -36,10 +36,13 @@ export const MenStorefrontManager: React.FC = () => {
   const [uploading, setUploading] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [tab, setTab] = useState<"content" | "catalogue" | "marketing" | "signups">("content");
+  const [tab, setTab] = useState<"content" | "catalogue" | "advanced">("content");
   const [addingProductTo, setAddingProductTo] = useState<string | null>(null);
   const [newProduct, setNewProduct] = useState({ name: "", price: "", stock: "0", description: "", imageUrl: "", status: "draft" as "draft" | "active" });
   const [savingNewProduct, setSavingNewProduct] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [productEdit, setProductEdit] = useState({ name: "", price: "", description: "", status: "draft" as "draft" | "active" });
+  const [updatingProduct, setUpdatingProduct] = useState(false);
 
   const load = async () => {
     setLoading(true); setError("");
@@ -131,11 +134,46 @@ export const MenStorefrontManager: React.FC = () => {
       const nextCategories = settings.categories.map(item => item.id === category.id ? { ...item, productIds: [...new Set([...(item.productIds || []), created.id])] } : item);
       update("categories", nextCategories);
       await hostingerStorefrontService.saveMenStorefrontDraft({ ...settings, categories: nextCategories });
+      if (newProduct.status === "active") await hostingerStorefrontService.publishMenStorefront();
       setNewProduct({ name: "", price: "", stock: "0", description: "", imageUrl: "", status: "draft" });
       setAddingProductTo(null);
-      setMessage("Product saved as a men's draft and assigned to " + category.title + ". Publish it when ready.");
+      setMessage((newProduct.status === "active" ? "Product published" : "Product saved as a draft") + " and assigned to " + category.title + ".");
     } catch (e) { setError(e instanceof Error ? e.message : "Could not create the men's product."); }
     finally { setSavingNewProduct(false); }
+  };
+
+
+  const openProductEditor = (product: MenStorefrontProduct) => {
+    setEditingProductId(product.id);
+    setProductEdit({ name: product.name, price: String(product.price), description: product.description || "", status: product.status === "active" ? "active" : "draft" });
+    setError("");
+    setMessage("");
+  };
+
+  const saveProductSettings = async (product: MenStorefrontProduct) => {
+    const price = Number(productEdit.price);
+    if (!productEdit.name.trim() || !Number.isFinite(price) || price < 0) {
+      setError("Enter a product name and a valid selling price.");
+      return;
+    }
+    setUpdatingProduct(true); setError(""); setMessage("");
+    try {
+      const updated = await adminProductService.updateProduct(product.id, {
+        name: productEdit.name.trim(), price, description: productEdit.description,
+        status: productEdit.status, gender: "men"
+      });
+      setProducts(current => current.map(item => item.id === product.id ? {
+        ...item, name: updated.name, description: updated.description, price: updated.price, status: updated.status
+      } : item));
+      if (productEdit.status === "active") {
+        await hostingerStorefrontService.saveMenStorefrontDraft(settings);
+        await hostingerStorefrontService.publishMenStorefront();
+      }
+      setEditingProductId(null);
+      setMessage(productEdit.status === "active" ? "Product published. The current men's storefront settings were published too." : "Product settings saved as a draft.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not update this men's product.");
+    } finally { setUpdatingProduct(false); }
   };
 
   const exportSubscribers = () => {
@@ -161,7 +199,7 @@ export const MenStorefrontManager: React.FC = () => {
         <a href="/men" target="_blank" rel="noreferrer" className="rounded-lg border px-3 py-2 text-xs font-semibold text-[#563568]">Preview men's page ↗</a>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        {(["content", "catalogue", "marketing", "signups"] as const).map(item => <button key={item} type="button" onClick={() => setTab(item)} className={`min-h-10 rounded-lg px-3 text-xs font-semibold capitalize ${tab === item ? "bg-[#563568] text-white" : "border border-[#E7DCEB] text-[#563568]"}`}>{item === "signups" ? `Launch signups (${subscribers.length})` : item}</button>)}
+        {(["content", "catalogue", "advanced"] as const).map(item => <button key={item} type="button" onClick={() => setTab(item)} className={`min-h-10 rounded-lg px-3 text-xs font-semibold ${tab === item ? "bg-[#563568] text-white" : "border border-[#E7DCEB] text-[#563568]"}`}>{item === "content" ? "Page" : item === "catalogue" ? "Products & categories" : "Advanced"}</button>)}
       </div>
     </header>
 
@@ -222,6 +260,25 @@ export const MenStorefrontManager: React.FC = () => {
             <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{product.name}</span><span className="text-[#705E7B]">₹{product.price.toLocaleString("en-IN")} · {product.status}</span></span>
           </label>)}
         </div>
+
+        {products.length > 0 && <div className="mt-3 space-y-2">
+          <h4 className="text-sm font-semibold text-[#563568]">Manage men's products</h4>
+          <p className="text-xs text-[#705E7B]">Edit product details or publish a draft here. Published products can appear on the men's storefront when assigned to a visible section.</p>
+          {products.map(product => <div key={product.id} className="rounded-xl border border-[#EEE6F1] p-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {product.images?.[0] && <img src={product.images[0]} alt="" className="h-14 w-14 rounded-lg object-cover" />}
+              <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-[#302438]">{product.name}</p><p className="text-xs text-[#705E7B]">₹{product.price.toLocaleString("en-IN")} · Stock {product.stock} · {product.status === "active" ? "Published" : product.status === "archived" ? "Archived" : "Draft"}</p></div>
+              {product.status !== "archived" && <button type="button" onClick={() => openProductEditor(product)} className="rounded-lg border border-[#DCCCE4] px-3 py-2 text-xs font-semibold text-[#563568]">Edit settings</button>}
+            </div>
+            {editingProductId === product.id && <div className="mt-3 grid gap-3 rounded-lg bg-[#F7F0FA] p-3 sm:grid-cols-2">
+              <label><span className={labelClass}>Product name</span><input className={fieldClass} value={productEdit.name} onChange={e => setProductEdit(current => ({ ...current, name: e.target.value }))}/></label>
+              <label><span className={labelClass}>Selling price (₹)</span><input className={fieldClass} type="number" min="0" step="1" value={productEdit.price} onChange={e => setProductEdit(current => ({ ...current, price: e.target.value }))}/></label>
+              <label><span className={labelClass}>Visibility</span><select className={fieldClass} value={productEdit.status} onChange={e => setProductEdit(current => ({ ...current, status: e.target.value as "draft" | "active" }))}><option value="draft">Keep as draft</option><option value="active">Publish product</option></select></label>
+              <label className="sm:col-span-2"><span className={labelClass}>Description</span><textarea className={fieldClass} rows={2} value={productEdit.description} onChange={e => setProductEdit(current => ({ ...current, description: e.target.value }))}/></label>
+              <div className="sm:col-span-2 flex flex-wrap gap-2"><button type="button" disabled={updatingProduct} onClick={() => void saveProductSettings(product)} className="rounded-lg bg-[#563568] px-4 py-2.5 text-xs font-semibold text-white disabled:opacity-50">{updatingProduct ? "Saving…" : productEdit.status === "active" ? "Save & publish" : "Save changes"}</button><button type="button" onClick={() => setEditingProductId(null)} className="rounded-lg border px-4 py-2.5 text-xs font-semibold text-[#563568]">Cancel</button></div>
+            </div>}
+          </div>)}
+        </div>}
         {products.length === 0 && <p className="text-xs text-[#705E7B]">No catalogue products found yet. Add products in Products & Catalogue first.</p>}
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={settings.showBestSellers} onChange={e => update("showBestSellers", e.target.checked)} /> Show a separate Best Sellers section</label>
         <p className="text-xs text-[#705E7B]">Best Sellers uses the same selected product pool; choose items below.</p>
@@ -243,7 +300,7 @@ export const MenStorefrontManager: React.FC = () => {
       </section>
     </div>}
 
-    {tab === "marketing" && <section className="space-y-4 rounded-2xl border border-[#E7DCEB] bg-white p-4 sm:p-5">
+    {tab === "advanced" && <section className="space-y-4 rounded-2xl border border-[#E7DCEB] bg-white p-4 sm:p-5">
       <h3 className="font-semibold text-[#302438]">Offers & launch notifications</h3>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={settings.offers.enabled} onChange={e => update("offers", { ...settings.offers, enabled: e.target.checked })} /> Show men's offer panel</label>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -261,7 +318,7 @@ export const MenStorefrontManager: React.FC = () => {
       <div className="flex flex-wrap gap-2"><button disabled={busy} onClick={() => void saveDraft()} className="rounded-lg border px-4 py-2.5 text-sm font-semibold text-[#563568]">Save draft</button><button disabled={busy} onClick={() => void publish()} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-semibold text-white">Publish marketing settings</button></div>
     </section>}
 
-    {tab === "signups" && <section className="space-y-3 rounded-2xl border border-[#E7DCEB] bg-white p-4 sm:p-5">
+    {tab === "advanced" && <section className="space-y-3 rounded-2xl border border-[#E7DCEB] bg-white p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-semibold text-[#302438]">Launch notification signups</h3><p className="text-xs text-[#705E7B]">Emails are stored securely in your Hostinger database with signup consent.</p></div><button onClick={exportSubscribers} disabled={!subscribers.length} className="rounded-lg bg-[#563568] px-3 py-2 text-xs font-semibold text-white disabled:opacity-40">Export CSV</button></div>
       {subscribers.length ? <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead><tr className="border-b text-[#705E7B]"><th className="p-2">Email</th><th className="p-2">Consent</th><th className="p-2">Signed up</th><th className="p-2">Action</th></tr></thead><tbody>{subscribers.map(item => <tr key={item.id} className="border-b border-[#F0EAF2]"><td className="p-2">{item.email}</td><td className="p-2">{item.consent ? "Yes" : "No"}</td><td className="p-2">{new Date(item.createdAt).toLocaleDateString()}</td><td className="p-2"><button onClick={() => void removeSubscriber(item.id)} className="text-red-600 underline">Delete</button></td></tr>)}</tbody></table></div> : <p className="rounded-lg bg-[#F7F0FA] p-4 text-sm text-[#705E7B]">No signups yet. Once visitors subscribe, they will appear here.</p>}
       <button onClick={() => void load()} className="rounded-lg border px-3 py-2 text-xs font-semibold text-[#563568]">Refresh signups</button>

@@ -160,7 +160,7 @@ export interface MenStorefrontSettings {
   offers: { enabled: boolean; label: string; description: string; ctaText: string; ctaLink: string };
   notification: { enabled: boolean; headline: string; description: string; buttonText: string };
 }
-export interface MenStorefrontProduct { id: string; name: string; slug: string; price: number; compareAtPrice?: number | null; images: string[]; status: string; stock: number; }
+export interface MenStorefrontProduct { id: string; name: string; slug: string; description?: string; price: number; compareAtPrice?: number | null; images: string[]; status: string; stock: number; }
 export interface MenLaunchSubscriber { id: string; email: string; consent: boolean; source: string; createdAt: string; }
 
 
