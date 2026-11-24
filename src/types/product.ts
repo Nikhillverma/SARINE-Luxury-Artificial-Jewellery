@@ -41,6 +41,8 @@ export interface ProductVariant {
 
 export interface Product {
   id: string;
+  /** Catalogue audience keeps men's and women's products independently managed. */
+  gender?: "men" | "women";
   slug: string;
   name: string;
   description: string;
