@@ -7,7 +7,7 @@
  * - Consistent vertical rhythm: 64-96px desktop, 40-56px mobile
  * - Hero banner: fixed responsive height h-[360px] sm:h-[420px] lg:h-[520px],
  *   stacked absolute slides with opacity transitions, object-[70%_center],
- *   soft beige gradient overlay, centered container controls, no blank space underneath.
+ *   centered container controls, no blank space underneath.
  */
 
 import React, { useEffect, useState, useRef } from 'react';
@@ -475,7 +475,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           Fixed responsive height: h-[420px] md:h-[520px] lg:h-[600px]
           Stacked absolute slides with opacity transitions
           Every image: object-cover object-[70%_center] on #F0E6F4
-          Text in centered container (max-w-[1280px]) with soft lavender gradient overlay
+          Text in centered container (max-w-[1280px]) directly over the hero image
           Slide indicators bottom-left, arrow buttons bottom-right inside container
           ========================================================================= */}
       <section
@@ -523,7 +523,6 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           </div>
         ))}
 
-        {!currentHero.campaign?.artworkOnly && <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(90deg,rgba(43,26,51,0.60)_0%,rgba(43,26,51,0.48)_42%,rgba(43,26,51,0.12)_76%,rgba(43,26,51,0)_100%)]" />}
 
         {/* Persistent offer badge: remains visible even when campaign artwork includes its own copy. */}
         {currentHero.campaign?.offerLabel && (
