@@ -278,22 +278,26 @@ export const AdminOrdersPage: React.FC = () => {
     });
   }, [orders, searchTerm, dateFrom, dateTo, sortOrder]);
 
-  const orderMetrics = useMemo(() => ({
-    total: orders.length,
-    attention: orders.filter((order) => ['pending', 'placed', 'needs_refund'].includes(order.orderStatus?.toLowerCase()) || order.refundNeeded || (order.paymentStatus?.toLowerCase() === 'failed')).length,
-    inProgress: orders.filter((order) => ['confirmed', 'processing', 'packed', 'shipped', 'out_for_delivery'].includes(order.orderStatus?.toLowerCase())).length,
-    delivered: orders.filter((order) => order.orderStatus?.toLowerCase() === 'delivered').length,
-    refund: orders.filter((order) => order.refundNeeded || order.orderStatus?.toLowerCase() === 'needs_refund').length
-  }), [orders]);
+  const orderMetrics = useMemo(() => {
+    const genuine = orders.filter(order => !order.isTest);
+    return {
+      total: genuine.length,
+      test: orders.filter(order => order.isTest).length,
+      attention: genuine.filter((order) => ['pending', 'placed', 'needs_refund'].includes(order.orderStatus?.toLowerCase()) || order.refundNeeded || (order.paymentStatus?.toLowerCase() === 'failed')).length,
+      inProgress: genuine.filter((order) => ['confirmed', 'processing', 'packed', 'shipped', 'out_for_delivery'].includes(order.orderStatus?.toLowerCase())).length,
+      delivered: genuine.filter((order) => order.orderStatus?.toLowerCase() === 'delivered').length,
+      refund: genuine.filter((order) => order.refundNeeded || order.orderStatus?.toLowerCase() === 'needs_refund').length
+    };
+  }, [orders]);
 
   const exportOrdersCsv = () => {
-    const columns = ['Order Number', 'Created At', 'Customer', 'Email', 'Phone', 'City', 'State', 'Pincode', 'Items', 'Subtotal', 'Shipping Fee', 'Total', 'Payment Method', 'Payment Status', 'Order Status', 'Courier', 'Tracking Number'];
+    const columns = ['Order Number', 'Order Type', 'Created At', 'Customer', 'Email', 'Phone', 'City', 'State', 'Pincode', 'Items', 'Subtotal', 'Shipping Fee', 'Total', 'Payment Method', 'Payment Status', 'Order Status', 'Courier', 'Tracking Number'];
     const cell = (value: unknown) => {
       const text = String(value ?? '');
       const safe = ['=', '+', '-', '@', String.fromCharCode(9), String.fromCharCode(13)].includes(text.charAt(0)) ? `'${text}` : text;
       return `"${safe.replace(/"/g, '""')}"`;
     };
-    const rows = filteredOrders.map((order) => [order.orderNumber, order.createdAt, order.customer?.name, order.customer?.email, order.customer?.phone, order.shippingAddress?.city, order.shippingAddress?.state, order.shippingAddress?.pincode, (order.lines || []).map((line) => `${line.name} x${line.quantity}`).join('; '), order.subtotal, order.shippingFee, order.total, order.paymentMethod, order.paymentStatus, order.orderStatus, order.courierName, order.trackingNumber]);
+    const rows = filteredOrders.map((order) => [order.orderNumber, order.isTest ? 'TEST' : 'REAL', order.createdAt, order.customer?.name, order.customer?.email, order.customer?.phone, order.shippingAddress?.city, order.shippingAddress?.state, order.shippingAddress?.pincode, (order.lines || []).map((line) => `${line.name} x${line.quantity}`).join('; '), order.subtotal, order.shippingFee, order.total, order.paymentMethod, order.paymentStatus, order.orderStatus, order.courierName, order.trackingNumber]);
     const csv = [columns, ...rows].map((row) => row.map(cell).join(',')).join('\r\n');
     const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -583,7 +587,8 @@ export const AdminOrdersPage: React.FC = () => {
         {/* Live ledger snapshot */}
         <section aria-label="Order overview" className="grid grid-cols-2 xl:grid-cols-5 gap-3">
           {[
-            { label: 'Loaded orders', value: orderMetrics.total, hint: 'Current fetched records' },
+            { label: 'Real orders', value: orderMetrics.total, hint: 'Excludes test orders' },
+            { label: 'Test orders', value: orderMetrics.test, hint: 'Excluded from sales totals' },
             { label: 'Needs attention', value: orderMetrics.attention, hint: 'Pending, failed or refund' },
             { label: 'In fulfilment', value: orderMetrics.inProgress, hint: 'Being prepared or delivered' },
             { label: 'Delivered', value: orderMetrics.delivered, hint: 'Completed deliveries' },
@@ -843,7 +848,7 @@ export const AdminOrdersPage: React.FC = () => {
                     Order Details
                   </span>
                   <h2 className="font-serif text-2xl text-[#302438] font-normal mt-0.5">
-                    {selectedOrder.orderNumber}
+                    {selectedOrder.orderNumber}{selectedOrder.isTest && <span className="ml-2 inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-900">TEST</span>}
                   </h2>
                 </div>
                 <button
