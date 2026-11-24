@@ -382,6 +382,171 @@ publicRouter.get("/campaign", async (_req, res, next) => {
   } catch (error) { next(error); }
 });
 
+
+const DEFAULT_MEN_STOREFRONT = {
+  version: 1, enabled: true, heroImageUrl: "", eyebrow: "SARINE · MEN",
+  title: "A New Standard of Style",
+  description: "Modern essentials. Timeless details. Discover a considered edit of jewellery for him.",
+  comingSoon: true, comingSoonText: "Our men's edit is on its way. Be among the first to discover it.",
+  categories: [
+    { id: "bracelets", title: "Bracelets", description: "Refined details for every day.", imageUrl: "", active: true, sortOrder: 0 },
+    { id: "chains", title: "Chains", description: "Understated pieces with presence.", imageUrl: "", active: true, sortOrder: 1 },
+    { id: "rings", title: "Rings", description: "A signature in the details.", imageUrl: "", active: true, sortOrder: 2 },
+    { id: "kada", title: "Kada", description: "Classic form, modern character.", imageUrl: "", active: true, sortOrder: 3 }
+  ],
+  showProducts: false, productIds: [], featuredTitle: "The Men's Edit",
+  bestSellerIds: [], showBestSellers: false,
+  collections: [],
+  offers: { enabled: false, label: "A little something extra", description: "", ctaText: "Explore offers", ctaLink: "/men" },
+  notification: { enabled: true, headline: "Be first to know", description: "Sign up for an update when SARINE Men arrives.", buttonText: "Notify me" }
+};
+function normalizeMenStorefront(value) {
+  const input = value && typeof value === "object" ? value : {};
+  const text = (v, fallback, max) => String(v ?? fallback).trim().slice(0, max);
+  const safeImage = v => { const s = text(v, "", 2048); return !s || /^https:\/\//i.test(s) ? s : ""; };
+  const categories = Array.isArray(input.categories) ? input.categories.slice(0, 12).map((item, index) => ({
+    id: text(item?.id, "category-" + index, 60).toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+    title: text(item?.title, "Category", 80),
+    description: text(item?.description, "", 180),
+    imageUrl: safeImage(item?.imageUrl),
+    active: item?.active !== false,
+    sortOrder: index
+  })) : DEFAULT_MEN_STOREFRONT.categories;
+  const collections = Array.isArray(input.collections) ? input.collections.slice(0, 20).map((item, index) => ({
+    id: text(item?.id, "collection-" + index, 60).toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+    title: text(item?.title, "Collection", 100),
+    description: text(item?.description, "", 240),
+    productIds: Array.isArray(item?.productIds) ? [...new Set(item.productIds.filter(id => typeof id === "string"))].slice(0, 50) : [],
+    active: item?.active === true,
+    sortOrder: index
+  })) : [];
+  const offers = input.offers && typeof input.offers === "object" ? input.offers : {};
+  const notification = input.notification && typeof input.notification === "object" ? input.notification : {};
+  const productIds = Array.isArray(input.productIds) ? [...new Set(input.productIds.filter(id => typeof id === "string"))].slice(0, 100) : [];
+  const bestSellerIds = Array.isArray(input.bestSellerIds) ? [...new Set(input.bestSellerIds.filter(id => typeof id === "string"))].slice(0, 12) : [];
+  const ctaLink = text(offers.ctaLink, "/men", 500);
+  return {
+    version: 1, enabled: input.enabled !== false, heroImageUrl: safeImage(input.heroImageUrl),
+    eyebrow: text(input.eyebrow, DEFAULT_MEN_STOREFRONT.eyebrow, 100),
+    title: text(input.title, DEFAULT_MEN_STOREFRONT.title, 140),
+    description: text(input.description, DEFAULT_MEN_STOREFRONT.description, 500),
+    comingSoon: input.comingSoon !== false,
+    comingSoonText: text(input.comingSoonText, DEFAULT_MEN_STOREFRONT.comingSoonText, 300),
+    categories, showProducts: input.showProducts === true, productIds,
+    featuredTitle: text(input.featuredTitle, DEFAULT_MEN_STOREFRONT.featuredTitle, 100),
+    bestSellerIds, showBestSellers: input.showBestSellers === true,
+    collections,
+    offers: {
+      enabled: offers.enabled === true,
+      label: text(offers.label, DEFAULT_MEN_STOREFRONT.offers.label, 100),
+      description: text(offers.description, "", 300),
+      ctaText: text(offers.ctaText, "Explore offers", 80),
+      ctaLink: ctaLink.startsWith("/") && !ctaLink.startsWith("//") ? ctaLink : "/men"
+    },
+    notification: {
+      enabled: notification.enabled !== false,
+      headline: text(notification.headline, DEFAULT_MEN_STOREFRONT.notification.headline, 100),
+      description: text(notification.description, DEFAULT_MEN_STOREFRONT.notification.description, 240),
+      buttonText: text(notification.buttonText, "Notify me", 40)
+    }
+  };
+}
+async function readMenStorefrontRecord() {
+  await ensureSchema();
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='men_storefront' LIMIT 1");
+  if (!rows.length) return { draft: DEFAULT_MEN_STOREFRONT, published: DEFAULT_MEN_STOREFRONT };
+  try {
+    const saved = JSON.parse(rows[0].setting_value);
+    return { draft: normalizeMenStorefront(saved.draft), published: normalizeMenStorefront(saved.published) };
+  } catch { return { draft: DEFAULT_MEN_STOREFRONT, published: DEFAULT_MEN_STOREFRONT }; }
+}
+async function writeMenStorefrontRecord(record) {
+  await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('men_storefront', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [JSON.stringify(record)]);
+}
+async function ensureMenSubscribersSchema() {
+  await pool.execute(`CREATE TABLE IF NOT EXISTS men_launch_subscribers (
+    id CHAR(36) NOT NULL PRIMARY KEY,
+    email VARCHAR(254) NOT NULL,
+    consent TINYINT(1) NOT NULL DEFAULT 0,
+    source VARCHAR(40) NOT NULL DEFAULT 'men-page',
+    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    UNIQUE KEY uq_men_launch_email (email),
+    INDEX idx_men_launch_created (created_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+}
+const menSignupLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 8, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Too many signup attempts. Please try again later." } });
+adminOnly.get("/men-storefront", async (_req, res, next) => {
+  try {
+    const record = await readMenStorefrontRecord();
+    const [rows] = await pool.execute("SELECT id, name, slug, price, images, status, stock FROM products ORDER BY created_at DESC LIMIT 500");
+    const products = rows.map(row => {
+      let images = []; try { images = JSON.parse(row.images || "[]"); } catch {}
+      return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price), images: Array.isArray(images) ? images : [], status: row.status, stock: Number(row.stock) };
+    });
+    res.set("Cache-Control", "no-store").json({ ...record, products });
+  } catch (error) { next(error); }
+});
+adminOnly.put("/men-storefront/draft", async (req, res, next) => {
+  try {
+    const draft = normalizeMenStorefront(req.body?.settings);
+    if (!draft.title || !draft.description) return res.status(400).json({ error: "Add a title and description for the men's page." });
+    const record = await readMenStorefrontRecord();
+    await writeMenStorefrontRecord({ ...record, draft });
+    res.set("Cache-Control", "no-store").json({ success: true, draft });
+  } catch (error) { next(error); }
+});
+adminOnly.post("/men-storefront/publish", async (_req, res, next) => {
+  try {
+    const record = await readMenStorefrontRecord();
+    const published = normalizeMenStorefront(record.draft);
+    await writeMenStorefrontRecord({ ...record, published });
+    res.set("Cache-Control", "no-store").json({ success: true, published });
+  } catch (error) { next(error); }
+});
+publicRouter.get("/men-storefront", async (_req, res, next) => {
+  try {
+    const { published } = await readMenStorefrontRecord();
+    const productIds = published.showProducts ? published.productIds : [];
+    let products = [];
+    if (productIds.length) {
+      const placeholders = productIds.map(() => "?").join(",");
+      const [rows] = await pool.execute(`SELECT id, name, slug, price, compare_at_price, images, stock FROM products WHERE status='active' AND id IN (${placeholders})`, productIds);
+      const byId = new Map(rows.map(row => [row.id, row]));
+      products = productIds.map(id => byId.get(id)).filter(Boolean).map(row => {
+        let images = []; try { images = JSON.parse(row.images || "[]"); } catch {}
+        return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price), compareAtPrice: row.compare_at_price == null ? null : Number(row.compare_at_price), images: Array.isArray(images) ? images : [], stock: Number(row.stock) };
+      });
+    }
+    res.set("Cache-Control", "no-store").json({ settings: published, products });
+  } catch (error) { next(error); }
+});
+publicRouter.post("/men-launch-signups", menSignupLimiter, async (req, res, next) => {
+  try {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const consent = req.body?.consent === true;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || !consent) return res.status(400).json({ error: "Enter a valid email and agree to receive SARINE Men launch updates." });
+    await ensureMenSubscribersSchema();
+    const id = crypto.randomUUID();
+    await pool.execute("INSERT INTO men_launch_subscribers (id, email, consent, source) VALUES (?, ?, 1, 'men-page') ON DUPLICATE KEY UPDATE email=VALUES(email)", [id, email]);
+    res.status(201).json({ success: true, message: "You're on the list. We'll let you know when SARINE Men arrives." });
+  } catch (error) { next(error); }
+});
+adminOnly.get("/men-launch-signups", async (_req, res, next) => {
+  try {
+    await ensureMenSubscribersSchema();
+    const [rows] = await pool.execute("SELECT id, email, consent, source, created_at AS createdAt FROM men_launch_subscribers ORDER BY created_at DESC LIMIT 5000");
+    res.set("Cache-Control", "no-store").json({ subscribers: rows.map(row => ({ ...row, consent: Boolean(row.consent) })) });
+  } catch (error) { next(error); }
+});
+adminOnly.delete("/men-launch-signups/:id", async (req, res, next) => {
+  try {
+    await ensureMenSubscribersSchema();
+    const [result] = await pool.execute("DELETE FROM men_launch_subscribers WHERE id = ?", [req.params.id]);
+    if (!result.affectedRows) return res.status(404).json({ error: "Signup not found." });
+    res.json({ success: true });
+  } catch (error) { next(error); }
+});
+
 admin.use("/", adminOnly);
 export { publicRouter as publicStorefrontRouter };
 export default admin;
