@@ -654,7 +654,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                   to={`/shop?category=${encodeURIComponent(cat.slug)}`}
                   className={sectionCarouselEnabled("categories") ? "sarine-category-card group w-[72%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "sarine-category-card group min-w-0"} style={sectionCarouselEnabled("categories") ? desktopCardStyle("categories", 20, 5) : undefined}
                 >
-                  <div className="sarine-category-card__media relative aspect-[4/5] overflow-hidden rounded-sm border border-[var(--border)] bg-[var(--pill)] transition-colors group-hover:border-[var(--gold)]">
+                  <div className="sarine-category-card__media relative aspect-square overflow-hidden rounded-sm border border-[var(--border)] bg-[var(--pill)] transition-colors group-hover:border-[var(--gold)]">
                     <img
                       src={cat.image}
                       alt={cat.name}
@@ -664,12 +664,12 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                       referrerPolicy="no-referrer"
                       className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                     />
-                    <div className="sarine-category-card__caption absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-[#2B1A33]/75 via-[#2B1A33]/15 to-transparent px-4 pb-4 pt-12">
-                      <h3 className="font-serif text-lg font-medium !text-white sm:text-xl [text-shadow:0_1px_5px_rgba(0,0,0,0.7)]" style={{ color: "#FFFFFF" }}>{cat.name}</h3>
-                      <span aria-hidden="true" className="sarine-category-card__arrow inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/70 bg-white/10 text-white backdrop-blur-sm">
-                        <ArrowRight size={15} />
-                      </span>
-                    </div>
+                  </div>
+                  <div className="sarine-category-card__caption flex min-h-0 items-center justify-between gap-2 px-1 pt-3 pb-1">
+                    <h3 className="min-w-0 font-serif text-base font-medium !text-[color:var(--heading)] sm:text-lg">{cat.name}</h3>
+                    <span aria-hidden="true" className="sarine-category-card__arrow inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[color:var(--plum)]">
+                      <ArrowRight size={15} />
+                    </span>
                   </div>
                 </Link>
               ))}
