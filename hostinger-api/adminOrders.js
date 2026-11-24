@@ -252,7 +252,7 @@ router.get("/", async (req, res, next) => {
 
 /**
  * POST /api/admin/orders/test
- * Creates four synthetic COD test orders, one per published men's category.
+ * Creates one synthetic COD test order for each active published men's category (up to twelve).
  * These orders never touch inventory or payment gateways and are excluded
  * from revenue analytics by orders.is_test.
  */
@@ -288,7 +288,7 @@ router.post("/test", async (req, res, next) => {
     );
     let sequence = Math.max(Number(counterRows[0]?.counter_value || 0), Number(maxRows[0]?.max_seq || 0), 124);
     const created = [];
-    const selectedCategories = categories.slice(0, 4);
+    const selectedCategories = categories.slice(0, 12);
     for (let index = 0; index < selectedCategories.length; index++) {
       const category = selectedCategories[index];
       let orderNumber;
