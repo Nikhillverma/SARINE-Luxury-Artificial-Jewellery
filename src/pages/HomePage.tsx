@@ -694,15 +694,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
           <div className="w-full text-center mb-4 sm:mb-4">
-            <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">
-              JUST ARRIVED
-            </span>
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">
               New Arrivals
             </h2>
-            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed max-w-xl mx-auto">
-              Discover our newest handcrafted pieces, designed with delicate craftsmanship for modern grace.
-            </p>
             <div className="mt-3">
               <Link
                 to="/shop?sort=newest"
@@ -766,9 +760,6 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">
               Best Sellers
             </h2>
-            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed max-w-xl mx-auto">
-              Our most cherished pieces, ranked by genuine customer purchases.
-            </p>
             <div className="mt-3">
               <Link
                 to='/shop?sort=bestseller'
@@ -824,11 +815,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       <section style={{ order: sectionOrder("curated-favourites"), display: sectionVisible("curated-favourites") && (loading || (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0) ? undefined : "none", backgroundColor: "var(--tint)" }} className="sarine-product-section sarine-section-curated-favourites py-6 sm:py-8 lg:py-10 border-t border-[var(--border)] bg-[var(--tint)]">
         <div className="site-container">
           <div className="w-full text-center mb-4 sm:mb-4">
-            <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">THE SARINE EDIT</span>
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">Curated Favourites</h2>
-            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed max-w-xl mx-auto">
-              A considered edit of beautiful pieces selected from the SARINE collection.
-            </p>
             <div className="mt-3">
               <Link to="/shop" className="text-xs sm:text-[13px] !text-[color:var(--plum)] hover:!text-[color:var(--plum)] font-sans font-medium inline-flex items-center gap-1.5 transition-colors">
                 <span>View All</span><ArrowRight size={13} />
@@ -865,15 +852,9 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") && occasions.some(item => item.active) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[var(--border)] !bg-white">
         <div className="site-container">
           <div className="w-full text-center mb-4 sm:mb-4">
-            <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">
-              CURATED OCCASIONS
-            </span>
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">
               Shop by Occasion
             </h2>
-            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed max-w-xl mx-auto">
-              Adornments thoughtfully curated for festive splendour, sacred vows, and every day in between.
-            </p>
           </div>
 
           {sectionCarouselEnabled("occasions") && <div className="mb-3 flex items-center justify-end gap-2" aria-label="Shop by Occasion carousel controls">
@@ -902,9 +883,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       <section style={{ order: sectionOrder("explore-now"), display: sectionVisible("explore-now") && hasPublishedExploreNow && exploreProducts.length ? undefined : "none", backgroundColor: "var(--white)" }} className="sarine-product-section sarine-section-explore-now border-t border-[var(--border)] bg-white py-7 sm:py-9 lg:py-11">
         <div className="site-container">
           <div className="mb-5 text-center sm:mb-6">
-            <span className="mb-2 block text-[10px] font-medium uppercase tracking-[0.25em] !text-[color:var(--gold-text)]">DISCOVER SOMETHING NEW</span>
             <h2 className="font-serif text-2xl font-normal !text-[color:var(--heading)] sm:text-3xl lg:text-4xl">Explore Now</h2>
-            <p className="mx-auto mt-2 max-w-xl text-xs leading-relaxed !text-[color:var(--body)] sm:text-sm">A fresh selection of pieces to inspire your next look.</p>
           </div>
           <div className="sarine-product-grid grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
             {exploreProducts.slice(0, exploreDisplayCount).map(product => (
@@ -922,9 +901,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       <section style={{ order: sectionOrder("price"), display: sectionVisible("price") ? undefined : "none", backgroundColor: "#FFFFFF" }} className="py-6 sm:py-8 border-t border-[var(--border)] !bg-white">
         <div className="site-container">
           <div className="w-full text-center mb-4">
-            <span className="text-[10px] uppercase tracking-[0.25em] !text-[color:var(--gold-text)] font-medium block mb-2 font-sans">{homepageContent.price.eyebrow}</span>
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">{homepageContent.price.title}</h2>
-            <p className="mt-2 text-xs sm:text-sm !text-[color:var(--body)] font-sans leading-relaxed max-w-xl mx-auto">{homepageContent.price.description}</p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 max-w-2xl mx-auto">
             {homepageContent.price.links.map((item, index) => (
