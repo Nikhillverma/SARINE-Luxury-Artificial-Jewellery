@@ -564,52 +564,17 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </div>
           </div>}
 
-          {/* Bottom row inside container: 01 02 03 left, arrows right */}
-          <div className="flex items-center justify-between w-full pointer-events-auto pt-4">
-            {/* 01 02 03 indicators */}
-            <div className="flex items-center space-x-6 text-xs font-sans tracking-widest text-[#6F6475]">
-              {heroSlides.map((slide, idx) => (
-                <button
-                  key={slide.id}
-                  onClick={() => setActiveSlide(idx)}
-                  className={`pb-1 transition-all cursor-pointer ${
-                    activeSlide === idx
-                      ? 'text-[color:var(--gold-light)] font-semibold border-b-2 border-[var(--gold-light)]'
-                      : 'text-[color:var(--footer-muted)]'
-                  }`}
-                  aria-label={`Go to slide 0${idx + 1}`}
-                >
-                  0{idx + 1}
-                </button>
-              ))}
-            </div>
-
-            {/* Carousel controls, including a persistent pause option for motion-sensitive users. */}
-            <div className="flex items-center space-x-3">
-              <button
-                type="button"
-                onClick={() => setIsHeroPaused(paused => !paused)}
-                aria-label={isHeroPaused ? "Play automatic hero slides" : "Pause automatic hero slides"}
-                aria-pressed={isHeroPaused}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[var(--border)] bg-[var(--white)] hover:bg-[var(--gold)] hover:border-[var(--gold)] text-[color:var(--plum)] hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
-              >
-                {isHeroPaused ? <Play size={16} /> : <Pause size={16} />}
-              </button>
-              <button
-                onClick={prevSlide}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[var(--border)] bg-[var(--white)] hover:bg-[var(--gold)] hover:border-[var(--gold)] text-[color:var(--plum)] hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
-                aria-label="Previous slide"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <button
-                onClick={nextSlide}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[var(--border)] bg-[var(--white)] hover:bg-[var(--gold)] hover:border-[var(--gold)] text-[color:var(--plum)] hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
-                aria-label="Next slide"
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
+          {/* Keep the pause control; remove manual slide navigation. */}
+          <div className="flex w-full justify-end pointer-events-auto pt-4">
+            <button
+              type="button"
+              onClick={() => setIsHeroPaused(paused => !paused)}
+              aria-label={isHeroPaused ? "Play automatic hero slides" : "Pause automatic hero slides"}
+              aria-pressed={isHeroPaused}
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[var(--border)] bg-[var(--white)] hover:bg-[var(--gold)] hover:border-[var(--gold)] text-[color:var(--plum)] hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
+            >
+              {isHeroPaused ? <Play size={16} /> : <Pause size={16} />}
+            </button>
           </div>
         </div>
       </section>
@@ -633,15 +598,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         <div className="site-container">
           <div className="relative mb-5 flex items-center justify-center gap-4">
             <h2 className="w-full text-center font-serif text-2xl font-normal !text-[color:var(--heading)] sm:text-3xl lg:text-4xl">Shop by Category</h2>
-            <div className="absolute right-0 flex shrink-0 items-center gap-2">
-              <Link to="/shop" className="hidden items-center gap-1 text-xs font-medium !text-[color:var(--plum)] transition-colors hover:!text-[color:var(--plum)] sm:inline-flex">
-                View all <ArrowRight size={13} />
-              </Link>
-              {sectionCarouselEnabled("categories") && <>
-                <button type="button" onClick={() => scrollCategories('left')} aria-label="Scroll categories left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white"><ChevronLeft size={17} /></button>
-                <button type="button" onClick={() => scrollCategories('right')} aria-label="Scroll categories right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white"><ChevronRight size={17} /></button>
-              </>}
-            </div>
+
           </div>
 
           {categories.length > 0 ? (
