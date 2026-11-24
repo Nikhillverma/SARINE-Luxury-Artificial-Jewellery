@@ -814,12 +814,6 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               </Link>
             </div>
           </div>
-{sectionCarouselEnabled("curated-favourites") && (
-          <div className="mb-3 flex items-center justify-end gap-2" aria-label="Curated Favourites carousel controls">
-            <button type="button" onClick={() => scrollProductTrack(curatedCarouselRef.current, 'left')} aria-label="Scroll Curated Favourites left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white"><ChevronLeft size={17} /></button>
-            <button type="button" onClick={() => scrollProductTrack(curatedCarouselRef.current, 'right')} aria-label="Scroll Curated Favourites right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white"><ChevronRight size={17} /></button>
-          </div>
-          )}
           {loading ? (
             <div className="flex gap-4 overflow-hidden pb-3">
               {[...Array(4)].map((_, i) => <div key={i} className="w-[68%] shrink-0 sm:w-[42%] md:w-[30%] lg:w-1/4 animate-pulse"><div className="bg-[var(--pill)] aspect-[3/4] w-full border border-[var(--border)]" /><div className="h-4 bg-[var(--pill)] w-2/3 mt-3" /><div className="h-3 bg-[var(--pill)] w-1/3 mt-2" /></div>)}
