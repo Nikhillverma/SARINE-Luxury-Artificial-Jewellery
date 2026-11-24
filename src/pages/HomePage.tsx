@@ -661,13 +661,13 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         <div className="site-container">
           <div className="grid grid-cols-2 gap-3 sm:gap-5">
             <Link to="/shop" className="group block min-w-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--plum)]" aria-label="Shop for her">
-              <div className="aspect-[3/1] w-full overflow-hidden rounded-[10px] bg-[var(--pill)]">
+              <div className="aspect-[2/1] sm:aspect-[3/1] w-full overflow-hidden rounded-[10px] bg-[var(--pill)]">
                 {shopByGender.forHerImageUrl && <img src={shopByGender.forHerImageUrl} alt="" aria-hidden="true" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />}
               </div>
               <p className="pt-2 text-center font-sans text-xs font-semibold tracking-[0.12em] text-black sm:pt-3 sm:text-sm">FOR HER</p>
             </Link>
             <button type="button" onClick={() => setShowMensComingSoon(true)} className="group block min-w-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--plum)]" aria-label="Shop for him — coming soon">
-              <div className="aspect-[3/1] w-full overflow-hidden rounded-[10px] bg-[var(--pill)]">
+              <div className="aspect-[2/1] sm:aspect-[3/1] w-full overflow-hidden rounded-[10px] bg-[var(--pill)]">
                 {shopByGender.forHimImageUrl && <img src={shopByGender.forHimImageUrl} alt="" aria-hidden="true" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />}
               </div>
               <p className="pt-2 text-center font-sans text-xs font-semibold tracking-[0.12em] text-black sm:pt-3 sm:text-sm">FOR HIM</p>
