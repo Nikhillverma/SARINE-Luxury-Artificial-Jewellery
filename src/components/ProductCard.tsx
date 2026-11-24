@@ -96,11 +96,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <button
           onClick={handleWishlistClick}
           aria-label={wishlisted ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
-          className="absolute top-1.5 right-1.5 z-20 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-[var(--white)] hover:bg-[var(--white)] !text-[color:var(--plum)] flex items-center border border-[var(--border)] transition-all cursor-pointer shadow-2xs backdrop-blur-xs touch-manipulation"
+          className="absolute top-1.5 right-1.5 z-20 relative inline-flex min-h-11 min-w-11 items-center justify-center !text-[color:var(--plum)] transition-all cursor-pointer touch-manipulation"
         >
+          <span aria-hidden="true" className="absolute h-8 w-8 rounded-full bg-[var(--white)] border border-[var(--border)] shadow-2xs backdrop-blur-xs" />
           <Heart
             size={16}
-            className={`transition-colors ${
+            className={`relative z-10 transition-colors ${
               wishlisted ? 'fill-[var(--rose)] !text-[color:var(--rose)]' : '!text-[color:var(--plum)]'
             }`}
           />
