@@ -1003,3 +1003,22 @@ body.sarine-global-theme #main-content .sarine-product-card__price > span:first-
   .sarine-global-footer .grid > div:not(:first-child) { min-width: 0; }
   .sarine-global-footer .grid > div h4 { line-height: 1.35; }
 }
+
+
+/* New Arrivals: centred editorial heading, no arrow controls; touch/trackpad scrolling remains available. */
+.sarine-home .sarine-section-heading--new {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .35rem;
+  text-align: center;
+}
+.sarine-home .sarine-section-heading--new > div { margin-top: 0 !important; }
+.sarine-home .sarine-section-heading--new h2 { text-align: center; }
+.sarine-home .sarine-section-heading--new a { min-height: 44px; }
+@media (max-width: 639px) {
+  .sarine-home .sarine-section-heading--new { align-items: center; gap: .25rem; }
+  .sarine-home .sarine-section-heading--new h2 { font-size: clamp(1.55rem, 7vw, 2rem); }
+  .sarine-home .sarine-section-heading--new a { font-size: 11px; white-space: nowrap; }
+}

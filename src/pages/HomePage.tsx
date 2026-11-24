@@ -386,13 +386,15 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           if (newestResult.status === 'fulfilled') {
             // 4 newest products sorted by createdAt descending.
             const newest = newestResult.value;
-            const sortedNewest = [...newest].sort((a, b) => {
-              const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-              const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-              return dateB - dateA;
-            });
-            const arrivalList = sortedNewest.slice(0, 4);
-            setNewArrivals((arrivalList.length > 0 ? arrivalList : newest.slice(0, 5)).filter(hasUsableProductImage));
+            const arrivalList = newest
+              .filter(hasUsableProductImage)
+              .sort((a, b) => {
+                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return (Number.isFinite(dateB) ? dateB : 0) - (Number.isFinite(dateA) ? dateA : 0);
+              })
+              .slice(0, 4);
+            setNewArrivals(arrivalList);
           }
 
           // Show the full error state only when every independent collection failed.
@@ -707,16 +709,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </div>
           </div>
 
-{sectionCarouselEnabled("new-arrivals") && (
-          <div className="mb-3 flex items-center justify-end gap-2" aria-label="New Arrivals carousel controls">
-            <button type="button" onClick={() => scrollProductTrack(newArrivalsCarouselRef.current, 'left')} aria-label="Scroll New Arrivals left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white">
-              <ChevronLeft size={17} />
-            </button>
-            <button type="button" onClick={() => scrollProductTrack(newArrivalsCarouselRef.current, 'right')} aria-label="Scroll New Arrivals right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white">
-              <ChevronRight size={17} />
-            </button>
-          </div>
-          )}
+
           {loading ? (
             <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {[...Array(5)].map((_, i) => (
