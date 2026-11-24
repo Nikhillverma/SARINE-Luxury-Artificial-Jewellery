@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 import { Product, isInStock, JEWELLERY_TYPE_LABELS, getDiscountPercent } from '../types/product';
 import { formatInr } from '../utils/currency';
 import { useWishlist } from '../context/WishlistContext';
-import { Heart, Star } from 'lucide-react';
+import { Gem, Heart, Star } from 'lucide-react';
 import { hostingerStorefrontService } from '../services/hostinger/hostingerStorefrontService';
 import { useCart } from '../context/CartContext';
 
@@ -32,6 +32,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   );
   const primaryImage = usableImages[0] || '';
   const secondaryImage = usableImages[1];
+  const [primaryImageFailed, setPrimaryImageFailed] = React.useState(false);
 
   const [reviewSummary, setReviewSummary] = React.useState<{ count: number; average: number } | null>(null);
 
@@ -44,7 +45,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     return () => { isCurrent = false; };
   }, [product.id]);
 
-  if (!primaryImage) return null;
 
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -57,21 +57,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       {/* 3:4 Portrait Image Container */}
       <div className="relative block w-full overflow-hidden bg-[var(--white)] aspect-[4/5] border border-[var(--border)] rounded-xs group-hover:border-[var(--gold)] transition-colors">
         <Link to={`/product/${product.slug}`} className="block w-full h-full">
-          <img
-            src={primaryImage}
-            onError={(event) => { const article = event.currentTarget.closest('article'); if (article) article.style.display = 'none'; }}
-            alt={product.name}
-            loading="lazy"
-            decoding="async"
-            fetchPriority="low"
-            referrerPolicy="no-referrer"
-            className={`absolute inset-0 h-full w-full object-cover object-center transition-all duration-500 ease-out ${
-              secondaryImage ? 'group-hover:opacity-0' : 'group-hover:scale-105'
-            }`}
-          />
+          {primaryImage && !primaryImageFailed ? (
+            <img
+              src={primaryImage}
+              onError={() => setPrimaryImageFailed(true)}
+              alt={product.name}
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+              referrerPolicy="no-referrer"
+              className={`absolute inset-0 h-full w-full object-cover object-center transition-all duration-500 ease-out ${
+                secondaryImage ? 'group-hover:opacity-0' : 'group-hover:scale-105'
+              }`}
+            />
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-[#F7F0FA] via-white to-[#EEE5F2] !text-[color:var(--plum)]" role="img" aria-label={`Image unavailable for ${product.name}`}>
+              <Gem size={30} strokeWidth={1.25} aria-hidden="true" />
+              <span className="px-3 text-center text-[10px] uppercase tracking-[0.18em]">SARINE</span>
+            </div>
+          )}
 
           {/* Secondary editorial image reveal on hover if available */}
-          {secondaryImage && (
+          {secondaryImage && !primaryImageFailed && (
             <img
               src={secondaryImage}
               onError={(event) => { event.currentTarget.style.display = "none"; }}
