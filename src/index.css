@@ -933,3 +933,80 @@ body.sarine-global-theme #main-content .sarine-product-card__reviews {
 body.sarine-global-theme #main-content .sarine-product-card__price > span:first-child {
   font-size: 15px;
 }
+ 
+/* ==========================================================================
+   SARINE homepage category carousel, collection identities and footer rhythm.
+   Header/navigation styles are intentionally excluded from this refinement.
+   ========================================================================== */
+.sarine-home .sarine-category-track { align-items: stretch; scroll-padding-inline: 1rem; }
+.sarine-home .sarine-category-card { min-width: 0; text-decoration: none; outline-offset: 4px; }
+.sarine-home .sarine-category-card__media {
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(54, 20, 63, .07);
+  isolation: isolate;
+}
+.sarine-home .sarine-category-card__media > img { transition: transform .65s cubic-bezier(.2,.7,.2,1); }
+.sarine-home .sarine-category-card__caption {
+  min-height: 6.5rem;
+  padding-inline: clamp(.75rem, 1.5vw, 1.1rem);
+}
+.sarine-home .sarine-category-card__caption h3 { min-width: 0; overflow-wrap: anywhere; line-height: 1.15; }
+.sarine-home .sarine-category-card__arrow { transition: color .2s ease, background-color .2s ease, transform .2s ease; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .sarine-home .sarine-category-card:hover .sarine-category-card__media > img { transform: scale(1.055); }
+  .sarine-home .sarine-category-card:hover .sarine-category-card__arrow {
+    transform: translateX(2px); color: var(--plum); background: #FFFFFF;
+  }
+}
+.sarine-home .sarine-category-card:focus-visible { outline: 2px solid var(--plum); outline-offset: 4px; }
+
+/* Keep all three collections related, but give each a recognisably different rhythm. */
+.sarine-home > .sarine-section-new-arrivals { background: #FFFFFF !important; }
+.sarine-home > .sarine-section-best-sellers { background: linear-gradient(180deg, #F7F0FA 0%, #FBF8FC 100%) !important; }
+.sarine-home > .sarine-section-curated-favourites { background: linear-gradient(145deg, #F7F0FA 0%, #FDFBFE 72%, #FFFFFF 100%) !important; }
+.sarine-home .sarine-section-heading { min-width: 0; }
+.sarine-home .sarine-section-heading h2 { margin: 0; letter-spacing: -.035em; }
+.sarine-home .sarine-section-heading a { min-height: 44px; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.sarine-home .sarine-section-heading--new {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; text-align: left;
+}
+.sarine-home .sarine-section-heading--new > div { margin-top: 0 !important; flex: 0 0 auto; }
+.sarine-home .sarine-section-heading--new a { border-bottom: 1px solid var(--gold-light); }
+.sarine-home .sarine-section-heading--best { padding-bottom: .9rem; border-bottom: 1px solid rgba(86, 53, 104, .16); }
+.sarine-home .sarine-section-heading--best a { border-bottom: 1px solid transparent; }
+.sarine-home .sarine-section-heading--curated {
+  width: min(100%, 42rem); margin-inline: auto; padding: .9rem 1rem 1rem;
+  border: 1px solid rgba(86, 53, 104, .13); border-radius: 12px;
+  background: rgba(255, 255, 255, .68); box-shadow: 0 5px 18px rgba(54, 20, 63, .035);
+}
+.sarine-home .sarine-section-heading--curated a { border-bottom: 1px solid rgba(86, 53, 104, .22); }
+.sarine-home .sarine-section-new-arrivals .sarine-product-card { border-radius: 5px; box-shadow: 0 1px 5px rgba(54, 20, 63, .025); }
+.sarine-home .sarine-section-best-sellers .sarine-product-card { border-radius: 11px; box-shadow: 0 5px 18px rgba(54, 20, 63, .065); }
+.sarine-home .sarine-section-curated-favourites .sarine-product-card {
+  border-radius: 13px; border-color: rgba(86, 53, 104, .15); box-shadow: 0 7px 22px rgba(54, 20, 63, .055);
+}
+.sarine-home .sarine-section-best-sellers .sarine-product-card:hover,
+.sarine-home .sarine-section-curated-favourites .sarine-product-card:hover { box-shadow: 0 12px 26px rgba(54, 20, 63, .11); }
+@media (max-width: 639px) {
+  .sarine-home .sarine-section-heading--new { align-items: center; gap: .5rem; }
+  .sarine-home .sarine-section-heading--new h2 { font-size: clamp(1.55rem, 7vw, 2rem); }
+  .sarine-home .sarine-section-heading--new a { font-size: 11px; white-space: nowrap; }
+  .sarine-home .sarine-section-heading--curated { padding: .75rem .65rem .8rem; border-radius: 9px; }
+  .sarine-home .sarine-category-card__caption { min-height: 5.5rem; padding: 2.5rem .75rem .8rem; }
+  .sarine-home .sarine-category-card__arrow { width: 1.85rem; height: 1.85rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sarine-home .sarine-category-card__media > img, .sarine-home .sarine-category-card__arrow { transition: none; }
+}
+
+/* Footer: predictable two-column mobile layout and accessible tap targets. */
+.sarine-global-footer ul a { display: inline-flex; min-height: 44px; align-items: center; line-height: 1.45; }
+.sarine-global-footer .mt-5 a[aria-label] {
+  display: inline-flex; width: 44px; height: 44px; align-items: center; justify-content: center;
+}
+.sarine-global-footer .pt-7 a { min-height: 44px; display: inline-flex; align-items: center; }
+@media (max-width: 639px) {
+  .sarine-global-footer .site-container { padding-left: 16px; padding-right: 16px; }
+  .sarine-global-footer .grid > div:not(:first-child) { min-width: 0; }
+  .sarine-global-footer .grid > div h4 { line-height: 1.35; }
+}
