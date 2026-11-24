@@ -1,4 +1,5 @@
 import { Router } from "express";
+import crypto from "node:crypto";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { canCancelOrder, canShipOrder, shouldRestoreStockOnCancellation } from "./orderAdminPolicy.js";
@@ -307,14 +308,15 @@ router.post("/test", async (req, res, next) => {
       const unitPrice = 1299 + index * 250;
       const shippingFee = unitPrice >= 1999 ? 0 : 99;
       const address = JSON.stringify({ fullName, phone, line1, line2: "Synthetic admin test data — no delivery", city, state, pincode });
+      const publicTokenHash = crypto.createHash("sha256").update(crypto.randomBytes(32)).digest("hex");
       await connection.execute(
         `INSERT INTO orders (
           id, order_number, customer_id, customer_name, customer_email, customer_phone,
           shipping_address, subtotal, shipping_fee, total, coupon_code, discount_amount,
           payment_method, payment_status, order_status, public_token_hash, source_document,
           is_test, created_at, updated_at
-        ) VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, NULL, 0, 'cod', 'pending', 'placed', NULL, ?, 1, UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
-        [orderNumber, orderNumber, fullName, email, phone, address, unitPrice, shippingFee, unitPrice + shippingFee,
+        ) VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, NULL, 0, 'cod', 'pending', 'placed', ?, ?, 1, UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))`,
+        [orderNumber, orderNumber, fullName, email, phone, address, unitPrice, shippingFee, unitPrice + shippingFee, publicTokenHash,
          JSON.stringify({ source: "admin_test_order_generator", isTest: true, categoryId: String(category.id || "").slice(0,80) })]
       );
       const productName = `[TEST ONLY] SARINE Men — ${String(category.title || "Category").slice(0, 100)} sample piece`;
