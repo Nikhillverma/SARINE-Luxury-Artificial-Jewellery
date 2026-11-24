@@ -148,6 +148,8 @@ export interface OccasionCard {
   sortOrder: number;
 }
 
+export interface ShopByGenderSettings { version: 1; forHerImageUrl: string; forHimImageUrl: string; }
+
 export interface StorefrontBanner {
   id: string;
   tagline: string;
@@ -204,6 +206,9 @@ export const hostingerStorefrontService = {
   publishHomepageContent: () =>
     request<{ success: boolean; published: HomepageContent }>("/admin/homepage-layout/content/publish", { method: "POST" }),
   getPublicHomepageContent: () => request<{ content: HomepageContent }>("/homepage-layout/content"),
+  getShopByGender: () => request<{ settings: ShopByGenderSettings }>("/admin/shop-by-gender"),
+  saveShopByGender: (settings: ShopByGenderSettings) => request<{ success: boolean; settings: ShopByGenderSettings }>("/admin/shop-by-gender", { method: "PUT", body: JSON.stringify(settings) }),
+  getPublicShopByGender: () => request<{ settings: ShopByGenderSettings }>("/shop-by-gender"),
   getOccasions: () => request<{ occasions: OccasionCard[] }>("/admin/storefront/occasions"),
   getPublicOccasions: () => request<{ occasions: OccasionCard[] }>("/storefront/occasions"),
   saveOccasions: (occasions: OccasionCard[]) => request<{ success: boolean; occasions: OccasionCard[] }>("/admin/storefront/occasions", { method: "PUT", body: JSON.stringify({ occasions }) }),
