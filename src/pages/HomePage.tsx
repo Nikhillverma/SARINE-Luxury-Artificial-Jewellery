@@ -645,16 +645,16 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           {categories.length > 0 ? (
             <div
               ref={categoryCarouselRef}
-              className={sectionCarouselEnabled("categories") ? "flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:gap-5" : "grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 lg:gap-5"}
+              className={sectionCarouselEnabled("categories") ? "sarine-category-track flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:gap-5" : "sarine-category-track grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 lg:gap-5"}
               aria-label="Jewellery categories"
             >
               {categories.map((cat) => (
                 <Link
                   key={cat.id}
                   to={`/shop?category=${encodeURIComponent(cat.slug)}`}
-                  className={sectionCarouselEnabled("categories") ? "group w-[72%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "group min-w-0"} style={sectionCarouselEnabled("categories") ? desktopCardStyle("categories", 20, 5) : undefined}
+                  className={sectionCarouselEnabled("categories") ? "sarine-category-card group w-[72%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "sarine-category-card group min-w-0"} style={sectionCarouselEnabled("categories") ? desktopCardStyle("categories", 20, 5) : undefined}
                 >
-                  <div className="relative aspect-[4/5] overflow-hidden rounded-sm border border-[var(--border)] bg-[var(--pill)] transition-colors group-hover:border-[var(--gold)]">
+                  <div className="sarine-category-card__media relative aspect-[4/5] overflow-hidden rounded-sm border border-[var(--border)] bg-[var(--pill)] transition-colors group-hover:border-[var(--gold)]">
                     <img
                       src={cat.image}
                       alt={cat.name}
@@ -664,8 +664,11 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                       referrerPolicy="no-referrer"
                       className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                     />
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#2B1A33]/75 via-[#2B1A33]/15 to-transparent px-4 pb-4 pt-12">
+                    <div className="sarine-category-card__caption absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-[#2B1A33]/75 via-[#2B1A33]/15 to-transparent px-4 pb-4 pt-12">
                       <h3 className="font-serif text-lg font-medium !text-white sm:text-xl [text-shadow:0_1px_5px_rgba(0,0,0,0.7)]" style={{ color: "#FFFFFF" }}>{cat.name}</h3>
+                      <span aria-hidden="true" className="sarine-category-card__arrow inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/70 bg-white/10 text-white backdrop-blur-sm">
+                        <ArrowRight size={15} />
+                      </span>
                     </div>
                   </div>
                 </Link>
@@ -692,7 +695,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       <section style={{ order: sectionOrder("new-arrivals"), display: sectionVisible("new-arrivals") ? undefined : "none", backgroundColor: "var(--white)" }} className="sarine-product-section sarine-section-new-arrivals py-6 sm:py-8 lg:py-10 border-t border-[var(--border)] bg-white">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
-          <div className="w-full text-center mb-4 sm:mb-4">
+          <div className="sarine-section-heading sarine-section-heading--new w-full text-center mb-4 sm:mb-4">
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">
               New Arrivals
             </h2>
@@ -755,7 +758,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       <section style={{ order: sectionOrder("best-sellers"), display: sectionVisible("best-sellers") && (loading || bestsellers.length > 0) ? undefined : "none", backgroundColor: "var(--white)" }} className="sarine-product-section sarine-section-best-sellers py-6 sm:py-8 lg:py-10 border-t border-[var(--border)] bg-white">
         <div className="site-container">
           {/* Centered Full-Width Section Header Block */}
-          <div className="w-full text-center mb-4 sm:mb-4">
+          <div className="sarine-section-heading sarine-section-heading--best w-full text-center mb-4 sm:mb-4">
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">
               Best Sellers
             </h2>
@@ -813,7 +816,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           ========================================================================= */}
       <section style={{ order: sectionOrder("curated-favourites"), display: sectionVisible("curated-favourites") && (loading || (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0) ? undefined : "none", backgroundColor: "var(--tint)" }} className="sarine-product-section sarine-section-curated-favourites py-6 sm:py-8 lg:py-10 border-t border-[var(--border)] bg-[var(--tint)]">
         <div className="site-container">
-          <div className="w-full text-center mb-4 sm:mb-4">
+          <div className="sarine-section-heading sarine-section-heading--curated w-full text-center mb-4 sm:mb-4">
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">Curated Favourites</h2>
             <div className="mt-3">
               <Link to="/shop" className="text-xs sm:text-[13px] !text-[color:var(--plum)] hover:!text-[color:var(--plum)] font-sans font-medium inline-flex items-center gap-1.5 transition-colors">
