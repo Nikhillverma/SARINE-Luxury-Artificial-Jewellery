@@ -604,7 +604,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           {categories.length > 0 ? (
             <div
               ref={categoryCarouselRef}
-              className={sectionCarouselEnabled("categories") ? "sarine-category-track flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:gap-5" : "sarine-category-track grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 lg:gap-5"}
+              className={sectionCarouselEnabled("categories") ? "sarine-category-track flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:gap-5" : "sarine-category-track grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 lg:gap-5"}
               aria-label="Jewellery categories"
             >
               {categories.map((cat) => (
@@ -675,7 +675,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               ))}
             </div>
           ) : newArrivals.length > 0 ? (
-            <div ref={newArrivalsCarouselRef} className={`sarine-product-grid ${sectionCarouselEnabled("new-arrivals") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:gap-6" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`} aria-label="New Arrivals products">
+            <div ref={newArrivalsCarouselRef} className={`sarine-product-grid ${sectionCarouselEnabled("new-arrivals") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:gap-6" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`} aria-label="New Arrivals products">
               {newArrivals.slice(0, 8).map((product) => (
                 <div key={product.id} className={sectionCarouselEnabled("new-arrivals") ? "w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "min-w-0"} style={sectionCarouselEnabled("new-arrivals") ? desktopCardStyle("new-arrivals", 24, 5) : undefined}>
                   <ProductCard product={product} />
@@ -738,7 +738,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               ))}
             </div>
           ) : bestsellers.length > 0 ? (
-            <div ref={carouselRef} className={`sarine-product-grid ${sectionCarouselEnabled("best-sellers") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:gap-6" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`} aria-label="Best Sellers products">
+            <div ref={carouselRef} className={`sarine-product-grid ${sectionCarouselEnabled("best-sellers") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 lg:gap-6" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`} aria-label="Best Sellers products">
               {bestsellers.slice(0, 12).map((product) => (
                 <div key={product.id} className={sectionCarouselEnabled("best-sellers") ? "w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "min-w-0"} style={sectionCarouselEnabled("best-sellers") ? desktopCardStyle("best-sellers", 24, 5) : undefined}>
                   <ProductCard product={product} />
@@ -771,7 +771,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               {[...Array(4)].map((_, i) => <div key={i} className="w-[68%] shrink-0 sm:w-[42%] md:w-[30%] lg:w-1/4 animate-pulse"><div className="bg-[var(--pill)] aspect-[3/4] w-full border border-[var(--border)]" /><div className="h-4 bg-[var(--pill)] w-2/3 mt-3" /><div className="h-3 bg-[var(--pill)] w-1/3 mt-2" /></div>)}
             </div>
           ) : (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0 ? (
-            <div ref={curatedCarouselRef} className={`sarine-product-grid ${sectionCarouselEnabled("curated-favourites") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`} aria-label="Curated Favourites products">
+            <div ref={curatedCarouselRef} className={`sarine-product-grid ${sectionCarouselEnabled("curated-favourites") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"}`} aria-label="Curated Favourites products">
               {(hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).slice(0, 12).map(product => <div key={product.id} className={sectionCarouselEnabled("curated-favourites") ? "w-[68%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "min-w-0"} style={sectionCarouselEnabled("curated-favourites") ? desktopCardStyle("curated-favourites", 20, 5) : undefined}><ProductCard product={product} /></div>)}
             </div>
           ) : (
@@ -795,7 +795,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </h2>
           </div>
 
-          <div ref={occasionsCarouselRef} className={sectionCarouselEnabled("occasions") ? "flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth pb-2 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4" : "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"} aria-label="Shop by Occasion cards">
+          <div ref={occasionsCarouselRef} className={sectionCarouselEnabled("occasions") ? "flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth pb-2 touch-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4" : "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"} aria-label="Shop by Occasion cards">
             {occasions.filter(item => item.active).map((item) => (
               <Link key={item.id} to={item.link} className={sectionCarouselEnabled("occasions") ? "group flex w-[72%] shrink-0 snap-start flex-col items-center text-center sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "group flex min-w-0 flex-col items-center text-center"} style={sectionCarouselEnabled("occasions") ? desktopCardStyle("occasions", 20, 5) : undefined}>
                 <div className="aspect-[4/5] w-full overflow-hidden bg-[#2B1A33] border border-[var(--border)] rounded-xs relative group-hover:border-[var(--gold)] transition-colors">
