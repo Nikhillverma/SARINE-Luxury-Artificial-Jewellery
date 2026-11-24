@@ -56,7 +56,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, homepageWishl
   return (
     <article className="sarine-product-card group flex flex-col w-full bg-[var(--white)] p-2 sm:p-2.5 border border-[var(--border)] rounded-md transition-all duration-300 hover:border-[var(--border)] hover:shadow-xs relative" style={{ "--tw-shadow-color": "var(--border)" } as React.CSSProperties}>
       {/* 3:4 Portrait Image Container */}
-      <div className={`relative block w-full overflow-hidden bg-[var(--white)] aspect-[4/5] border border-[var(--border)] rounded-xs group-hover:border-[var(--gold)] transition-colors ${homepageWishlist ? "@container" : ""}`}>
+      <div className="relative @container block w-full overflow-hidden bg-[var(--white)] aspect-[4/5] border border-[var(--border)] rounded-xs group-hover:border-[var(--gold)] transition-colors">
         <Link to={`/product/${product.slug}`} className="block w-full h-full">
           {primaryImage && !primaryImageFailed ? (
             <img
@@ -98,13 +98,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, homepageWishl
           onClick={handleWishlistClick}
           aria-label={wishlisted ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
           className={homepageWishlist
-            ? "absolute top-2.5 right-2.5 z-20 inline-flex h-[23px] w-[23px] items-center justify-center border-0 bg-transparent !text-[color:var(--plum)] transition-colors cursor-pointer touch-manipulation"
+            ? "absolute top-0 right-0 z-20 inline-flex h-11 w-11 items-start justify-end border-0 bg-transparent p-2.5 !text-[color:var(--plum)] transition-colors cursor-pointer touch-manipulation"
             : "absolute top-1.5 right-1.5 z-20 inline-flex min-h-11 min-w-11 items-center justify-center !text-[color:var(--plum)] transition-all cursor-pointer touch-manipulation"}
         >
           {!homepageWishlist && <span aria-hidden="true" className="absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--white)] border border-[var(--border)] shadow-2xs backdrop-blur-xs" />}
           <Heart
             size={16}
-            style={homepageWishlist ? { width: "clamp(12px, 8cqw, 16px)", height: "clamp(12px, 8cqw, 16px)" } : undefined}
+            style={{ width: "clamp(12px, 7cqw, 18px)", height: "clamp(12px, 7cqw, 18px)" }}
             className={`relative z-10 transition-colors ${
               wishlisted ? 'fill-[var(--rose)] !text-[color:var(--rose)]' : '!text-[color:var(--plum)]'
             }`}
