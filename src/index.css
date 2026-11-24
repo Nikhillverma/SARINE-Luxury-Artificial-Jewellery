@@ -878,16 +878,16 @@ body.sarine-global-theme #main-content :is(a, button)[class*="bg-[var(--plum)]"]
 .sarine-home .sarine-story-section h2 {
   font-size: clamp(1.8rem, 3vw, 2.5rem);
 }
-.sarine-home .sarine-story-section .lg\\:col-span-7 > div:first-child > p {
+.sarine-home .sarine-story-section [class~="lg:col-span-7"] > div:first-child > p {
   max-width: 42rem;
   font-size: clamp(.875rem, 1.1vw, .9375rem);
   line-height: 1.8;
 }
-.sarine-home .sarine-story-section .lg\\:col-span-7 h3 {
+.sarine-home .sarine-story-section [class~="lg:col-span-7"] h3 {
   font-size: .875rem;
   line-height: 1.4;
 }
-.sarine-home .sarine-story-section .lg\\:col-span-7 p {
+.sarine-home .sarine-story-section [class~="lg:col-span-7"] p {
   line-height: 1.6;
 }
 .sarine-home .sarine-story-section img {
@@ -916,4 +916,20 @@ body.sarine-global-theme #main-content :is(a, button)[class*="bg-[var(--plum)]"]
   .sarine-home .sarine-story-section img {
     transition: none;
   }
+}
+
+/* Product information remains comfortably readable on collection and detail rails too. */
+body.sarine-global-theme #main-content .sarine-product-card__type {
+  font-size: 10px;
+  line-height: 1.5;
+}
+body.sarine-global-theme #main-content .sarine-product-card__title {
+  font-size: clamp(.9rem, 1.15vw, 1rem);
+  line-height: 1.4;
+}
+body.sarine-global-theme #main-content .sarine-product-card__reviews {
+  font-size: 11px;
+}
+body.sarine-global-theme #main-content .sarine-product-card__price > span:first-child {
+  font-size: 15px;
 }
