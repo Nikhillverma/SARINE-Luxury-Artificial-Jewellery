@@ -1117,3 +1117,39 @@ body.sarine-global-theme #main-content .sarine-product-card__price > span:first-
     margin-bottom: .5rem !important;
   }
 }
+
+
+/* Centre collection titles while keeping View All aligned to the right.
+   The title is centred against the full heading row, not the remaining space. */
+.sarine-home .sarine-section-heading--new,
+.sarine-home .sarine-section-heading--curated {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 44px;
+  text-align: center;
+}
+.sarine-home .sarine-section-heading--new h2,
+.sarine-home .sarine-section-heading--curated h2 {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: calc(100% - 7rem);
+  text-align: center;
+}
+.sarine-home .sarine-section-heading--new > a,
+.sarine-home .sarine-section-heading--curated > a {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+}
+@media (max-width: 639px) {
+  .sarine-home .sarine-section-heading--new h2,
+  .sarine-home .sarine-section-heading--curated h2 {
+    max-width: calc(100% - 5.5rem);
+    font-size: clamp(1.15rem, 5vw, 1.5rem);
+  }
+}
