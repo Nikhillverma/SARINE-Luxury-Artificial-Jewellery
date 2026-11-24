@@ -665,11 +665,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                       className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                     />
                   </div>
-                  <div className="sarine-category-card__caption flex min-h-0 items-center justify-between gap-2 px-1 pt-3 pb-1">
-                    <h3 className="min-w-0 font-serif text-base font-medium !text-[color:var(--heading)] sm:text-lg">{cat.name}</h3>
-                    <span aria-hidden="true" className="sarine-category-card__arrow inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-white text-[color:var(--plum)]">
-                      <ArrowRight size={15} />
-                    </span>
+                  <div className="sarine-category-card__caption flex min-h-0 items-center justify-center px-1 pt-3 pb-1 text-center">
+                    <h3 className="w-full min-w-0 text-center font-serif text-base font-medium !text-black sm:text-lg">{cat.name}</h3>
                   </div>
                 </Link>
               ))}
