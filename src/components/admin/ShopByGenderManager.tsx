@@ -61,7 +61,7 @@ export const ShopByGenderManager: React.FC = () => {
     {loading ? <p className="text-sm text-gray-500">Loading Shop by Gender settings…</p> : <div className="grid gap-4 sm:grid-cols-2">
       {tiles.map(tile => <article key={tile.key} className="space-y-3 rounded-xl border p-4">
         <h3 className="text-sm font-semibold tracking-wide text-[#563568]">{tile.title}</h3>
-        <div className="aspect-[3/1] overflow-hidden rounded-lg bg-[#F7F0FA]">
+        <div className="aspect-[2/1] sm:aspect-[3/1] overflow-hidden rounded-lg bg-[#F7F0FA]">
           {tile.value ? <img src={tile.value} alt={tile.title + " homepage preview"} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-xs text-[#705E7B]">No image uploaded</div>}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -71,7 +71,7 @@ export const ShopByGenderManager: React.FC = () => {
           </label>
           <button type="button" disabled={busy || !tile.value} onClick={() => { setSettings(current => ({ ...current, [tile.key]: "" })); setMessage(""); }} className="min-h-11 rounded-lg border border-red-200 px-4 py-2 text-xs text-red-700 disabled:opacity-40">Remove image</button>
         </div>
-        <p className="text-[11px] text-gray-500">Recommended ratio: 3:1 landscape. JPEG, PNG or WebP.</p>
+        <p className="text-[11px] text-gray-500">Recommended ratio: 3:1 desktop, 2:1 mobile. JPEG, PNG or WebP.</p>
       </article>)}
     </div>}
     <div className="flex flex-wrap gap-2">
