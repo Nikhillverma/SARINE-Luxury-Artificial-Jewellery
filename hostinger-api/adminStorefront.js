@@ -480,7 +480,7 @@ const menSignupLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 8, standar
 adminOnly.get("/men-storefront", async (_req, res, next) => {
   try {
     const record = await readMenStorefrontRecord();
-    const [rows] = await pool.execute("SELECT id, name, slug, price, images, status, stock FROM products ORDER BY created_at DESC LIMIT 500");
+    const [rows] = await pool.execute("SELECT id, name, slug, price, images, status, stock FROM products WHERE JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE(?)) ORDER BY created_at DESC LIMIT 500", ["__sarine_men_catalogue__"]);
     const products = rows.map(row => {
       let images = []; try { images = JSON.parse(row.images || "[]"); } catch {}
       return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price), images: Array.isArray(images) ? images : [], status: row.status, stock: Number(row.stock) };
@@ -517,7 +517,7 @@ publicRouter.get("/men-storefront", async (_req, res, next) => {
     let products = [];
     if (productIds.length) {
       const placeholders = productIds.map(() => "?").join(",");
-      const [rows] = await pool.execute(`SELECT id, name, slug, price, compare_at_price, images, stock FROM products WHERE status='active' AND id IN (${placeholders})`, productIds);
+      const [rows] = await pool.execute(`SELECT id, name, slug, price, compare_at_price, images, stock FROM products WHERE status='active' AND JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE('__sarine_men_catalogue__')) AND id IN (${placeholders})`, productIds);
       const byId = new Map(rows.map(row => [row.id, row]));
       products = productIds.map(id => byId.get(id)).filter(Boolean).map(row => {
         let images = []; try { images = JSON.parse(row.images || "[]"); } catch {}
@@ -538,7 +538,7 @@ publicRouter.get("/men-storefront/categories/:categoryId", async (req, res, next
     if (ids.length) {
       const placeholders = ids.map(() => "?").join(",");
       const [rows] = await pool.execute(
-        `SELECT id, name, slug, price, compare_at_price, images, stock FROM products WHERE status='active' AND id IN (${placeholders})`,
+        `SELECT id, name, slug, price, compare_at_price, images, stock FROM products WHERE status='active' AND JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE('__sarine_men_catalogue__')) AND id IN (${placeholders})`,
         ids
       );
       const byId = new Map(rows.map(row => [row.id, row]));

@@ -157,7 +157,7 @@ app.get("/api/products", async (req, res, next) => {
     const parsedQuery = parseCatalogueQuery(req.query);
     if (parsedQuery.error) return res.status(400).json({ error: parsedQuery.error });
     const { categorySlug, categoryId, jewelleryType, collectionSlug, inStockOnly, minPrice, maxPrice, sortBy, page: currentPage, pageSize: limit, search } = parsedQuery.filters;
-    const conditions = ["p.status = 'active'"];
+    const conditions = ["p.status = 'active'", "NOT JSON_CONTAINS(COALESCE(p.tags, '[]'), JSON_QUOTE('__sarine_men_catalogue__'))"];
     const values = [];
 
     if (categoryId) {

@@ -13,6 +13,7 @@ const router = Router();
 router.use(requireAdminAuth);
 
 const STATUSES = new Set(["active", "draft", "archived"]);
+const MEN_PRODUCT_TAG = "__sarine_men_catalogue__";
 const parseJson = (value, fallback) => {
   if (Array.isArray(value)) return value;
   if (value && typeof value === "object") return value;
@@ -25,8 +26,11 @@ const slugify = (value) => String(value || "")
   .slice(0, 180);
 
 function mapProduct(row) {
+  const storedTags = parseJson(row.tags, []);
+  const gender = Array.isArray(storedTags) && storedTags.includes(MEN_PRODUCT_TAG) ? "men" : "women";
   return {
     id: row.id, slug: row.slug, name: row.name,
+    gender,
     description: row.description || "",
     shortDescription: row.short_description || "",
     price: Number(row.price),
@@ -38,7 +42,7 @@ function mapProduct(row) {
     jewelleryType: row.jewellery_type || "",
     stock: Number(row.stock),
     status: row.status,
-    tags: parseJson(row.tags, []),
+    tags: parseJson(row.tags, []).filter(tag => tag !== MEN_PRODUCT_TAG),
     baseMetal: row.base_metal || "",
     platingFinish: row.plating_finish || "",
     stoneType: row.stone_type || "",
@@ -73,6 +77,9 @@ function validateProduct(body, partial = false) {
 function valuesFromBody(body, existing = {}) {
   const get = (key, fallback = null) => body[key] !== undefined ? body[key] : (existing[key] ?? fallback);
   const name = get("name", "");
+  const gender = get("gender", existing.gender || "women") === "men" ? "men" : "women";
+  const tags = normalizeStringList(get("tags", [])).filter(tag => tag !== MEN_PRODUCT_TAG);
+  if (gender === "men") tags.push(MEN_PRODUCT_TAG);
   return {
     name: String(name).trim(),
     slug: slugify(get("slug", name)),
@@ -87,7 +94,7 @@ function valuesFromBody(body, existing = {}) {
     jewellery_type: get("jewelleryType"),
     stock: Number(get("stock", 0)),
     status: get("status", "draft"),
-    tags: JSON.stringify(normalizeStringList(get("tags", []))),
+    tags: JSON.stringify(tags),
     base_metal: get("baseMetal"),
     plating_finish: get("platingFinish"),
     stone_type: get("stoneType"),
@@ -106,6 +113,9 @@ router.get("/", async (req, res, next) => {
     const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 50));
     const conditions = [];
     const params = [];
+    const gender = req.query.gender === "men" || req.query.gender === "women" ? String(req.query.gender) : "";
+    if (gender === "men") { conditions.push("JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE(?))"); params.push(MEN_PRODUCT_TAG); }
+    if (gender === "women") { conditions.push("NOT JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE(?))"); params.push(MEN_PRODUCT_TAG); }
     if (status !== "all") {
       if (!STATUSES.has(status)) return res.status(400).json({ error: "Invalid product status." });
       conditions.push("status = ?");
