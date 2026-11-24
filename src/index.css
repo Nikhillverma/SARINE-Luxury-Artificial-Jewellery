@@ -787,3 +787,133 @@ body.sarine-global-theme #main-content :is(a, button)[class*="bg-[var(--plum)]"]
   outline: 2px solid var(--gold) !important;
   outline-offset: 3px;
 }
+
+
+/* ==========================================================================
+   SARINE storefront visual refinement — editorial hierarchy and legibility.
+   Keeps every homepage section and existing CTA/button treatment unchanged.
+   ========================================================================== */
+.sarine-home > .sarine-product-section {
+  padding-block: clamp(2.25rem, 4.5vw, 4.25rem) !important;
+  border-top: 1px solid var(--surface-border);
+}
+.sarine-home > .sarine-section-new-arrivals {
+  background: #FFFFFF !important;
+}
+.sarine-home > .sarine-section-best-sellers {
+  background: linear-gradient(180deg, #F7F0FA 0%, #FBF8FC 100%) !important;
+}
+.sarine-home > .sarine-section-curated-favourites {
+  background: #F7F0FA !important;
+}
+.sarine-home > .sarine-section-explore-now {
+  background: #FBF8FC !important;
+}
+.sarine-home > .sarine-product-section .w-full.text-center.mb-4,
+.sarine-home > .sarine-product-section .mb-5.text-center {
+  margin-bottom: clamp(1.25rem, 2.5vw, 1.75rem) !important;
+}
+.sarine-home > .sarine-product-section h2 {
+  font-size: clamp(1.75rem, 3vw, 2.45rem);
+  line-height: 1.12;
+}
+.sarine-home > .sarine-product-section .w-full.text-center.mb-4 p,
+.sarine-home > .sarine-product-section .mb-5.text-center p {
+  max-width: 38rem;
+  margin-inline: auto;
+  font-size: clamp(.8125rem, 1.1vw, .9375rem);
+  line-height: 1.75;
+  color: var(--body);
+}
+.sarine-home > .sarine-section-best-sellers .w-full.text-center.mb-4 > span,
+.sarine-home > .sarine-section-curated-favourites .w-full.text-center.mb-4 > span,
+.sarine-home > .sarine-section-explore-now .mb-5.text-center > span {
+  letter-spacing: .22em;
+}
+.sarine-home .sarine-product-grid {
+  align-items: stretch;
+  column-gap: clamp(.625rem, 1.4vw, 1.25rem);
+  row-gap: clamp(1rem, 2vw, 1.5rem);
+}
+.sarine-home .sarine-product-grid > div {
+  min-width: 0;
+}
+.sarine-home .sarine-product-card {
+  height: 100%;
+  border-color: #E9E1EC;
+  border-radius: 8px;
+  background: #FFFFFF;
+  box-shadow: 0 2px 10px rgba(55, 35, 64, .035);
+}
+.sarine-home .sarine-product-card > div:first-child {
+  border-radius: 5px;
+  background: #F8F5F9;
+}
+.sarine-home .sarine-product-card > div:last-child {
+  padding: 11px 12px 13px;
+}
+.sarine-home .sarine-product-card__type {
+  font-size: 10px;
+  letter-spacing: .13em;
+  line-height: 1.45;
+}
+.sarine-home .sarine-product-card__title {
+  min-height: 2.7em;
+  font-size: clamp(.875rem, 1.15vw, 1rem);
+  line-height: 1.4;
+}
+.sarine-home .sarine-product-card__reviews {
+  font-size: 11px;
+}
+.sarine-home .sarine-product-card__price > span:first-child {
+  font-size: 15px;
+}
+.sarine-home .sarine-section-explore-now .sarine-product-grid {
+  row-gap: 1.5rem;
+}
+.sarine-home .sarine-story-section {
+  padding-block: clamp(2.5rem, 5vw, 4.75rem) !important;
+  background: linear-gradient(110deg, #F7F0FA 0%, #FFFFFF 72%) !important;
+}
+.sarine-home .sarine-story-section h2 {
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+}
+.sarine-home .sarine-story-section .lg\\:col-span-7 > div:first-child > p {
+  max-width: 42rem;
+  font-size: clamp(.875rem, 1.1vw, .9375rem);
+  line-height: 1.8;
+}
+.sarine-home .sarine-story-section .lg\\:col-span-7 h3 {
+  font-size: .875rem;
+  line-height: 1.4;
+}
+.sarine-home .sarine-story-section .lg\\:col-span-7 p {
+  line-height: 1.6;
+}
+.sarine-home .sarine-story-section img {
+  transition: transform .7s ease;
+}
+.sarine-home .sarine-story-section > .site-container > div > div:first-child {
+  overflow: hidden;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .sarine-home .sarine-story-section img:hover {
+    transform: scale(1.025);
+  }
+}
+@media (max-width: 639px) {
+  .sarine-home > .sarine-product-section {
+    padding-block: 2.25rem !important;
+  }
+  .sarine-home .sarine-product-card > div:last-child {
+    padding: 9px 8px 11px;
+  }
+  .sarine-home .sarine-product-card__title {
+    font-size: .875rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sarine-home .sarine-story-section img {
+    transition: none;
+  }
+}
