@@ -134,9 +134,10 @@ export const MenStorefrontManager: React.FC = () => {
       const nextCategories = settings.categories.map(item => item.id === category.id ? { ...item, productIds: [...new Set([...(item.productIds || []), created.id])] } : item);
       update("categories", nextCategories);
       await hostingerStorefrontService.saveMenStorefrontDraft({ ...settings, categories: nextCategories });
+      if (newProduct.status === "active") await hostingerStorefrontService.publishMenStorefront();
       setNewProduct({ name: "", price: "", stock: "0", description: "", imageUrl: "", status: "draft" });
       setAddingProductTo(null);
-      setMessage("Product saved as a men's draft and assigned to " + category.title + ". Publish it when ready.");
+      setMessage((newProduct.status === "active" ? "Product published" : "Product saved as a draft") + " and assigned to " + category.title + ".");
     } catch (e) { setError(e instanceof Error ? e.message : "Could not create the men's product."); }
     finally { setSavingNewProduct(false); }
   };
@@ -144,7 +145,7 @@ export const MenStorefrontManager: React.FC = () => {
 
   const openProductEditor = (product: MenStorefrontProduct) => {
     setEditingProductId(product.id);
-    setProductEdit({ name: product.name, price: String(product.price), description: "", status: product.status === "active" ? "active" : "draft" });
+    setProductEdit({ name: product.name, price: String(product.price), description: product.description || "", status: product.status === "active" ? "active" : "draft" });
     setError("");
     setMessage("");
   };
@@ -162,10 +163,14 @@ export const MenStorefrontManager: React.FC = () => {
         status: productEdit.status, gender: "men"
       });
       setProducts(current => current.map(item => item.id === product.id ? {
-        ...item, name: updated.name, price: updated.price, status: updated.status
+        ...item, name: updated.name, description: updated.description, price: updated.price, status: updated.status
       } : item));
+      if (productEdit.status === "active") {
+        await hostingerStorefrontService.saveMenStorefrontDraft(settings);
+        await hostingerStorefrontService.publishMenStorefront();
+      }
       setEditingProductId(null);
-      setMessage(productEdit.status === "active" ? "Product published and available to the men's storefront." : "Product settings saved as a draft.");
+      setMessage(productEdit.status === "active" ? "Product published. The current men's storefront settings were published too." : "Product settings saved as a draft.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not update this men's product.");
     } finally { setUpdatingProduct(false); }
