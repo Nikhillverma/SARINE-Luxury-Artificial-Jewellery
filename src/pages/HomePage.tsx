@@ -693,20 +693,17 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           ========================================================================= */}
       <section style={{ order: sectionOrder("new-arrivals"), display: sectionVisible("new-arrivals") ? undefined : "none", backgroundColor: "var(--white)" }} className="sarine-product-section sarine-section-new-arrivals py-6 sm:py-8 lg:py-10 border-t border-[var(--border)] bg-white">
         <div className="site-container">
-          {/* Centered Full-Width Section Header Block */}
-          <div className="sarine-section-heading sarine-section-heading--new w-full text-center mb-4 sm:mb-4">
+          <div className="sarine-section-heading sarine-section-heading--new w-full mb-3 sm:mb-4">
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">
               New Arrivals
             </h2>
-            <div className="mt-3">
-              <Link
-                to="/shop?sort=newest"
-                className="text-xs sm:text-[13px] !text-[color:var(--plum)] hover:!text-[color:var(--plum)] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
-              >
-                <span>View All</span>
-                <ArrowRight size={13} />
-              </Link>
-            </div>
+            <Link
+              to="/shop?sort=newest"
+              className="text-xs sm:text-[13px] !text-[color:var(--plum)] hover:!text-[color:var(--plum)] font-sans font-medium inline-flex items-center gap-1.5 transition-colors"
+            >
+              <span>View All</span>
+              <ArrowRight size={13} />
+            </Link>
           </div>
 
 
@@ -806,13 +803,11 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           ========================================================================= */}
       <section style={{ order: sectionOrder("curated-favourites"), display: sectionVisible("curated-favourites") && (loading || (hasPublishedCuratedFavourites ? manualCuratedFavourites : curatedFavourites).length > 0) ? undefined : "none", backgroundColor: "var(--tint)" }} className="sarine-product-section sarine-section-curated-favourites py-6 sm:py-8 lg:py-10 border-t border-[var(--border)] bg-[var(--tint)]">
         <div className="site-container">
-          <div className="sarine-section-heading sarine-section-heading--curated w-full text-center mb-4 sm:mb-4">
+          <div className="sarine-section-heading sarine-section-heading--curated w-full mb-3 sm:mb-4">
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">Curated Favourites</h2>
-            <div className="mt-3">
-              <Link to="/shop" className="text-xs sm:text-[13px] !text-[color:var(--plum)] hover:!text-[color:var(--plum)] font-sans font-medium inline-flex items-center gap-1.5 transition-colors">
-                <span>View All</span><ArrowRight size={13} />
-              </Link>
-            </div>
+            <Link to="/shop" className="text-xs sm:text-[13px] !text-[color:var(--plum)] hover:!text-[color:var(--plum)] font-sans font-medium inline-flex items-center gap-1.5 transition-colors">
+              <span>View All</span><ArrowRight size={13} />
+            </Link>
           </div>
           {loading ? (
             <div className="flex gap-4 overflow-hidden pb-3">
@@ -835,7 +830,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           4 cards: Daily Wear, Festive, Wedding, Gifting
           Using existing product images, linking to /shop with filter queries
           ========================================================================= */}
-      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") && occasions.some(item => item.active) ? undefined : "none" }} className="py-6 sm:py-8 lg:py-10 border-t border-[var(--border)] !bg-white">
+      <section style={{ order: sectionOrder("occasions"), display: sectionVisible("occasions") && occasions.some(item => item.active) ? undefined : "none" }} className="sarine-section-occasions py-4 sm:py-6 lg:py-7 border-t border-[var(--border)] !bg-white">
         <div className="site-container">
           <div className="w-full text-center mb-4 sm:mb-4">
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl !text-[color:var(--heading)] font-normal">
@@ -843,11 +838,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </h2>
           </div>
 
-          {sectionCarouselEnabled("occasions") && <div className="mb-3 flex items-center justify-end gap-2" aria-label="Shop by Occasion carousel controls">
-            <button type="button" onClick={() => scrollProductTrack(occasionsCarouselRef.current, 'left')} aria-label="Scroll occasions left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white"><ChevronLeft size={17} /></button>
-            <button type="button" onClick={() => scrollProductTrack(occasionsCarouselRef.current, 'right')} aria-label="Scroll occasions right" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white"><ChevronRight size={17} /></button>
-          </div>}
-          <div ref={occasionsCarouselRef} className={sectionCarouselEnabled("occasions") ? "flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-3 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5" : "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"} aria-label="Shop by Occasion cards">
+          <div ref={occasionsCarouselRef} className={sectionCarouselEnabled("occasions") ? "flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth pb-2 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4" : "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"} aria-label="Shop by Occasion cards">
             {occasions.filter(item => item.active).map((item) => (
               <Link key={item.id} to={item.link} className={sectionCarouselEnabled("occasions") ? "group flex w-[72%] shrink-0 snap-start flex-col items-center text-center sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "group flex min-w-0 flex-col items-center text-center"} style={sectionCarouselEnabled("occasions") ? desktopCardStyle("occasions", 20, 5) : undefined}>
                 <div className="aspect-[4/5] w-full overflow-hidden bg-[#2B1A33] border border-[var(--border)] rounded-xs relative group-hover:border-[var(--gold)] transition-colors">
