@@ -252,6 +252,7 @@ applyCachedPublishedDesignBeforeRender();
 const CmsPublicPage = lazy(() => import('./pages/CmsPublicPage').then((module) => ({ default: module.CmsPublicPage })));
 const HomePage = lazy(() => import('./pages/HomePage').then((module) => ({ default: module.HomePage })));
 const CollectionPage = lazy(() => import('./pages/CollectionPage').then((module) => ({ default: module.CollectionPage })));
+const MensCollectionPage = lazy(() => import('./pages/MensCollectionPage').then((module) => ({ default: module.MensCollectionPage })));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage').then((module) => ({ default: module.ProductDetailPage })));
 const BagPage = lazy(() => import('./pages/BagPage').then((module) => ({ default: module.BagPage })));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage').then((module) => ({ default: module.CheckoutPage })));
@@ -445,6 +446,7 @@ function MainAppShell() {
             path="/shop"
             element={<CollectionPage includeAll={includeAll} />}
           />
+          <Route path="/men" element={<MensCollectionPage />} />
           <Route
             path="/product/:slug"
             element={<ProductDetailPage includeAll={includeAll} />}

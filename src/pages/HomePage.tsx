@@ -178,7 +178,6 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const [loadError, setLoadError] = useState<boolean>(false);
 
   const [shopByGender, setShopByGender] = useState<ShopByGenderSettings>({ version: 1, forHerImageUrl: "", forHimImageUrl: "" });
-  const [showMensComingSoon, setShowMensComingSoon] = useState(false);
 
   const [occasions, setOccasions] = useState([
     { id: "daily-wear", title: "Daily Wear", subtitle: "Effortless everyday minimalism", image: "/images/optimized/ananya-temple-coin-bracelet.webp", link: "/shop?search=everyday", active: true, sortOrder: 0 },
@@ -666,22 +665,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               </div>
               <p className="pt-2 text-center font-sans text-xs font-semibold tracking-[0.12em] text-black sm:pt-3 sm:text-sm">FOR HER</p>
             </Link>
-            <button type="button" onClick={() => setShowMensComingSoon(true)} className="group block min-w-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--plum)]" aria-label="Shop for him — coming soon">
+            <Link to="/men" className="group block min-w-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--plum)]" aria-label="Explore the For Him collection — coming soon">
               <div className="aspect-[1.6/1] min-[380px]:aspect-[1.8/1] min-[440px]:aspect-[2/1] sm:aspect-[2.5/1] md:aspect-[2.75/1] lg:aspect-[3/1] w-full overflow-hidden rounded-[10px] bg-[var(--pill)]">
                 {shopByGender.forHimImageUrl && <img src={shopByGender.forHimImageUrl} alt="" aria-hidden="true" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />}
               </div>
               <p className="pt-2 text-center font-sans text-xs font-semibold tracking-[0.12em] text-black sm:pt-3 sm:text-sm">FOR HIM</p>
-            </button>
+            </Link>
           </div>
         </div>
-        {showMensComingSoon && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 px-4 py-6" role="presentation" onClick={() => setShowMensComingSoon(false)}>
-          <div role="dialog" aria-modal="true" aria-labelledby="mens-coming-soon-title" className="w-full max-w-sm rounded-xl bg-white p-7 text-center shadow-2xl" onClick={event => event.stopPropagation()}>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--plum)]">SARINE</p>
-            <h2 id="mens-coming-soon-title" className="mt-3 font-serif text-3xl font-normal text-[var(--heading)]">Coming Soon</h2>
-            <p className="mt-3 text-sm leading-relaxed text-[var(--body)]">Our collection for him is on its way. Stay tuned for the launch.</p>
-            <button type="button" autoFocus onClick={() => setShowMensComingSoon(false)} className="mt-6 inline-flex min-h-11 items-center justify-center rounded-md bg-[var(--plum)] px-6 text-xs font-semibold uppercase tracking-wider text-white">Close</button>
-          </div>
-        </div>}
       </section>
 
       {/* =========================================================================
