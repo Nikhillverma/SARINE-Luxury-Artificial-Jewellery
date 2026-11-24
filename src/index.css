@@ -1049,3 +1049,71 @@ body.sarine-global-theme #main-content .sarine-product-card__price > span:first-
   .sarine-home .sarine-section-heading--curated h2 { font-size: clamp(1.55rem, 7vw, 2rem); }
   .sarine-home .sarine-section-heading--curated a { font-size: 11px; white-space: nowrap; }
 }
+
+/* Compact homepage collection headers: keep View All on the right of the title. */
+.sarine-home .sarine-section-heading--new,
+.sarine-home .sarine-section-heading--curated {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-bottom: 1rem !important;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+}
+.sarine-home .sarine-section-heading--new h2,
+.sarine-home .sarine-section-heading--curated h2 {
+  min-width: 0;
+  text-align: left;
+  font-size: clamp(1.45rem, 3vw, 2.25rem);
+}
+.sarine-home .sarine-section-heading--new > div,
+.sarine-home .sarine-section-heading--curated > div {
+  margin: 0 !important;
+}
+.sarine-home .sarine-section-heading--new a,
+.sarine-home .sarine-section-heading--curated a {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  min-height: 44px;
+}
+.sarine-home .sarine-section-occasions {
+  padding-block: clamp(1.5rem, 3vw, 2.5rem) !important;
+}
+.sarine-home .sarine-section-occasions .site-container > .w-full.text-center {
+  margin-bottom: .75rem !important;
+}
+.sarine-home .sarine-section-occasions [aria-label="Shop by Occasion cards"] {
+  gap: .75rem;
+  padding-bottom: .25rem;
+}
+.sarine-home .sarine-section-occasions [aria-label="Shop by Occasion cards"] > a > div + div {
+  padding-top: .5rem;
+}
+@media (max-width: 639px) {
+  .sarine-home .sarine-section-heading--new,
+  .sarine-home .sarine-section-heading--curated {
+    gap: .5rem;
+    margin-bottom: .75rem !important;
+  }
+  .sarine-home .sarine-section-heading--new h2,
+  .sarine-home .sarine-section-heading--curated h2 {
+    font-size: clamp(1.25rem, 5.8vw, 1.65rem);
+  }
+  .sarine-home .sarine-section-heading--new a,
+  .sarine-home .sarine-section-heading--curated a {
+    font-size: 11px;
+  }
+  .sarine-home .sarine-section-occasions {
+    padding-block: 1.25rem !important;
+  }
+  .sarine-home .sarine-section-occasions .site-container > .w-full.text-center {
+    margin-bottom: .5rem !important;
+  }
+}
