@@ -110,10 +110,10 @@ export const Footer: React.FC = () => {
         </div>
       </div>
 
-      <div className="site-container pt-14 pb-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-[var(--footer-line)]">
+      <div className="site-container pt-10 pb-10 sm:pt-14 sm:pb-12">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-9 sm:gap-10 pb-10 sm:pb-12 border-b border-[var(--footer-line)]">
           {/* Brand & Socials Column */}
-          <div className="lg:col-span-4">
+          <div className="col-span-2 lg:col-span-4">
             <Link to="/" className="inline-block">
               <span className="font-serif text-2xl tracking-[0.25em] !text-white font-normal uppercase hover:!text-[color:var(--gold-light)] transition-colors">
                 SARINE
@@ -274,9 +274,9 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs !text-[color:var(--footer-muted)] gap-4">
+        <div className="pt-7 sm:pt-8 flex flex-col sm:flex-row items-center justify-between text-center sm:text-left text-xs !text-[color:var(--footer-muted)] gap-4">
           <p>{chrome.footer.copyright}</p>
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-3 gap-y-2">
             <Link to="/privacy-policy" className="hover:!text-[color:var(--gold-light)] transition-colors">
               Privacy Policy
             </Link>
