@@ -1271,3 +1271,125 @@ body.sarine-global-theme #main-content .sarine-product-card__price > span:first-
     width: 100%;
   }
 }
+
+
+/* ==========================================================================
+   SARINE site-wide responsive foundation
+   Applies to storefront pages, shared overlays, and the admin workspace.
+   Keep page-specific layouts intact while preventing narrow-screen overflow.
+   ========================================================================== */
+#root {
+  min-width: 0;
+  overflow-x: clip;
+}
+#root :where(main, section, article, aside, header, footer, nav, form, fieldset) {
+  min-width: 0;
+  max-width: 100%;
+}
+#root :where(img, video, iframe, canvas) {
+  max-width: 100%;
+}
+#root :where(input, select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+}
+#root :where(h1, h2, h3, h4, p, a, button, label, span) {
+  overflow-wrap: anywhere;
+}
+#root :where(.grid, [class*="grid-cols-"]) > *,
+#root :where(.flex, [class*="flex"]) > * {
+  min-width: 0;
+}
+#root :where(table) {
+  max-width: 100%;
+}
+#root :where(.overflow-x-auto) {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+#root :where(button, a, input, select, textarea) {
+  touch-action: manipulation;
+}
+.sarine-global-footer {
+  overflow: hidden;
+}
+.sarine-global-footer :where(a, button) {
+  min-height: 40px;
+}
+@media (max-width: 767px) {
+  html {
+    scroll-padding-top: 76px;
+  }
+  #root :where(.site-container) {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  #root :where(table) {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  #root :where(input, select, textarea) {
+    font-size: 16px;
+  }
+  #root :where(button, [role="button"], a) {
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sarine-global-footer {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+@media (max-width: 380px) {
+  #root :where(.site-container) {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+/* Admin workspace: fluid content width, compact phone gutters and safe tables. */
+.admin-workspace {
+  width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+.admin-workspace > :last-child {
+  min-width: 0;
+}
+.admin-workspace main {
+  min-width: 0;
+  width: 100%;
+}
+.admin-workspace main > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.admin-workspace main :where(table) {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.admin-workspace main :where(input, select, textarea) {
+  max-width: 100%;
+}
+@media (max-width: 767px) {
+  .admin-workspace main {
+    padding: 14px !important;
+  }
+  .admin-workspace main :where(.grid) {
+    min-width: 0;
+  }
+  .admin-workspace main :where(button, a) {
+    max-width: 100%;
+  }
+  .admin-workspace header {
+    gap: 8px;
+  }
+}
+@media (max-width: 380px) {
+  .admin-workspace main {
+    padding: 10px !important;
+  }
+}
