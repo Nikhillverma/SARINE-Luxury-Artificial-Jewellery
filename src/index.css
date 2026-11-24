@@ -1393,3 +1393,57 @@ body.sarine-global-theme #main-content .sarine-product-card__price > span:first-
     padding: 10px !important;
   }
 }
+
+
+/* Mobile-first homepage card layout: show complete cards in a two-column grid.
+   Desktop/tablet carousel behaviour and admin-configured carousel settings remain intact. */
+@media (max-width: 767px) {
+  .sarine-home .sarine-category-track,
+  .sarine-home .sarine-product-grid,
+  .sarine-home .sarine-occasion-track {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-auto-flow: row;
+    align-items: start;
+    gap: 14px 12px !important;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible !important;
+    padding-bottom: 0 !important;
+    scroll-snap-type: none !important;
+  }
+
+  .sarine-home .sarine-category-track > .sarine-category-card,
+  .sarine-home .sarine-product-grid > *,
+  .sarine-home .sarine-occasion-track > a {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    flex: none !important;
+    flex-basis: auto !important;
+    scroll-snap-align: none !important;
+  }
+
+  .sarine-home .sarine-category-card__media {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+  }
+
+  .sarine-home .sarine-product-card {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .sarine-home .sarine-product-card img,
+  .sarine-home .sarine-occasion-track img {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .sarine-home .sarine-category-track,
+  .sarine-home .sarine-product-grid,
+  .sarine-home .sarine-occasion-track {
+    gap: 12px 9px !important;
+  }
+}
