@@ -53,7 +53,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   return (
-    <article className="group flex flex-col w-full bg-[var(--white)] p-2 sm:p-2.5 border border-[var(--border)] rounded-md transition-all duration-300 hover:border-[var(--border)] hover:shadow-xs relative" style={{ "--tw-shadow-color": "var(--border)" } as React.CSSProperties}>
+    <article className="sarine-product-card group flex flex-col w-full bg-[var(--white)] p-2 sm:p-2.5 border border-[var(--border)] rounded-md transition-all duration-300 hover:border-[var(--border)] hover:shadow-xs relative" style={{ "--tw-shadow-color": "var(--border)" } as React.CSSProperties}>
       {/* 3:4 Portrait Image Container */}
       <div className="relative block w-full overflow-hidden bg-[var(--white)] aspect-[4/5] border border-[var(--border)] rounded-xs group-hover:border-[var(--gold)] transition-colors">
         <Link to={`/product/${product.slug}`} className="block w-full h-full">
@@ -130,7 +130,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div className="pt-3 pb-1 flex flex-col flex-grow">
         {/* Category / Type Label */}
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[12px] uppercase tracking-[0.16em] !text-[color:var(--gold-text)] font-sans font-medium">
+          <span className="sarine-product-card__type text-[12px] uppercase tracking-[0.16em] !text-[color:var(--gold-text)] font-sans font-medium">
             {JEWELLERY_TYPE_LABELS[product.jewelleryType] || product.jewelleryType}
           </span>
           {product.collectionSlugs.length > 0 && (
@@ -141,14 +141,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
 
         {/* Product Title */}
-        <h3 className="min-h-[2.6em] font-serif text-[15px] sm:text-base !text-[color:var(--heading)] font-normal leading-snug line-clamp-2 group-hover:!text-[color:var(--plum)] transition-colors">
+        <h3 className="sarine-product-card__title min-h-[2.6em] font-serif text-[15px] sm:text-base !text-[color:var(--heading)] font-normal leading-snug line-clamp-2 group-hover:!text-[color:var(--plum)] transition-colors">
           <Link to={`/product/${product.slug}`}>
             {product.name}
           </Link>
         </h3>
 
         {reviewSummary && reviewSummary.count > 0 && (
-          <div className="mt-1.5 flex items-center gap-1.5 text-[10px] font-sans" role="img" aria-label={`Rated ${reviewSummary.average.toFixed(1)} out of 5 from ${reviewSummary.count} approved customer ${reviewSummary.count === 1 ? 'review' : 'reviews'}`}>
+          <div className="sarine-product-card__reviews mt-1.5 flex items-center gap-1.5 text-[10px] font-sans" role="img" aria-label={`Rated ${reviewSummary.average.toFixed(1)} out of 5 from ${reviewSummary.count} approved customer ${reviewSummary.count === 1 ? 'review' : 'reviews'}`}>
             <span className="inline-flex items-center gap-0.5 !text-[color:var(--gold)]" aria-hidden="true">
               {Array.from({ length: 5 }, (_, index) => (
                 <Star key={index} size={11} strokeWidth={1.8} fill={index < Math.round(reviewSummary.average) ? 'currentColor' : 'none'} />
@@ -159,7 +159,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         )}
 
         {/* Price Row */}
-        <div className="mt-1.5 flex items-baseline gap-2.5">
+        <div className="sarine-product-card__price mt-1.5 flex items-baseline gap-2.5">
           {campaignDiscount > 0 ? (
             <>
               <span className="!text-[color:var(--plum)] font-semibold text-sm font-sans tracking-tight">{formatInr(campaignPrice)}</span>
