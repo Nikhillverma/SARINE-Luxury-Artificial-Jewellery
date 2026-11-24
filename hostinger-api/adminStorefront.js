@@ -161,6 +161,50 @@ adminOnly.get("/announcement", async (_req, res, next) => {
 
 
 
+// Shop by Gender imagery is managed independently in Storefront Studio and stored in MariaDB.
+const DEFAULT_SHOP_BY_GENDER = Object.freeze({ version: 1, forHerImageUrl: "", forHimImageUrl: "" });
+function validateShopByGender(input) {
+  if (!input || typeof input !== "object" || input.version !== 1) throw new Error("Shop by Gender settings version is invalid.");
+  const imageUrl = (value, label) => {
+    const url = typeof value === "string" ? value.trim() : "";
+    if (url.length > 2048 || (url && !/^https:\/\//i.test(url))) throw new Error(label + " must be a valid HTTPS image URL.");
+    return url;
+  };
+  return {
+    version: 1,
+    forHerImageUrl: imageUrl(input.forHerImageUrl, "For Her image"),
+    forHimImageUrl: imageUrl(input.forHimImageUrl, "For Him image")
+  };
+}
+async function readShopByGender() {
+  await ensureSchema();
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='shop_by_gender' LIMIT 1");
+  if (!rows.length) return DEFAULT_SHOP_BY_GENDER;
+  try { return validateShopByGender(JSON.parse(rows[0].setting_value)); }
+  catch { return DEFAULT_SHOP_BY_GENDER; }
+}
+adminOnly.get("/shop-by-gender", async (_req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ settings: await readShopByGender() }); }
+  catch (error) { next(error); }
+});
+adminOnly.put("/shop-by-gender", async (req, res, next) => {
+  try {
+    let settings;
+    try { settings = validateShopByGender(req.body || {}); }
+    catch (error) { return res.status(400).json({ error: error.message }); }
+    await ensureSchema();
+    await pool.execute(
+      "INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('shop_by_gender', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)",
+      [JSON.stringify(settings)]
+    );
+    res.set("Cache-Control", "no-store").json({ success: true, settings });
+  } catch (error) { next(error); }
+});
+publicRouter.get("/shop-by-gender", async (_req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ settings: await readShopByGender() }); }
+  catch (error) { next(error); }
+});
+
 // Shop by Occasion cards are editable in Storefront Studio and stored in MariaDB.
 const defaultOccasions = [
   { id: "daily-wear", title: "Daily Wear", subtitle: "Effortless everyday minimalism", image: "/images/ananya-temple-coin-bracelet.jpg", link: "/shop?search=everyday", active: true, sortOrder: 0 },
