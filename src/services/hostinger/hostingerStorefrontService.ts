@@ -206,9 +206,9 @@ export const hostingerStorefrontService = {
   publishHomepageContent: () =>
     request<{ success: boolean; published: HomepageContent }>("/admin/homepage-layout/content/publish", { method: "POST" }),
   getPublicHomepageContent: () => request<{ content: HomepageContent }>("/homepage-layout/content"),
-  getShopByGender: () => request<{ settings: ShopByGenderSettings }>("/admin/shop-by-gender"),
-  saveShopByGender: (settings: ShopByGenderSettings) => request<{ success: boolean; settings: ShopByGenderSettings }>("/admin/shop-by-gender", { method: "PUT", body: JSON.stringify(settings) }),
-  getPublicShopByGender: () => request<{ settings: ShopByGenderSettings }>("/shop-by-gender"),
+  getShopByGender: () => request<{ settings: ShopByGenderSettings }>("/admin/storefront/shop-by-gender"),
+  saveShopByGender: (settings: ShopByGenderSettings) => request<{ success: boolean; settings: ShopByGenderSettings }>("/admin/storefront/shop-by-gender", { method: "PUT", body: JSON.stringify(settings) }),
+  getPublicShopByGender: () => request<{ settings: ShopByGenderSettings }>("/storefront/shop-by-gender"),
   getOccasions: () => request<{ occasions: OccasionCard[] }>("/admin/storefront/occasions"),
   getPublicOccasions: () => request<{ occasions: OccasionCard[] }>("/storefront/occasions"),
   saveOccasions: (occasions: OccasionCard[]) => request<{ success: boolean; occasions: OccasionCard[] }>("/admin/storefront/occasions", { method: "PUT", body: JSON.stringify({ occasions }) }),
