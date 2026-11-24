@@ -150,6 +150,20 @@ export interface OccasionCard {
 
 export interface ShopByGenderSettings { version: 1; forHerImageUrl: string; forHimImageUrl: string; }
 
+export interface MenStorefrontCategory { id: string; title: string; description: string; imageUrl: string; active: boolean; sortOrder: number; }
+export interface MenStorefrontCollection { id: string; title: string; description: string; productIds: string[]; active: boolean; sortOrder: number; }
+export interface MenStorefrontSettings {
+  version: 1; enabled: boolean; heroImageUrl: string; eyebrow: string; title: string; description: string;
+  comingSoon: boolean; comingSoonText: string; categories: MenStorefrontCategory[];
+  showProducts: boolean; productIds: string[]; featuredTitle: string;
+  bestSellerIds: string[]; showBestSellers: boolean; collections: MenStorefrontCollection[];
+  offers: { enabled: boolean; label: string; description: string; ctaText: string; ctaLink: string };
+  notification: { enabled: boolean; headline: string; description: string; buttonText: string };
+}
+export interface MenStorefrontProduct { id: string; name: string; slug: string; price: number; compareAtPrice?: number | null; images: string[]; status: string; stock: number; }
+export interface MenLaunchSubscriber { id: string; email: string; consent: boolean; source: string; createdAt: string; }
+
+
 export interface StorefrontBanner {
   id: string;
   tagline: string;
@@ -206,6 +220,14 @@ export const hostingerStorefrontService = {
   publishHomepageContent: () =>
     request<{ success: boolean; published: HomepageContent }>("/admin/homepage-layout/content/publish", { method: "POST" }),
   getPublicHomepageContent: () => request<{ content: HomepageContent }>("/homepage-layout/content"),
+
+  getMenStorefront: () => request<{ draft: MenStorefrontSettings; published: MenStorefrontSettings; products: MenStorefrontProduct[] }>("/admin/storefront/men-storefront"),
+  saveMenStorefrontDraft: (settings: MenStorefrontSettings) => request<{ success: boolean; draft: MenStorefrontSettings }>("/admin/storefront/men-storefront/draft", { method: "PUT", body: JSON.stringify({ settings }) }),
+  publishMenStorefront: () => request<{ success: boolean; published: MenStorefrontSettings }>("/admin/storefront/men-storefront/publish", { method: "POST" }),
+  getPublicMenStorefront: () => request<{ settings: MenStorefrontSettings; products: MenStorefrontProduct[] }>("/storefront/men-storefront"),
+  subscribeMenLaunch: (email: string, consent: boolean) => request<{ success: boolean; message: string }>("/storefront/men-launch-signups", { method: "POST", body: JSON.stringify({ email, consent }) }),
+  getMenLaunchSignups: () => request<{ subscribers: MenLaunchSubscriber[] }>("/admin/storefront/men-launch-signups"),
+  deleteMenLaunchSignup: (id: string) => request<{ success: boolean }>(`/admin/storefront/men-launch-signups/${encodeURIComponent(id)}`, { method: "DELETE" }),
   getShopByGender: () => request<{ settings: ShopByGenderSettings }>("/admin/storefront/shop-by-gender"),
   saveShopByGender: (settings: ShopByGenderSettings) => request<{ success: boolean; settings: ShopByGenderSettings }>("/admin/storefront/shop-by-gender", { method: "PUT", body: JSON.stringify(settings) }),
   getPublicShopByGender: () => request<{ settings: ShopByGenderSettings }>("/storefront/shop-by-gender"),
