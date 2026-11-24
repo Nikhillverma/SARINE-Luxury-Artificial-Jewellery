@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { hostingerMediaService } from "../../services";
+import { adminProductService, hostingerMediaService } from "../../services";
 import {
   hostingerStorefrontService,
   type MenStorefrontSettings,
@@ -37,6 +37,9 @@ export const MenStorefrontManager: React.FC = () => {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [tab, setTab] = useState<"content" | "catalogue" | "marketing" | "signups">("content");
+  const [addingProductTo, setAddingProductTo] = useState<string | null>(null);
+  const [newProduct, setNewProduct] = useState({ name: "", price: "", stock: "0", description: "", imageUrl: "" });
+  const [savingNewProduct, setSavingNewProduct] = useState(false);
 
   const load = async () => {
     setLoading(true); setError("");
@@ -96,6 +99,42 @@ export const MenStorefrontManager: React.FC = () => {
     update("categories", settings.categories.map(item => item.id === id ? { ...item, ...patch } : item));
   const removeCategory = (id: string) => update("categories", settings.categories.filter(item => item.id !== id));
 
+  const uploadMenProductImage = async (file?: File) => {
+    if (!file) return;
+    setUploading("men-product"); setError(""); setMessage("");
+    try {
+      const imageUrl = await hostingerMediaService.uploadImage(file);
+      setNewProduct(current => ({ ...current, imageUrl }));
+      setMessage("Product image uploaded to Hostinger storage.");
+    } catch (e) { setError(e instanceof Error ? e.message : "Product image upload failed."); }
+    finally { setUploading(""); }
+  };
+
+  const createMenProduct = async (category: MenStorefrontSettings["categories"][number]) => {
+    if (!newProduct.name.trim() || !newProduct.price.trim() || !newProduct.imageUrl) {
+      setError("Add a product name, selling price and at least one product image."); return;
+    }
+    const price = Number(newProduct.price); const stock = Number(newProduct.stock);
+    if (!Number.isFinite(price) || price < 0 || !Number.isInteger(stock) || stock < 0) {
+      setError("Enter a valid price and non-negative whole stock quantity."); return;
+    }
+    setSavingNewProduct(true); setError(""); setMessage("");
+    try {
+      const slug = newProduct.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const created = await adminProductService.createProduct({
+        slug, name: newProduct.name.trim(), description: newProduct.description.trim(), shortDescription: "",
+        price, images: [newProduct.imageUrl], categoryId: category.id, collectionSlugs: [],
+        jewelleryType: "necklace", stock, status: "draft", tags: [], gender: "men"
+      });
+      setProducts(current => [...current, { id: created.id, name: created.name, slug: created.slug, price: created.price, images: created.images, status: created.status, stock: created.stock }]);
+      updateCategory(category.id, { productIds: [...new Set([...(category.productIds || []), created.id])] });
+      setNewProduct({ name: "", price: "", stock: "0", description: "", imageUrl: "" });
+      setAddingProductTo(null);
+      setMessage("Product saved as a men's draft and assigned to " + category.title + ". Publish it when ready.");
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not create the men's product."); }
+    finally { setSavingNewProduct(false); }
+  };
+
   const exportSubscribers = () => {
     const rows = [["Email", "Consent", "Source", "Signed up"], ...subscribers.map(item => [item.email, item.consent ? "Yes" : "No", item.source, item.createdAt])];
     const csv = rows.map(row => row.map(value => '"' + String(value ?? "").replace(/"/g, '""') + '"').join(",")).join("\r\n");
@@ -153,6 +192,18 @@ export const MenStorefrontManager: React.FC = () => {
           <div><span className={labelClass}>Image</span><input type="file" accept="image/jpeg,image/png,image/webp" disabled={Boolean(uploading)} onChange={e => void uploadImage("category", e.target.files?.[0], item.id)} className="w-full text-xs" />{item.imageUrl && <img src={item.imageUrl} alt={item.title} className="mt-2 h-16 w-24 rounded-lg object-cover" />}</div>
           <div className="flex items-end gap-2"><label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={item.active} onChange={e => updateCategory(item.id, { active: e.target.checked })} /> Published</label><button type="button" onClick={() => updateCategory(item.id, { sortOrder: Math.max(0, index - 1) })} disabled={index === 0} className="rounded-lg border px-2 py-2 text-xs disabled:opacity-40" aria-label="Move category up">↑</button><button type="button" onClick={() => updateCategory(item.id, { sortOrder: index + 1 })} disabled={index === settings.categories.length - 1} className="rounded-lg border px-2 py-2 text-xs disabled:opacity-40" aria-label="Move category down">↓</button><button type="button" onClick={() => removeCategory(item.id)} className="rounded-lg border px-2 py-2 text-xs text-red-600">Remove</button></div>
           <div className="sm:col-span-4 rounded-lg bg-[#FCFAFD] p-3"><p className={labelClass}>Assign men's catalogue products</p><div className="grid gap-2 sm:grid-cols-2">{products.map(product => <label key={product.id} className="flex items-center gap-2 text-xs"><input type="checkbox" checked={(item.productIds || []).includes(product.id)} onChange={e => updateCategory(item.id, { productIds: e.target.checked ? [...(item.productIds || []), product.id] : (item.productIds || []).filter(id => id !== product.id) })}/><span className="min-w-0 truncate">{product.name}</span><span className="text-[#8B7299]">₹{product.price.toLocaleString("en-IN")}</span></label>)}</div>{products.length === 0 && <p className="text-xs text-[#705E7B]">Add men's products to the catalogue, then assign them here.</p>}</div>
+
+          <div className="sm:col-span-4 rounded-lg border border-dashed border-[#CDB9D8] bg-white p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2"><div><p className="text-sm font-semibold text-[#563568]">Products in {item.title}</p><p className="text-xs text-[#705E7B]">Only men's catalogue products are available in this category.</p></div><button type="button" onClick={() => { setAddingProductTo(addingProductTo === item.id ? null : item.id); setNewProduct({ name: "", price: "", stock: "0", description: "", imageUrl: "" }); setError(""); }} className="rounded-lg bg-[#563568] px-3 py-2 text-xs font-semibold text-white">+ Add product</button></div>
+            {addingProductTo === item.id && <div className="mt-3 grid gap-3 rounded-lg bg-[#F7F0FA] p-3 sm:grid-cols-2">
+              <label><span className={labelClass}>Product name *</span><input className={fieldClass} value={newProduct.name} maxLength={255} onChange={e => setNewProduct(current => ({ ...current, name: e.target.value }))} /></label>
+              <label><span className={labelClass}>Selling price (₹) *</span><input className={fieldClass} type="number" min="0" step="1" value={newProduct.price} onChange={e => setNewProduct(current => ({ ...current, price: e.target.value }))} /></label>
+              <label><span className={labelClass}>Opening stock</span><input className={fieldClass} type="number" min="0" step="1" value={newProduct.stock} onChange={e => setNewProduct(current => ({ ...current, stock: e.target.value }))} /></label>
+              <label><span className={labelClass}>Product image *</span><input className="block w-full text-xs" type="file" accept="image/jpeg,image/png,image/webp" disabled={Boolean(uploading)} onChange={e => void uploadMenProductImage(e.target.files?.[0])}/>{uploading === "men-product" && <span className="text-xs text-[#705E7B]">Uploading image…</span>}{newProduct.imageUrl && <img src={newProduct.imageUrl} alt="Men's product preview" className="mt-2 h-20 w-20 rounded-lg object-cover"/>}</label>
+              <label className="sm:col-span-2"><span className={labelClass}>Description</span><textarea className={fieldClass} rows={2} maxLength={5000} value={newProduct.description} onChange={e => setNewProduct(current => ({ ...current, description: e.target.value }))}/></label>
+              <div className="sm:col-span-2 flex flex-wrap gap-2"><button type="button" disabled={savingNewProduct || Boolean(uploading)} onClick={() => void createMenProduct(item)} className="rounded-lg bg-[#563568] px-4 py-2.5 text-xs font-semibold text-white disabled:opacity-50">{savingNewProduct ? "Saving product…" : "Save product to this category"}</button><button type="button" onClick={() => setAddingProductTo(null)} className="rounded-lg border px-4 py-2.5 text-xs font-semibold text-[#563568]">Cancel</button></div>
+            </div>}
+          </div>
         </div>)}
       </section>
       <section className="space-y-3 rounded-2xl border border-[#E7DCEB] bg-white p-4 sm:p-5">
