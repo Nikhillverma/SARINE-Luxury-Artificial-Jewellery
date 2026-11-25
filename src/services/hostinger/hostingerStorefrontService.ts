@@ -7,6 +7,7 @@ const API_BASE = (
 
 export type DesignFontFamily = "Cormorant Garamond" | "Plus Jakarta Sans" | "Playfair Display" | "DM Sans" | "Lato" | "Montserrat" | "Poppins" | "Inter" | "Roboto" | "Georgia" | "Arial";
 export interface DesignFontRole { family: DesignFontFamily; sizeScale: number; weight: 300 | 400 | 500 | 600 | 700; }
+export interface ResponsiveTypeScale { desktop: { h1:number; h2:number; h3:number; h4:number; body:number; small:number; button:number }; tablet: { h1:number; h2:number; h3:number; h4:number; body:number; small:number; button:number }; mobile: { h1:number; h2:number; h3:number; h4:number; body:number; small:number; button:number }; tabletOverride:boolean; mobileOverride:boolean; }
 export interface GlobalDesignSettings {
   version: 2;
   colors: { primary: string; accent: string; surface: string; pageBackground: string; text: string; headerBackground: string; footerBackground: string; footerText: string };
@@ -24,6 +25,7 @@ export interface GlobalDesignSettings {
     footer: { background: string; headings: string; links: string; linkHover: string; divider: string; bottomText: string };
   };
   fonts: { logo: DesignFontRole; heading: DesignFontRole; body: DesignFontRole; buttonLabel: DesignFontRole };
+  responsiveTypography: ResponsiveTypeScale;
 }
 export const DEFAULT_GLOBAL_DESIGN: GlobalDesignSettings = {
   version: 2,
@@ -40,6 +42,7 @@ export const DEFAULT_GLOBAL_DESIGN: GlobalDesignSettings = {
     countdown: { background: "#FCE9F0", border: "#F3C6D6", text: "#B3265C" },
     footer: { background: "#4A1D5C", headings: "#FFFFFF", links: "#F3E9DF", linkHover: "#E2C07A", divider: "#7B4D8C", bottomText: "#CDB9D6" }
   },
+  responsiveTypography: {"desktop":{"h1":60,"h2":42,"h3":28,"h4":20,"body":16,"small":13,"button":14},"tablet":{"h1":48,"h2":36,"h3":24,"h4":19,"body":15,"small":12,"button":14},"mobile":{"h1":38,"h2":30,"h3":21,"h4":18,"body":14,"small":12,"button":13},"tabletOverride":false,"mobileOverride":false},
   fonts: {
     logo: { family: "Cormorant Garamond", sizeScale: 100, weight: 600 },
     heading: { family: "Cormorant Garamond", sizeScale: 100, weight: 600 },
