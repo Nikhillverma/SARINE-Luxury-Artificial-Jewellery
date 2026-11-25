@@ -38,6 +38,7 @@ export class HostingerOrderService implements IOrderService {
           'Content-Type': 'application/json',
           Accept: 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           items: input.lines.map((l) => ({
             productId: l.productId,
