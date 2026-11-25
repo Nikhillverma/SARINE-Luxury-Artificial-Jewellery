@@ -1393,3 +1393,58 @@ body.sarine-global-theme #main-content .sarine-product-card__price > span:first-
     padding: 10px !important;
   }
 }
+
+
+/* SARINE footer: mobile-only layout and spacing corrections. */
+@media (max-width: 767.98px) {
+  .sarine-global-footer .sarine-footer-main {
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+
+  .sarine-global-footer .sarine-footer-grid {
+    row-gap: 24px;
+    padding-bottom: 24px;
+  }
+
+  /* Brand, tagline and social icons stay grouped with consistent spacing. */
+  .sarine-global-footer .sarine-footer-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .sarine-global-footer .sarine-footer-brand > p,
+  .sarine-global-footer .sarine-footer-brand > div {
+    margin-top: 0;
+  }
+
+  /* Keep Shop/About left and Customer Care/Payments right. */
+  .sarine-global-footer .sarine-footer-section {
+    min-width: 0;
+  }
+
+  .sarine-global-footer .sarine-footer-section h4 {
+    margin-bottom: 12px;
+  }
+
+  /* No list gap or Tailwind space-y margins; each anchor is a 40px tap target. */
+  .sarine-global-footer .sarine-footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 0;
+  }
+
+  .sarine-global-footer .sarine-footer-links li {
+    margin: 0;
+  }
+
+  .sarine-global-footer .sarine-footer-links li a {
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+    width: 100%;
+  }
+}
