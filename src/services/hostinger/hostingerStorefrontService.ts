@@ -5,43 +5,50 @@ const API_BASE = (
 ).replace(/\/+$/, "");
 
 
+export type DesignFontFamily = "Cormorant Garamond" | "Plus Jakarta Sans" | "Playfair Display" | "DM Sans" | "Lato" | "Montserrat" | "Poppins" | "Inter" | "Roboto" | "Georgia" | "Arial";
+export interface DesignFontRole { family: DesignFontFamily; sizeScale: number; weight: 300 | 400 | 500 | 600 | 700; }
+export interface ResponsiveTypeScale { desktop: { h1:number; h2:number; h3:number; h4:number; body:number; small:number; button:number }; tablet: { h1:number; h2:number; h3:number; h4:number; body:number; small:number; button:number }; mobile: { h1:number; h2:number; h3:number; h4:number; body:number; small:number; button:number }; tabletOverride:boolean; mobileOverride:boolean; }
 export interface GlobalDesignSettings {
-  version: 1;
-  colors: {
-    primary: string;
-    accent: string;
-    surface: string;
-    pageBackground: string;
-    text: string;
-    headerBackground: string;
-    footerBackground: string;
-    footerText: string;
-  };
-  typography: {
-    headingFont: "Cormorant Garamond" | "Georgia" | "Playfair Display";
-    bodyFont: "Plus Jakarta Sans" | "Arial" | "DM Sans";
-    headingScale: number;
-    bodyScale: number;
-  };
-  layout: {
-    contentWidth: 1120 | 1200 | 1280 | 1360;
-    cornerRadius: 0 | 4 | 8 | 16;
-  };
+  version: 2;
+  colors: { primary: string; accent: string; surface: string; pageBackground: string; text: string; headerBackground: string; footerBackground: string; footerText: string };
+  typography: { headingFont: "Cormorant Garamond" | "Georgia" | "Playfair Display"; bodyFont: "Plus Jakarta Sans" | "Arial" | "DM Sans"; headingScale: number; bodyScale: number };
+  layout: { contentWidth: 1120 | 1200 | 1280 | 1360; cornerRadius: 0 | 4 | 8 | 16 };
   components: { buttonStyle: "solid" | "outline" };
+  elements: {
+    text: { heading: string; body: string; goldText: string; muted: string; link: string; linkHover: string };
+    buttons: { primaryBackground: string; primaryText: string; primaryHoverBackground: string; primaryPressedBackground: string; secondaryBorder: string; secondaryText: string };
+    surfaces: { alternateSection: string; card: string; border: string; pill: string };
+    productCards: { saleBadgeBackground: string; saleBadgeText: string; sellingPrice: string; oldPrice: string; starRating: string; categoryLabel: string };
+    announcement: { background: string; text: string; separator: string };
+    hero: { caption: string; heading: string; paragraph: string };
+    countdown: { background: string; border: string; text: string };
+    footer: { background: string; headings: string; links: string; linkHover: string; divider: string; bottomText: string };
+  };
+  fonts: { logo: DesignFontRole; heading: DesignFontRole; body: DesignFontRole; buttonLabel: DesignFontRole };
+  responsiveTypography: ResponsiveTypeScale;
 }
 export const DEFAULT_GLOBAL_DESIGN: GlobalDesignSettings = {
-  version: 1,
-  colors: {
-    primary: "#4A1D5C", accent: "#B8893C", surface: "#FFFFFF",
-    pageBackground: "#FFFFFF", text: "#2B1A33", headerBackground: "#FFFFFF",
-    footerBackground: "#4A1D5C", footerText: "#F3E9DF"
+  version: 2,
+  colors: { primary: "#563568", accent: "#B69ACF", surface: "#FFFFFF", pageBackground: "#FFFFFF", text: "#302438", headerBackground: "#FFFFFF", footerBackground: "#563568", footerText: "#FFFFFF" },
+  typography: { headingFont: "Cormorant Garamond", bodyFont: "Plus Jakarta Sans", headingScale: 100, bodyScale: 100 },
+  layout: { contentWidth: 1280, cornerRadius: 8 }, components: { buttonStyle: "solid" },
+  elements: {
+    text: { heading: "#302438", body: "#5A4F5E", goldText: "#563568", muted: "#806F89", link: "#563568", linkHover: "#B69ACF" },
+    buttons: { primaryBackground: "#563568", primaryText: "#FFFFFF", primaryHoverBackground: "#B69ACF", primaryPressedBackground: "#442753", secondaryBorder: "#B69ACF", secondaryText: "#302438" },
+    surfaces: { alternateSection: "#F7F0FA", card: "#FFFFFF", border: "#E7DCEB", pill: "#F7F0FA" },
+    productCards: { saleBadgeBackground: "#563568", saleBadgeText: "#FFFFFF", sellingPrice: "#563568", oldPrice: "#806F89", starRating: "#B69ACF", categoryLabel: "#563568" },
+    announcement: { background: "#563568", text: "#FFFFFF", separator: "#B69ACF" },
+    hero: { caption: "#B69ACF", heading: "#FFFFFF", paragraph: "#FFFFFF" },
+    countdown: { background: "#F7F0FA", border: "#B69ACF", text: "#563568" },
+    footer: { background: "#563568", headings: "#FFFFFF", links: "#FFFFFF", linkHover: "#B69ACF", divider: "#806F89", bottomText: "#F7F0FA" }
   },
-  typography: {
-    headingFont: "Cormorant Garamond", bodyFont: "Plus Jakarta Sans",
-    headingScale: 100, bodyScale: 100
-  },
-  layout: { contentWidth: 1280, cornerRadius: 8 },
-  components: { buttonStyle: "solid" }
+  responsiveTypography: {"desktop":{"h1":60,"h2":42,"h3":28,"h4":20,"body":16,"small":13,"button":14},"tablet":{"h1":48,"h2":36,"h3":24,"h4":19,"body":15,"small":12,"button":14},"mobile":{"h1":38,"h2":30,"h3":21,"h4":18,"body":14,"small":12,"button":13},"tabletOverride":false,"mobileOverride":false},
+  fonts: {
+    logo: { family: "Cormorant Garamond", sizeScale: 100, weight: 600 },
+    heading: { family: "Cormorant Garamond", sizeScale: 100, weight: 600 },
+    body: { family: "Plus Jakarta Sans", sizeScale: 100, weight: 400 },
+    buttonLabel: { family: "Plus Jakarta Sans", sizeScale: 100, weight: 600 }
+  }
 };
 
 export interface HomepageSectionConfig {
