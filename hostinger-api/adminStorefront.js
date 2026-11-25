@@ -174,6 +174,159 @@ const DEFAULT_CURATED={version:1,productIds:[],configured:false};
 const DEFAULT_EXPLORE={version:1,productIds:[],displayCount:8,configured:false};
 async function readSetting(key,fallback){await ensureSchema();const [rows]=await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1",[key]);if(!rows.length)return fallback;try{return JSON.parse(rows[0].setting_value)}catch{return fallback}}
 async function writeSetting(key,value){await ensureSchema();await pool.execute("INSERT INTO storefront_settings (setting_key,setting_value) VALUES (?,?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)",[key,JSON.stringify(value)])}
+const DEFAULT_GLOBAL_DESIGN = {"version":2,"colors":{"primary":"#4A1D5C","accent":"#B8893C","surface":"#FFFFFF","pageBackground":"#FFFFFF","text":"#2B1A33","headerBackground":"#FFFFFF","footerBackground":"#4A1D5C","footerText":"#F3E9DF"},"typography":{"headingFont":"Cormorant Garamond","bodyFont":"Plus Jakarta Sans","headingScale":100,"bodyScale":100},"layout":{"contentWidth":1280,"cornerRadius":8},"components":{"buttonStyle":"solid"},"elements":{"text":{"heading":"#2B1A33","body":"#5A4F5E","goldText":"#8A6120","muted":"#8E8392","link":"#4A1D5C","linkHover":"#B8893C"},"buttons":{"primaryBackground":"#4A1D5C","primaryText":"#FFFFFF","primaryHoverBackground":"#B8893C","primaryPressedBackground":"#36143F","secondaryBorder":"#B8893C","secondaryText":"#2B1A33"},"surfaces":{"alternateSection":"#F8F4FB","card":"#FFFFFF","border":"#ECE4F0","pill":"#F3ECF8"},"productCards":{"saleBadgeBackground":"#B3265C","saleBadgeText":"#FFFFFF","sellingPrice":"#4A1D5C","oldPrice":"#8E8392","starRating":"#B8893C","categoryLabel":"#8A6120"},"announcement":{"background":"#4A1D5C","text":"#FFFFFF","separator":"#E2C07A"},"hero":{"caption":"#E2C07A","heading":"#FFFFFF","paragraph":"#FFFFFF"},"countdown":{"background":"#FCE9F0","border":"#F3C6D6","text":"#B3265C"},"footer":{"background":"#4A1D5C","headings":"#FFFFFF","links":"#F3E9DF","linkHover":"#E2C07A","divider":"#7B4D8C","bottomText":"#CDB9D6"}},"fonts":{"logo":{"family":"Cormorant Garamond","sizeScale":100,"weight":600},"heading":{"family":"Cormorant Garamond","sizeScale":100,"weight":600},"body":{"family":"Plus Jakarta Sans","sizeScale":100,"weight":400},"buttonLabel":{"family":"Plus Jakarta Sans","sizeScale":100,"weight":600}}};
+const DESIGN_FONT_FAMILIES = new Set(["Cormorant Garamond","Plus Jakarta Sans","Playfair Display","DM Sans","Lato","Montserrat","Poppins","Inter","Roboto","Georgia","Arial"]);
+const DESIGN_WEIGHTS = new Set([300,400,500,600,700]);
+const DESIGN_HEX = /^#[0-9A-Fa-f]{6}$/;
+function mergeDesign(base,value) {
+  if (!base || typeof base !== "object" || Array.isArray(base)) return value === undefined ? base : value;
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const merged = {};
+  for (const key of Object.keys(base)) merged[key] = mergeDesign(base[key],source[key]);
+  return merged;
+}
+const DEFAULT_RESPONSIVE_TYPOGRAPHY = {"desktop":{"h1":60,"h2":42,"h3":28,"h4":20,"body":16,"small":13,"button":14},"tablet":{"h1":48,"h2":36,"h3":24,"h4":19,"body":15,"small":12,"button":14},"mobile":{"h1":38,"h2":30,"h3":21,"h4":18,"body":14,"small":12,"button":13},"tabletOverride":false,"mobileOverride":false};
+function normalizeGlobalDesign(value) {
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const d = mergeDesign(DEFAULT_GLOBAL_DESIGN,source);
+  const isLegacy = Number(source.version || 1) < 2 || !source.elements;
+  if (isLegacy) {
+    const colors = source.colors || {};
+    // Legacy primary text was the heading/primary foreground, not body copy.
+    d.elements.text.heading = colors.text || d.elements.text.heading;
+    d.elements.text.link = colors.primary || d.elements.text.link;
+    d.elements.text.linkHover = colors.accent || d.elements.text.linkHover;
+    d.elements.buttons.primaryBackground = colors.primary || d.elements.buttons.primaryBackground;
+    d.elements.buttons.primaryText = colors.surface || d.elements.buttons.primaryText;
+    d.elements.buttons.primaryHoverBackground = colors.accent || d.elements.buttons.primaryHoverBackground;
+    d.elements.buttons.secondaryBorder = colors.accent || d.elements.buttons.secondaryBorder;
+    d.elements.surfaces.card = colors.surface || d.elements.surfaces.card;
+    d.elements.announcement.background = colors.primary || d.elements.announcement.background;
+    d.elements.footer.background = colors.footerBackground || d.elements.footer.background;
+    d.elements.footer.links = colors.footerText || d.elements.footer.links;
+    // Body remains the new palette default (#5A4F5E); old primary text is not body text.
+    if (source.typography) {
+      d.fonts.logo.family = source.typography.headingFont || d.fonts.logo.family;
+      d.fonts.heading.family = source.typography.headingFont || d.fonts.heading.family;
+      d.fonts.body.family = source.typography.bodyFont || d.fonts.body.family;
+      d.fonts.buttonLabel.family = source.typography.bodyFont || d.fonts.buttonLabel.family;
+      d.fonts.heading.sizeScale = Number(source.typography.headingScale) || d.fonts.heading.sizeScale;
+      d.fonts.body.sizeScale = Number(source.typography.bodyScale) || d.fonts.body.sizeScale;
+    }
+  }
+  d.responsiveTypography = mergeDesign(DEFAULT_RESPONSIVE_TYPOGRAPHY, source.responsiveTypography);
+  d.version = 2;
+  return d;
+}
+function validateGlobalDesign(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "Design settings must be an object.";
+  const d = normalizeGlobalDesign(value);
+  for (const group of ["text","buttons","surfaces","productCards","announcement","hero","countdown","footer"]) {
+    for (const [key,color] of Object.entries(d.elements[group] || {})) if (typeof color !== "string" || !DESIGN_HEX.test(color)) return `Invalid hex colour at elements.${group}.${key}; use #RRGGBB.`;
+  }
+  for (const [key,color] of Object.entries(d.colors || {})) if (typeof color !== "string" || !DESIGN_HEX.test(color)) return `Invalid legacy hex colour at colors.${key}; use #RRGGBB.`;
+  for (const device of ["desktop","tablet","mobile"]) {
+    const scale=d.responsiveTypography?.[device];
+    for (const key of ["h1","h2","h3","h4","body","small","button"]) if (!Number.isFinite(scale?.[key]) || scale[key]<10 || scale[key]>96) return `Responsive ${device} ${key} size must be between 10px and 96px.`;
+  }
+  if (typeof d.responsiveTypography.tabletOverride!=="boolean" || typeof d.responsiveTypography.mobileOverride!=="boolean") return "Responsive typography override flags must be boolean.";
+  for (const role of ["logo","heading","body","buttonLabel"]) {
+    const f=d.fonts?.[role];
+    if (!f || !DESIGN_FONT_FAMILIES.has(f.family)) return `Invalid font family for ${role}.`;
+    if (!Number.isFinite(f.sizeScale) || f.sizeScale<70 || f.sizeScale>150) return `Font size scale for ${role} must be between 70 and 150.`;
+    if (!DESIGN_WEIGHTS.has(f.weight)) return `Invalid font weight for ${role}.`;
+  }
+  if (![1120,1200,1280,1360].includes(d.layout.contentWidth)) return "Invalid content width.";
+  if (![0,4,8,16].includes(d.layout.cornerRadius)) return "Invalid corner radius.";
+  if (!["solid","outline"].includes(d.components.buttonStyle)) return "Invalid button style.";
+  if (!["Cormorant Garamond","Georgia","Playfair Display"].includes(d.typography.headingFont)) return "Invalid legacy heading font.";
+  if (!["Plus Jakarta Sans","Arial","DM Sans"].includes(d.typography.bodyFont)) return "Invalid legacy body font.";
+  for (const n of [d.typography.headingScale,d.typography.bodyScale]) if (!Number.isFinite(n)||n<70||n>150) return "Legacy typography scale must be between 70 and 150.";
+  return null;
+}
+function sanitizeStoredGlobalDesign(value, key) {
+  const d = normalizeGlobalDesign(value);
+  const warn = field => console.warn(`[storefront-design] Invalid stored value at ${key}.${field}; using the field default.`);
+  for (const group of ["text","buttons","surfaces","productCards","announcement","hero","countdown","footer"]) {
+    for (const field of Object.keys(DEFAULT_GLOBAL_DESIGN.elements[group])) {
+      const color = d.elements[group][field];
+      if (typeof color !== "string" || !DESIGN_HEX.test(color)) {
+        d.elements[group][field] = DEFAULT_GLOBAL_DESIGN.elements[group][field];
+        warn(`elements.${group}.${field}`);
+      }
+    }
+  }
+  for (const field of Object.keys(DEFAULT_GLOBAL_DESIGN.colors)) {
+    const color = d.colors[field];
+    if (typeof color !== "string" || !DESIGN_HEX.test(color)) {
+      d.colors[field] = DEFAULT_GLOBAL_DESIGN.colors[field];
+      warn(`colors.${field}`);
+    }
+  }
+  for (const device of ["desktop","tablet","mobile"]) {
+    for (const field of ["h1","h2","h3","h4","body","small","button"]) {
+      const value=d.responsiveTypography?.[device]?.[field];
+      if (!Number.isFinite(value)||value<10||value>96) d.responsiveTypography[device][field]=DEFAULT_RESPONSIVE_TYPOGRAPHY[device][field];
+    }
+  }
+  if (typeof d.responsiveTypography.tabletOverride!=="boolean") d.responsiveTypography.tabletOverride=false;
+  if (typeof d.responsiveTypography.mobileOverride!=="boolean") d.responsiveTypography.mobileOverride=false;
+  for (const role of ["logo","heading","body","buttonLabel"]) {
+    const font = d.fonts[role];
+    if (!DESIGN_FONT_FAMILIES.has(font.family)) { font.family = DEFAULT_GLOBAL_DESIGN.fonts[role].family; warn(`fonts.${role}.family`); }
+    if (!Number.isFinite(font.sizeScale) || font.sizeScale < 70 || font.sizeScale > 150) { font.sizeScale = DEFAULT_GLOBAL_DESIGN.fonts[role].sizeScale; warn(`fonts.${role}.sizeScale`); }
+    if (!DESIGN_WEIGHTS.has(font.weight)) { font.weight = DEFAULT_GLOBAL_DESIGN.fonts[role].weight; warn(`fonts.${role}.weight`); }
+  }
+  if (![1120,1200,1280,1360].includes(d.layout.contentWidth)) { d.layout.contentWidth = DEFAULT_GLOBAL_DESIGN.layout.contentWidth; warn("layout.contentWidth"); }
+  if (![0,4,8,16].includes(d.layout.cornerRadius)) { d.layout.cornerRadius = DEFAULT_GLOBAL_DESIGN.layout.cornerRadius; warn("layout.cornerRadius"); }
+  if (!["solid","outline"].includes(d.components.buttonStyle)) { d.components.buttonStyle = DEFAULT_GLOBAL_DESIGN.components.buttonStyle; warn("components.buttonStyle"); }
+  if (!["Cormorant Garamond","Georgia","Playfair Display"].includes(d.typography.headingFont)) { d.typography.headingFont = DEFAULT_GLOBAL_DESIGN.typography.headingFont; warn("typography.headingFont"); }
+  if (!["Plus Jakarta Sans","Arial","DM Sans"].includes(d.typography.bodyFont)) { d.typography.bodyFont = DEFAULT_GLOBAL_DESIGN.typography.bodyFont; warn("typography.bodyFont"); }
+  for (const field of ["headingScale","bodyScale"]) if (!Number.isFinite(d.typography[field]) || d.typography[field] < 70 || d.typography[field] > 150) { d.typography[field] = DEFAULT_GLOBAL_DESIGN.typography[field]; warn(`typography.${field}`); }
+  return d;
+}
+let legacyDesignMigrationPromise;
+async function migrateLegacyGlobalDesign() {
+  if (!legacyDesignMigrationPromise) {
+    legacyDesignMigrationPromise = (async () => {
+      const legacy = await readSetting("global_design",null);
+      if (!legacy || typeof legacy !== "object" || Array.isArray(legacy)) return;
+      for (const [field,key] of [["draft","global_design_draft"],["published","global_design_published"]]) {
+        const oldValue = legacy[field];
+        if (!oldValue || typeof oldValue !== "object" || Array.isArray(oldValue)) continue;
+        await ensureSchema();
+        await pool.execute(
+          "INSERT IGNORE INTO storefront_settings (setting_key,setting_value) VALUES (?,?)",
+          [key,JSON.stringify(normalizeGlobalDesign(oldValue))]
+        );
+      }
+    })().catch(error => { legacyDesignMigrationPromise = undefined; throw error; });
+  }
+  await legacyDesignMigrationPromise;
+}
+function toLegacyGlobalDesign(value) {
+  const d = normalizeGlobalDesign(value);
+  return { version:1, colors:d.colors, typography:d.typography, layout:d.layout, components:d.components };
+}
+async function writeLegacyGlobalDesignPart(field,value) {
+  const current = await readSetting("global_design",null);
+  const record = current && typeof current === "object" && !Array.isArray(current)
+    ? { ...current }
+    : { draft:toLegacyGlobalDesign(DEFAULT_GLOBAL_DESIGN), published:toLegacyGlobalDesign(DEFAULT_GLOBAL_DESIGN) };
+  record[field] = toLegacyGlobalDesign(value);
+  await writeSetting("global_design",record);
+}
+async function readGlobalDesign(key) {
+  await migrateLegacyGlobalDesign();
+  return sanitizeStoredGlobalDesign(await readSetting(key,null) || DEFAULT_GLOBAL_DESIGN,key);
+}
+async function saveGlobalDesign(value) {
+  const d=normalizeGlobalDesign(value);
+  await writeSetting("global_design_draft",d);
+  await writeLegacyGlobalDesignPart("draft",d);
+  return d;
+}
+
 function validProductIds(ids,max=100){return Array.isArray(ids)&&ids.length<=max&&ids.every(id=>typeof id==="string"&&id.length>0&&id.length<=191)&&new Set(ids).size===ids.length}
 function mapStorefrontProduct(row){const arr=value=>{try{const parsed=typeof value==="string"?JSON.parse(value):value;return Array.isArray(parsed)?parsed:[]}catch{return[]}};return{id:row.id,slug:row.slug,name:row.name,description:row.description||"",shortDescription:row.short_description||undefined,price:Number(row.price),...(row.compare_at_price==null?{}:{compareAtPrice:Number(row.compare_at_price)}),images:arr(row.images),categoryId:row.category_id||"",collectionSlugs:arr(row.collection_slugs),jewelleryType:row.jewellery_type||"necklace",stock:Number(row.stock),status:row.status,tags:arr(row.tags),createdAt:row.created_at?new Date(row.created_at).toISOString():new Date().toISOString()}}
 async function productsForIds(ids,randomize=false){if(!Array.isArray(ids)||!ids.length)return[];const safeIds=ids.filter(id=>typeof id==="string").slice(0,100);if(!safeIds.length)return[];const placeholders=safeIds.map(()=>" ?".trim()).join(",");const [rows]=await pool.execute("SELECT * FROM products WHERE status='active' AND stock>0 AND id IN ("+placeholders+")",safeIds);const byId=new Map(rows.map(row=>[row.id,row]));const ordered=safeIds.map(id=>byId.get(id)).filter(Boolean);if(randomize){for(let i=ordered.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ordered[i],ordered[j]]=[ordered[j],ordered[i]]}}return ordered.map(mapStorefrontProduct)}
@@ -193,6 +346,18 @@ adminOnly.get("/explore-now",async(_req,res,next)=>{try{const draft=await readSe
 adminOnly.put("/explore-now/draft",async(req,res,next)=>{try{const productIds=req.body?.productIds;const displayCount=Number(req.body?.displayCount);if(!validProductIds(productIds,100))return res.status(400).json({error:"Choose up to 100 unique eligible products."});if(!Number.isInteger(displayCount)||displayCount<2||displayCount>24)return res.status(400).json({error:"Display count must be between 2 and 24."});const draft={version:1,productIds,displayCount,configured:productIds.length>0};await writeSetting("explore_now_draft",draft);res.json({success:true,draft})}catch(e){next(e)}});
 adminOnly.post("/explore-now/publish",async(_req,res,next)=>{try{const draft=await readSetting("explore_now_draft",DEFAULT_EXPLORE);await writeSetting("explore_now_published",draft);res.json({success:true,published:draft})}catch(e){next(e)}});
 publicRouter.get("/explore-now",async(_req,res,next)=>{try{const config=await readSetting("explore_now_published",DEFAULT_EXPLORE);const products=config.configured===true?await productsForIds(config.productIds||[],true):[];const displayCount=Math.max(2,Math.min(24,Number(config.displayCount)||8));res.set("Cache-Control","no-store").json({products,displayCount,configured:config.configured===true&&products.length>0})}catch(e){next(e)}});
+
+
+adminOnly.get("/storefront/design",async(_req,res,next)=>{try{const draft=await readGlobalDesign("global_design_draft");const published=await readGlobalDesign("global_design_published");res.set("Cache-Control","no-store").json({draft,published})}catch(e){next(e)}});
+adminOnly.get("/design",async(_req,res,next)=>{try{const draft=await readGlobalDesign("global_design_draft");const published=await readGlobalDesign("global_design_published");res.set("Cache-Control","no-store").json({draft,published})}catch(e){next(e)}});
+adminOnly.put("/storefront/design",async(req,res,next)=>{try{const value=req.body?.design;const invalid=validateGlobalDesign(value);if(invalid)return res.status(400).json({error:invalid});const draft=await saveGlobalDesign(value);res.set("Cache-Control","no-store").json({success:true,draft})}catch(e){next(e)}});
+adminOnly.put("/design",async(req,res,next)=>{try{const value=req.body?.design;const invalid=validateGlobalDesign(value);if(invalid)return res.status(400).json({error:invalid});const draft=await saveGlobalDesign(value);res.set("Cache-Control","no-store").json({success:true,draft})}catch(e){next(e)}});
+adminOnly.post("/storefront/design/publish",async(_req,res,next)=>{try{const published=await readGlobalDesign("global_design_draft");await writeSetting("global_design_published",published);
+await writeLegacyGlobalDesignPart("published",published);res.set("Cache-Control","no-store").json({success:true,published})}catch(e){next(e)}});
+adminOnly.post("/design/publish",async(_req,res,next)=>{try{const published=await readGlobalDesign("global_design_draft");await writeSetting("global_design_published",published);
+await writeLegacyGlobalDesignPart("published",published);res.set("Cache-Control","no-store").json({success:true,published})}catch(e){next(e)}});
+publicRouter.get("/storefront/design",async(_req,res,next)=>{try{const design=await readGlobalDesign("global_design_published");res.set("Cache-Control","no-store").json({design})}catch(e){next(e)}});
+publicRouter.get("/design",async(_req,res,next)=>{try{const design=await readGlobalDesign("global_design_published");res.set("Cache-Control","no-store").json({design})}catch(e){next(e)}});
 
 publicRouter.get("/banners", async (_req, res, next) => {
   try {
