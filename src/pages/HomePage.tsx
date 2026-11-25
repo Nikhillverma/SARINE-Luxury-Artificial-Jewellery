@@ -713,7 +713,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
             </div>
           </div>
 
-        {sectionCarouselEnabled("best-sellers") && (
+{sectionCarouselEnabled("best-sellers") && (
           <div className="mb-3 flex items-center justify-end gap-2" aria-label="Best Sellers carousel controls">
             <button type="button" onClick={() => scrollProductTrack(carouselRef.current, 'left')} aria-label="Scroll Best Sellers left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white">
               <ChevronLeft size={17} />
