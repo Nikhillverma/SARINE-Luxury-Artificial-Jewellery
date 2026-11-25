@@ -253,7 +253,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* TIER 2: MAIN BRAND HEADER (Warm Pale Ivory/Lavender #FAF5FC) */}
         <div className="bg-[var(--white)]">
-          <div className="site-container py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-3 xl:gap-4">
+          <div className="site-container relative py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-3 xl:gap-4">
             {/* Left: SARINE Wordmark with Diamond Star Motif & Tagline */}
             <div className="flex items-center gap-2 sm:gap-3">
               <button
@@ -267,7 +267,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {isMobileMenuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
               </button>
 
-              <Link to="/" className="flex flex-col items-center group">
+              <Link to="/" className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center group xl:static xl:translate-x-0">
                 <span className="font-serif text-[26px] sm:text-[34px] tracking-[0.24em] text-[color:var(--heading)] uppercase font-normal leading-tight group-hover:text-[color:var(--gold)] transition-colors">
                   SARINE
                 </span>
@@ -323,7 +323,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Mobile Quick Search Button */}
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors xl:hidden cursor-pointer rounded-full hover:bg-[var(--white)]"
+                className="hidden xl:inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer rounded-full hover:bg-[var(--white)]"
                 aria-label="Open search"
               >
                 <Search size={20} strokeWidth={1.5} />
@@ -356,7 +356,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {/* Mobile Account Icon Only */}
                 <Link
                   to="/account"
-                  className="hidden sm:inline-flex xl:hidden min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors rounded-full hover:bg-[var(--white)]"
+                  className="inline-flex xl:hidden min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors rounded-full hover:bg-[var(--white)]"
                   aria-label="My Account"
                 >
                   <User size={19} strokeWidth={1.5} className="text-[color:var(--plum)]" />
@@ -446,7 +446,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Wishlist Button with Label & Numeric Badge */}
               <button
                 onClick={openWishlist}
-                className="relative hidden sm:inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer group rounded-xs hover:bg-[var(--white)]"
+                className="relative inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer group rounded-xs hover:bg-[var(--white)]"
                 aria-label={`Wishlist with ${wishlistCount} saved pieces`}
                 title="View Wishlist"
               >
@@ -483,6 +483,20 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Mobile search row: full-width, readable and separate from the brand controls */}
+        <div className="xl:hidden border-t border-[var(--border)]/60 bg-[var(--white)] px-4 py-2">
+          <button
+            type="button"
+            onClick={() => setIsSearchOpen(true)}
+            className="flex min-h-11 w-full items-center gap-3 border border-[var(--border)] bg-white px-3.5 text-left text-sm text-[color:var(--body)] shadow-2xs transition-colors hover:border-[var(--plum)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--plum)]"
+            aria-label="Search jewellery, collections, or more"
+          >
+            <Search size={18} className="shrink-0 text-[color:var(--plum)]" strokeWidth={1.75} />
+            <span className="min-w-0 flex-1 truncate">Search jewellery, collections, or more...</span>
+            <SlidersHorizontal size={16} className="shrink-0 text-[color:var(--plum)]" />
+          </button>
         </div>
 
         {/* TIER 3: SECONDARY NAVIGATION BAR (Pale Ivory/Lavender #FAF5FC with Delicate Champagne Gold Borders) */}
