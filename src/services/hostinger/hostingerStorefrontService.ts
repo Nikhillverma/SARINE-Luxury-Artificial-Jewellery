@@ -29,18 +29,18 @@ export interface GlobalDesignSettings {
 }
 export const DEFAULT_GLOBAL_DESIGN: GlobalDesignSettings = {
   version: 2,
-  colors: { primary: "#4A1D5C", accent: "#B8893C", surface: "#FFFFFF", pageBackground: "#FFFFFF", text: "#2B1A33", headerBackground: "#FFFFFF", footerBackground: "#4A1D5C", footerText: "#F3E9DF" },
+  colors: { primary: "#563568", accent: "#B69ACF", surface: "#FFFFFF", pageBackground: "#FFFFFF", text: "#302438", headerBackground: "#FFFFFF", footerBackground: "#563568", footerText: "#FFFFFF" },
   typography: { headingFont: "Cormorant Garamond", bodyFont: "Plus Jakarta Sans", headingScale: 100, bodyScale: 100 },
   layout: { contentWidth: 1280, cornerRadius: 8 }, components: { buttonStyle: "solid" },
   elements: {
-    text: { heading: "#2B1A33", body: "#5A4F5E", goldText: "#8A6120", muted: "#8E8392", link: "#4A1D5C", linkHover: "#B8893C" },
-    buttons: { primaryBackground: "#4A1D5C", primaryText: "#FFFFFF", primaryHoverBackground: "#B8893C", primaryPressedBackground: "#36143F", secondaryBorder: "#B8893C", secondaryText: "#2B1A33" },
-    surfaces: { alternateSection: "#F8F4FB", card: "#FFFFFF", border: "#ECE4F0", pill: "#F3ECF8" },
-    productCards: { saleBadgeBackground: "#B3265C", saleBadgeText: "#FFFFFF", sellingPrice: "#4A1D5C", oldPrice: "#8E8392", starRating: "#B8893C", categoryLabel: "#8A6120" },
-    announcement: { background: "#4A1D5C", text: "#FFFFFF", separator: "#E2C07A" },
-    hero: { caption: "#E2C07A", heading: "#FFFFFF", paragraph: "#FFFFFF" },
-    countdown: { background: "#FCE9F0", border: "#F3C6D6", text: "#B3265C" },
-    footer: { background: "#4A1D5C", headings: "#FFFFFF", links: "#F3E9DF", linkHover: "#E2C07A", divider: "#7B4D8C", bottomText: "#CDB9D6" }
+    text: { heading: "#302438", body: "#5A4F5E", goldText: "#563568", muted: "#806F89", link: "#563568", linkHover: "#B69ACF" },
+    buttons: { primaryBackground: "#563568", primaryText: "#FFFFFF", primaryHoverBackground: "#B69ACF", primaryPressedBackground: "#442753", secondaryBorder: "#B69ACF", secondaryText: "#302438" },
+    surfaces: { alternateSection: "#F7F0FA", card: "#FFFFFF", border: "#E7DCEB", pill: "#F7F0FA" },
+    productCards: { saleBadgeBackground: "#563568", saleBadgeText: "#FFFFFF", sellingPrice: "#563568", oldPrice: "#806F89", starRating: "#B69ACF", categoryLabel: "#563568" },
+    announcement: { background: "#563568", text: "#FFFFFF", separator: "#B69ACF" },
+    hero: { caption: "#B69ACF", heading: "#FFFFFF", paragraph: "#FFFFFF" },
+    countdown: { background: "#F7F0FA", border: "#B69ACF", text: "#563568" },
+    footer: { background: "#563568", headings: "#FFFFFF", links: "#FFFFFF", linkHover: "#B69ACF", divider: "#806F89", bottomText: "#F7F0FA" }
   },
   responsiveTypography: {"desktop":{"h1":60,"h2":42,"h3":28,"h4":20,"body":16,"small":13,"button":14},"tablet":{"h1":48,"h2":36,"h3":24,"h4":19,"body":15,"small":12,"button":14},"mobile":{"h1":38,"h2":30,"h3":21,"h4":18,"body":14,"small":12,"button":13},"tabletOverride":false,"mobileOverride":false},
   fonts: {
