@@ -129,6 +129,7 @@ function validatePublishedDesign(value: unknown): ValidatedPublishedDesign | nul
   const sourceResponsive = isRecord(value.responsiveTypography) ? value.responsiveTypography : {};
   const sourceCustomization = isRecord(value.customization) ? value.customization : {};
   const sourceSpacing = isRecord(sourceCustomization.spacing) ? sourceCustomization.spacing : {};
+  const sourceElementStyles = isRecord(sourceCustomization.elements) ? sourceCustomization.elements : {};
 
   const validated: ValidatedPublishedDesign = {
     version: value.version as 1 | 2,
@@ -212,6 +213,32 @@ function validatePublishedDesign(value: unknown): ValidatedPublishedDesign | nul
   const cleanSpacing: Record<string,number> = {};
   for (const [key,[min,max]] of Object.entries(spacingBounds)) { const n=sourceSpacing[key]; if (typeof n === "number" && Number.isFinite(n) && n >= min && n <= max) cleanSpacing[key]=n; }
   if (Object.keys(cleanSpacing).length === Object.keys(spacingBounds).length) validated.customization = { spacing: cleanSpacing as unknown as GlobalDesignSettings["customization"]["spacing"] };
+  const styleKeys = ["fontSize","lineHeight","letterSpacing","fontWeight","textAlign","textTransform","marginTop","marginRight","marginBottom","marginLeft","paddingTop","paddingRight","paddingBottom","paddingLeft","width","maxWidth","minHeight","borderRadius","borderWidth"] as const;
+  const alignments = ["left","center","right","justify"], transforms = ["none","uppercase","capitalize","lowercase"];
+  const cleanElements: Record<string, GlobalDesignSettings["customization"]["elements"][string]> = {};
+  for (const [element,rawBreakpoints] of Object.entries(sourceElementStyles)) {
+    if (!isRecord(rawBreakpoints)) continue;
+    const cleanBreakpoints: Record<string, unknown> = {}; let validElement = true;
+    for (const device of ["desktop","tablet","mobile"] as const) {
+      const rawStyle = rawBreakpoints[device]; if (!isRecord(rawStyle)) { validElement=false; break; }
+      const cleanStyle: Record<string, unknown> = {};
+      for (const key of styleKeys) {
+        const v=rawStyle[key];
+        if (key==="textAlign") { if (!alignments.includes(String(v))) validElement=false; else cleanStyle[key]=v; }
+        else if (key==="textTransform") { if (!transforms.includes(String(v))) validElement=false; else cleanStyle[key]=v; }
+        else if (typeof v!=="number" || !Number.isFinite(v)) validElement=false;
+        else if (key==="fontSize" && (v<8||v>120)) validElement=false;
+        else if (key==="lineHeight" && (v<0.8||v>3)) validElement=false;
+        else if (key==="fontWeight" && ![300,400,500,600,700].includes(v)) validElement=false;
+        else if ((key==="width"||key==="maxWidth") && (v<0||v>100)) validElement=false;
+        else if (!["fontSize","lineHeight","fontWeight","width","maxWidth"].includes(key) && (v< -200||v>1000)) validElement=false;
+        else cleanStyle[key]=v;
+      }
+      cleanBreakpoints[device]=cleanStyle;
+    }
+    if (validElement) cleanElements[element]=cleanBreakpoints as GlobalDesignSettings["customization"]["elements"][string];
+  }
+  if (Object.keys(cleanElements).length) validated.customization = { ...(validated.customization||{}), spacing: cleanSpacing as unknown as GlobalDesignSettings["customization"]["spacing"], elements: cleanElements };
 
   const hasValidField = Object.values(validated).some(
     section => typeof section === 'object' && Object.keys(section).length > 0
@@ -296,6 +323,16 @@ function applyValidatedPublishedDesign(design: ValidatedPublishedDesign): void {
   }
   if (design.customization) {
     for (const [key, value] of Object.entries(design.customization.spacing)) root.style.setProperty("--sarine-spacing-" + key, value + "px");
+  }
+  if (design.customization?.elements) {
+    for (const [element,breakpoints] of Object.entries(design.customization.elements)) {
+      for (const device of ["desktop","tablet","mobile"] as const) {
+        for (const [key,value] of Object.entries(breakpoints[device])) {
+          const unit=["fontSize","letterSpacing","marginTop","marginRight","marginBottom","marginLeft","paddingTop","paddingRight","paddingBottom","paddingLeft","minHeight","borderRadius","borderWidth"].includes(key)?"px":(key==="width"||key==="maxWidth"?"%":"");
+          root.style.setProperty("--sarine-el-"+element+"-"+device+"-"+key,String(value)+unit);
+        }
+      }
+    }
   }
 
   if (design.responsiveTypography) {
