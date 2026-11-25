@@ -52,7 +52,7 @@ export const TermsPage: React.FC = () => {
           </p>
           <ul className="list-disc pl-5 space-y-1.5 text-xs text-[var(--body)]">
             <li><strong className="text-[var(--heading)]">Currency:</strong> All prices are displayed and charged strictly in <strong>Indian National Rupees (INR, ₹)</strong>.</li>
-            <li><strong className="text-[var(--heading)]">Taxes:</strong> All product prices include applicable Indian Goods and Services Tax (GST) unless indicated otherwise.</li>
+            <li><strong className="text-[var(--heading)]">Price Transparency:</strong> Prices are displayed in INR. Any applicable charges are shown in the order summary before you place your order.</li>
             <li><strong className="text-[var(--heading)]">Pricing Accuracy:</strong> While we endeavor to ensure all pricing information is exact, in the rare event of a typographical or system error, SARINE reserves the right to notify the customer and cancel the affected order with a full refund.</li>
           </ul>
         </section>
