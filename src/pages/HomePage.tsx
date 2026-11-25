@@ -23,8 +23,6 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
-  Pause,
-  Play,
   Heart,
   Star,
   Sparkles,
@@ -204,7 +202,6 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   // Hero Slider State
   const [activeSlide, setActiveSlide] = useState<number>(0);
-  const [isHeroPaused, setIsHeroPaused] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -430,12 +427,12 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   // Regular slides use 5 seconds; campaign slides use their admin-configured hold time.
   // The timer restarts on every slide change so a featured offer gets its full viewing time.
   useEffect(() => {
-    if (slideCount <= 1 || isHeroPaused || prefersReducedMotion) return;
+    if (slideCount <= 1 || prefersReducedMotion) return;
     const timer = window.setTimeout(() => {
       setActiveSlide(prev => (prev + 1) % slideCount);
     }, activeSlideDuration);
     return () => window.clearTimeout(timer);
-  }, [activeSlide, activeSlideDuration, isHeroPaused, prefersReducedMotion, slideCount]);
+  }, [activeSlide, activeSlideDuration, prefersReducedMotion, slideCount]);
 
   const prevSlide = () => {
     setActiveSlide((prev) => (prev - 1 + slideCount) % slideCount);
@@ -536,21 +533,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         ))}
 
 
-        {/* Hero text overlays and offer badge removed; preserve image-only slides and controls. */}
-        <div className="sarine-home-hero-content site-container h-full flex flex-col justify-between py-8 md:py-12 pointer-events-none relative z-10">
-          {/* Keep the pause control; remove manual slide navigation. */}
-          <div className="flex w-full justify-end pointer-events-auto pt-4">
-            <button
-              type="button"
-              onClick={() => setIsHeroPaused(paused => !paused)}
-              aria-label={isHeroPaused ? "Play automatic hero slides" : "Pause automatic hero slides"}
-              aria-pressed={isHeroPaused}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[var(--border)] bg-[var(--white)] hover:bg-[var(--gold)] hover:border-[var(--gold)] text-[color:var(--plum)] hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs backdrop-blur-xs"
-            >
-              {isHeroPaused ? <Play size={16} /> : <Pause size={16} />}
-            </button>
-          </div>
-        </div>
+        {/* Hero text overlays, offer badge, and pause control removed; preserve image-only slides. */}
       </section>
 
       {/* Compact campaign countdown: a small centred pill immediately below the hero. */}
