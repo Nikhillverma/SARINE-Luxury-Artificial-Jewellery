@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Check, Monitor, RotateCcw, Save, Smartphone, Tablet, Upload } from "lucide-react";
 import { ResponsiveTypographyControls } from "./ResponsiveTypographyControls";
+import { AdvancedDesignControls } from "./AdvancedDesignControls";
 import {
   DEFAULT_GLOBAL_DESIGN, hostingerStorefrontService,
   type DesignFontFamily, type DesignFontRole, type GlobalDesignSettings
@@ -219,6 +220,7 @@ export const GlobalDesignStudio: React.FC = () => {
             </div>
           </details>)}
           <ResponsiveTypographyControls value={design.responsiveTypography} onChange={responsiveTypography=>setDesign(current=>({...current,responsiveTypography}))} />
+          <AdvancedDesignControls value={design.customization} onChange={customization=>setDesign(current=>({...current,customization}))} />
         </div>
         <aside className="min-w-0 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-semibold text-[#302438]">Live design preview</h3><p className="text-xs text-[#806F89]">Updates as you edit the controls.</p></div><div className="flex rounded-lg border border-[#E7DCEB] p-1" aria-label="Preview device size">
