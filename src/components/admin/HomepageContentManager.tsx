@@ -58,6 +58,16 @@ export const HomepageContentManager: React.FC = () => {
     } catch (e) { setError(e instanceof Error ? e.message : "Homepage content could not be published."); }
     finally { setBusy(false); }
   };
+  const applyRecommendedCareCopy = () => {
+    setDraft(current => ({ ...current, care: {
+      ...current.care,
+      description: "A little everyday care can help your jewellery retain its finish. Keep pieces dry, store them separately, and handle them gently. Care needs may vary by material and finish, so follow any product-specific guidance.",
+      steps: [{"title":"The Last Touch","description":"Put your jewellery on after perfumes, lotions, and hair products have dried completely."},{"title":"Separate Storage","description":"Keep each piece in a clean, dry pouch or box, away from other jewellery to reduce scratches and tangling."},{"title":"Gentle Cleaning","description":"After wearing, wipe gently with a soft, dry, lint-free cloth. Avoid harsh cleaners and polishing chemicals."},{"title":"Keep It Dry","description":"Remove jewellery before bathing, swimming, or exercising, and keep it away from moisture and household chemicals."}]
+    } }));
+    setMessage("Recommended material-neutral care copy added to the draft. Review it, then save and publish when ready.");
+    setError("");
+  };
+
   const uploadStoryImage = async (file?: File) => {
     if (!file) return;
     setUploading(true); setError(""); setMessage("");
@@ -143,6 +153,10 @@ export const HomepageContentManager: React.FC = () => {
 
         <fieldset className="min-w-0 space-y-3 rounded-xl border border-[#E7DCEB] p-4 lg:col-span-2">
           <legend className="px-2 text-sm font-semibold text-[#563568]">Jewellery Care Guide</legend>
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#F7F0FA] p-3">
+            <p className="max-w-2xl text-xs leading-relaxed text-[#6F6475]">Use verified, material-neutral care guidance unless product-specific materials and finishes have been confirmed.</p>
+            <button type="button" disabled={busy || uploading} onClick={applyRecommendedCareCopy} className="min-h-10 rounded-lg border border-[#DCCDE5] bg-white px-3 py-2 text-xs font-medium text-[#563568] disabled:opacity-50">Apply recommended care copy</button>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className={labelClass}>Eyebrow {input(draft.care.eyebrow, value => update({ care: { ...draft.care, eyebrow: value } }), 80)}</label>
             <label className={labelClass}>Heading {input(draft.care.title, value => update({ care: { ...draft.care, title: value } }), 140)}</label>
