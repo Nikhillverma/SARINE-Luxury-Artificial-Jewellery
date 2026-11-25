@@ -15,7 +15,7 @@ const FONTS: DesignFontFamily[] = ["Cormorant Garamond","Plus Jakarta Sans","Pla
 
 const fields: Field[] = [
   ...[
-    ["heading","Heading text","Headings and prominent text"],["body","Body text","Paragraphs and supporting copy"],["goldText","Gold label text","Eyebrows and premium labels"],["muted","Muted text","Secondary and helper text"],["link","Links","Standard text links"],["linkHover","Link hover","Hovered and focused links"]
+    ["heading","Heading text","Headings and prominent text"],["body","Body text","Paragraphs and supporting copy"],["goldText","Accent label text","Eyebrows and premium labels"],["muted","Muted text","Secondary and helper text"],["link","Links","Standard text links"],["linkHover","Link hover","Hovered and focused links"]
   ].map(([id,label,help])=>({id,label,help,section:"text" as const,key:id})),
   ...[
     ["primaryBackground","Primary button background","Main call-to-action background"],["primaryText","Primary button text","Text on primary buttons"],["primaryHoverBackground","Primary button hover","Hover background"],["primaryPressedBackground","Primary button pressed","Pressed/active background"],["secondaryBorder","Secondary button border","Outline for secondary actions"],["secondaryText","Secondary button text","Text on secondary actions"]
@@ -142,9 +142,23 @@ export const GlobalDesignStudio: React.FC = () => {
     catch(e){setError(e instanceof Error?e.message:"Design could not be published.");}
     finally{setPublishing(false);}
   };
+  const applyApprovedPalette=()=>{
+    const updates: Array<[string,string]> = [
+      ["goldText","#563568"],["linkHover","#B69ACF"],
+      ["primaryHoverBackground","#442753"],["secondaryBorder","#B69ACF"],
+      ["footerLinks","#FFFFFF"],["legacyAccent","#B69ACF"]
+    ];
+    setDesign(current=>updates.reduce((next,[id,color])=>{
+      const field=fields.find(item=>item.id===id);
+      return field?setValue(next,field,color):next;
+    },clone(current)));
+    setConfirmRestore(false);setError("");
+    setMessage("Approved SARINE palette applied to this draft only. Save draft to keep it; the live storefront is unchanged.");
+  };
+
   const restoreDefaults=()=>{
     setDesign(clone(DEFAULT_GLOBAL_DESIGN));setConfirmRestore(false);
-    setMessage("SARINE plum, gold and ivory defaults are loaded in this draft only. Save and publish when ready.");setError("");
+    setMessage("SARINE plum, lavender and white defaults are loaded in this draft only. Save and publish when ready.");setError("");
   };
 
   const renderColor=(field:Field)=>{
@@ -232,7 +246,7 @@ export const GlobalDesignStudio: React.FC = () => {
         </aside>
       </div>
       <div className="flex flex-col-reverse gap-2 border-t border-[#EFE8F2] pt-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-2">{!confirmRestore?<button type="button" onClick={()=>setConfirmRestore(true)} disabled={saving||publishing} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#DCCBE7] px-4 py-2.5 text-sm text-[#563568] hover:bg-[#F7F0FA] disabled:opacity-50"><RotateCcw size={16}/>Restore brand defaults</button>:<div className="rounded-lg border border-[#DCCBE7] bg-[#FBF8FC] p-3"><p className="text-sm font-medium text-[#302438]">Restore SARINE's plum, gold and ivory defaults?</p><p className="mt-1 text-xs text-[#806F89]">This replaces editor values in the draft only. It does not save or publish.</p><div className="mt-2 flex flex-wrap gap-2"><button type="button" onClick={restoreDefaults} className="min-h-10 rounded-lg bg-[#4A1D5C] px-3 py-2 text-xs font-semibold text-white">Confirm restore</button><button type="button" onClick={()=>setConfirmRestore(false)} className="min-h-10 rounded-lg border border-[#DCCBE7] px-3 py-2 text-xs text-[#563568]">Cancel</button></div></div>}</div>
+        <div className="space-y-2"><button type="button" onClick={applyApprovedPalette} disabled={saving||publishing} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#B69ACF] px-4 py-2.5 text-sm text-[#563568] hover:bg-[#F7F0FA] disabled:opacity-50">Apply approved SARINE palette</button>{!confirmRestore?<button type="button" onClick={()=>setConfirmRestore(true)} disabled={saving||publishing} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#DCCBE7] px-4 py-2.5 text-sm text-[#563568] hover:bg-[#F7F0FA] disabled:opacity-50"><RotateCcw size={16}/>Restore brand defaults</button>:<div className="rounded-lg border border-[#DCCBE7] bg-[#FBF8FC] p-3"><p className="text-sm font-medium text-[#302438]">Restore SARINE's plum, lavender and white defaults?</p><p className="mt-1 text-xs text-[#806F89]">This replaces editor values in the draft only. It does not save or publish.</p><div className="mt-2 flex flex-wrap gap-2"><button type="button" onClick={restoreDefaults} className="min-h-10 rounded-lg bg-[#4A1D5C] px-3 py-2 text-xs font-semibold text-white">Confirm restore</button><button type="button" onClick={()=>setConfirmRestore(false)} className="min-h-10 rounded-lg border border-[#DCCBE7] px-3 py-2 text-xs text-[#563568]">Cancel</button></div></div>}</div>
         <div className="flex flex-col gap-2 sm:flex-row"><button type="button" onClick={()=>void saveDraft()} disabled={!canSave||!dirty} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#563568] px-5 py-2.5 text-sm font-medium text-[#563568] hover:bg-[#F7F0FA] disabled:opacity-50"><Save size={16}/>{saving?"Saving…":"Save draft"}</button><button type="button" onClick={()=>void publish()} disabled={!canSave} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#563568] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#442753] disabled:opacity-50">{publishing?<Upload size={16} className="animate-pulse"/>:<Check size={16} />}{publishing?"Publishing…":"Publish design"}</button></div>
       </div>
       <p className="text-[11px] text-[#806F89]">Saving a draft never changes the public site. Publishing applies selected global styling; product data, orders, checkout, navigation destinations and existing page content are not modified.</p>
