@@ -774,3 +774,41 @@ body.sarine-global-theme #main-content :is(a, button)[class*="bg-[var(--plum)]"]
   outline: 2px solid var(--gold) !important;
   outline-offset: 3px;
 }
+
+
+/* Responsive typography controls from Global Design Studio.
+   Tablet/mobile values are only used when their manual override is enabled. */
+body.sarine-global-theme #main-content h1 { font-size: var(--sarine-type-desktop-h1, clamp(1.875rem, 4.4vw, 3.75rem)); }
+body.sarine-global-theme #main-content h2 { font-size: var(--sarine-type-desktop-h2, clamp(1.625rem, 3.2vw, 2.625rem)); }
+body.sarine-global-theme #main-content h3 { font-size: var(--sarine-type-desktop-h3, clamp(1rem, 1.65vw, 1.75rem)); }
+body.sarine-global-theme #main-content h4 { font-size: var(--sarine-type-desktop-h4, 1.25rem); }
+body.sarine-global-theme #main-content p,
+body.sarine-global-theme #main-content li { font-size: var(--sarine-type-desktop-body, 1rem); }
+body.sarine-global-theme #main-content small,
+body.sarine-global-theme #main-content .text-xs { font-size: var(--sarine-type-desktop-small, .8125rem); }
+body.sarine-global-theme #main-content button,
+body.sarine-global-theme #main-content a[role="button"] { font-size: var(--sarine-type-desktop-button, .875rem); }
+@media (min-width: 768px) and (max-width: 1023px) {
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content h1 { font-size: var(--sarine-type-tablet-h1); }
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content h2 { font-size: var(--sarine-type-tablet-h2); }
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content h3 { font-size: var(--sarine-type-tablet-h3); }
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content h4 { font-size: var(--sarine-type-tablet-h4); }
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content p,
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content li { font-size: var(--sarine-type-tablet-body); }
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content small,
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content .text-xs { font-size: var(--sarine-type-tablet-small); }
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content button,
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content a[role="button"] { font-size: var(--sarine-type-tablet-button); }
+}
+@media (max-width: 767px) {
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content h1 { font-size: var(--sarine-type-mobile-h1); }
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content h2 { font-size: var(--sarine-type-mobile-h2); }
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content h3 { font-size: var(--sarine-type-mobile-h3); }
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content h4 { font-size: var(--sarine-type-mobile-h4); }
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content p,
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content li { font-size: var(--sarine-type-mobile-body); }
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content small,
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content .text-xs { font-size: var(--sarine-type-mobile-small); }
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content button,
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content a[role="button"] { font-size: var(--sarine-type-mobile-button); }
+}
