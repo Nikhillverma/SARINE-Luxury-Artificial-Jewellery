@@ -536,44 +536,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
         ))}
 
 
-        {/* Persistent offer badge: remains visible even when campaign artwork includes its own copy. */}
-        {currentHero.campaign?.offerLabel && (
-          <div className="absolute top-6 left-4 sm:left-8 lg:left-[max(2rem,calc((100vw-1200px)/2))] z-20 pointer-events-none">
-            <span className="inline-flex items-center rounded-full border border-[var(--white)] bg-[var(--plum)] px-4 py-2 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-white shadow-lg backdrop-blur-sm">
-              {currentHero.campaign.offerLabel}
-            </span>
-          </div>
-        )}
-        {/* Centered content overlay container */}
+        {/* Hero text overlays and offer badge removed; preserve image-only slides and controls. */}
         <div className="sarine-home-hero-content site-container h-full flex flex-col justify-between py-8 md:py-12 pointer-events-none relative z-10">
-          {/* Campaign artwork can be a complete clickable creative; editable campaigns use the normal hero overlay. */}
-          {!currentHero.campaign?.artworkOnly && <div className="sarine-home-hero-copy my-auto max-w-xl md:max-w-lg lg:max-w-xl pointer-events-auto">
-            <span className="text-[12px] sm:text-[13px] uppercase tracking-[0.2em] !text-[color:var(--gold-light)] font-medium block mb-2 sm:mb-3 [text-shadow:0_2px_8px_rgba(43,26,51,0.45)]">
-              {currentHero.eyebrow}
-            </span>
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-[46px] leading-[1.16] !text-white font-normal tracking-tight [text-shadow:0_2px_12px_rgba(43,26,51,0.45)]">
-              {currentHero.heading}
-            </h1>
-            <p className="mt-2 sm:mt-3 text-[13px] sm:text-sm !text-white leading-relaxed max-w-md font-sans [text-shadow:0_1px_8px_rgba(43,26,51,0.45)]">
-              {currentHero.paragraph}
-            </p>
-            <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-3">
-              <CampaignDestinationLink
-                to={currentHero.shopLink}
-                className="px-6 sm:px-7 py-3 min-h-11 bg-[var(--gold)] text-white text-xs sm:text-[13px] font-sans font-medium hover:bg-[var(--white)] hover:text-[color:var(--plum)] transition-colors rounded-[6px] inline-flex items-center gap-2 shadow-xs"
-              >
-                <span>{currentHero.ctaText}</span>
-                <ArrowRight size={13} />
-              </CampaignDestinationLink>
-              <a
-                href="#categories"
-                className="px-6 sm:px-7 py-3 min-h-11 bg-[var(--white)] border border-[var(--white)] text-[color:var(--plum)] text-xs sm:text-[13px] font-sans font-medium hover:bg-[var(--gold)] hover:text-white transition-colors rounded-[6px]"
-              >
-                Explore Categories
-              </a>
-            </div>
-          </div>}
-
           {/* Keep the pause control; remove manual slide navigation. */}
           <div className="flex w-full justify-end pointer-events-auto pt-4">
             <button
