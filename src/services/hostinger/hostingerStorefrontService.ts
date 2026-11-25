@@ -8,6 +8,9 @@ const API_BASE = (
 export type DesignFontFamily = "Cormorant Garamond" | "Plus Jakarta Sans" | "Playfair Display" | "DM Sans" | "Lato" | "Montserrat" | "Poppins" | "Inter" | "Roboto" | "Georgia" | "Arial";
 export interface DesignFontRole { family: DesignFontFamily; sizeScale: number; weight: 300 | 400 | 500 | 600 | 700; }
 export interface ResponsiveTypeScale { desktop: { h1:number; h2:number; h3:number; h4:number; body:number; small:number; button:number }; tablet: { h1:number; h2:number; h3:number; h4:number; body:number; small:number; button:number }; mobile: { h1:number; h2:number; h3:number; h4:number; body:number; small:number; button:number }; tabletOverride:boolean; mobileOverride:boolean; }
+export interface ElementStyle { fontSize:number; lineHeight:number; letterSpacing:number; fontWeight:300|400|500|600|700; textAlign:'left'|'center'|'right'|'justify'; textTransform:'none'|'uppercase'|'capitalize'|'lowercase'; marginTop:number; marginRight:number; marginBottom:number; marginLeft:number; paddingTop:number; paddingRight:number; paddingBottom:number; paddingLeft:number; width:number; maxWidth:number; minHeight:number; borderRadius:number; borderWidth:number; }
+const makeElementStyle=(fontSize:number):ElementStyle=>({fontSize,lineHeight:1.4,letterSpacing:0,fontWeight:400,textAlign:'left',textTransform:'none',marginTop:0,marginRight:0,marginBottom:0,marginLeft:0,paddingTop:0,paddingRight:0,paddingBottom:0,paddingLeft:0,width:100,maxWidth:100,minHeight:0,borderRadius:8,borderWidth:0});
+const makeResponsiveStyle=(fontSize:number)=>({desktop:makeElementStyle(fontSize),tablet:makeElementStyle(fontSize),mobile:makeElementStyle(fontSize)});
 export interface GlobalDesignSettings {
   version: 2;
   colors: { primary: string; accent: string; surface: string; pageBackground: string; text: string; headerBackground: string; footerBackground: string; footerText: string };
@@ -26,7 +29,7 @@ export interface GlobalDesignSettings {
   };
   fonts: { logo: DesignFontRole; heading: DesignFontRole; body: DesignFontRole; buttonLabel: DesignFontRole };
   responsiveTypography: ResponsiveTypeScale;
-  customization: { spacing: { sectionVertical:number; sectionHorizontal:number; cardPadding:number; cardGap:number; gridGap:number; buttonPaddingX:number; buttonPaddingY:number; headerHeight:number; footerPadding:number } };
+  customization: { spacing: { sectionVertical:number; sectionHorizontal:number; cardPadding:number; cardGap:number; gridGap:number; buttonPaddingX:number; buttonPaddingY:number; headerHeight:number; footerPadding:number }; elements: Record<string, { desktop: ElementStyle; tablet: ElementStyle; mobile: ElementStyle }> };
 }
 export const DEFAULT_GLOBAL_DESIGN: GlobalDesignSettings = {
   version: 2,
@@ -44,7 +47,7 @@ export const DEFAULT_GLOBAL_DESIGN: GlobalDesignSettings = {
     footer: { background: "#563568", headings: "#FFFFFF", links: "#FFFFFF", linkHover: "#B69ACF", divider: "#806F89", bottomText: "#F7F0FA" }
   },
   responsiveTypography: {"desktop":{"h1":60,"h2":42,"h3":28,"h4":20,"body":16,"small":13,"button":14},"tablet":{"h1":48,"h2":36,"h3":24,"h4":19,"body":15,"small":12,"button":14},"mobile":{"h1":38,"h2":30,"h3":21,"h4":18,"body":14,"small":12,"button":13},"tabletOverride":false,"mobileOverride":false},
-  customization: { spacing: { sectionVertical:48, sectionHorizontal:24, cardPadding:16, cardGap:16, gridGap:20, buttonPaddingX:24, buttonPaddingY:12, headerHeight:76, footerPadding:48 } },
+  customization: { spacing: { sectionVertical:48, sectionHorizontal:24, cardPadding:16, cardGap:16, gridGap:20, buttonPaddingX:24, buttonPaddingY:12, headerHeight:76, footerPadding:48 }, elements: {announcement:makeResponsiveStyle(12),header:makeResponsiveStyle(14),logo:makeResponsiveStyle(28),navigation:makeResponsiveStyle(12),hero:makeResponsiveStyle(16),heroEyebrow:makeResponsiveStyle(11),heroHeading:makeResponsiveStyle(48),heroBody:makeResponsiveStyle(16),heroButton:makeResponsiveStyle(14),sectionHeading:makeResponsiveStyle(32),sectionBody:makeResponsiveStyle(16),categoryTile:makeResponsiveStyle(14),productGrid:makeResponsiveStyle(14),productCard:makeResponsiveStyle(14),productImage:makeResponsiveStyle(14),productTitle:makeResponsiveStyle(15),productPrice:makeResponsiveStyle(14),countdown:makeResponsiveStyle(12),footer:makeResponsiveStyle(14),footerHeading:makeResponsiveStyle(14),footerLink:makeResponsiveStyle(13)} },
   fonts: {
     logo: { family: "Cormorant Garamond", sizeScale: 100, weight: 600 },
     heading: { family: "Cormorant Garamond", sizeScale: 100, weight: 600 },
