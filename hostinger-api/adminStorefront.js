@@ -780,50 +780,85 @@ adminOnly.patch("/reviews/:id", async (req, res, next) => {
 
 // Global brand design settings: draft and published snapshots share the existing
 // storefront_settings table, so this feature does not require a database migration.
-const defaultGlobalDesign = {
-  version: 1,
-  colors: {
-    primary: "#563568", accent: "#B69ACF", surface: "#F7F0FA",
-    pageBackground: "#FFFFFF", text: "#302438", headerBackground: "#FFFFFF",
-    footerBackground: "#563568", footerText: "#F7F0FA"
-  },
-  typography: {
-    headingFont: "Cormorant Garamond", bodyFont: "Plus Jakarta Sans",
-    headingScale: 100, bodyScale: 100
-  },
-  layout: { contentWidth: 1280, cornerRadius: 8 },
-  components: { buttonStyle: "solid" }
-};
-function validateGlobalDesign(input) {
-  const value = input && typeof input === "object" ? input : {};
-  const colors = { ...defaultGlobalDesign.colors, ...(value.colors || {}) };
-  for (const [key, color] of Object.entries(colors)) {
-    if (!/^#[0-9a-f]{6}$/i.test(String(color))) throw new Error("Choose a valid six-digit hex colour for " + key + ".");
-    colors[key] = String(color).toUpperCase();
+const DEFAULT_GLOBAL_DESIGN = {"version":2,"colors":{"primary":"#563568","accent":"#B69ACF","surface":"#FFFFFF","pageBackground":"#FFFFFF","text":"#302438","headerBackground":"#FFFFFF","footerBackground":"#563568","footerText":"#FFFFFF"},"typography":{"headingFont":"Cormorant Garamond","bodyFont":"Plus Jakarta Sans","headingScale":100,"bodyScale":100},"layout":{"contentWidth":1280,"cornerRadius":8},"components":{"buttonStyle":"solid"},"elements":{"text":{"heading":"#302438","body":"#5A4F5E","goldText":"#563568","muted":"#806F89","link":"#563568","linkHover":"#B69ACF"},"buttons":{"primaryBackground":"#563568","primaryText":"#FFFFFF","primaryHoverBackground":"#B69ACF","primaryPressedBackground":"#442753","secondaryBorder":"#B69ACF","secondaryText":"#302438"},"surfaces":{"alternateSection":"#F7F0FA","card":"#FFFFFF","border":"#E7DCEB","pill":"#F7F0FA"},"productCards":{"saleBadgeBackground":"#563568","saleBadgeText":"#FFFFFF","sellingPrice":"#563568","oldPrice":"#806F89","starRating":"#B69ACF","categoryLabel":"#563568"},"announcement":{"background":"#563568","text":"#FFFFFF","separator":"#B69ACF"},"hero":{"caption":"#B69ACF","heading":"#FFFFFF","paragraph":"#FFFFFF"},"countdown":{"background":"#F7F0FA","border":"#B69ACF","text":"#563568"},"footer":{"background":"#563568","headings":"#FFFFFF","links":"#FFFFFF","linkHover":"#B69ACF","divider":"#806F89","bottomText":"#F7F0FA"}},"fonts":{"logo":{"family":"Cormorant Garamond","sizeScale":100,"weight":600},"heading":{"family":"Cormorant Garamond","sizeScale":100,"weight":600},"body":{"family":"Plus Jakarta Sans","sizeScale":100,"weight":400},"buttonLabel":{"family":"Plus Jakarta Sans","sizeScale":100,"weight":600}}};
+const DESIGN_FONT_FAMILIES = new Set(["Cormorant Garamond","Plus Jakarta Sans","Playfair Display","DM Sans","Lato","Montserrat","Poppins","Inter","Roboto","Georgia","Arial"]);
+const DESIGN_WEIGHTS = new Set([300,400,500,600,700]);
+const DESIGN_HEX = /^#[0-9A-Fa-f]{6}$/;
+function mergeDesign(base,value) {
+  if (!base || typeof base !== "object" || Array.isArray(base)) return value === undefined ? base : value;
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const merged = {};
+  for (const key of Object.keys(base)) merged[key] = mergeDesign(base[key],source[key]);
+  return merged;
+}
+function normalizeGlobalDesign(value) {
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const d = mergeDesign(DEFAULT_GLOBAL_DESIGN,source);
+  const legacy = Number(source.version || 1) < 2 || !source.elements;
+  if (legacy) {
+    const c=source.colors||{};
+    d.elements.text.heading=c.text||d.elements.text.heading;
+    d.elements.text.link=c.primary||d.elements.text.link;
+    d.elements.text.linkHover=c.accent||d.elements.text.linkHover;
+    d.elements.buttons.primaryBackground=c.primary||d.elements.buttons.primaryBackground;
+    d.elements.buttons.primaryText=c.surface||d.elements.buttons.primaryText;
+    d.elements.buttons.primaryHoverBackground=c.accent||d.elements.buttons.primaryHoverBackground;
+    d.elements.buttons.secondaryBorder=c.accent||d.elements.buttons.secondaryBorder;
+    d.elements.surfaces.card=c.surface||d.elements.surfaces.card;
+    d.elements.announcement.background=c.primary||d.elements.announcement.background;
+    d.elements.footer.background=c.footerBackground||d.elements.footer.background;
+    d.elements.footer.links=c.footerText||d.elements.footer.links;
+    const t=source.typography||{};
+    d.fonts.logo.family=t.headingFont||d.fonts.logo.family;
+    d.fonts.heading.family=t.headingFont||d.fonts.heading.family;
+    d.fonts.body.family=t.bodyFont||d.fonts.body.family;
+    d.fonts.buttonLabel.family=t.bodyFont||d.fonts.buttonLabel.family;
+    d.fonts.heading.sizeScale=Number(t.headingScale)||d.fonts.heading.sizeScale;
+    d.fonts.body.sizeScale=Number(t.bodyScale)||d.fonts.body.sizeScale;
   }
-  const typography = { ...defaultGlobalDesign.typography, ...(value.typography || {}) };
-  if (!["Cormorant Garamond", "Georgia", "Playfair Display"].includes(typography.headingFont)) throw new Error("Choose a supported heading font.");
-  if (!["Plus Jakarta Sans", "Arial", "DM Sans"].includes(typography.bodyFont)) throw new Error("Choose a supported body font.");
-  if (!Number.isInteger(typography.headingScale) || typography.headingScale < 90 || typography.headingScale > 120 || !Number.isInteger(typography.bodyScale) || typography.bodyScale < 90 || typography.bodyScale > 110) throw new Error("Typography scale is outside the allowed range.");
-  const layout = { ...defaultGlobalDesign.layout, ...(value.layout || {}) };
-  if (![1120, 1200, 1280, 1360].includes(layout.contentWidth)) throw new Error("Choose a supported content width.");
-  if (![0, 4, 8, 16].includes(layout.cornerRadius)) throw new Error("Choose a supported corner radius.");
-  const components = { ...defaultGlobalDesign.components, ...(value.components || {}) };
-  if (!["solid", "outline"].includes(components.buttonStyle)) throw new Error("Choose a supported button style.");
-  return { version: 1, colors, typography, layout, components };
+  d.responsiveTypography=mergeDesign(DEFAULT_GLOBAL_DESIGN.responsiveTypography,source.responsiveTypography);
+  d.version=2;
+  return d;
+}
+function validateGlobalDesign(value) {
+  if (!value || typeof value!=="object" || Array.isArray(value)) throw new Error("Design settings must be an object.");
+  const d=normalizeGlobalDesign(value);
+  for (const [group,fields] of Object.entries(d.elements)) {
+    for (const [key,color] of Object.entries(fields)) if (typeof color!=="string" || !DESIGN_HEX.test(color)) throw new Error("Invalid colour at elements."+group+"."+key+". Use #RRGGBB.");
+  }
+  for (const [key,color] of Object.entries(d.colors)) if (typeof color!=="string" || !DESIGN_HEX.test(color)) throw new Error("Invalid colour at colors."+key+". Use #RRGGBB.");
+  for (const role of ["logo","heading","body","buttonLabel"]) {
+    const font=d.fonts[role];
+    if (!DESIGN_FONT_FAMILIES.has(font.family)) throw new Error("Choose a supported font for "+role+".");
+    if (!Number.isFinite(font.sizeScale)||font.sizeScale<70||font.sizeScale>150) throw new Error("Font size scale for "+role+" must be 70–150%.");
+    if (!DESIGN_WEIGHTS.has(font.weight)) throw new Error("Choose a supported font weight for "+role+".");
+  }
+  for (const device of ["desktop","tablet","mobile"]) for (const key of ["h1","h2","h3","h4","body","small","button"]) {
+    const n=d.responsiveTypography[device][key];
+    if (!Number.isFinite(n)||n<10||n>96) throw new Error("Responsive "+device+" "+key+" size must be between 10px and 96px.");
+  }
+  if (typeof d.responsiveTypography.tabletOverride!=="boolean"||typeof d.responsiveTypography.mobileOverride!=="boolean") throw new Error("Responsive override flags must be boolean.");
+  if (![1120,1200,1280,1360].includes(d.layout.contentWidth)) throw new Error("Choose a supported content width.");
+  if (![0,4,8,16].includes(d.layout.cornerRadius)) throw new Error("Choose a supported corner radius.");
+  if (!["solid","outline"].includes(d.components.buttonStyle)) throw new Error("Choose a supported button style.");
+  if (!["Cormorant Garamond","Georgia","Playfair Display"].includes(d.typography.headingFont)) throw new Error("Choose a supported legacy heading font.");
+  if (!["Plus Jakarta Sans","Arial","DM Sans"].includes(d.typography.bodyFont)) throw new Error("Choose a supported legacy body font.");
+  if (![d.typography.headingScale,d.typography.bodyScale].every(n=>Number.isFinite(n)&&n>=70&&n<=150)) throw new Error("Legacy typography scale must be 70–150%.");
+  return d;
 }
 async function readGlobalDesignRecord() {
   await ensureSchema();
   const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='global_design' LIMIT 1");
-  if (!rows.length) return { draft: defaultGlobalDesign, published: defaultGlobalDesign };
+  if (!rows.length) return { draft: DEFAULT_GLOBAL_DESIGN, published: DEFAULT_GLOBAL_DESIGN };
   try {
     const saved = JSON.parse(rows[0].setting_value);
     return {
-      draft: validateGlobalDesign(saved.draft || defaultGlobalDesign),
-      published: validateGlobalDesign(saved.published || defaultGlobalDesign)
+      draft: validateGlobalDesign(saved.draft || DEFAULT_GLOBAL_DESIGN),
+      published: validateGlobalDesign(saved.published || DEFAULT_GLOBAL_DESIGN)
     };
-  } catch {
-    return { draft: defaultGlobalDesign, published: defaultGlobalDesign };
+  } catch (error) {
+    console.warn("[storefront-design] Stored design could not be parsed; defaults are being used.", error.message);
+    return { draft: DEFAULT_GLOBAL_DESIGN, published: DEFAULT_GLOBAL_DESIGN };
   }
 }
 async function writeGlobalDesignRecord(record) {
