@@ -111,7 +111,7 @@ export const Footer: React.FC = () => {
       </div>
 
       <div className="site-container pt-10 pb-10 sm:pt-14 sm:pb-12">
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-9 sm:gap-10 pb-10 sm:pb-12 border-b border-[var(--footer-line)]">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-6 sm:gap-10 pb-10 sm:pb-12 border-b border-[var(--footer-line)]">
           {/* Brand & Socials Column */}
           <div className="col-span-2 lg:col-span-4">
             <Link to="/" className="inline-block">
@@ -163,7 +163,7 @@ export const Footer: React.FC = () => {
             <h4 className="text-xs uppercase tracking-wider !text-white font-semibold mb-4">
               {chrome.footer.headings.shop}
             </h4>
-            <ul className="space-y-2.5 text-xs !text-[color:var(--ivory-text)]">
+            <ul className="space-y-1.5 sm:space-y-2.5 text-xs !text-[color:var(--ivory-text)]">
               <li>
                 <Link to="/shop" className="hover:!text-[color:var(--gold-light)] transition-colors">
                   All Products
