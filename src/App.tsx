@@ -212,7 +212,7 @@ function validatePublishedDesign(value: unknown): ValidatedPublishedDesign | nul
   const spacingBounds: Record<string,[number,number]> = { sectionVertical:[0,160], sectionHorizontal:[0,96], cardPadding:[0,64], cardGap:[0,64], gridGap:[0,64], buttonPaddingX:[0,64], buttonPaddingY:[0,40], headerHeight:[40,180], footerPadding:[0,160] };
   const cleanSpacing: Record<string,number> = {};
   for (const [key,[min,max]] of Object.entries(spacingBounds)) { const n=sourceSpacing[key]; if (typeof n === "number" && Number.isFinite(n) && n >= min && n <= max) cleanSpacing[key]=n; }
-  if (Object.keys(cleanSpacing).length === Object.keys(spacingBounds).length) validated.customization = { spacing: cleanSpacing as unknown as GlobalDesignSettings["customization"]["spacing"] };
+  if (Object.keys(cleanSpacing).length === Object.keys(spacingBounds).length) validated.customization = { spacing: cleanSpacing as unknown as GlobalDesignSettings["customization"]["spacing"], elements: {} };
   const styleKeys = ["fontSize","lineHeight","letterSpacing","fontWeight","textAlign","textTransform","marginTop","marginRight","marginBottom","marginLeft","paddingTop","paddingRight","paddingBottom","paddingLeft","width","maxWidth","minHeight","borderRadius","borderWidth"] as const;
   const alignments = ["left","center","right","justify"], transforms = ["none","uppercase","capitalize","lowercase"];
   const cleanElements: Record<string, GlobalDesignSettings["customization"]["elements"][string]> = {};
