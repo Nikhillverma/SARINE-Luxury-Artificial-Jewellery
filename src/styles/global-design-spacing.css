@@ -13,3 +13,12 @@ body.sarine-global-theme .sarine-global-footer .sarine-footer-grid { gap:var(--s
 body.sarine-global-theme .sarine-global-header > .site-container,
 body.sarine-global-theme .sarine-global-header .site-container { min-height:var(--sarine-spacing-headerHeight,76px); padding-inline:var(--sarine-spacing-sectionHorizontal,24px); }
 body.sarine-global-theme .sarine-global-announcement .site-container { padding-inline:var(--sarine-spacing-sectionHorizontal,24px); }
+
+/* Match SARINE's actual homepage section and category component hooks. */
+body.sarine-global-theme #categories,
+body.sarine-global-theme .sarine-product-section,
+body.sarine-global-theme .sarine-section-occasions,
+body.sarine-global-theme .sarine-story-section { padding-block:var(--sarine-spacing-sectionVertical,48px)!important; padding-inline:var(--sarine-spacing-sectionHorizontal,24px)!important; }
+body.sarine-global-theme .sarine-category-track { gap:var(--sarine-spacing-cardGap,16px)!important; }
+body.sarine-global-theme .sarine-product-grid { gap:var(--sarine-spacing-gridGap,20px)!important; }
+body.sarine-global-theme .sarine-product-card { padding:var(--sarine-spacing-cardPadding,16px)!important; }
