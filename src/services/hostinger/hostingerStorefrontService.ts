@@ -8,6 +8,9 @@ const API_BASE = (
 export type DesignFontFamily = "Cormorant Garamond" | "Plus Jakarta Sans" | "Playfair Display" | "DM Sans" | "Lato" | "Montserrat" | "Poppins" | "Inter" | "Roboto" | "Georgia" | "Arial";
 export interface DesignFontRole { family: DesignFontFamily; sizeScale: number; weight: 300 | 400 | 500 | 600 | 700; }
 export interface ResponsiveTypeScale { desktop: { h1:number; h2:number; h3:number; h4:number; body:number; small:number; button:number }; tablet: { h1:number; h2:number; h3:number; h4:number; body:number; small:number; button:number }; mobile: { h1:number; h2:number; h3:number; h4:number; body:number; small:number; button:number }; tabletOverride:boolean; mobileOverride:boolean; }
+export interface ElementStyle { fontFamily:DesignFontFamily; textColor:string; backgroundColor:string; borderColor:string; fontSize:number; lineHeight:number; letterSpacing:number; fontWeight:300|400|500|600|700; textAlign:'left'|'center'|'right'|'justify'; textTransform:'none'|'uppercase'|'capitalize'|'lowercase'; marginTop:number; marginRight:number; marginBottom:number; marginLeft:number; paddingTop:number; paddingRight:number; paddingBottom:number; paddingLeft:number; width:number; maxWidth:number; minHeight:number; borderRadius:number; borderWidth:number; }
+const makeElementStyle=(fontSize:number,textColor:string,backgroundColor:string,borderColor:string):ElementStyle=>({fontFamily:"Plus Jakarta Sans",textColor,backgroundColor,borderColor,fontSize,lineHeight:1.4,letterSpacing:0,fontWeight:400,textAlign:'left',textTransform:'none',marginTop:0,marginRight:0,marginBottom:0,marginLeft:0,paddingTop:0,paddingRight:0,paddingBottom:0,paddingLeft:0,width:100,maxWidth:100,minHeight:0,borderRadius:8,borderWidth:0});
+const makeResponsiveStyle=(fontSize:number,textColor="#302438",backgroundColor="#FFFFFF",borderColor="#E7DCEB")=>({desktop:makeElementStyle(fontSize,textColor,backgroundColor,borderColor),tablet:makeElementStyle(fontSize,textColor,backgroundColor,borderColor),mobile:makeElementStyle(fontSize,textColor,backgroundColor,borderColor)});
 export interface GlobalDesignSettings {
   version: 2;
   colors: { primary: string; accent: string; surface: string; pageBackground: string; text: string; headerBackground: string; footerBackground: string; footerText: string };
@@ -26,6 +29,7 @@ export interface GlobalDesignSettings {
   };
   fonts: { logo: DesignFontRole; heading: DesignFontRole; body: DesignFontRole; buttonLabel: DesignFontRole };
   responsiveTypography: ResponsiveTypeScale;
+  customization: { spacing: { sectionVertical:number; sectionHorizontal:number; cardPadding:number; cardGap:number; gridGap:number; buttonPaddingX:number; buttonPaddingY:number; headerHeight:number; footerPadding:number }; elements: Record<string, { desktop: ElementStyle; tablet: ElementStyle; mobile: ElementStyle }> };
 }
 export const DEFAULT_GLOBAL_DESIGN: GlobalDesignSettings = {
   version: 2,
@@ -43,6 +47,7 @@ export const DEFAULT_GLOBAL_DESIGN: GlobalDesignSettings = {
     footer: { background: "#563568", headings: "#FFFFFF", links: "#FFFFFF", linkHover: "#B69ACF", divider: "#806F89", bottomText: "#F7F0FA" }
   },
   responsiveTypography: {"desktop":{"h1":60,"h2":42,"h3":28,"h4":20,"body":16,"small":13,"button":14},"tablet":{"h1":48,"h2":36,"h3":24,"h4":19,"body":15,"small":12,"button":14},"mobile":{"h1":38,"h2":30,"h3":21,"h4":18,"body":14,"small":12,"button":13},"tabletOverride":false,"mobileOverride":false},
+  customization: { spacing: { sectionVertical:48, sectionHorizontal:24, cardPadding:16, cardGap:16, gridGap:20, buttonPaddingX:24, buttonPaddingY:12, headerHeight:76, footerPadding:48 }, elements: {announcement:makeResponsiveStyle(12, "#FFFFFF", "#563568", "#B69ACF"),header:makeResponsiveStyle(14, "#302438", "#FFFFFF", "#E7DCEB"),logo:makeResponsiveStyle(28, "#563568", "#FFFFFF", "#E7DCEB"),navigation:makeResponsiveStyle(12, "#302438", "#FFFFFF", "#E7DCEB"),hero:makeResponsiveStyle(16, "#FFFFFF", "#F7F0FA", "#E7DCEB"),heroEyebrow:makeResponsiveStyle(11, "#B69ACF", "#F7F0FA", "#E7DCEB"),heroHeading:makeResponsiveStyle(48, "#FFFFFF", "#F7F0FA", "#E7DCEB"),heroBody:makeResponsiveStyle(16, "#FFFFFF", "#F7F0FA", "#E7DCEB"),heroButton:makeResponsiveStyle(14, "#FFFFFF", "#563568", "#B69ACF"),sectionHeading:makeResponsiveStyle(32, "#302438", "#FFFFFF", "#E7DCEB"),sectionBody:makeResponsiveStyle(16, "#5A4F5E", "#FFFFFF", "#E7DCEB"),categoryTile:makeResponsiveStyle(14, "#563568", "#FFFFFF", "#E7DCEB"),productGrid:makeResponsiveStyle(14, "#302438", "#FFFFFF", "#E7DCEB"),productCard:makeResponsiveStyle(14, "#302438", "#FFFFFF", "#E7DCEB"),productImage:makeResponsiveStyle(14, "#302438", "#FFFFFF", "#E7DCEB"),productTitle:makeResponsiveStyle(15, "#302438", "#FFFFFF", "#E7DCEB"),productPrice:makeResponsiveStyle(14, "#563568", "#FFFFFF", "#E7DCEB"),countdown:makeResponsiveStyle(12, "#563568", "#F7F0FA", "#B69ACF"),footer:makeResponsiveStyle(14, "#FFFFFF", "#563568", "#806F89"),footerHeading:makeResponsiveStyle(14, "#FFFFFF", "#563568", "#806F89"),footerLink:makeResponsiveStyle(13, "#FFFFFF", "#563568", "#806F89")} },
   fonts: {
     logo: { family: "Cormorant Garamond", sizeScale: 100, weight: 600 },
     heading: { family: "Cormorant Garamond", sizeScale: 100, weight: 600 },
@@ -319,3 +324,4 @@ export interface ProductReview {
   productName?: string;
   imageUrls: string[];
 }
+

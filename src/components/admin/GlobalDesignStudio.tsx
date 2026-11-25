@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Check, Monitor, RotateCcw, Save, Smartphone, Tablet, Upload } from "lucide-react";
 import { ResponsiveTypographyControls } from "./ResponsiveTypographyControls";
+import { AdvancedDesignControls } from "./AdvancedDesignControls";
+import { ElementStyleControls } from "./ElementStyleControls";
 import {
   DEFAULT_GLOBAL_DESIGN, hostingerStorefrontService,
   type DesignFontFamily, type DesignFontRole, type GlobalDesignSettings
@@ -15,7 +17,7 @@ const FONTS: DesignFontFamily[] = ["Cormorant Garamond","Plus Jakarta Sans","Pla
 
 const fields: Field[] = [
   ...[
-    ["heading","Heading text","Headings and prominent text"],["body","Body text","Paragraphs and supporting copy"],["goldText","Gold label text","Eyebrows and premium labels"],["muted","Muted text","Secondary and helper text"],["link","Links","Standard text links"],["linkHover","Link hover","Hovered and focused links"]
+    ["heading","Heading text","Headings and prominent text"],["body","Body text","Paragraphs and supporting copy"],["goldText","Accent label text","Eyebrows and premium labels"],["muted","Muted text","Secondary and helper text"],["link","Links","Standard text links"],["linkHover","Link hover","Hovered and focused links"]
   ].map(([id,label,help])=>({id,label,help,section:"text" as const,key:id})),
   ...[
     ["primaryBackground","Primary button background","Main call-to-action background"],["primaryText","Primary button text","Text on primary buttons"],["primaryHoverBackground","Primary button hover","Hover background"],["primaryPressedBackground","Primary button pressed","Pressed/active background"],["secondaryBorder","Secondary button border","Outline for secondary actions"],["secondaryText","Secondary button text","Text on secondary actions"]
@@ -142,9 +144,29 @@ export const GlobalDesignStudio: React.FC = () => {
     catch(e){setError(e instanceof Error?e.message:"Design could not be published.");}
     finally{setPublishing(false);}
   };
+  const applyApprovedPalette=()=>{
+    const updates: Array<[string,string]> = [
+      ["goldText","#563568"],["linkHover","#B69ACF"],
+      ["primaryHoverBackground","#442753"],["secondaryBorder","#B69ACF"],
+      ["footerLinks","#FFFFFF"],["legacyAccent","#B69ACF"]
+    ];
+    setDesign(current=>updates.reduce((next,[id,color])=>{
+      const field=fields.find(item=>item.id===id);
+      return field?setValue(next,field,color):next;
+    },clone(current)));
+    setConfirmRestore(false);setError("");
+    setMessage("Approved SARINE palette applied to this draft only. Save draft to keep it; the live storefront is unchanged.");
+  };
+
   const restoreDefaults=()=>{
     setDesign(clone(DEFAULT_GLOBAL_DESIGN));setConfirmRestore(false);
-    setMessage("SARINE plum, gold and ivory defaults are loaded in this draft only. Save and publish when ready.");setError("");
+    setMessage("SARINE plum, lavender and white defaults are loaded in this draft only. Save and publish when ready.");setError("");
+  };
+
+  const previewElementStyle=(key:string):React.CSSProperties=>{
+    const v=design.customization.elements[key]?.[previewMode];
+    if(!v)return {};
+    return {fontFamily:v.fontFamily,fontSize:v.fontSize+"px",lineHeight:v.lineHeight,letterSpacing:v.letterSpacing+"px",fontWeight:v.fontWeight,textAlign:v.textAlign,textTransform:v.textTransform as React.CSSProperties["textTransform"],color:v.textColor,backgroundColor:v.backgroundColor,borderColor:v.borderColor,marginTop:v.marginTop+"px",marginRight:v.marginRight+"px",marginBottom:v.marginBottom+"px",marginLeft:v.marginLeft+"px",paddingTop:v.paddingTop+"px",paddingRight:v.paddingRight+"px",paddingBottom:v.paddingBottom+"px",paddingLeft:v.paddingLeft+"px",width:v.width+"%",maxWidth:v.maxWidth+"%",minHeight:v.minHeight+"px",borderRadius:v.borderRadius+"px",borderWidth:v.borderWidth+"px"};
   };
 
   const renderColor=(field:Field)=>{
@@ -205,6 +227,8 @@ export const GlobalDesignStudio: React.FC = () => {
             </div>
           </details>)}
           <ResponsiveTypographyControls value={design.responsiveTypography} onChange={responsiveTypography=>setDesign(current=>({...current,responsiveTypography}))} />
+          <AdvancedDesignControls value={design.customization} onChange={customization=>setDesign(current=>({...current,customization}))} />
+          <ElementStyleControls value={design.customization.elements} onChange={elements=>setDesign(current=>({...current,customization:{...current.customization,elements}}))} />
         </div>
         <aside className="min-w-0 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-semibold text-[#302438]">Live design preview</h3><p className="text-xs text-[#806F89]">Updates as you edit the controls.</p></div><div className="flex rounded-lg border border-[#E7DCEB] p-1" aria-label="Preview device size">
@@ -213,16 +237,16 @@ export const GlobalDesignStudio: React.FC = () => {
             <button type="button" onClick={()=>setPreviewMode("mobile")} aria-pressed={previewMode==="mobile"} className={"min-h-10 min-w-10 rounded-md p-2 "+(previewMode==="mobile"?"bg-[#563568] text-white":"text-[#705E7B]")} aria-label="Mobile preview"><Smartphone size={17}/></button>
           </div></div>
           <div className="rounded-xl border border-dashed border-[#D8C8E1] bg-[#F8F5FA] p-3 sm:p-4"><div style={previewStyle}>
-            <div className="flex items-center justify-between gap-2 px-4 py-3 text-xs" style={{background:design.elements.announcement.background,color:design.elements.announcement.text,borderBottom:"1px solid "+design.elements.announcement.separator}}><span>✦ SARINE ATELIER ✦</span><span>Complimentary delivery</span></div>
-            <div className="flex items-center justify-between border-b px-4 py-4" style={{background:design.colors.headerBackground,borderColor:design.elements.surfaces.border}}><span className="text-xl tracking-[0.2em]" style={{color:design.elements.text.heading,fontFamily:design.fonts.logo.family,fontSize:"calc(1.25rem * "+design.fonts.logo.sizeScale/100+")",fontWeight:design.fonts.logo.weight}}>SARINE</span><span className="text-[10px] tracking-wider" style={{color:design.elements.text.body}}>COLLECTIONS　 ABOUT</span></div>
-            <div className="px-4 py-8 text-center sm:px-6 sm:py-10" style={{background:design.elements.surfaces.alternateSection}}>
-              <p className="text-[10px] uppercase tracking-[0.2em]" style={{color:design.elements.hero.caption,fontFamily:design.fonts.buttonLabel.family,fontWeight:design.fonts.buttonLabel.weight}}>THE SARINE EDIT</p>
-              <h4 className="mt-3 leading-tight" style={{fontFamily:design.fonts.heading.family,fontSize:design.responsiveTypography[previewMode].h1+"px",fontWeight:design.fonts.heading.weight,color:design.elements.text.heading}}>Elegance in every detail</h4>
-              <p className="mx-auto mt-3 max-w-sm text-xs leading-relaxed" style={{fontFamily:design.fonts.body.family,fontSize:design.responsiveTypography[previewMode].body+"px",fontWeight:design.fonts.body.weight,color:design.elements.text.body}}>Thoughtfully chosen pieces for everyday moments and unforgettable celebrations.</p>
-              <button type="button" className="mt-5 min-h-11 px-5 py-3 text-xs font-semibold" style={{background:design.components.buttonStyle==="solid"?design.elements.buttons.primaryBackground:"transparent",color:design.components.buttonStyle==="solid"?design.elements.buttons.primaryText:design.elements.buttons.secondaryText,border:"1px solid "+design.elements.buttons.secondaryBorder,borderRadius:design.layout.cornerRadius+"px",fontFamily:design.fonts.buttonLabel.family,fontWeight:design.fonts.buttonLabel.weight,fontSize:design.responsiveTypography[previewMode].button+"px"}}>Discover the collection</button>
-              <div className="mt-5 inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[10px]" style={{background:design.elements.countdown.background,borderColor:design.elements.countdown.border,color:design.elements.countdown.text}}>LIMITED TIME　 02 : 14 : 36</div>
+            <div className="flex items-center justify-between gap-2 px-4 py-3 text-xs" style={{background:design.elements.announcement.background,color:design.elements.announcement.text,borderBottom:"1px solid "+design.elements.announcement.separator,...previewElementStyle("announcement")}}><span>✦ SARINE ATELIER ✦</span><span>Complimentary delivery</span></div>
+            <div className="flex items-center justify-between border-b px-4 py-4" style={{background:design.colors.headerBackground,borderColor:design.elements.surfaces.border,...previewElementStyle("header")}}><span className="text-xl tracking-[0.2em]" style={{color:design.elements.text.heading,fontFamily:design.fonts.logo.family,fontSize:"calc(1.25rem * "+design.fonts.logo.sizeScale/100+")",fontWeight:design.fonts.logo.weight,...previewElementStyle("logo")}}>SARINE</span><span className="text-[10px] tracking-wider" style={{color:design.elements.text.body,...previewElementStyle("navigation")}}>COLLECTIONS　 ABOUT</span></div>
+            <div className="px-4 py-8 text-center sm:px-6 sm:py-10" style={{background:design.elements.surfaces.alternateSection,...previewElementStyle("hero")}}>
+              <p className="text-[10px] uppercase tracking-[0.2em]" style={{color:design.elements.hero.caption,fontFamily:design.fonts.buttonLabel.family,fontWeight:design.fonts.buttonLabel.weight,...previewElementStyle("heroEyebrow")}}>THE SARINE EDIT</p>
+              <h4 className="mt-3 leading-tight" style={{fontFamily:design.fonts.heading.family,fontSize:design.responsiveTypography[previewMode].h1+"px",fontWeight:design.fonts.heading.weight,color:design.elements.text.heading,...previewElementStyle("heroHeading")}}>Elegance in every detail</h4>
+              <p className="mx-auto mt-3 max-w-sm text-xs leading-relaxed" style={{fontFamily:design.fonts.body.family,fontSize:design.responsiveTypography[previewMode].body+"px",fontWeight:design.fonts.body.weight,color:design.elements.text.body,...previewElementStyle("heroBody")}}>Thoughtfully chosen pieces for everyday moments and unforgettable celebrations.</p>
+              <button type="button" className="mt-5 min-h-11 px-5 py-3 text-xs font-semibold" style={{background:design.components.buttonStyle==="solid"?design.elements.buttons.primaryBackground:"transparent",color:design.components.buttonStyle==="solid"?design.elements.buttons.primaryText:design.elements.buttons.secondaryText,border:"1px solid "+design.elements.buttons.secondaryBorder,borderRadius:design.layout.cornerRadius+"px",fontFamily:design.fonts.buttonLabel.family,fontWeight:design.fonts.buttonLabel.weight,fontSize:design.responsiveTypography[previewMode].button+"px",...previewElementStyle("heroButton")}}>Discover the collection</button>
+              <div className="mt-5 inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[10px]" style={{background:design.elements.countdown.background,borderColor:design.elements.countdown.border,color:design.elements.countdown.text,...previewElementStyle("countdown")}}>LIMITED TIME　 02 : 14 : 36</div>
             </div>
-            <div className="px-4 py-4 text-center text-[10px]" style={{background:design.elements.footer.background,color:design.elements.footer.bottomText,borderTop:"1px solid "+design.elements.footer.divider}}>SARINE · Timeless jewellery for every you</div>
+            <div className="px-4 py-4 text-center text-[10px]" style={{background:design.elements.footer.background,color:design.elements.footer.bottomText,borderTop:"1px solid "+design.elements.footer.divider,...previewElementStyle("footer")}}>SARINE · Timeless jewellery for every you</div>
           </div><p className="mt-2 text-center text-[11px] text-[#806F89]">{previewMode==="desktop"?"Desktop · Full content width":previewMode==="tablet"?"Tablet · 620px canvas":"Mobile · 375px canvas"}</p></div>
           <div className="space-y-2 rounded-xl border border-[#E7DCEB] p-4"><h4 className="text-sm font-semibold text-[#563568]">Currently published</h4><div className="flex flex-wrap gap-2">
             <span className="rounded-full px-2.5 py-1 text-[11px]" style={{background:publishedDesign.elements.buttons.primaryBackground,color:publishedDesign.elements.buttons.primaryText}}>Primary button</span>
@@ -232,7 +256,7 @@ export const GlobalDesignStudio: React.FC = () => {
         </aside>
       </div>
       <div className="flex flex-col-reverse gap-2 border-t border-[#EFE8F2] pt-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-2">{!confirmRestore?<button type="button" onClick={()=>setConfirmRestore(true)} disabled={saving||publishing} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#DCCBE7] px-4 py-2.5 text-sm text-[#563568] hover:bg-[#F7F0FA] disabled:opacity-50"><RotateCcw size={16}/>Restore brand defaults</button>:<div className="rounded-lg border border-[#DCCBE7] bg-[#FBF8FC] p-3"><p className="text-sm font-medium text-[#302438]">Restore SARINE's plum, gold and ivory defaults?</p><p className="mt-1 text-xs text-[#806F89]">This replaces editor values in the draft only. It does not save or publish.</p><div className="mt-2 flex flex-wrap gap-2"><button type="button" onClick={restoreDefaults} className="min-h-10 rounded-lg bg-[#4A1D5C] px-3 py-2 text-xs font-semibold text-white">Confirm restore</button><button type="button" onClick={()=>setConfirmRestore(false)} className="min-h-10 rounded-lg border border-[#DCCBE7] px-3 py-2 text-xs text-[#563568]">Cancel</button></div></div>}</div>
+        <div className="space-y-2"><button type="button" onClick={applyApprovedPalette} disabled={saving||publishing} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#B69ACF] px-4 py-2.5 text-sm text-[#563568] hover:bg-[#F7F0FA] disabled:opacity-50">Apply approved SARINE palette</button>{!confirmRestore?<button type="button" onClick={()=>setConfirmRestore(true)} disabled={saving||publishing} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#DCCBE7] px-4 py-2.5 text-sm text-[#563568] hover:bg-[#F7F0FA] disabled:opacity-50"><RotateCcw size={16}/>Restore brand defaults</button>:<div className="rounded-lg border border-[#DCCBE7] bg-[#FBF8FC] p-3"><p className="text-sm font-medium text-[#302438]">Restore SARINE's plum, lavender and white defaults?</p><p className="mt-1 text-xs text-[#806F89]">This replaces editor values in the draft only. It does not save or publish.</p><div className="mt-2 flex flex-wrap gap-2"><button type="button" onClick={restoreDefaults} className="min-h-10 rounded-lg bg-[#4A1D5C] px-3 py-2 text-xs font-semibold text-white">Confirm restore</button><button type="button" onClick={()=>setConfirmRestore(false)} className="min-h-10 rounded-lg border border-[#DCCBE7] px-3 py-2 text-xs text-[#563568]">Cancel</button></div></div>}</div>
         <div className="flex flex-col gap-2 sm:flex-row"><button type="button" onClick={()=>void saveDraft()} disabled={!canSave||!dirty} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#563568] px-5 py-2.5 text-sm font-medium text-[#563568] hover:bg-[#F7F0FA] disabled:opacity-50"><Save size={16}/>{saving?"Saving…":"Save draft"}</button><button type="button" onClick={()=>void publish()} disabled={!canSave} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#563568] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#442753] disabled:opacity-50">{publishing?<Upload size={16} className="animate-pulse"/>:<Check size={16} />}{publishing?"Publishing…":"Publish design"}</button></div>
       </div>
       <p className="text-[11px] text-[#806F89]">Saving a draft never changes the public site. Publishing applies selected global styling; product data, orders, checkout, navigation destinations and existing page content are not modified.</p>
