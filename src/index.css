@@ -1448,3 +1448,79 @@ body.sarine-global-theme #main-content .sarine-product-card__price > span:first-
     width: 100%;
   }
 }
+
+
+/* Global Design Studio: individual colour, font-role and responsive type tokens. */
+body.sarine-global-theme {
+  --heading: var(--design-text-heading, var(--heading));
+  --body: var(--design-text-body, var(--body));
+  --gold: var(--design-text-goldText, var(--gold));
+  --link: var(--design-text-link, var(--link));
+  --muted: var(--design-text-muted, var(--muted));
+  --button-primary-background: var(--design-button-primaryBackground, var(--button-primary-background));
+  --button-primary-hover: var(--design-button-primaryHoverBackground, var(--button-primary-hover));
+  --card-background: var(--design-surface-card, var(--card-background));
+  --surface-border: var(--design-surface-border, var(--surface-border));
+  --tint: var(--design-surface-alternateSection, var(--tint));
+  --font-heading-family: var(--design-font-heading, var(--font-heading-family));
+  --font-body-family: var(--design-font-body, var(--font-body-family));
+}
+body.sarine-global-theme .sarine-home,
+body.sarine-global-theme #main-content { color: var(--design-text-body, inherit); }
+body.sarine-global-theme .sarine-global-footer {
+  background: var(--design-footer-background, var(--footer-background));
+  color: var(--design-footer-bottomText, var(--footer-text));
+}
+body.sarine-global-theme .sarine-global-footer h4 { color: var(--design-footer-headings, inherit); }
+body.sarine-global-theme .sarine-global-footer a { color: var(--design-footer-links, inherit); }
+body.sarine-global-theme .sarine-global-footer a:hover { color: var(--design-footer-linkHover, inherit); }
+body.sarine-global-theme .sarine-announcement,
+body.sarine-global-theme [data-sarine-announcement] {
+  background: var(--design-announcement-background, inherit);
+  color: var(--design-announcement-text, inherit);
+}
+body.sarine-global-theme .product-grid > article [class*="sale"],
+body.sarine-global-theme .product-grid > article [class*="badge"] {
+  color: var(--design-product-saleBadgeText, inherit);
+  background-color: var(--design-product-saleBadgeBackground, inherit);
+}
+body.sarine-global-theme .product-grid > article h3 { color: var(--design-product-categoryLabel, inherit); }
+body.sarine-global-theme .product-grid > article .text-sm.font-sans { color: var(--design-product-sellingPrice, inherit); }
+body.sarine-global-theme .product-grid > article [class*="line-through"] { color: var(--design-product-oldPrice, inherit); }
+body.sarine-global-theme #main-content h1 { font-family: var(--design-font-heading, var(--font-heading-family)); font-weight: var(--design-font-heading-weight, inherit); }
+body.sarine-global-theme #main-content p { font-family: var(--design-font-body, var(--font-body-family)); font-weight: var(--design-font-body-weight, inherit); }
+body.sarine-global-theme #main-content button { font-family: var(--design-font-buttonLabel, var(--font-body-family)); font-weight: var(--design-font-buttonLabel-weight, inherit); }
+body.sarine-global-theme #main-content h1 { font-size: var(--sarine-type-desktop-h1, inherit); }
+body.sarine-global-theme #main-content h2 { font-size: var(--sarine-type-desktop-h2, inherit); }
+body.sarine-global-theme #main-content h3 { font-size: var(--sarine-type-desktop-h3, inherit); }
+body.sarine-global-theme #main-content h4 { font-size: var(--sarine-type-desktop-h4, inherit); }
+body.sarine-global-theme #main-content p,
+body.sarine-global-theme #main-content li { font-size: var(--sarine-type-desktop-body, inherit); }
+body.sarine-global-theme #main-content small,
+body.sarine-global-theme #main-content .text-xs { font-size: var(--sarine-type-desktop-small, inherit); }
+body.sarine-global-theme #main-content button,
+body.sarine-global-theme #main-content a[role="button"] { font-size: var(--sarine-type-desktop-button, inherit); }
+@media (min-width: 768px) and (max-width: 1023px) {
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content h1 { font-size: var(--sarine-type-tablet-h1); }
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content h2 { font-size: var(--sarine-type-tablet-h2); }
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content h3 { font-size: var(--sarine-type-tablet-h3); }
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content h4 { font-size: var(--sarine-type-tablet-h4); }
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content p,
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content li { font-size: var(--sarine-type-tablet-body); }
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content small,
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content .text-xs { font-size: var(--sarine-type-tablet-small); }
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content button,
+  body.sarine-global-theme[data-sarine-tablet-type-override="true"] #main-content a[role="button"] { font-size: var(--sarine-type-tablet-button); }
+}
+@media (max-width: 767px) {
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content h1 { font-size: var(--sarine-type-mobile-h1); }
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content h2 { font-size: var(--sarine-type-mobile-h2); }
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content h3 { font-size: var(--sarine-type-mobile-h3); }
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content h4 { font-size: var(--sarine-type-mobile-h4); }
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content p,
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content li { font-size: var(--sarine-type-mobile-body); }
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content small,
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content .text-xs { font-size: var(--sarine-type-mobile-small); }
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content button,
+  body.sarine-global-theme[data-sarine-mobile-type-override="true"] #main-content a[role="button"] { font-size: var(--sarine-type-mobile-button); }
+}
