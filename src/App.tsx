@@ -213,7 +213,7 @@ function validatePublishedDesign(value: unknown): ValidatedPublishedDesign | nul
   const cleanSpacing: Record<string,number> = {};
   for (const [key,[min,max]] of Object.entries(spacingBounds)) { const n=sourceSpacing[key]; if (typeof n === "number" && Number.isFinite(n) && n >= min && n <= max) cleanSpacing[key]=n; }
   if (Object.keys(cleanSpacing).length === Object.keys(spacingBounds).length) validated.customization = { spacing: cleanSpacing as unknown as GlobalDesignSettings["customization"]["spacing"], elements: {} };
-  const styleKeys = ["fontSize","lineHeight","letterSpacing","fontWeight","textAlign","textTransform","marginTop","marginRight","marginBottom","marginLeft","paddingTop","paddingRight","paddingBottom","paddingLeft","width","maxWidth","minHeight","borderRadius","borderWidth"] as const;
+  const styleKeys = ["fontFamily","textColor","backgroundColor","borderColor","fontSize","lineHeight","letterSpacing","fontWeight","textAlign","textTransform","marginTop","marginRight","marginBottom","marginLeft","paddingTop","paddingRight","paddingBottom","paddingLeft","width","maxWidth","minHeight","borderRadius","borderWidth"] as const;
   const alignments = ["left","center","right","justify"], transforms = ["none","uppercase","capitalize","lowercase"];
   const cleanElements: Record<string, GlobalDesignSettings["customization"]["elements"][string]> = {};
   for (const [element,rawBreakpoints] of Object.entries(sourceElementStyles)) {
@@ -224,7 +224,9 @@ function validatePublishedDesign(value: unknown): ValidatedPublishedDesign | nul
       const cleanStyle: Record<string, unknown> = {};
       for (const key of styleKeys) {
         const v=rawStyle[key];
-        if (key==="textAlign") { if (!alignments.includes(String(v))) validElement=false; else cleanStyle[key]=v; }
+        if (key==="fontFamily") { if (!["Cormorant Garamond","Plus Jakarta Sans","Playfair Display","DM Sans","Lato","Montserrat","Poppins","Inter","Roboto","Georgia","Arial"].includes(String(v))) validElement=false; else cleanStyle[key]=v; }
+        else if (key==="textColor"||key==="backgroundColor"||key==="borderColor") { if (typeof v!=="string" || !/^#[0-9A-Fa-f]{6}$/.test(v)) validElement=false; else cleanStyle[key]=v; }
+        else if (key==="textAlign") { if (!alignments.includes(String(v))) validElement=false; else cleanStyle[key]=v; }
         else if (key==="textTransform") { if (!transforms.includes(String(v))) validElement=false; else cleanStyle[key]=v; }
         else if (typeof v!=="number" || !Number.isFinite(v)) validElement=false;
         else if (key==="fontSize" && (v<8||v>120)) validElement=false;
