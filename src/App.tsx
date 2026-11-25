@@ -38,6 +38,7 @@ type ValidatedPublishedDesign = {
   elements?: Partial<GlobalDesignSettings['elements']>;
   fonts?: Partial<GlobalDesignSettings['fonts']>;
   responsiveTypography?: GlobalDesignSettings['responsiveTypography'];
+  customization?: GlobalDesignSettings['customization'];
   colors: Partial<GlobalDesignSettings['colors']>;
   typography: Partial<GlobalDesignSettings['typography']>;
   layout: Partial<GlobalDesignSettings['layout']>;
@@ -63,6 +64,7 @@ const RUNTIME_DESIGN_PROPERTIES = [
   '--font-body-scale',
   '--container-max-width',
   '--design-corner-radius',
+  ...['sectionVertical','sectionHorizontal','cardPadding','cardGap','gridGap','buttonPaddingX','buttonPaddingY','headerHeight','footerPadding'].map(key => '--sarine-spacing-' + key),
   '--sarine-global-primary',
   '--sarine-global-accent',
   '--sarine-global-surface',
@@ -125,12 +127,15 @@ function validatePublishedDesign(value: unknown): ValidatedPublishedDesign | nul
   const sourceElements = isRecord(value.elements) ? value.elements : {};
   const sourceFonts = isRecord(value.fonts) ? value.fonts : {};
   const sourceResponsive = isRecord(value.responsiveTypography) ? value.responsiveTypography : {};
+  const sourceCustomization = isRecord(value.customization) ? value.customization : {};
+  const sourceSpacing = isRecord(sourceCustomization.spacing) ? sourceCustomization.spacing : {};
 
   const validated: ValidatedPublishedDesign = {
     version: value.version as 1 | 2,
     elements: {},
     fonts: {},
     responsiveTypography: undefined,
+    customization: undefined,
     colors: {},
     typography: {},
     layout: {},
@@ -202,6 +207,11 @@ function validatePublishedDesign(value: unknown): ValidatedPublishedDesign | nul
     responsive.mobileOverride = sourceResponsive.mobileOverride;
   } else responsiveValid = false;
   if (responsiveValid) validated.responsiveTypography = responsive;
+  
+  const spacingBounds: Record<string,[number,number]> = { sectionVertical:[0,160], sectionHorizontal:[0,96], cardPadding:[0,64], cardGap:[0,64], gridGap:[0,64], buttonPaddingX:[0,64], buttonPaddingY:[0,40], headerHeight:[40,180], footerPadding:[0,160] };
+  const cleanSpacing: Record<string,number> = {};
+  for (const [key,[min,max]] of Object.entries(spacingBounds)) { const n=sourceSpacing[key]; if (typeof n === "number" && Number.isFinite(n) && n >= min && n <= max) cleanSpacing[key]=n; }
+  if (Object.keys(cleanSpacing).length === Object.keys(spacingBounds).length) validated.customization = { spacing: cleanSpacing as unknown as GlobalDesignSettings["customization"]["spacing"] };
 
   const hasValidField = Object.values(validated).some(
     section => typeof section === 'object' && Object.keys(section).length > 0
@@ -284,6 +294,10 @@ function applyValidatedPublishedDesign(design: ValidatedPublishedDesign): void {
       root.style.setProperty('--design-font-' + role + '-weight', String(font.weight));
     }
   }
+  if (design.customization) {
+    for (const [key, value] of Object.entries(design.customization.spacing)) root.style.setProperty("--sarine-spacing-" + key, value + "px");
+  }
+
   if (design.responsiveTypography) {
     for (const device of ['desktop','tablet','mobile'] as const) {
       for (const [role, size] of Object.entries(design.responsiveTypography[device])) {
