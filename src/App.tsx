@@ -125,6 +125,14 @@ function MainAppShell() {
         root.style.setProperty('--sarine-global-body-scale', String(design.typography.bodyScale / 100));
         root.style.setProperty('--sarine-global-content-width', design.layout.contentWidth + 'px');
         root.style.setProperty('--sarine-global-radius', design.layout.cornerRadius + 'px');
+        const typeScale = design.responsiveTypography;
+        for (const device of ["desktop", "tablet", "mobile"] as const) {
+          for (const role of ["h1", "h2", "h3", "h4", "body", "small", "button"] as const) {
+            root.style.setProperty(`--sarine-type-${device}-${role}`, typeScale[device][role] + "px");
+          }
+        }
+        document.body.dataset.sarineTabletTypeOverride = String(typeScale.tabletOverride);
+        document.body.dataset.sarineMobileTypeOverride = String(typeScale.mobileOverride);
         document.body.dataset.sarineButtonStyle = design.components.buttonStyle;
         document.body.classList.add('sarine-global-theme');
       })
