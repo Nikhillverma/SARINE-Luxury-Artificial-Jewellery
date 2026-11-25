@@ -110,10 +110,10 @@ export const Footer: React.FC = () => {
         </div>
       </div>
 
-      <div className="site-container pt-10 pb-10 sm:pt-14 sm:pb-12">
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-6 sm:gap-10 pb-10 sm:pb-12 border-b border-[var(--footer-line)]">
+      <div className="site-container sarine-footer-main pt-10 pb-10 sm:pt-14 sm:pb-12">
+        <div className="sarine-footer-grid grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-6 sm:gap-10 pb-10 sm:pb-12 border-b border-[var(--footer-line)]">
           {/* Brand & Socials Column */}
-          <div className="col-span-2 lg:col-span-4">
+          <div className="sarine-footer-brand col-span-2 lg:col-span-4">
             <Link to="/" className="inline-block">
               <span className="font-serif text-2xl tracking-[0.25em] !text-white font-normal uppercase hover:!text-[color:var(--gold-light)] transition-colors">
                 SARINE
@@ -159,11 +159,11 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Column 1: Shop */}
-          <div className="lg:col-span-2 col-span-1">
+          <div className="sarine-footer-section lg:col-span-2 col-span-1">
             <h4 className="text-xs uppercase tracking-wider !text-white font-semibold mb-4">
               {chrome.footer.headings.shop}
             </h4>
-            <ul className="space-y-1.5 sm:space-y-2.5 text-xs !text-[color:var(--ivory-text)]">
+            <ul className="sarine-footer-links text-xs !text-[color:var(--ivory-text)]">
               <li>
                 <Link to="/shop" className="hover:!text-[color:var(--gold-light)] transition-colors">
                   All Products
@@ -188,11 +188,11 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Column 2: Customer Care */}
-          <div className="lg:col-span-2 col-span-1">
+          <div className="sarine-footer-section lg:col-span-2 col-span-1">
             <h4 className="text-xs uppercase tracking-wider !text-white font-semibold mb-4">
               {chrome.footer.headings.care}
             </h4>
-            <ul className="space-y-2.5 text-xs !text-[color:var(--ivory-text)]">
+            <ul className="sarine-footer-links text-xs !text-[color:var(--ivory-text)]">
               <li>
                 <Link to="/contact" className="hover:!text-[color:var(--gold-light)] transition-colors">
                   Help & Support
@@ -222,11 +222,11 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Column 3: About */}
-          <div className="lg:col-span-2 col-span-1">
+          <div className="sarine-footer-section lg:col-span-2 col-span-1">
             <h4 className="text-xs uppercase tracking-wider !text-white font-semibold mb-4">
               {chrome.footer.headings.about}
             </h4>
-            <ul className="space-y-2.5 text-xs !text-[color:var(--ivory-text)]">
+            <ul className="sarine-footer-links text-xs !text-[color:var(--ivory-text)]">
               <li>
                 <Link to="/about" className="hover:!text-[color:var(--gold-light)] transition-colors">
                   Our Story
@@ -251,7 +251,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Column 4: Payment Methods */}
-          <div className="lg:col-span-2 col-span-1">
+          <div className="sarine-footer-section lg:col-span-2 col-span-1">
             <h4 className="text-xs uppercase tracking-wider !text-white font-semibold mb-4">
               {chrome.footer.headings.payments}
             </h4>
