@@ -247,7 +247,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       paragraph: 'Thoughtfully designed artificial jewellery that brings timeless elegance to your everyday moments.',
       image: HOMEPAGE_IMAGES.heroSlide1,
       shopLink: '/shop',
-      categoriesLink: '#categories',      ctaText: 'Shop the Collection'
+      categoriesLink: '#categories',
+      ctaText: 'Shop the Collection'
     },
     {
       id: 1,
@@ -496,7 +497,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
           const startX = heroTouchStartX.current;
           const endX = event.changedTouches[0]?.clientX;
           heroTouchStartX.current = null;
-          if (startX === null || endX === undefined) return;          const deltaX = endX - startX;
+          if (startX === null || endX === undefined) return;
+          const deltaX = endX - startX;
           if (Math.abs(deltaX) > 48) deltaX < 0 ? nextSlide() : prevSlide();
         }}
         className="sarine-home-hero relative w-full h-[420px] md:h-[520px] lg:h-[600px] overflow-hidden bg-[var(--tint)] border-b border-[var(--border)] touch-pan-y"
@@ -710,7 +712,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
               </Link>
             </div>
           </div>
-{sectionCarouselEnabled("best-sellers") && (
+
+        {sectionCarouselEnabled("best-sellers") && (
           <div className="mb-3 flex items-center justify-end gap-2" aria-label="Best Sellers carousel controls">
             <button type="button" onClick={() => scrollProductTrack(carouselRef.current, 'left')} aria-label="Scroll Best Sellers left" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-white !text-[color:var(--plum)] shadow-sm transition hover:border-[var(--gold)] hover:bg-[var(--gold)] hover:!text-white">
               <ChevronLeft size={17} />
