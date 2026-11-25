@@ -290,7 +290,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             {/* Centre: Wide Rounded Search Bar (Desktop) */}
-            <div className="hidden xl:flex flex-1 max-w-xl mx-4 xl:mx-8">
+            <div className="hidden xl:flex min-w-0 flex-1 max-w-xl mx-3 xl:mx-5">
               <div
                 onClick={() => setIsSearchOpen(true)}
                 className="w-full flex items-center bg-white border border-[#FFFFFF] hover:border-[var(--plum)] rounded-full px-4 py-2 cursor-pointer shadow-2xs transition-all group"
@@ -305,7 +305,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 aria-label="Search for jewellery, collections, or more..."
               >
                 <Search size={16} className="text-[color:var(--plum)] shrink-0 mr-3" strokeWidth={1.75} />
-                <span className="text-[13px] text-[color:var(--body)] italic tracking-wide flex-1 select-none">
+                <span className="block min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[13px] text-[color:var(--body)] italic tracking-wide select-none">
                   Search for jewellery, collections, or more...
                 </span>
                 <span className="w-[1px] h-4 bg-[var(--border)] mx-2.5 shrink-0" />
