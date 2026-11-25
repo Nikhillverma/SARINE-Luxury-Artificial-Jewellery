@@ -34,7 +34,10 @@ export const ALLOWED_FONTS = [
 
 type AllowedFont = (typeof ALLOWED_FONTS)[number];
 type ValidatedPublishedDesign = {
-  version: 1;
+  version: 1 | 2;
+  elements?: Partial<GlobalDesignSettings['elements']>;
+  fonts?: Partial<GlobalDesignSettings['fonts']>;
+  responsiveTypography?: GlobalDesignSettings['responsiveTypography'];
   colors: Partial<GlobalDesignSettings['colors']>;
   typography: Partial<GlobalDesignSettings['typography']>;
   layout: Partial<GlobalDesignSettings['layout']>;
@@ -73,7 +76,17 @@ const RUNTIME_DESIGN_PROPERTIES = [
   '--sarine-global-heading-scale',
   '--sarine-global-body-scale',
   '--sarine-global-content-width',
-  '--sarine-global-radius'
+  '--sarine-global-radius',
+  ...['heading','body','goldText','muted','link','linkHover'].map(key => '--design-text-' + key),
+  ...['primaryBackground','primaryText','primaryHoverBackground','primaryPressedBackground','secondaryBorder','secondaryText'].map(key => '--design-button-' + key),
+  ...['alternateSection','card','border','pill'].map(key => '--design-surface-' + key),
+  ...['saleBadgeBackground','saleBadgeText','sellingPrice','oldPrice','starRating','categoryLabel'].map(key => '--design-product-' + key),
+  ...['background','text','separator'].map(key => '--design-announcement-' + key),
+  ...['caption','heading','paragraph'].map(key => '--design-hero-' + key),
+  ...['background','border','text'].map(key => '--design-countdown-' + key),
+  ...['background','headings','links','linkHover','divider','bottomText'].map(key => '--design-footer-' + key),
+  ...['logo','heading','body','buttonLabel'].map(key => '--design-font-' + key),
+  ...['desktop','tablet','mobile'].flatMap(device => ['h1','h2','h3','h4','body','small','button'].map(role => '--sarine-type-' + device + '-' + role))
 ] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -103,15 +116,21 @@ function isValidScale(value: unknown): value is number {
 }
 
 function validatePublishedDesign(value: unknown): ValidatedPublishedDesign | null {
-  if (!isRecord(value) || value.version !== 1) return null;
+  if (!isRecord(value) || (value.version !== 1 && value.version !== 2)) return null;
 
   const sourceColors = isRecord(value.colors) ? value.colors : {};
   const sourceTypography = isRecord(value.typography) ? value.typography : {};
   const sourceLayout = isRecord(value.layout) ? value.layout : {};
   const sourceComponents = isRecord(value.components) ? value.components : {};
+  const sourceElements = isRecord(value.elements) ? value.elements : {};
+  const sourceFonts = isRecord(value.fonts) ? value.fonts : {};
+  const sourceResponsive = isRecord(value.responsiveTypography) ? value.responsiveTypography : {};
 
   const validated: ValidatedPublishedDesign = {
-    version: 1,
+    version: value.version as 1 | 2,
+    elements: {},
+    fonts: {},
+    responsiveTypography: undefined,
     colors: {},
     typography: {},
     layout: {},
@@ -141,6 +160,48 @@ function validatePublishedDesign(value: unknown): ValidatedPublishedDesign | nul
   if (sourceComponents.buttonStyle === 'solid' || sourceComponents.buttonStyle === 'outline') {
     validated.components.buttonStyle = sourceComponents.buttonStyle;
   }
+
+
+  const elementGroups = ["text","buttons","surfaces","productCards","announcement","hero","countdown","footer"] as const;
+  const elements = {} as GlobalDesignSettings["elements"];
+  for (const group of elementGroups) {
+    const sourceGroup = isRecord(sourceElements[group]) ? sourceElements[group] : {};
+    const cleanGroup = {} as Record<string, string>;
+    for (const [key, color] of Object.entries(sourceGroup)) if (isHexColor(color)) cleanGroup[key] = color;
+    if (Object.keys(cleanGroup).length) (elements as unknown as Record<string, unknown>)[group] = cleanGroup;
+  }
+  if (Object.keys(elements).length) validated.elements = elements;
+
+  const fontRoles = ["logo","heading","body","buttonLabel"] as const;
+  const fonts = {} as GlobalDesignSettings["fonts"];
+  for (const role of fontRoles) {
+    const sourceRole = isRecord(sourceFonts[role]) ? sourceFonts[role] : {};
+    const family = sourceRole.family;
+    const sizeScale = sourceRole.sizeScale;
+    const weight = sourceRole.weight;
+    if (isAllowedFont(family) && isValidScale(sizeScale) && [300,400,500,600,700].includes(weight as number)) {
+      (fonts as unknown as Record<string, unknown>)[role] = { family, sizeScale, weight };
+    }
+  }
+  if (Object.keys(fonts).length) validated.fonts = fonts;
+
+  const responsive = {} as GlobalDesignSettings["responsiveTypography"];
+  let responsiveValid = true;
+  for (const device of ["desktop","tablet","mobile"] as const) {
+    const sourceDevice = isRecord(sourceResponsive[device]) ? sourceResponsive[device] : {};
+    const target = {} as Record<string, number>;
+    for (const key of ["h1","h2","h3","h4","body","small","button"] as const) {
+      const size = sourceDevice[key];
+      if (typeof size === "number" && Number.isFinite(size) && size >= 10 && size <= 96) target[key] = size;
+      else responsiveValid = false;
+    }
+    (responsive as unknown as Record<string, unknown>)[device] = target;
+  }
+  if (typeof sourceResponsive.tabletOverride === "boolean" && typeof sourceResponsive.mobileOverride === "boolean") {
+    responsive.tabletOverride = sourceResponsive.tabletOverride;
+    responsive.mobileOverride = sourceResponsive.mobileOverride;
+  } else responsiveValid = false;
+  if (responsiveValid) validated.responsiveTypography = responsive;
 
   const hasValidField = Object.values(validated).some(
     section => typeof section === 'object' && Object.keys(section).length > 0
@@ -203,6 +264,34 @@ function applyValidatedPublishedDesign(design: ValidatedPublishedDesign): void {
   }
   if (layout.cornerRadius !== undefined) {
     root.style.setProperty('--design-corner-radius', layout.cornerRadius + 'px');
+  }
+
+
+  if (design.elements) {
+    const groups = design.elements as Record<string, Record<string, string> | undefined>;
+    for (const [group, fields] of Object.entries(groups)) {
+      if (!fields) continue;
+      for (const [key, color] of Object.entries(fields)) {
+        root.style.setProperty('--design-' + (group === 'text' ? 'text' : group === 'buttons' ? 'button' : group === 'surfaces' ? 'surface' : group === 'productCards' ? 'product' : group) + '-' + key, color);
+      }
+    }
+  }
+  if (design.fonts) {
+    for (const [role, font] of Object.entries(design.fonts)) {
+      if (!font) continue;
+      root.style.setProperty('--design-font-' + role, '"' + font.family + '", system-ui, sans-serif');
+      root.style.setProperty('--design-font-' + role + '-scale', String(font.sizeScale / 100));
+      root.style.setProperty('--design-font-' + role + '-weight', String(font.weight));
+    }
+  }
+  if (design.responsiveTypography) {
+    for (const device of ['desktop','tablet','mobile'] as const) {
+      for (const [role, size] of Object.entries(design.responsiveTypography[device])) {
+        root.style.setProperty('--sarine-type-' + device + '-' + role, size + 'px');
+      }
+    }
+    document.body.dataset.sarineTabletTypeOverride = String(design.responsiveTypography.tabletOverride);
+    document.body.dataset.sarineMobileTypeOverride = String(design.responsiveTypography.mobileOverride);
   }
 
   // Keep the complete legacy variable surface as aliases to the semantic tokens.
