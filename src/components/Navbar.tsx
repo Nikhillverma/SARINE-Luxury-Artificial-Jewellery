@@ -267,7 +267,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {isMobileMenuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
               </button>
 
-              <Link to="/" className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center group xl:static xl:translate-x-0">
+              <Link to="/" className="absolute left-1/2 -translate-x-1/2 flex max-w-[calc(100%-11rem)] flex-col items-center group xl:static xl:max-w-none xl:translate-x-0">
                 <span className="font-serif text-[26px] sm:text-[34px] tracking-[0.24em] text-[color:var(--heading)] uppercase font-normal leading-tight group-hover:text-[color:var(--gold)] transition-colors">
                   SARINE
                 </span>
@@ -283,7 +283,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </svg>
                   <div className="h-[1px] flex-1 bg-[var(--white)]" />
                 </div>
-                <span className="text-[8px] sm:text-[9px] tracking-[0.32em] text-[color:var(--body)] uppercase font-sans font-medium whitespace-nowrap">
+                <span className="max-w-full truncate text-[7px] sm:text-[9px] tracking-[0.2em] sm:tracking-[0.32em] text-[color:var(--body)] uppercase font-sans font-medium whitespace-nowrap xl:max-w-none">
                   {headerTagline || 'LUXURY ARTIFICIAL JEWELLERY'}
                 </span>
               </Link>
