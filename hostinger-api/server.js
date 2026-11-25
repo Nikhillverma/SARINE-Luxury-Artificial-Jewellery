@@ -49,12 +49,14 @@ const PORT = Number(process.env.PORT || 3000);
 const normalizeBrowserOrigin = (value) => String(value || "").trim().replace(/\/+$/, "");
 const allowedOrigins = new Set([
   "https://lavender-emu-732118.hostingersite.com",
-  "https://www.lavender-emu-732118.hostingersite.com",
-  "http://lavender-emu-732118.hostingersite.com",
-  "http://www.lavender-emu-732118.hostingersite.com",
-  "http://localhost:5173",
-  "http://127.0.0.1:5173"
+  "https://www.lavender-emu-732118.hostingersite.com"
 ]);
+
+// Local development origins are accepted only outside production.
+if (process.env.NODE_ENV !== "production") {
+  allowedOrigins.add("http://localhost:5173");
+  allowedOrigins.add("http://127.0.0.1:5173");
+}
 
 // Accept one or more explicitly configured storefront origins. Normalize
 // trailing slashes so a harmless hPanel value formatting difference cannot
