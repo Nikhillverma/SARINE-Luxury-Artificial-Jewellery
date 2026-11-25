@@ -184,6 +184,7 @@ function mergeDesign(base,value) {
   for (const key of Object.keys(base)) merged[key] = mergeDesign(base[key],source[key]);
   return merged;
 }
+const DEFAULT_RESPONSIVE_TYPOGRAPHY = {"desktop":{"h1":60,"h2":42,"h3":28,"h4":20,"body":16,"small":13,"button":14},"tablet":{"h1":48,"h2":36,"h3":24,"h4":19,"body":15,"small":12,"button":14},"mobile":{"h1":38,"h2":30,"h3":21,"h4":18,"body":14,"small":12,"button":13},"tabletOverride":false,"mobileOverride":false};
 function normalizeGlobalDesign(value) {
   const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const d = mergeDesign(DEFAULT_GLOBAL_DESIGN,source);
@@ -212,6 +213,7 @@ function normalizeGlobalDesign(value) {
       d.fonts.body.sizeScale = Number(source.typography.bodyScale) || d.fonts.body.sizeScale;
     }
   }
+  d.responsiveTypography = mergeDesign(DEFAULT_RESPONSIVE_TYPOGRAPHY, source.responsiveTypography);
   d.version = 2;
   return d;
 }
@@ -222,6 +224,11 @@ function validateGlobalDesign(value) {
     for (const [key,color] of Object.entries(d.elements[group] || {})) if (typeof color !== "string" || !DESIGN_HEX.test(color)) return `Invalid hex colour at elements.${group}.${key}; use #RRGGBB.`;
   }
   for (const [key,color] of Object.entries(d.colors || {})) if (typeof color !== "string" || !DESIGN_HEX.test(color)) return `Invalid legacy hex colour at colors.${key}; use #RRGGBB.`;
+  for (const device of ["desktop","tablet","mobile"]) {
+    const scale=d.responsiveTypography?.[device];
+    for (const key of ["h1","h2","h3","h4","body","small","button"]) if (!Number.isFinite(scale?.[key]) || scale[key]<10 || scale[key]>96) return `Responsive ${device} ${key} size must be between 10px and 96px.`;
+  }
+  if (typeof d.responsiveTypography.tabletOverride!=="boolean" || typeof d.responsiveTypography.mobileOverride!=="boolean") return "Responsive typography override flags must be boolean.";
   for (const role of ["logo","heading","body","buttonLabel"]) {
     const f=d.fonts?.[role];
     if (!f || !DESIGN_FONT_FAMILIES.has(f.family)) return `Invalid font family for ${role}.`;
@@ -255,6 +262,14 @@ function sanitizeStoredGlobalDesign(value, key) {
       warn(`colors.${field}`);
     }
   }
+  for (const device of ["desktop","tablet","mobile"]) {
+    for (const field of ["h1","h2","h3","h4","body","small","button"]) {
+      const value=d.responsiveTypography?.[device]?.[field];
+      if (!Number.isFinite(value)||value<10||value>96) d.responsiveTypography[device][field]=DEFAULT_RESPONSIVE_TYPOGRAPHY[device][field];
+    }
+  }
+  if (typeof d.responsiveTypography.tabletOverride!=="boolean") d.responsiveTypography.tabletOverride=false;
+  if (typeof d.responsiveTypography.mobileOverride!=="boolean") d.responsiveTypography.mobileOverride=false;
   for (const role of ["logo","heading","body","buttonLabel"]) {
     const font = d.fonts[role];
     if (!DESIGN_FONT_FAMILIES.has(font.family)) { font.family = DEFAULT_GLOBAL_DESIGN.fonts[role].family; warn(`fonts.${role}.family`); }
