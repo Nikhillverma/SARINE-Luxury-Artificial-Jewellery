@@ -253,9 +253,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* TIER 2: MAIN BRAND HEADER (Warm Pale Ivory/Lavender #FAF5FC) */}
         <div className="bg-[var(--white)]">
-          <div className="site-container py-3 sm:py-4 flex items-center justify-between gap-4">
+          <div className="site-container py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-3 xl:gap-4">
             {/* Left: SARINE Wordmark with Diamond Star Motif & Tagline */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -356,7 +356,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {/* Mobile Account Icon Only */}
                 <Link
                   to="/account"
-                  className="xl:hidden inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors rounded-full hover:bg-[var(--white)]"
+                  className="hidden sm:inline-flex xl:hidden min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors rounded-full hover:bg-[var(--white)]"
                   aria-label="My Account"
                 >
                   <User size={19} strokeWidth={1.5} className="text-[color:var(--plum)]" />
@@ -446,7 +446,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Wishlist Button with Label & Numeric Badge */}
               <button
                 onClick={openWishlist}
-                className="relative inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer group rounded-xs hover:bg-[var(--white)]"
+                className="relative hidden sm:inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer group rounded-xs hover:bg-[var(--white)]"
                 aria-label={`Wishlist with ${wishlistCount} saved pieces`}
                 title="View Wishlist"
               >
