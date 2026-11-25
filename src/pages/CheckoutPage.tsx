@@ -303,7 +303,7 @@ export const CheckoutPage: React.FC = () => {
                 const targetUrl = order.publicToken
                   ? `/order/${order.orderNumber}?t=${order.publicToken}`
                   : `/order/${order.orderNumber}`;
-                console.log(`[Checkout] Navigating to: ${targetUrl}`);
+                // Avoid writing the tokenized order URL to browser logs.
                 navigate(targetUrl, { replace: true });
                 localStorage.removeItem('sarine_applied_coupon');
                 clearCart();
@@ -348,7 +348,7 @@ export const CheckoutPage: React.FC = () => {
         const targetUrl = order.publicToken
           ? `/order/${order.orderNumber}?t=${order.publicToken}`
           : `/order/${order.orderNumber}`;
-        console.log(`[Checkout] Navigating to: ${targetUrl}`);
+        // Avoid writing the tokenized order URL to browser logs.
         navigate(targetUrl, { replace: true });
         localStorage.removeItem('sarine_applied_coupon');
         clearCart();
