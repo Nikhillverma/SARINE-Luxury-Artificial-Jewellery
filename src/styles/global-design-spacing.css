@@ -1,3 +1,4 @@
+@import "./global-design-elements.css";
 /* Granular Global Design Studio spacing tokens with safe legacy fallbacks. */
 body.sarine-global-theme #main-content > section,
 body.sarine-global-theme #main-content > .sarine-home > section { padding-block:var(--sarine-spacing-sectionVertical,48px); }
