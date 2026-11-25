@@ -8,3 +8,6 @@ body.sarine-global-theme #main-content a[role="button"] { padding-inline:var(--s
 body.sarine-global-theme .sarine-global-footer .sarine-footer-main { padding-block:var(--sarine-spacing-footerPadding,48px); }
 body.sarine-global-theme .sarine-global-footer .sarine-footer-grid { gap:var(--sarine-spacing-cardGap,16px); }
 @media(max-width:767px){body.sarine-global-theme #main-content > section,body.sarine-global-theme #main-content > .sarine-home > section{padding-inline:var(--sarine-spacing-sectionHorizontal,24px);}}
+body.sarine-global-theme .sarine-global-header > .site-container,
+body.sarine-global-theme .sarine-global-header .site-container { min-height:var(--sarine-spacing-headerHeight,76px); padding-inline:var(--sarine-spacing-sectionHorizontal,24px); }
+body.sarine-global-theme .sarine-global-announcement .site-container { padding-inline:var(--sarine-spacing-sectionHorizontal,24px); }
