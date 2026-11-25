@@ -568,12 +568,12 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 <Link
                   key={cat.id}
                   to={`/shop?category=${encodeURIComponent(cat.slug)}`}
-                  className={sectionCarouselEnabled("categories") ? "sarine-category-card group w-[26%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "sarine-category-card group min-w-0"} style={sectionCarouselEnabled("categories") ? desktopCardStyle("categories", 20, 5) : undefined}
+                  className={sectionCarouselEnabled("categories") ? "sarine-category-card group w-[26%] shrink-0 snap-start sm:w-[42%] md:w-[30%] lg:w-auto lg:[flex-basis:var(--desktop-card-basis)]" : "sarine-category-card group min-w-0"} style={sectionCarouselEnabled("categories") ? desktopCardStyle("categories", 20, 5) : undefined} aria-label={`Shop ${cat.name}`}
                 >
                   <div className="sarine-category-card__media relative aspect-square overflow-hidden rounded-sm border border-[var(--border)] bg-[var(--pill)] transition-colors group-hover:border-[var(--gold)]">
                     <img
                       src={cat.image}
-                      alt={cat.name}
+                      alt=""
                       loading="lazy"
                       decoding="async"
                       fetchPriority="low"
