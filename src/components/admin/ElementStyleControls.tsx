@@ -1,4 +1,5 @@
 import React from "react";
+import "../../styles/global-design-elements.css";
 import type { ElementStyle, GlobalDesignSettings } from "../../services/hostinger/hostingerStorefrontService";
 type ElementMap=GlobalDesignSettings["customization"]["elements"];
 const targets:[string,string][]=[["announcement","Announcement strip"],["header","Header"],["logo","Logo"],["navigation","Navigation"],["hero","Hero section"],["heroEyebrow","Hero eyebrow"],["heroHeading","Hero heading"],["heroBody","Hero paragraph"],["heroButton","Hero button"],["sectionHeading","Section headings"],["sectionBody","Section descriptions"],["categoryTile","Category tiles"],["productGrid","Product grid"],["productCard","Product cards"],["productImage","Product images"],["productTitle","Product titles"],["productPrice","Product prices"],["countdown","Countdown bar"],["footer","Footer"],["footerHeading","Footer headings"],["footerLink","Footer links"]];
