@@ -253,13 +253,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* TIER 2: MAIN BRAND HEADER (Warm Pale Ivory/Lavender #FAF5FC) */}
         <div className="bg-[var(--white)]">
-          <div className="site-container py-3 sm:py-4 flex items-center justify-between gap-4">
+          <div className="site-container py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-3 xl:gap-4">
             {/* Left: SARINE Wordmark with Diamond Star Motif & Tagline */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="inline-flex min-h-11 min-w-11 items-center justify-center text-[#302438] hover:text-[color:var(--plum)] transition-colors lg:hidden cursor-pointer rounded-xs"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center text-[#302438] hover:text-[color:var(--plum)] transition-colors xl:hidden cursor-pointer rounded-xs"
                 aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
                 aria-expanded={isMobileMenuOpen}
                 aria-controls="sarine-mobile-navigation"
@@ -290,7 +290,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             {/* Centre: Wide Rounded Search Bar (Desktop) */}
-            <div className="hidden lg:flex flex-1 max-w-xl mx-4 xl:mx-8">
+            <div className="hidden xl:flex flex-1 max-w-xl mx-4 xl:mx-8">
               <div
                 onClick={() => setIsSearchOpen(true)}
                 className="w-full flex items-center bg-white border border-[#FFFFFF] hover:border-[var(--plum)] rounded-full px-4 py-2 cursor-pointer shadow-2xs transition-all group"
@@ -323,7 +323,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Mobile Quick Search Button */}
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors lg:hidden cursor-pointer rounded-full hover:bg-[var(--white)]"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors xl:hidden cursor-pointer rounded-full hover:bg-[var(--white)]"
                 aria-label="Open search"
               >
                 <Search size={20} strokeWidth={1.5} />
@@ -337,7 +337,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <Link
                   to="/account"
-                  className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer group"
+                  className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer group"
                   aria-label="My Account"
                   title="My Account"
                 >
@@ -356,7 +356,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {/* Mobile Account Icon Only */}
                 <Link
                   to="/account"
-                  className="sm:hidden inline-flex min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors rounded-full hover:bg-[var(--white)]"
+                  className="hidden sm:inline-flex xl:hidden min-h-11 min-w-11 items-center justify-center p-2 text-[#302438] hover:text-[color:var(--plum)] transition-colors rounded-full hover:bg-[var(--white)]"
                   aria-label="My Account"
                 >
                   <User size={19} strokeWidth={1.5} className="text-[color:var(--plum)]" />
@@ -441,12 +441,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
 
               {/* Subtle divider */}
-              <span className="w-[1px] h-5 bg-[var(--border)] hidden sm:block" />
+              <span className="w-[1px] h-5 bg-[var(--border)] hidden xl:block" />
 
               {/* Wishlist Button with Label & Numeric Badge */}
               <button
                 onClick={openWishlist}
-                className="relative inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer group rounded-xs hover:bg-[var(--white)]"
+                className="relative hidden sm:inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 py-1.5 text-[#302438] hover:text-[color:var(--plum)] transition-colors cursor-pointer group rounded-xs hover:bg-[var(--white)]"
                 aria-label={`Wishlist with ${wishlistCount} saved pieces`}
                 title="View Wishlist"
               >
@@ -456,13 +456,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {wishlistCount}
                   </span>
                 </div>
-                <span className="text-[13px] font-medium text-[#302438] group-hover:text-[color:var(--plum)] hidden sm:inline">
+                <span className="text-[13px] font-medium text-[#302438] group-hover:text-[color:var(--plum)] hidden xl:inline">
                   Wishlist
                 </span>
               </button>
 
               {/* Subtle divider */}
-              <span className="w-[1px] h-5 bg-[var(--border)] hidden sm:block" />
+              <span className="w-[1px] h-5 bg-[var(--border)] hidden xl:block" />
 
               {/* Bag Button with Label & Numeric Badge */}
               <button
@@ -477,7 +477,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {itemCount}
                   </span>
                 </div>
-                <span className="text-[13px] font-medium text-[#302438] group-hover:text-[color:var(--plum)] hidden sm:inline">
+                <span className="text-[13px] font-medium text-[#302438] group-hover:text-[color:var(--plum)] hidden xl:inline">
                   Bag
                 </span>
               </button>
@@ -487,7 +487,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* TIER 3: SECONDARY NAVIGATION BAR (Pale Ivory/Lavender #FAF5FC with Delicate Champagne Gold Borders) */}
         <nav
-          className="hidden lg:block bg-[var(--white)] border-t border-[var(--white)] border-b border-[var(--white)]"
+          className="hidden xl:block bg-[var(--white)] border-t border-[var(--white)] border-b border-[var(--white)]"
           aria-label="Main Category Navigation"
         >
           <div className="site-container flex items-center justify-center space-x-6 xl:space-x-8 text-[13px] font-sans">
@@ -667,7 +667,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* 3. Desktop Dropdown Panels Container */}
         {/* Absolute full width container directly below header */}
         <div
-          className={`hidden lg:block absolute top-full left-0 w-full bg-white border-t border-[var(--border)] border-b border-[var(--border)] shadow-lg transition-all duration-200 ease-out z-50 ${
+          className={`hidden xl:block absolute top-full left-0 w-full bg-white border-t border-[var(--border)] border-b border-[var(--border)] shadow-lg transition-all duration-200 ease-out z-50 ${
             activeDropdown
               ? 'opacity-100 translate-y-0 visible pointer-events-auto'
               : 'opacity-0 -translate-y-1 invisible pointer-events-none'
@@ -1535,7 +1535,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* 4. Mobile Navigation Drawer & Backdrop */}
         {isMobileMenuOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden flex">
+          <div className="fixed inset-0 z-50 xl:hidden flex">
             {/* Backdrop */}
             <div
               className="fixed inset-0 bg-[var(--heading)] backdrop-blur-xs transition-opacity"
