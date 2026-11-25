@@ -1,0 +1,10 @@
+/* Granular Global Design Studio spacing tokens with safe legacy fallbacks. */
+body.sarine-global-theme #main-content > section,
+body.sarine-global-theme #main-content > .sarine-home > section { padding-block:var(--sarine-spacing-sectionVertical,48px); }
+body.sarine-global-theme #main-content .product-grid { gap:var(--sarine-spacing-gridGap,20px); }
+body.sarine-global-theme #main-content .product-grid > article { padding:var(--sarine-spacing-cardPadding,16px); }
+body.sarine-global-theme #main-content button,
+body.sarine-global-theme #main-content a[role="button"] { padding-inline:var(--sarine-spacing-buttonPaddingX,24px); padding-block:var(--sarine-spacing-buttonPaddingY,12px); }
+body.sarine-global-theme .sarine-global-footer .sarine-footer-main { padding-block:var(--sarine-spacing-footerPadding,48px); }
+body.sarine-global-theme .sarine-global-footer .sarine-footer-grid { gap:var(--sarine-spacing-cardGap,16px); }
+@media(max-width:767px){body.sarine-global-theme #main-content > section,body.sarine-global-theme #main-content > .sarine-home > section{padding-inline:var(--sarine-spacing-sectionHorizontal,24px);}}
