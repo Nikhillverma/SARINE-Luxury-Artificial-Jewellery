@@ -26,6 +26,7 @@ export interface GlobalDesignSettings {
   };
   fonts: { logo: DesignFontRole; heading: DesignFontRole; body: DesignFontRole; buttonLabel: DesignFontRole };
   responsiveTypography: ResponsiveTypeScale;
+  customization: { spacing: { sectionVertical:number; sectionHorizontal:number; cardPadding:number; cardGap:number; gridGap:number; buttonPaddingX:number; buttonPaddingY:number; headerHeight:number; footerPadding:number } };
 }
 export const DEFAULT_GLOBAL_DESIGN: GlobalDesignSettings = {
   version: 2,
@@ -43,6 +44,7 @@ export const DEFAULT_GLOBAL_DESIGN: GlobalDesignSettings = {
     footer: { background: "#563568", headings: "#FFFFFF", links: "#FFFFFF", linkHover: "#B69ACF", divider: "#806F89", bottomText: "#F7F0FA" }
   },
   responsiveTypography: {"desktop":{"h1":60,"h2":42,"h3":28,"h4":20,"body":16,"small":13,"button":14},"tablet":{"h1":48,"h2":36,"h3":24,"h4":19,"body":15,"small":12,"button":14},"mobile":{"h1":38,"h2":30,"h3":21,"h4":18,"body":14,"small":12,"button":13},"tabletOverride":false,"mobileOverride":false},
+  customization: { spacing: { sectionVertical:48, sectionHorizontal:24, cardPadding:16, cardGap:16, gridGap:20, buttonPaddingX:24, buttonPaddingY:12, headerHeight:76, footerPadding:48 } },
   fonts: {
     logo: { family: "Cormorant Garamond", sizeScale: 100, weight: 600 },
     heading: { family: "Cormorant Garamond", sizeScale: 100, weight: 600 },
