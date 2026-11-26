@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { hostingerMediaService, type HostingerMediaAsset } from "../../services/hostinger/hostingerMediaService";
+import { hostingerMediaService } from "../../services";
+import type { HostingerMediaAsset } from "../../services/hostinger/hostingerMediaService";
 
 const PAGE_SIZE = 40;
 
