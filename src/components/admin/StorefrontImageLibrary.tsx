@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { hostingerMediaService } from "../../services";
-import type { HostingerMediaAsset, HostingerMediaDuplicateGroup } from "../../services/hostinger/hostingerMediaService";
+import type { HostingerMediaAsset, HostingerMediaDuplicateGroup, HostingerMediaUsageAsset } from "../../services/hostinger/hostingerMediaService";
 
 const PAGE_SIZE = 40;
 type LibraryFilters = { mimeType: string; from: string; to: string; sort: "newest" | "oldest" | "filename" };
@@ -8,9 +8,13 @@ const DEFAULT_FILTERS: LibraryFilters = { mimeType: "", from: "", to: "", sort: 
 
 export const StorefrontImageLibrary: React.FC = () => {
   const [assets, setAssets] = useState<HostingerMediaAsset[]>([]);
-  const [viewMode, setViewMode] = useState<"all" | "duplicates">("all");
+  const [viewMode, setViewMode] = useState<"all" | "duplicates" | "usage">("all");
   const [duplicateGroups, setDuplicateGroups] = useState<HostingerMediaDuplicateGroup[]>([]);
   const [duplicateTotal, setDuplicateTotal] = useState(0);
+  const [usageAssets, setUsageAssets] = useState<HostingerMediaUsageAsset[]>([]);
+  const [usageTotal, setUsageTotal] = useState(0);
+  const [usageCoverage, setUsageCoverage] = useState<string[]>([]);
+  const [usageNote, setUsageNote] = useState("");
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
@@ -40,6 +44,14 @@ export const StorefrontImageLibrary: React.FC = () => {
     } catch (e) { setError(e instanceof Error ? e.message : "Duplicate images could not be loaded."); }
     finally { setLoading(false); }
   };
+  const loadUsage = async (nextOffset = 0) => {
+    setLoading(true); setError("");
+    try {
+      const result = await hostingerMediaService.listImageUsage(PAGE_SIZE, nextOffset);
+      setUsageAssets(result.media); setUsageTotal(result.total); setUsageCoverage(result.coverage); setUsageNote(result.note); setOffset(result.offset);
+    } catch (e) { setError(e instanceof Error ? e.message : "Image usage could not be loaded."); }
+    finally { setLoading(false); }
+  };
   useEffect(() => { void load(0, "", DEFAULT_FILTERS); }, []);
   useEffect(() => {
     if (!selected) return;
@@ -56,6 +68,7 @@ export const StorefrontImageLibrary: React.FC = () => {
       setFile(null);
       setSearch(""); setQuery("");
       setFilters(DEFAULT_FILTERS);
+      setViewMode("all");
       await load(0, "", DEFAULT_FILTERS);
       setMessage("Image uploaded and saved to Hostinger media storage.");
     } catch (e) { setError(e instanceof Error ? e.message : "Image upload failed."); }
@@ -70,16 +83,19 @@ export const StorefrontImageLibrary: React.FC = () => {
   const applySearch = (event: React.FormEvent) => {
     event.preventDefault();
     const next = search.trim();
+    setViewMode("all");
     setQuery(next);
     void load(0, next);
   };
 
   const applyFilters = (next: LibraryFilters) => {
+    setViewMode("all");
     setFilters(next);
     void load(0, query, next);
   };
 
   const clearFilters = () => {
+    setViewMode("all");
     setSearch(""); setQuery("");
     setFilters(DEFAULT_FILTERS);
     void load(0, "", DEFAULT_FILTERS);
@@ -102,6 +118,7 @@ export const StorefrontImageLibrary: React.FC = () => {
     <div className="flex flex-wrap gap-2" aria-label="Image library view">
       <button type="button" aria-pressed={viewMode === "all"} onClick={() => { setViewMode("all"); void load(0); }} className="min-h-10 rounded-lg border border-[#DCCDE5] bg-[#563568] px-4 text-xs font-medium text-white">All images</button>
       <button type="button" aria-pressed={viewMode === "duplicates"} onClick={() => { setViewMode("duplicates"); void loadDuplicateGroups(0); }} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs font-medium text-[#563568]">Duplicate groups</button>
+      <button type="button" aria-pressed={viewMode === "usage"} onClick={() => { setViewMode("usage"); void loadUsage(0); }} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs font-medium text-[#563568]">Image usage</button>
     </div>
     <form onSubmit={applySearch} className="flex flex-wrap gap-2">
       <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search image filename…" aria-label="Search image filename" className="min-h-11 min-w-0 flex-1 rounded-lg border border-[#E7DCEB] px-3 text-sm" />
@@ -126,13 +143,29 @@ export const StorefrontImageLibrary: React.FC = () => {
       </label>
     </div>
     <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#6F6475]">
-      <span>{viewMode === "duplicates" ? `${duplicateTotal} duplicate groups` : `${total} matching stored images`}</span>
+      <span>{viewMode === "duplicates" ? `${duplicateTotal} duplicate groups` : viewMode === "usage" ? `${usageTotal} stored images · usage report` : `${total} matching stored images`}</span>
       <div className="flex gap-2">
         <button type="button" disabled={loading} onClick={clearFilters} className="rounded-lg border border-[#DCCDE5] px-3 py-2 text-[#563568]">Clear filters</button>
-        <button type="button" disabled={loading} onClick={() => void load()} className="rounded-lg border border-[#DCCDE5] px-3 py-2 text-[#563568]">Refresh library</button>
+        <button type="button" disabled={loading} onClick={() => viewMode === "usage" ? void loadUsage(0) : viewMode === "duplicates" ? void loadDuplicateGroups(0) : void load()} className="rounded-lg border border-[#DCCDE5] px-3 py-2 text-[#563568]">Refresh library</button>
       </div>
     </div>
-    {loading ? <p role="status" className="py-8 text-center text-sm text-[#6F6475]">Loading image library…</p> : viewMode === "duplicates" ? duplicateGroups.length ? <div className="space-y-4">
+    {loading ? <p role="status" className="py-8 text-center text-sm text-[#6F6475]">Loading image library…</p> : viewMode === "usage" ? <div className="space-y-4">
+      <div className="rounded-xl border border-[#E7DCEB] bg-[#FBF8FC] p-3">
+        <h3 className="text-sm font-semibold text-[#302438]">Where image references were found</h3>
+        <p className="mt-1 text-xs leading-relaxed text-[#6F6475]">Checks product images, category images, hero banners, Storefront Studio settings, website page drafts and published pages, and reusable page sections.</p>
+        <div className="mt-3 flex flex-wrap gap-2">{usageCoverage.map(item => <span key={item} className="rounded-full border border-[#E7DCEB] bg-white px-2.5 py-1 text-[10px] text-[#563568]">{item}</span>)}</div>
+      </div>
+      {usageAssets.map(asset => <article key={asset.id} className="grid gap-3 rounded-xl border border-[#E7DCEB] p-3 sm:grid-cols-[112px_minmax(0,1fr)]">
+        <button type="button" onClick={() => setSelected(asset)} className="block w-full cursor-zoom-in" aria-label={"Preview " + asset.fileName}><img src={asset.url} alt={asset.fileName} loading="lazy" className="aspect-square w-full rounded-lg bg-[#F7F0FA] object-contain" /></button>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-start justify-between gap-2"><div className="min-w-0"><h3 className="truncate text-sm font-semibold text-[#302438]" title={asset.fileName}>{asset.fileName}</h3><p className="mt-1 text-[10px] text-[#6F6475]">{(asset.size / 1024).toFixed(1)} KB · {asset.mimeType.replace("image/", "").toUpperCase()} · Uploaded {new Date(asset.createdAt).toLocaleDateString("en-IN")}</p></div>
+            <span className={asset.usageCount ? "rounded-full bg-[#EAF5EE] px-2.5 py-1 text-[10px] font-medium text-[#24613D]" : "rounded-full bg-[#FFF4DF] px-2.5 py-1 text-[10px] font-medium text-[#805500]"}>{asset.usageCount ? "Referenced in " + asset.usageCount + " place(s)" : "No recorded reference"}</span></div>
+          {asset.references.length > 0 ? <ul className="mt-3 space-y-1.5">{asset.references.map((ref, index) => <li key={asset.id + "-" + index} className="flex flex-wrap gap-x-2 text-xs"><span className="font-medium text-[#563568]">{ref.source}</span><span className="break-all text-[#6F6475]">{ref.location}</span></li>)}</ul> : <p className="mt-3 text-xs text-[#805500]">No match found in tracked sources. This does not prove the image is unused or safe to delete.</p>}
+          <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => setSelected(asset)} className="min-h-9 rounded-lg border border-[#DCCDE5] px-3 text-xs font-medium text-[#563568]">Inspect image</button><button type="button" onClick={() => void copyUrl(asset.url)} className="min-h-9 rounded-lg border border-[#DCCDE5] px-3 text-xs font-medium text-[#563568]">Copy URL</button></div>
+        </div>
+      </article>)}
+      <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">{usageNote}</p>
+    </div> : viewMode === "duplicates" ? duplicateGroups.length ? <div className="space-y-4">
       <p className="text-xs text-[#6F6475]">Groups contain files with exactly matching image content. Every copy is shown separately with its upload date and URL. This view is read-only: no files are deleted or changed.</p>
       {duplicateGroups.map(group => <article key={group.contentHash} className="overflow-hidden rounded-xl border border-[#E7DCEB]">
         <div className="flex flex-wrap items-center justify-between gap-2 bg-[#FBF8FC] p-3">
@@ -174,6 +207,11 @@ export const StorefrontImageLibrary: React.FC = () => {
       <button type="button" disabled={loading || offset <= 0} onClick={() => void loadDuplicateGroups(Math.max(0, offset - 20))} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs text-[#563568] disabled:opacity-40">Previous groups</button>
       <span className="text-xs tabular-nums text-[#6F6475]">{duplicateTotal ? offset + 1 : 0}–{Math.min(offset + duplicateGroups.length, duplicateTotal)} of {duplicateTotal}</span>
       <button type="button" disabled={loading || offset + duplicateGroups.length >= duplicateTotal} onClick={() => void loadDuplicateGroups(offset + 20)} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs text-[#563568] disabled:opacity-40">Next groups</button>
+    </div>}
+    {viewMode === "usage" && <div className="flex items-center justify-between gap-3 border-t border-[#E7DCEB] pt-4">
+      <button type="button" disabled={loading || offset <= 0} onClick={() => void loadUsage(Math.max(0, offset - PAGE_SIZE))} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs text-[#563568] disabled:opacity-40">Previous</button>
+      <span className="text-xs tabular-nums text-[#6F6475]">{usageTotal ? offset + 1 : 0}–{Math.min(offset + usageAssets.length, usageTotal)} of {usageTotal}</span>
+      <button type="button" disabled={loading || offset + usageAssets.length >= usageTotal} onClick={() => void loadUsage(offset + PAGE_SIZE)} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs text-[#563568] disabled:opacity-40">Next</button>
     </div>}
     {selected && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setSelected(null); }}>
       <section role="dialog" aria-modal="true" aria-label={"Image preview: " + selected.fileName} className="max-h-[92vh] w-full max-w-5xl overflow-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-6">

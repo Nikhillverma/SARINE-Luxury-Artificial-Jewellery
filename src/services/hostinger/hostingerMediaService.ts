@@ -35,6 +35,21 @@ function resolveMediaUrl(url: string): string {
   return `${API_BASE}${path}`;
 }
 
+export interface HostingerMediaUsageReference { source: string; location: string; }
+export interface HostingerMediaUsageAsset extends HostingerMediaAsset {
+  usageCount: number;
+  usageStatus: "referenced" | "no-recorded-reference";
+  references: HostingerMediaUsageReference[];
+}
+export interface HostingerMediaUsageReport {
+  media: HostingerMediaUsageAsset[];
+  total: number;
+  limit: number;
+  offset: number;
+  coverage: string[];
+  note: string;
+}
+
 export interface HostingerMediaDuplicateGroup {
   contentHash: string;
   copies: number;
@@ -64,6 +79,14 @@ export class HostingerMediaService {
     };
   }
 
+  async listImageUsage(limit = 40, offset = 0): Promise<HostingerMediaUsageReport> {
+    const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+    const response = await fetch(API_BASE + "/admin/media/usage?" + params.toString(), { credentials: "include", headers: { Accept: "application/json" } });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : "Image usage could not be loaded (" + response.status + ").");
+    const result = data as HostingerMediaUsageReport;
+    return { ...result, media: (result.media || []).map(asset => ({ ...asset, url: resolveMediaUrl(asset.url) })) };
+  }
   async listDuplicateGroups(limit = 20, offset = 0): Promise<{ groups: HostingerMediaDuplicateGroup[]; total: number; limit: number; offset: number }> {
     const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
     const response = await fetch(`${API_BASE}/admin/media/duplicates?${params.toString()}`, {
