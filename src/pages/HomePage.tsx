@@ -11,9 +11,9 @@
  */
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { productService, categoryService } from '../services';
-import { Product } from '../types/product';
+import { Product, type ProductCollection } from '../types/product';
 import { Category } from '../types/category';
 import { ProductCard } from '../components/ProductCard';
 import { formatInr } from '../utils/currency';
@@ -109,6 +109,20 @@ const defaultHomepageLayout: HomepageLayout = {
 };
 
 export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
+  const [rangeParams, setRangeParams] = useSearchParams();
+  const rangeFromUrl = rangeParams.get('range');
+  const [selectedProductCollection, setSelectedProductCollection] = useState<ProductCollection | undefined>(
+    rangeFromUrl === 'artificial' || rangeFromUrl === 'demi-fine' ? rangeFromUrl : undefined
+  );
+  const selectProductCollection = (collection?: ProductCollection) => {
+    setSelectedProductCollection(collection);
+    if (collection) window.sessionStorage.setItem('sarine_product_range', collection);
+    else window.sessionStorage.removeItem('sarine_product_range');
+    const next = new URLSearchParams(rangeParams);
+    if (collection) next.set('range', collection);
+    else next.delete('range');
+    setRangeParams(next, { replace: false });
+  };
   const [homepageLayout, setHomepageLayout] = useState<HomepageLayout>(defaultHomepageLayout);
   const [festivalCampaigns, setFestivalCampaigns] = useState<FestivalCampaign[]>([]);
   const sectionConfig = (id: string) => homepageLayout.sections.find(section => section.id === id);
@@ -422,7 +436,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     return () => {
       isCancelled = true;
     };
-  }, [includeAll]);
+  }, [includeAll, selectedProductCollection]);
 
   // Regular slides use 5 seconds; campaign slides use their admin-configured hold time.
   // The timer restarts on every slide change so a featured offer gets its full viewing time.
@@ -479,6 +493,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   return (
     <div className="sarine-home w-full bg-[#FBF8F5] text-[#302438] font-sans selection:bg-[var(--pill)] selection:text-[#302438]" style={{ display: "flex", flexDirection: "column" }}>
+      <nav aria-label="Shop by jewellery range" className="w-full border-b border-[#E7DCEB] bg-white">
+        <div className="mx-auto flex min-h-11 w-full max-w-[1280px] items-center justify-center gap-5 px-4 text-xs sm:gap-8 sm:text-sm">
+          <button type="button" onClick={() => selectProductCollection(undefined)} aria-current={!selectedProductCollection ? "page" : undefined} className={`min-h-11 border-b-2 px-1 font-medium transition-colors ${!selectedProductCollection ? "border-[#563568] text-[#563568]" : "border-transparent text-[#705E7B] hover:text-[#563568]"}`}>Home</button>
+          <button type="button" onClick={() => selectProductCollection("artificial")} aria-current={selectedProductCollection === "artificial" ? "page" : undefined} className={`min-h-11 border-b-2 px-1 font-medium transition-colors ${selectedProductCollection === "artificial" ? "border-[#563568] text-[#563568]" : "border-transparent text-[#705E7B] hover:text-[#563568]"}`}>Artificial</button>
+          <button type="button" onClick={() => selectProductCollection("demi-fine")} aria-current={selectedProductCollection === "demi-fine" ? "page" : undefined} className={`min-h-11 border-b-2 px-1 font-medium transition-colors ${selectedProductCollection === "demi-fine" ? "border-[#563568] text-[#563568]" : "border-transparent text-[#705E7B] hover:text-[#563568]"}`}>Demi-Fine</button>
+        </div>
+      </nav>
+
       {/* =========================================================================
           3. HERO SLIDER
           Fixed responsive height: h-[420px] md:h-[520px] lg:h-[600px]
