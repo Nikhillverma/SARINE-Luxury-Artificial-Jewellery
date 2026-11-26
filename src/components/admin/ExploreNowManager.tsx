@@ -26,15 +26,16 @@ export const ExploreNowManager: React.FC = () => {
     (!search.trim() || product.name.toLowerCase().includes(search.trim().toLowerCase()) || product.slug.toLowerCase().includes(search.trim().toLowerCase())));
   const unchanged = JSON.stringify(draft) === JSON.stringify(published);
 
-  const load = async () => {
+  const load = async (isCancelled: () => boolean = () => false) => {
     setLoading(true); setError("");
     try {
       const [catalogue, config] = await Promise.all([adminProductService.getProducts(), hostingerStorefrontService.getExploreNow(collection || undefined)]);
+      if (isCancelled()) return;
       setProducts(collection ? catalogue.filter(product => product.productCollection === collection) : catalogue); setDraft(config.draft); setPublished(config.published);
-    } catch (e) { setError(e instanceof Error ? e.message : "Could not load Explore Now settings."); }
-    finally { setLoading(false); }
+    } catch (e) { if (!isCancelled()) setError(e instanceof Error ? e.message : "Could not load Explore Now settings."); }
+    finally { if (!isCancelled()) setLoading(false); }
   };
-  useEffect(() => { void load(); }, [collection]);
+  useEffect(() => { let cancelled = false; setProducts([]); setDraft(EMPTY); setPublished(EMPTY); void load(() => cancelled); return () => { cancelled = true; }; }, [collection]);
 
   const update = (productIds: string[], displayCount = draft.displayCount) => {
     setDraft({ version: 1, productIds, displayCount, configured: productIds.length > 0 });
