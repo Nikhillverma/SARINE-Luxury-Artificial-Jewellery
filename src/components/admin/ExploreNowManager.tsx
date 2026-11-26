@@ -65,7 +65,7 @@ export const ExploreNowManager: React.FC = () => {
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div><h2 className="font-semibold text-[#2C1838]">Explore Now</h2>
         <p className="mt-1 text-xs text-gray-500">Choose the eligible products, then set how many appear in a clean, non-carousel grid. The storefront shuffles this pool on each visit.</p>
-        <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={collection} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global selection)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
+        <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={collection} disabled={loading || busy} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global selection)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
       </div>
       <span className={unchanged ? "text-xs rounded-full px-3 py-1 bg-green-50 text-green-700" : "text-xs rounded-full px-3 py-1 bg-amber-50 text-amber-700"}>{unchanged ? "Published version" : "Unpublished changes"}</span>
     </div>
