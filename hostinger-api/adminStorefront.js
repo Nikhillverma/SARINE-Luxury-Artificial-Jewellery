@@ -25,6 +25,8 @@ async function ensureSchema() {
         cta_link VARCHAR(500) NOT NULL DEFAULT '/shop',
         image_url VARCHAR(2048) NOT NULL,
         product_collection VARCHAR(24) NULL,
+        starts_at_utc VARCHAR(24) NULL,
+        ends_at_utc VARCHAR(24) NULL,
         is_active TINYINT(1) NOT NULL DEFAULT 0,
         sort_order INT NOT NULL DEFAULT 0,
         created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -33,6 +35,10 @@ async function ensureSchema() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
       const [bannerColumns] = await pool.execute("SHOW COLUMNS FROM storefront_banners LIKE 'product_collection'");
       if (!bannerColumns.length) await pool.execute("ALTER TABLE storefront_banners ADD COLUMN product_collection VARCHAR(24) NULL AFTER image_url");
+      const [startColumn] = await pool.execute("SHOW COLUMNS FROM storefront_banners LIKE 'starts_at_utc'");
+      if (!startColumn.length) await pool.execute("ALTER TABLE storefront_banners ADD COLUMN starts_at_utc VARCHAR(24) NULL AFTER product_collection");
+      const [endColumn] = await pool.execute("SHOW COLUMNS FROM storefront_banners LIKE 'ends_at_utc'");
+      if (!endColumn.length) await pool.execute("ALTER TABLE storefront_banners ADD COLUMN ends_at_utc VARCHAR(24) NULL AFTER starts_at_utc");
       const [bannerIndexes] = await pool.execute("SHOW INDEX FROM storefront_banners WHERE Key_name='idx_storefront_banners_collection_active'");
       if (!bannerIndexes.length) await pool.execute("ALTER TABLE storefront_banners ADD INDEX idx_storefront_banners_collection_active (product_collection, is_active, sort_order)");
       await pool.execute(`CREATE TABLE IF NOT EXISTS storefront_settings (
@@ -51,8 +57,17 @@ function mapBanner(row) {
   return {
     id: row.id, tagline: row.tagline, title: row.title, subtitle: row.subtitle,
     ctaText: row.cta_text, ctaLink: row.cta_link, imageUrl: row.image_url,
-    active: Boolean(row.is_active), sortOrder: Number(row.sort_order), productCollection: row.product_collection || null
+    active: Boolean(row.is_active), sortOrder: Number(row.sort_order), productCollection: row.product_collection || null, startsAtUtc: row.starts_at_utc || null, endsAtUtc: row.ends_at_utc || null
   };
+}
+function normalizeBannerSchedule(value, label) {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) {
+    throw new Error(label + " must be a valid UTC timestamp.");
+  }
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime()) || date.toISOString() !== value) throw new Error(label + " must be a valid UTC timestamp.");
+  return value;
 }
 function validate(input) {
   const title = String(input.title || "").trim();
@@ -62,6 +77,11 @@ function validate(input) {
   if (!/^https:\/\//i.test(imageUrl) || imageUrl.length > 2048) return "Banner image must be a valid HTTPS media URL.";
   if (!(ctaLink.startsWith("/") && !ctaLink.startsWith("//")) && !/^https:\/\//i.test(ctaLink)) return "CTA destination must be a site path or HTTPS URL.";
   if (ctaLink.length > 500) return "CTA destination is too long.";
+  try {
+    const start = normalizeBannerSchedule(input.startsAtUtc, "Start date");
+    const end = normalizeBannerSchedule(input.endsAtUtc, "End date");
+    if (start && end && end <= start) return "End date must be later than the start date.";
+  } catch (error) { return error.message; }
   return null;
 }
 
@@ -123,11 +143,12 @@ adminOnly.post("/banners", async (req, res, next) => {
     const [count] = await pool.execute("SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM storefront_banners WHERE product_collection <=> ?", [productCollection]);
     await pool.execute(
       `INSERT INTO storefront_banners
-       (id, tagline, title, subtitle, cta_text, cta_link, image_url, product_collection, is_active, sort_order)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, tagline, title, subtitle, cta_text, cta_link, image_url, product_collection, starts_at_utc, ends_at_utc, is_active, sort_order)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, String(input.tagline || "").slice(0,120), String(input.title).trim(),
        String(input.subtitle || "").slice(0,500), String(input.ctaText || "Shop now").slice(0,80),
        String(input.ctaLink || "/shop").trim(), String(input.imageUrl).trim(), productCollection,
+       normalizeBannerSchedule(input.startsAtUtc, "Start date"), normalizeBannerSchedule(input.endsAtUtc, "End date"),
        input.active === true ? 1 : 0, Number.isInteger(input.sortOrder) ? input.sortOrder : Number(count[0].next_order)]
     );
     const [rows] = await pool.execute("SELECT * FROM storefront_banners WHERE id = ?", [id]);
@@ -148,10 +169,11 @@ adminOnly.put("/banners/:id", async (req, res, next) => {
     if (invalid) return res.status(400).json({ error: invalid });
     await pool.execute(
       `UPDATE storefront_banners SET tagline=?, title=?, subtitle=?, cta_text=?, cta_link=?,
-       image_url=?, product_collection=?, is_active=?, sort_order=? WHERE id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci`,
+       image_url=?, product_collection=?, starts_at_utc=?, ends_at_utc=?, is_active=?, sort_order=? WHERE id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci`,
       [String(merged.tagline || "").slice(0,120), String(merged.title).trim(),
        String(merged.subtitle || "").slice(0,500), String(merged.ctaText || "Shop now").slice(0,80),
        String(merged.ctaLink || "/shop").trim(), String(merged.imageUrl).trim(), productCollection,
+       normalizeBannerSchedule(merged.startsAtUtc, "Start date"), normalizeBannerSchedule(merged.endsAtUtc, "End date"),
        merged.active === true ? 1 : 0,
        Number.isInteger(merged.sortOrder) ? merged.sortOrder : current.sortOrder, req.params.id]
     );
@@ -311,7 +333,16 @@ publicRouter.get("/banners", async (req, res, next) => {
   try {
     await ensureSchema();
     const collection = collectionFrom(req.query.productCollection);
-    const [rows] = collection ? await pool.execute("SELECT * FROM storefront_banners WHERE product_collection=? AND is_active=1 ORDER BY sort_order ASC, created_at ASC", [collection]) : await pool.execute("SELECT * FROM storefront_banners WHERE product_collection IS NULL AND is_active=1 ORDER BY sort_order ASC, created_at ASC");
+    const nowUtc = new Date().toISOString();
+    const [rows] = collection
+      ? await pool.execute(
+        "SELECT * FROM storefront_banners WHERE is_active=1 AND (product_collection IS NULL OR product_collection=?) AND (starts_at_utc IS NULL OR starts_at_utc<=?) AND (ends_at_utc IS NULL OR ends_at_utc>?) ORDER BY sort_order ASC, created_at ASC",
+        [collection, nowUtc, nowUtc]
+      )
+      : await pool.execute(
+        "SELECT * FROM storefront_banners WHERE product_collection IS NULL AND is_active=1 AND (starts_at_utc IS NULL OR starts_at_utc<=?) AND (ends_at_utc IS NULL OR ends_at_utc>?) ORDER BY sort_order ASC, created_at ASC",
+        [nowUtc, nowUtc]
+      );
     res.set("Cache-Control", "no-store").json({ banners: rows.map(mapBanner) });
   } catch (error) { next(error); }
 });
