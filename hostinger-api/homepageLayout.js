@@ -60,7 +60,15 @@ async function readLayoutSchedule(collection) {
   await ensureSchema();
   const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [layoutScheduleKey(collection)]);
   if (!rows.length) return null;
-  try { return normalizeEditorialSchedule(JSON.parse(rows[0].setting_value)); } catch { return null; }
+  try {
+    const schedule = normalizeEditorialSchedule(JSON.parse(rows[0].setting_value));
+    if (!schedule) return null;
+    return {
+      ...schedule,
+      content: validateHomepageLayout(schedule.content),
+      previousPublished: validateHomepageLayout(schedule.previousPublished)
+    };
+  } catch { return null; }
 }
 async function writeLayoutSchedule(collection, schedule) {
   await ensureSchema();
