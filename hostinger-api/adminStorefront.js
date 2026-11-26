@@ -32,7 +32,9 @@ async function ensureSchema() {
         INDEX idx_storefront_banners_active_order (is_active, sort_order)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
       const [bannerColumns] = await pool.execute("SHOW COLUMNS FROM storefront_banners LIKE 'product_collection'");
-      if (!bannerColumns.length) await pool.execute("ALTER TABLE storefront_banners ADD COLUMN product_collection VARCHAR(24) NULL AFTER image_url, ADD INDEX idx_storefront_banners_collection_active (product_collection, is_active, sort_order)");
+      if (!bannerColumns.length) await pool.execute("ALTER TABLE storefront_banners ADD COLUMN product_collection VARCHAR(24) NULL AFTER image_url");
+      const [bannerIndexes] = await pool.execute("SHOW INDEX FROM storefront_banners WHERE Key_name='idx_storefront_banners_collection_active'");
+      if (!bannerIndexes.length) await pool.execute("ALTER TABLE storefront_banners ADD INDEX idx_storefront_banners_collection_active (product_collection, is_active, sort_order)");
       await pool.execute(`CREATE TABLE IF NOT EXISTS storefront_settings (
         setting_key VARCHAR(100) NOT NULL PRIMARY KEY,
         setting_value TEXT NOT NULL,
