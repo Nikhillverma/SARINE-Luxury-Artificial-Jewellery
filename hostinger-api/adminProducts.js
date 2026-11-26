@@ -58,7 +58,8 @@ function mapProduct(row) {
     careInstructions: parseJson(row.care_instructions, []),
     productVideoUrl: row.product_video_url || "",
     createdAt: row.created_at,
-    updatedAt: row.updated_at
+    updatedAt: row.updated_at,
+    sortOrder: Number(row.sort_order || 0)
   };
 }
 
