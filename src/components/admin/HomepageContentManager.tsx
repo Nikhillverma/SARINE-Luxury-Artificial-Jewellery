@@ -4,11 +4,19 @@ import { hostingerMediaService } from "../../services";
 import {
   DEFAULT_HOMEPAGE_CONTENT,
   hostingerStorefrontService,
-  type HomepageContent
+  type HomepageContent,
+  type EditorialSchedule,
+  type EditorialScheduleStatus
 } from "../../services/hostinger/hostingerStorefrontService";
 
 const fieldClass = "w-full rounded-lg border border-[#E7DCEB] bg-white p-3 text-sm text-[#302438] focus:outline-none focus:ring-2 focus:ring-[#B69ACF]";
 const labelClass = "block space-y-1.5 text-xs font-medium text-[#563568]";
+function localDateTime(value?: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
+}
+function utcDateTime(value: string) { return new Date(value).toISOString(); }
 
 export const HomepageContentManager: React.FC = () => {
   const [draft, setDraft] = useState<HomepageContent>(DEFAULT_HOMEPAGE_CONTENT);
@@ -23,6 +31,12 @@ export const HomepageContentManager: React.FC = () => {
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [savedPreview, setSavedPreview] = useState<HomepageContent | null>(null);
   const [showPublishConfirmation, setShowPublishConfirmation] = useState(false);
+  const [schedule, setSchedule] = useState<EditorialSchedule | null>(null);
+  const [scheduleStatus, setScheduleStatus] = useState<EditorialScheduleStatus>("none");
+  const [startLocal, setStartLocal] = useState("");
+  const [endLocal, setEndLocal] = useState("");
+  const [scheduleReview, setScheduleReview] = useState(false);
+  const [cancelReview, setCancelReview] = useState(false);
 
   const load = async (isCancelled: () => boolean = () => false) => {
     setLoading(true); setError(""); setMessage("");
@@ -31,6 +45,8 @@ export const HomepageContentManager: React.FC = () => {
       if (isCancelled()) return;
       setDraft(result.draft);
       setPublished(result.published);
+      setSchedule(result.schedule); setScheduleStatus(result.scheduleStatus);
+      setStartLocal(localDateTime(result.schedule?.startsAtUtc)); setEndLocal(localDateTime(result.schedule?.endsAtUtc));
       setSavedPreview(null);
       setShowPublishConfirmation(false);
     } catch (e) {
@@ -66,11 +82,39 @@ export const HomepageContentManager: React.FC = () => {
       setDraft(result.published);
       setPublished(result.published);
       setSavedPreview(result.published);
-      setMessage("Homepage content published successfully.");
+      setSchedule(null); setScheduleStatus("none"); setStartLocal(""); setEndLocal("");
+      setMessage("Homepage content published successfully. Any pending schedule was cleared.");
     } catch (e) { setError(e instanceof Error ? e.message : "Homepage content could not be published."); }
     finally { setBusy(false); }
   };
   const hasSavedPreview = savedPreview !== null && JSON.stringify(draft) === JSON.stringify(savedPreview);
+  const reviewContentSchedule = () => {
+    setError("");
+    if (!hasSavedPreview) { setError("Save draft & refresh preview before scheduling."); return; }
+    const start = new Date(startLocal);
+    const end = endLocal ? new Date(endLocal) : null;
+    if (!startLocal || !Number.isFinite(start.getTime()) || start.getTime() <= Date.now()) { setError("Choose a future publication date and time."); return; }
+    if (end && (!Number.isFinite(end.getTime()) || end.getTime() <= start.getTime())) { setError("Expiry must be later than publication."); return; }
+    setScheduleReview(true);
+  };
+  const confirmContentSchedule = async () => {
+    setBusy(true); setError(""); setMessage("");
+    try {
+      const result = await hostingerStorefrontService.scheduleHomepageContent(utcDateTime(startLocal), endLocal ? utcDateTime(endLocal) : null, collection || undefined);
+      setSchedule(result.schedule); setScheduleStatus(result.scheduleStatus); setScheduleReview(false);
+      setMessage("Homepage content publication scheduled.");
+    } catch (e) { setError(e instanceof Error ? e.message : "Schedule could not be saved."); }
+    finally { setBusy(false); }
+  };
+  const cancelContentSchedule = async () => {
+    setBusy(true); setError(""); setMessage("");
+    try {
+      const result = await hostingerStorefrontService.cancelHomepageContentSchedule(collection || undefined);
+      setSchedule(result.schedule); setScheduleStatus(result.scheduleStatus); setStartLocal(""); setEndLocal(""); setCancelReview(false);
+      setMessage("Schedule cancelled. The previous published version remains live.");
+    } catch (e) { setError(e instanceof Error ? e.message : "Schedule could not be cancelled."); }
+    finally { setBusy(false); }
+  };
   const uploadStoryImage = async (file?: File) => {
     if (!file) return;
     setUploading(true); setError(""); setMessage("");
@@ -262,6 +306,17 @@ export const HomepageContentManager: React.FC = () => {
         <p className="text-[11px] text-[#6F6475]">Preview width: {previewDevice === "mobile" ? "390px mobile" : "fluid desktop (up to 1120px)"}. This preview shows the saved version only. Any edits made since saving are not included until you save and refresh again.</p>
       </section>}
 
+      <section className="space-y-3 rounded-xl border border-[#E7DCEB] bg-white p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-sm font-semibold text-[#563568]">Scheduled publishing</h3><p className="mt-1 text-xs text-[#6F6475]">Uses your local time zone. The saved content snapshot goes live at the start time; the previous published version returns at expiry.</p></div><span className="rounded-full bg-[#F0EAF5] px-3 py-1 text-xs font-semibold text-[#563568]">{scheduleStatus === "none" ? "Not scheduled" : scheduleStatus === "scheduled" ? "Scheduled" : scheduleStatus === "published" ? "Published" : "Expired"}</span></div>
+        {schedule && <div className="rounded-lg bg-[#FCFAFD] p-3 text-xs text-[#6F6475]"><p><strong>Starts:</strong> {new Date(schedule.startsAtUtc).toLocaleString()}</p><p className="mt-1"><strong>Expires:</strong> {schedule.endsAtUtc ? new Date(schedule.endsAtUtc).toLocaleString() : "No expiry"}</p></div>}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className={labelClass}>Publish date & time (local)<input type="datetime-local" value={startLocal} min={localDateTime(new Date().toISOString())} onChange={e => setStartLocal(e.target.value)} disabled={busy || loading} className={fieldClass} /></label>
+          <label className={labelClass}>Expiry date & time (optional)<input type="datetime-local" value={endLocal} min={startLocal || undefined} onChange={e => setEndLocal(e.target.value)} disabled={busy || loading} className={fieldClass} /></label>
+        </div>
+        <div className="flex flex-wrap gap-2"><button type="button" disabled={busy || uploading || loading || !hasSavedPreview || !startLocal} onClick={reviewContentSchedule} className="rounded-lg bg-[#563568] px-4 py-2.5 text-xs font-semibold text-white disabled:opacity-50">{schedule ? "Review reschedule" : "Review schedule"}</button>{schedule && <button type="button" disabled={busy} onClick={() => setCancelReview(true)} className="rounded-lg border px-4 py-2.5 text-xs text-[#563568]">Cancel schedule</button>}</div>
+        {scheduleReview && <div role="dialog" className="space-y-3 rounded-lg border border-[#B69ACF] p-3"><h4 className="text-sm font-semibold text-[#563568]">Confirm scheduled publication</h4><p className="text-xs text-[#6F6475]">The saved {selectedVersion} homepage content goes live at {new Date(startLocal).toLocaleString()}{endLocal ? " and expires at " + new Date(endLocal).toLocaleString() : ", with no automatic expiry"}.</p><button type="button" disabled={busy} onClick={() => void confirmContentSchedule()} className="rounded-lg bg-[#563568] px-4 py-2 text-xs text-white">Confirm schedule</button><button type="button" disabled={busy} onClick={() => setScheduleReview(false)} className="ml-2 rounded-lg border px-4 py-2 text-xs">Keep editing</button></div>}
+        {cancelReview && <div role="dialog" className="space-y-2 rounded-lg border border-amber-200 p-3"><p className="text-xs text-[#6F6475]">Cancel this schedule? The previous published content remains live.</p><button type="button" disabled={busy} onClick={() => void cancelContentSchedule()} className="rounded-lg bg-[#563568] px-4 py-2 text-xs text-white">Confirm cancellation</button><button type="button" disabled={busy} onClick={() => setCancelReview(false)} className="ml-2 rounded-lg border px-4 py-2 text-xs">Keep schedule</button></div>}
+      </section>
       <div className="space-y-3 border-t border-[#E7DCEB] pt-4">
         <div className="rounded-xl border border-[#E7DCEB] bg-[#FCFAFD] p-4 space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
