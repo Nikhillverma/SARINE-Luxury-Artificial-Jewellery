@@ -415,7 +415,7 @@ export const AdminProductsPage: React.FC = () => {
             </label>
             <label className="text-[10px] text-[#806B8D]">Category
               <select aria-label="Filter products by category" value={categoryFilter} onChange={event => setCategoryFilter(event.target.value)} className="mt-1 w-full min-h-10 px-3 border border-[#E7DCEB] rounded-lg text-xs text-[#302438]">
-                <option value="all">All categories</option>{formCategories.map(category => <option key={category.id} value={category.id}>{category.name}{category.categoryCollection === "both" ? " (Shared)" : ""}</option>)}
+                <option value="all">All categories</option>{categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
               </select>
             </label>
             <label className="text-[10px] text-[#806B8D]">Product range
@@ -507,7 +507,7 @@ export const AdminProductsPage: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <label>Stock *<input required type="number" min="0" step="1" value={form.stock} disabled={Boolean(editing?.variants?.length)} onChange={e => setForm({ ...form, stock: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl disabled:bg-[#F0E8F3]"/></label>
-                <label>Category *<select required value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl">{categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
+                <label>Category *<select required value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl">{formCategories.map(category => <option key={category.id} value={category.id}>{category.name}{category.categoryCollection === "both" ? " (Shared)" : ""}</option>)}</select></label>
               </div>
               {editing?.variants?.length ? <p className="-mt-2 text-[10px] text-[#705E7B]">This product uses variants. Its total stock is calculated from active variant stock; adjust individual options in Product Variants.</p> : null}
               <div className="grid grid-cols-2 gap-3">
