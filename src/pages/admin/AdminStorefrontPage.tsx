@@ -87,7 +87,7 @@ export const AdminStorefrontPage: React.FC = () => {
         ? result.draft.trustMessages
         : ["Free Shipping Above ₹1,999", "7-Day Easy Returns", "Trusted by 1L+ Happy Customers"]);
       setPublishedAnnouncement(result.published);
-      setSavedAnnouncementPreview(null);
+      setSavedAnnouncementPreview(result.published);
       setReviewAnnouncementPublish(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to load announcement settings.");
