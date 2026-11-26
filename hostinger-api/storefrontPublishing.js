@@ -107,6 +107,7 @@ function validateOccasions(input) {
     if (!id || ids.has(id)) throw new Error("Each occasion must have a unique ID.");
     ids.add(id);
     if (title.length > 80 || subtitle.length > 180 || image.length > 2048 || link.length > 500) throw new Error("Occasion card text or URL exceeds the allowed length.");
+    if (image && !((image.startsWith("/") && !image.startsWith("//")) || /^https:\/\//i.test(image))) throw new Error("Occasion images must use a site path or HTTPS URL.");
     if (item?.active === true && (!title || !subtitle || !image || /product-placeholder/i.test(image))) throw new Error("Complete the title, description and image for every visible occasion card.");
     if (!(link.startsWith("/") && !link.startsWith("//")) && !/^https:\/\//i.test(link)) throw new Error("Occasion destinations must be internal paths or HTTPS URLs.");
     return { id, title, subtitle, image, link, active: item?.active === true, sortOrder: index };
@@ -175,7 +176,7 @@ function attachWorkspaceRoutes({ path, workspace, legacyKey, fallback, validate,
   });
   publicRouter.get(path, async (req, res, next) => {
     try {
-      const collection = collectionFrom(req.query.productCollection);
+      const collection = collectionFrom(req.query.productCollection || req.query.range);
       const record = await readRecord(workspace, collection, legacyKey, fallback);
       const value = record.published;
       res.set("Cache-Control", "no-store").json(publicShape(value, defaultPublic));
