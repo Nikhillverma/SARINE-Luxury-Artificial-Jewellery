@@ -161,7 +161,7 @@ export const HomepageSectionManager: React.FC = () => {
     </div>
     <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[#E7DCEB] bg-[#F7F0FA]/50 p-3">
       <label className="text-xs font-medium text-[#302438]" htmlFor="homepage-layout-collection">Homepage version</label>
-      <select id="homepage-layout-collection" value={collection} disabled={busy || loading} onChange={event => { setCollection(event.target.value as typeof collection); setMessage(\"\"); }} className="rounded-lg border border-[#E7DCEB] bg-white px-3 py-2 text-sm text-[#563568]">
+      <select id="homepage-layout-collection" value={collection} disabled={busy || loading} onChange={event => { setCollection(event.target.value as typeof collection); setMessage(""); }} className="rounded-lg border border-[#E7DCEB] bg-white px-3 py-2 text-sm text-[#563568]">
         <option value="shared">Shared (both collections)</option>
         <option value="artificial">Artificial</option>
         <option value="demi-fine">Demi-Fine</option>
