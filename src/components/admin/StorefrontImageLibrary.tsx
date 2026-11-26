@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { hostingerMediaService } from "../../services";
-import type { HostingerMediaAsset } from "../../services/hostinger/hostingerMediaService";
+import type { HostingerMediaAsset, HostingerMediaDuplicateGroup } from "../../services/hostinger/hostingerMediaService";
 
 const PAGE_SIZE = 40;
 type LibraryFilters = { mimeType: string; from: string; to: string; sort: "newest" | "oldest" | "filename" };
@@ -8,6 +8,9 @@ const DEFAULT_FILTERS: LibraryFilters = { mimeType: "", from: "", to: "", sort: 
 
 export const StorefrontImageLibrary: React.FC = () => {
   const [assets, setAssets] = useState<HostingerMediaAsset[]>([]);
+  const [viewMode, setViewMode] = useState<"all" | "duplicates">("all");
+  const [duplicateGroups, setDuplicateGroups] = useState<HostingerMediaDuplicateGroup[]>([]);
+  const [duplicateTotal, setDuplicateTotal] = useState(0);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
@@ -29,6 +32,14 @@ export const StorefrontImageLibrary: React.FC = () => {
     finally { setLoading(false); }
   };
 
+  const loadDuplicateGroups = async (nextOffset = 0) => {
+    setLoading(true); setError("");
+    try {
+      const result = await hostingerMediaService.listDuplicateGroups(20, nextOffset);
+      setDuplicateGroups(result.groups); setDuplicateTotal(result.total); setOffset(result.offset);
+    } catch (e) { setError(e instanceof Error ? e.message : "Duplicate images could not be loaded."); }
+    finally { setLoading(false); }
+  };
   useEffect(() => { void load(0, "", DEFAULT_FILTERS); }, []);
   useEffect(() => {
     if (!selected) return;
@@ -88,6 +99,10 @@ export const StorefrontImageLibrary: React.FC = () => {
       </label>
       <button type="button" disabled={!file || uploading || loading} onClick={() => void upload()} className="min-h-11 rounded-lg bg-[#563568] px-4 py-2 text-sm font-medium text-white disabled:opacity-50">{uploading ? "Uploading…" : "Upload to library"}</button>
     </div>
+    <div className="flex flex-wrap gap-2" aria-label="Image library view">
+      <button type="button" aria-pressed={viewMode === "all"} onClick={() => { setViewMode("all"); void load(0); }} className="min-h-10 rounded-lg border border-[#DCCDE5] bg-[#563568] px-4 text-xs font-medium text-white">All images</button>
+      <button type="button" aria-pressed={viewMode === "duplicates"} onClick={() => { setViewMode("duplicates"); void loadDuplicateGroups(0); }} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs font-medium text-[#563568]">Duplicate groups</button>
+    </div>
     <form onSubmit={applySearch} className="flex flex-wrap gap-2">
       <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search image filename…" aria-label="Search image filename" className="min-h-11 min-w-0 flex-1 rounded-lg border border-[#E7DCEB] px-3 text-sm" />
       <button type="submit" disabled={loading} className="min-h-11 rounded-lg border border-[#DCCDE5] px-4 text-sm font-medium text-[#563568]">Search</button>
@@ -111,13 +126,30 @@ export const StorefrontImageLibrary: React.FC = () => {
       </label>
     </div>
     <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#6F6475]">
-      <span>{total} matching stored image{total === 1 ? "" : "s"}</span>
+      <span>{viewMode === "duplicates" ? `${duplicateTotal} duplicate groups` : `${total} matching stored images`}</span>
       <div className="flex gap-2">
         <button type="button" disabled={loading} onClick={clearFilters} className="rounded-lg border border-[#DCCDE5] px-3 py-2 text-[#563568]">Clear filters</button>
         <button type="button" disabled={loading} onClick={() => void load()} className="rounded-lg border border-[#DCCDE5] px-3 py-2 text-[#563568]">Refresh library</button>
       </div>
     </div>
-    {loading ? <p role="status" className="py-8 text-center text-sm text-[#6F6475]">Loading image library…</p> : assets.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+    {loading ? <p role="status" className="py-8 text-center text-sm text-[#6F6475]">Loading image library…</p> : viewMode === "duplicates" ? duplicateGroups.length ? <div className="space-y-4">
+      <p className="text-xs text-[#6F6475]">Groups contain files with exactly matching image content. Every copy is shown separately with its upload date and URL. This view is read-only: no files are deleted or changed.</p>
+      {duplicateGroups.map(group => <article key={group.contentHash} className="overflow-hidden rounded-xl border border-[#E7DCEB]">
+        <div className="flex flex-wrap items-center justify-between gap-2 bg-[#FBF8FC] p-3">
+          <div><h3 className="text-sm font-semibold text-[#302438]">{group.copies} identical copies</h3><p className="text-[10px] text-[#6F6475]">Latest copy: {new Date(group.latestUpload).toLocaleString("en-IN")}</p></div>
+          <span className="rounded-full bg-[#F7F0FA] px-3 py-1 text-[10px] text-[#563568]">Exact content match</span>
+        </div>
+        <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3">
+          {group.media.map(asset => <div key={asset.id} className="min-w-0 rounded-lg border border-[#E7DCEB] p-2">
+            <button type="button" onClick={() => setSelected({ ...asset, duplicateCount: group.copies })} className="block w-full cursor-zoom-in" aria-label={"Preview " + asset.fileName}><img src={asset.url} alt={asset.fileName} loading="lazy" className="aspect-[4/3] w-full rounded-md bg-[#F7F0FA] object-contain" /></button>
+            <p className="mt-2 truncate text-xs font-medium text-[#302438]" title={asset.fileName}>{asset.fileName}</p>
+            <p className="mt-1 text-[10px] text-[#6F6475]">{(asset.size / 1024).toFixed(1)} KB · {new Date(asset.createdAt).toLocaleString("en-IN")} · {asset.mimeType.replace("image/", "").toUpperCase()}</p>
+            <p className="mt-1 break-all text-[10px] text-[#6F6475]">ID: {asset.id}</p>
+            <div className="mt-2 grid grid-cols-2 gap-2"><button type="button" onClick={() => setSelected({ ...asset, duplicateCount: group.copies })} className="min-h-10 rounded-lg border border-[#DCCDE5] px-2 text-xs font-medium text-[#563568]">Inspect</button><button type="button" onClick={() => void copyUrl(asset.url)} className="min-h-10 rounded-lg border border-[#DCCDE5] px-2 text-xs font-medium text-[#563568]">Copy URL</button></div>
+          </div>)}
+        </div>
+      </article>)}
+    </div> : <p className="rounded-xl border border-dashed border-[#DCCDE5] p-8 text-center text-sm text-[#6F6475]">No identical image groups were found.</p> : assets.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {assets.map(asset => <article key={asset.id} className="min-w-0 overflow-hidden rounded-xl border border-[#E7DCEB]">
         <button type="button" onClick={() => setSelected(asset)} aria-label={"Preview " + asset.fileName} className="block w-full cursor-zoom-in">
           <img src={asset.url} alt={asset.fileName} loading="lazy" className="aspect-[4/3] w-full bg-[#F7F0FA] object-contain" />
@@ -133,11 +165,16 @@ export const StorefrontImageLibrary: React.FC = () => {
         </div>
       </article>)}
     </div> : <p className="rounded-xl border border-dashed border-[#DCCDE5] p-8 text-center text-sm text-[#6F6475]">No uploaded images found{query ? " for this filename search" : ""}.</p>}
-    <div className="flex items-center justify-between gap-3 border-t border-[#E7DCEB] pt-4">
+    {viewMode === "all" && <div className="flex items-center justify-between gap-3 border-t border-[#E7DCEB] pt-4">
       <button type="button" disabled={loading || offset <= 0} onClick={() => void load(Math.max(0, offset - PAGE_SIZE))} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs text-[#563568] disabled:opacity-40">Previous</button>
       <span className="text-xs tabular-nums text-[#6F6475]">{total ? offset + 1 : 0}–{Math.min(offset + assets.length, total)} of {total}</span>
       <button type="button" disabled={loading || offset + assets.length >= total} onClick={() => void load(offset + PAGE_SIZE)} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs text-[#563568] disabled:opacity-40">Next</button>
-    </div>
+    </div>}
+    {viewMode === "duplicates" && <div className="flex items-center justify-between gap-3 border-t border-[#E7DCEB] pt-4">
+      <button type="button" disabled={loading || offset <= 0} onClick={() => void loadDuplicateGroups(Math.max(0, offset - 20))} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs text-[#563568] disabled:opacity-40">Previous groups</button>
+      <span className="text-xs tabular-nums text-[#6F6475]">{duplicateTotal ? offset + 1 : 0}–{Math.min(offset + duplicateGroups.length, duplicateTotal)} of {duplicateTotal}</span>
+      <button type="button" disabled={loading || offset + duplicateGroups.length >= duplicateTotal} onClick={() => void loadDuplicateGroups(offset + 20)} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs text-[#563568] disabled:opacity-40">Next groups</button>
+    </div>}
     {selected && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setSelected(null); }}>
       <section role="dialog" aria-modal="true" aria-label={"Image preview: " + selected.fileName} className="max-h-[92vh] w-full max-w-5xl overflow-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-6">
         <div className="mb-4 flex items-start justify-between gap-4">
