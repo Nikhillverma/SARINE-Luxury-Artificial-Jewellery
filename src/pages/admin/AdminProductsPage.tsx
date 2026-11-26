@@ -114,14 +114,14 @@ export const AdminProductsPage: React.FC = () => {
   }), [products]);
 
   const exportCsv = () => {
-    const headers = ['Product ID', 'Name', 'SKU / Slug', 'Category', 'Type', 'Price INR', 'Compare At INR', 'Cost INR', 'Stock', 'Status', 'Image URLs', 'Tags'];
+    const headers = ['Product ID', 'Name', 'Product Range', 'SKU / Slug', 'Category', 'Type', 'Price INR', 'Compare At INR', 'Cost INR', 'Stock', 'Status', 'Image URLs', 'Tags'];
     const escapeCsv = (value: unknown) => {
       let text = String(value ?? '');
       if (typeof value === 'string' && (/^[=+@-]/.test(text) || text.startsWith('\t') || text.startsWith('\r'))) text = "'" + text;
       return '"' + text.replace(/"/g, '""') + '"';
     };
     const rows = visibleProducts.map(product => [
-      product.id, product.name, product.slug,
+      product.id, product.name, product.productCollection || 'Unassigned', product.slug,
       categories.find(category => category.id === product.categoryId)?.name || product.categoryId,
       product.jewelleryType, product.price, product.compareAtPrice ?? '',
       product.costPrice ?? '', product.stock, product.status,
@@ -324,6 +324,7 @@ export const AdminProductsPage: React.FC = () => {
       await adminProductService.createProduct({
         slug: `${product.slug}-copy-${Date.now().toString().slice(-6)}`,
         name: `${product.name} (Copy)`,
+        productCollection: product.productCollection,
         description: product.description,
         shortDescription: product.shortDescription,
         price: product.price,
@@ -483,6 +484,7 @@ export const AdminProductsPage: React.FC = () => {
             {error && <div className="mb-3 p-3 bg-red-50 text-red-700 rounded-lg text-xs">{error}</div>}
             <form onSubmit={save} className="space-y-4 text-xs">
               <label className="block">Product name *<input required maxLength={255} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
+              <label className="block">Product range *<select required value={form.productCollection} onChange={e => setForm({ ...form, productCollection: e.target.value as '' | ProductCollection })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"><option value="">Choose a product range</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select><span className="mt-1 block text-[10px] text-[#806B8D]">This determines which storefront collection displays this product.</span></label>
               <div className="grid grid-cols-2 gap-3">
                 <label>Selling price (₹) *<input required type="number" min="0" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
                 <label>Cost price (₹)<input type="number" min="0" step="0.01" value={form.costPrice} onChange={e => setForm({ ...form, costPrice: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
