@@ -60,6 +60,8 @@ export const HomepageSectionManager: React.FC = () => {
   const [explorePublished, setExplorePublished] = useState<ExploreNowConfig>(defaultExplore);
   const [products, setProducts] = useState<Product[]>([]);
   const [exploreBusy, setExploreBusy] = useState(false);
+  const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
+  const [previewVersion, setPreviewVersion] = useState(0);
 
   const ordered = useMemo(() => [...draft.sections].sort((a, b) => a.sortOrder - b.sortOrder), [draft]);
   const isPublished = JSON.stringify(draft) === JSON.stringify(published);
@@ -123,6 +125,11 @@ export const HomepageSectionManager: React.FC = () => {
     } finally { setBusy(false); }
   };
 
+  const saveAndRefreshPreview = async () => {
+    await save();
+    setPreviewVersion(value => value + 1);
+  };
+
   const saveExplore = async (publishAfterSave: boolean) => {
     setExploreBusy(true); setError(""); setMessage("");
     try {
@@ -167,6 +174,29 @@ export const HomepageSectionManager: React.FC = () => {
         <option value="demi-fine">Demi-Fine</option>
       </select>
       <span className="text-xs text-[#6F6475]">{collection === "shared" ? "Changes apply to the shared homepage layout." : `This ${collection === "artificial" ? "Artificial" : "Demi-Fine"} layout starts from Shared settings until you save a collection-specific draft.`}</span>
+    </div>
+    <div className="rounded-xl border border-[#E7DCEB] bg-white p-4 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div><h3 className="text-sm font-semibold text-[#302438]">Responsive homepage preview</h3>
+          <p className="mt-1 text-xs text-[#6F6475]">Preview the saved draft layout in a desktop or mobile viewport. Save your latest section changes first to refresh this preview.</p></div>
+        <div className="flex gap-2" role="group" aria-label="Preview size">
+          <button type="button" aria-pressed={previewMode === "desktop"} onClick={() => setPreviewMode("desktop")} className={`rounded-lg border px-3 py-2 text-xs ${previewMode === "desktop" ? "border-[#563568] bg-[#F7F0FA] text-[#563568]" : "border-[#E7DCEB] text-[#6F6475]"}`}>Desktop</button>
+          <button type="button" aria-pressed={previewMode === "mobile"} onClick={() => setPreviewMode("mobile")} className={`rounded-lg border px-3 py-2 text-xs ${previewMode === "mobile" ? "border-[#563568] bg-[#F7F0FA] text-[#563568]" : "border-[#E7DCEB] text-[#6F6475]"}`}>Mobile</button>
+        </div>
+      </div>
+      <div className="flex justify-center overflow-x-auto rounded-lg bg-[#F1EDF3] p-3">
+        <div className={previewMode === "mobile" ? "w-[390px] max-w-full shrink-0 overflow-hidden rounded-xl border border-[#DCCDE5] bg-white shadow-sm" : "w-full min-w-[320px] overflow-hidden rounded-xl border border-[#DCCDE5] bg-white shadow-sm"}>
+          <iframe key={previewVersion + "-" + collection + "-" + previewMode}
+            title={`SARINE ${collection} homepage ${previewMode} draft preview`}
+            src={`/?range=${collection === "shared" ? "home" : collection}&adminPreview=1&previewCollection=${collection}`}
+            className="block w-full border-0 bg-white" style={{ height: previewMode === "mobile" ? "760px" : "760px" }}
+            loading="lazy" />
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" disabled={busy || loading} onClick={() => void saveAndRefreshPreview()} className="rounded-lg bg-[#563568] px-4 py-2 text-xs font-medium text-white disabled:opacity-50">Save draft & refresh preview</button>
+        <span className="text-[11px] text-[#6F6475]">Draft layout only; other homepage content and product data remain on their currently published settings. Customers do not see draft changes until you publish.</span>
+      </div>
     </div>
     {error && <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg p-3">{error}</p>}
     {message && <p role="status" className="text-sm text-green-800 bg-green-50 rounded-lg p-3">{message}</p>}
