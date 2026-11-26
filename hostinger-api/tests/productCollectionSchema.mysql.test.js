@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import express from "express";
 import { assertSafeTestDatabase } from "../testDatabaseSafety.js";
 
 test("MariaDB range migration keeps legacy products unassigned and isolates both ranges", {
@@ -10,11 +11,26 @@ test("MariaDB range migration keeps legacy products unassigned and isolates both
     import("../db.js"),
     import("../productCollectionSchema.js")
   ]);
+  let server;
   try {
+    await pool.query("DROP TABLE IF EXISTS storefront_settings");
     await pool.query("DROP TABLE IF EXISTS products");
     await pool.query(`CREATE TABLE products (
       id VARCHAR(64) NOT NULL PRIMARY KEY,
-      status VARCHAR(24) NOT NULL
+      status VARCHAR(24) NOT NULL,
+      slug VARCHAR(180) NULL,
+      name VARCHAR(255) NULL,
+      description TEXT NULL,
+      short_description TEXT NULL,
+      price DECIMAL(10,2) NULL,
+      compare_at_price DECIMAL(10,2) NULL,
+      images LONGTEXT NULL,
+      tags LONGTEXT NULL,
+      collection_slugs LONGTEXT NULL,
+      category_id VARCHAR(64) NULL,
+      jewellery_type VARCHAR(80) NULL,
+      stock INT NULL,
+      created_at TIMESTAMP(3) NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
     await pool.execute("INSERT INTO products (id, status) VALUES (?, ?)", ["legacy-unassigned", "active"]);
 
@@ -33,8 +49,10 @@ test("MariaDB range migration keeps legacy products unassigned and isolates both
     assert.ok(indexes.length > 0, "range/status index should exist");
 
     await pool.execute(
-      "INSERT INTO products (id, status, product_collection) VALUES (?, ?, ?), (?, ?, ?)",
-      ["artificial-1", "active", "artificial", "demi-fine-1", "active", "demi-fine"]
+      `INSERT INTO products (id, status, product_collection, slug, name, price, images, tags, collection_slugs, stock) VALUES
+       (?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ["artificial-1", "active", "artificial", "artificial-1", "Artificial test item", 100, "[]", "[]", "[]", 5,
+       "demi-fine-1", "active", "demi-fine", "demi-fine-1", "Demi-Fine test item", 200, "[]", "[]", "[]", 5]
     );
 
     const [legacy] = await pool.execute("SELECT product_collection FROM products WHERE id=?", ["legacy-unassigned"]);
@@ -64,7 +82,57 @@ test("MariaDB range migration keeps legacy products unassigned and isolates both
       assert.equal(await validateSelection(["legacy-unassigned"], null), null, "Home keeps the original mixed catalogue");
       assert.equal(await validateSelection([], "artificial"), null, "empty range curation remains valid");
     }
+
+    await pool.query(`CREATE TABLE storefront_settings (
+      setting_key VARCHAR(100) NOT NULL PRIMARY KEY,
+      setting_value TEXT NOT NULL,
+      updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+    const mixedIds = ["artificial-1", "demi-fine-1"];
+    for (const collection of ["artificial", "demi-fine"]) {
+      await pool.execute(
+        "INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?), (?, ?)",
+        [
+          "curated_favourites_published_" + collection,
+          JSON.stringify({ version: 1, productIds: mixedIds, configured: true }),
+          "explore_now_published_" + collection,
+          JSON.stringify({ version: 1, productIds: mixedIds, displayCount: 4, configured: true })
+        ]
+      );
+    }
+
+    const [{ publicCuratedFavouritesRouter }, { publicExploreNowRouter }] = await Promise.all([
+      import("../curatedFavourites.js"),
+      import("../exploreNow.js")
+    ]);
+    const app = express();
+    app.use("/curated", publicCuratedFavouritesRouter);
+    app.use("/explore", publicExploreNowRouter);
+    server = app.listen(0);
+    await new Promise((resolve, reject) => {
+      server.once("listening", resolve);
+      server.once("error", reject);
+    });
+    const address = server.address();
+    assert.ok(address && typeof address === "object");
+    const baseUrl = "http://127.0.0.1:" + address.port;
+    for (const collection of ["artificial", "demi-fine"]) {
+      const expectedId = collection === "artificial" ? "artificial-1" : "demi-fine-1";
+      const curatedResponse = await fetch(baseUrl + "/curated?productCollection=" + collection);
+      assert.equal(curatedResponse.status, 200);
+      const curated = await curatedResponse.json();
+      assert.deepEqual(curated.products.map(product => product.id), [expectedId]);
+      assert.equal(curated.products[0].productCollection, collection);
+
+      const exploreResponse = await fetch(baseUrl + "/explore?productCollection=" + collection);
+      assert.equal(exploreResponse.status, 200);
+      const explore = await exploreResponse.json();
+      assert.deepEqual(explore.products.map(product => product.id), [expectedId]);
+      assert.equal(explore.products[0].productCollection, collection);
+    }
   } finally {
+    if (server) await new Promise(resolve => server.close(resolve));
+    await pool.query("DROP TABLE IF EXISTS storefront_settings").catch(() => {});
     await pool.query("DROP TABLE IF EXISTS products").catch(() => {});
     await pool.end();
   }
