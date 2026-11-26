@@ -8,6 +8,8 @@ import { normalizeStringList, validateProductFields } from "./productPolicy.js";
 import { ensureProductVariantSchema, mapVariant, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
 import { isValidVariantSku, formatVariantLabel } from "./productVariantPolicy.js";
 import { ensureProductVideoColumn } from "./productVideoSchema.js";
+import { ensureProductCollectionSchema } from "./productCollectionSchema.js";
+import { validateProductCollection, normalizeProductCollection } from "./productCollectionPolicy.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -30,6 +32,7 @@ function mapProduct(row) {
   const gender = Array.isArray(storedTags) && storedTags.includes(MEN_PRODUCT_TAG) ? "men" : "women";
   return {
     id: row.id, slug: row.slug, name: row.name,
+    productCollection: normalizeProductCollection(row.product_collection),
     gender,
     description: row.description || "",
     shortDescription: row.short_description || "",
@@ -56,6 +59,8 @@ function mapProduct(row) {
 
 function validateProduct(body, partial = false) {
   const errors = validateProductFields(body);
+  const collectionError = validateProductCollection(body.productCollection, { required: !partial });
+  if (collectionError) errors.push(collectionError);
   if (!partial || body.name !== undefined) {
     if (typeof body.name !== "string" || !body.name.trim() || body.name.trim().length > 255) errors.push("Name is required and must be at most 255 characters.");
   }
@@ -82,6 +87,7 @@ function valuesFromBody(body, existing = {}) {
   if (gender === "men") tags.push(MEN_PRODUCT_TAG);
   return {
     name: String(name).trim(),
+    product_collection: get("productCollection") || null,
     slug: slugify(get("slug", name)),
     description: get("description", ""),
     short_description: get("shortDescription", ""),
@@ -107,6 +113,7 @@ function valuesFromBody(body, existing = {}) {
 router.get("/", async (req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
+    await ensureProductCollectionSchema();
     const status = req.query.status ? String(req.query.status) : "all";
     const search = req.query.search ? String(req.query.search).trim().slice(0, 100) : "";
     const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
@@ -114,6 +121,9 @@ router.get("/", async (req, res, next) => {
     const conditions = [];
     const params = [];
     const gender = req.query.gender === "men" || req.query.gender === "women" ? String(req.query.gender) : "";
+    const productCollection = req.query.productCollection === undefined ? "" : normalizeProductCollection(String(req.query.productCollection));
+    if (req.query.productCollection !== undefined && !productCollection) return res.status(400).json({ error: "Product collection must be artificial or demi-fine." });
+    if (productCollection) { conditions.push("product_collection = ?"); params.push(productCollection); }
     if (gender === "men") { conditions.push("JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE(?))"); params.push(MEN_PRODUCT_TAG); }
     if (gender === "women") { conditions.push("NOT JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE(?))"); params.push(MEN_PRODUCT_TAG); }
     if (status !== "all") {
@@ -156,6 +166,7 @@ router.post("/", async (req, res, next) => {
   let connection;
   try {
     await ensureProductVideoColumn();
+    await ensureProductCollectionSchema();
     const body = req.body || {};
     const errors = validateProduct(body);
     if (errors.length) return res.status(400).json({ error: errors.join(" ") });
@@ -168,13 +179,13 @@ router.post("/", async (req, res, next) => {
     await connection.beginTransaction();
     await connection.execute(
       `INSERT INTO products
-       (id, slug, name, description, short_description, price, compare_at_price, cost_price,
+       (id, slug, name, product_collection, description, short_description, price, compare_at_price, cost_price,
         images, category_id, collection_slugs, jewellery_type, stock, status, tags,
         base_metal, plating_finish, stone_type, closure_type, care_instructions, product_video_url, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))`,
-      [id, data.slug, data.name, data.description, data.short_description, data.price,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))`,
+      [id, data.slug, data.name, data.product_collection, data.description, data.short_description, data.price,
        data.compare_at_price, data.cost_price, data.images, data.category_id,
-       data.collection_slugs, data.jewellery_type, data.stock, data.status, data.tags,
+       data.collection_slugs, data.product_collection, data.jewellery_type, data.stock, data.status, data.tags,
        data.base_metal, data.plating_finish, data.stone_type, data.closure_type, data.care_instructions, data.product_video_url]
     );
 
@@ -408,6 +419,7 @@ router.put("/:id/variants", async (req, res, next) => {
 router.put("/:id", async (req, res, next) => {
   try {
     await ensureProductVideoColumn();
+    await ensureProductCollectionSchema();
     const body = req.body || {};
     const errors = validateProduct(body, true);
     if (errors.length) return res.status(400).json({ error: errors.join(" ") });
@@ -426,7 +438,7 @@ router.put("/:id", async (req, res, next) => {
     if (!data.slug) return res.status(400).json({ error: "A valid product slug is required." });
     await pool.execute(
       `UPDATE products SET slug=?, name=?, description=?, short_description=?, price=?,
-       compare_at_price=?, cost_price=?, images=?, category_id=?, collection_slugs=?,
+       compare_at_price=?, cost_price=?, images=?, category_id=?, collection_slugs=?, product_collection=?,
        jewellery_type=?, stock=?, status=?, tags=?, base_metal=?, plating_finish=?,
        stone_type=?, closure_type=?, care_instructions=?, product_video_url=?, updated_at=CURRENT_TIMESTAMP(3)
        WHERE id=?`,
