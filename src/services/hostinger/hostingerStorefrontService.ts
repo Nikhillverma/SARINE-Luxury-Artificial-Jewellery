@@ -194,11 +194,13 @@ export const hostingerStorefrontService = {
     request<{ success: boolean; draft: HomepageLayout }>("/admin/homepage-layout/draft", { method: "PUT", body: JSON.stringify({ ...layout, productCollection: collection }) }),
   publishHomepageLayout: (collection?: "artificial" | "demi-fine") =>
     request<{ success: boolean; published: HomepageLayout }>("/admin/homepage-layout/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
-  getHomepageContent: (collection?: "artificial" | "demi-fine") => request<{ draft: HomepageContent; published: HomepageContent }>("/admin/homepage-layout/content" + collectionQuery(collection)),
+  getHomepageContent: (collection?: "artificial" | "demi-fine") => request<{ draft: HomepageContent; published: HomepageContent; schedule: EditorialSchedule | null; scheduleStatus: EditorialScheduleStatus }>("/admin/homepage-layout/content" + collectionQuery(collection)),
+  scheduleHomepageContent: (startsAtUtc: string, endsAtUtc: string | null, collection?: "artificial" | "demi-fine") => request<{ draft: HomepageContent; published: HomepageContent; schedule: EditorialSchedule; scheduleStatus: EditorialScheduleStatus }>("/admin/homepage-layout/content/schedule", { method: "POST", body: JSON.stringify({ startsAtUtc, endsAtUtc, productCollection: collection }) }),
+  cancelHomepageContentSchedule: (collection?: "artificial" | "demi-fine") => request<{ draft: HomepageContent; published: HomepageContent; schedule: null; scheduleStatus: EditorialScheduleStatus }>("/admin/homepage-layout/content/schedule/cancel", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
   saveHomepageContent: (content: HomepageContent, collection?: "artificial" | "demi-fine") =>
     request<{ success: boolean; draft: HomepageContent }>("/admin/homepage-layout/content/draft", { method: "PUT", body: JSON.stringify({ ...content, productCollection: collection }) }),
   publishHomepageContent: (collection?: "artificial" | "demi-fine") =>
-    request<{ success: boolean; published: HomepageContent }>("/admin/homepage-layout/content/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
+    request<{ success: boolean; published: HomepageContent; schedule: null; scheduleStatus: EditorialScheduleStatus }>("/admin/homepage-layout/content/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
   getPublicHomepageContent: () => request<{ content: HomepageContent }>("/homepage-layout/content" + publicRangeQuery()),
 
   getMenStorefront: (collection?: "artificial" | "demi-fine") => request<{ draft: MenStorefrontSettings; published: MenStorefrontSettings; products: MenStorefrontProduct[] }>("/admin/storefront/men-storefront" + collectionQuery(collection)),
