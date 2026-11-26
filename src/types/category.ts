@@ -18,4 +18,6 @@ export interface Category {
   sortOrder: number;
   /** Which top-level product range can use this category. Legacy categories default to shared. */
   categoryCollection?: CategoryCollection;
+  /** Optional top-level category for a one-level subcategory relationship. */
+  parentCategoryId?: string | null;
 }
