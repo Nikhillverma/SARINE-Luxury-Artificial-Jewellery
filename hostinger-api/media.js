@@ -108,6 +108,80 @@ publicMediaRouter.get("/:id", async (req, res, next) => {
 export const adminMediaRouter = Router();
 adminMediaRouter.use(requireAdminAuth);
 
+// Group exact-content duplicates for safe, read-only inspection. No media rows are changed.
+adminMediaRouter.get("/duplicates", async (req, res, next) => {
+  try {
+    await ensureMediaTable();
+    await ensureMediaHashSchema();
+
+    const parsedLimit = Number.parseInt(String(req.query.limit || "20"), 10);
+    const parsedOffset = Number.parseInt(String(req.query.offset || "0"), 10);
+    const limit = Math.min(50, Math.max(1, Number.isFinite(parsedLimit) ? parsedLimit : 20));
+    const offset = Math.min(100000, Math.max(0, Number.isFinite(parsedOffset) ? parsedOffset : 0));
+
+    const [groups] = await pool.execute(
+      `SELECT content_hash, COUNT(*) AS copies, MAX(created_at) AS latest_upload
+       FROM media_assets
+       WHERE content_hash IS NOT NULL
+       GROUP BY content_hash
+       HAVING COUNT(*) > 1
+       ORDER BY latest_upload DESC, content_hash ASC
+       LIMIT ? OFFSET ?`,
+      [limit, offset]
+    );
+    const [countRows] = await pool.query(
+      `SELECT COUNT(*) AS total FROM (
+         SELECT content_hash FROM media_assets
+         WHERE content_hash IS NOT NULL
+         GROUP BY content_hash HAVING COUNT(*) > 1
+       ) duplicate_groups`
+    );
+
+    const hashes = groups.map(group => group.content_hash);
+    let files = [];
+    if (hashes.length) {
+      const placeholders = hashes.map(() => "?").join(",");
+      const [rows] = await pool.execute(
+        `SELECT id, content_hash, file_name, mime_type, file_size, uploaded_by, created_at
+         FROM media_assets
+         WHERE content_hash IN (${placeholders})
+         ORDER BY content_hash ASC, created_at ASC, id ASC`,
+        hashes
+      );
+      files = rows;
+    }
+
+    const byHash = new Map();
+    for (const row of files) {
+      const list = byHash.get(row.content_hash) || [];
+      list.push({
+        id: row.id,
+        fileName: row.file_name,
+        mimeType: row.mime_type,
+        size: Number(row.file_size),
+        uploadedBy: row.uploaded_by,
+        createdAt: row.created_at,
+        url: "/api/media/" + row.id
+      });
+      byHash.set(row.content_hash, list);
+    }
+
+    res.set("Cache-Control", "no-store").json({
+      groups: groups.map(group => ({
+        contentHash: group.content_hash,
+        copies: Number(group.copies),
+        latestUpload: group.latest_upload,
+        media: byHash.get(group.content_hash) || []
+      })),
+      total: Number(countRows[0]?.total || 0),
+      limit,
+      offset
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Return metadata only; image bytes remain served by the existing public media route.
 adminMediaRouter.get("/", async (req, res, next) => {
   try {
