@@ -81,6 +81,7 @@ export const HomepageSectionManager: React.FC = () => {
   const [showPublishConfirmation, setShowPublishConfirmation] = useState(false);
   const [schedule, setSchedule] = useState<EditorialSchedule | null>(null);
   const [scheduleStatus, setScheduleStatus] = useState<EditorialScheduleStatus>("none");
+  const [scheduleCollection, setScheduleCollection] = useState<"shared" | "artificial" | "demi-fine" | null>(null);
   const [scheduleStartLocal, setScheduleStartLocal] = useState("");
   const [scheduleEndLocal, setScheduleEndLocal] = useState("");
   const [showScheduleConfirmation, setShowScheduleConfirmation] = useState(false);
@@ -118,6 +119,7 @@ export const HomepageSectionManager: React.FC = () => {
       setPublished(mergeKnownSections(result.published));
       setSchedule(result.schedule || null);
       setScheduleStatus(result.scheduleStatus || "none");
+      setScheduleCollection(result.scheduleCollection || null);
       setScheduleStartLocal(toLocalDateTimeInput(result.schedule?.startsAtUtc));
       setScheduleEndLocal(toLocalDateTimeInput(result.schedule?.endsAtUtc));
       setShowScheduleConfirmation(false);
@@ -241,6 +243,7 @@ export const HomepageSectionManager: React.FC = () => {
       const result = await hostingerStorefrontService.scheduleHomepageLayout(startsAtUtc, endsAtUtc, collection === "shared" ? undefined : collection);
       setSchedule(result.schedule);
       setScheduleStatus(result.scheduleStatus);
+      setScheduleCollection(result.scheduleCollection || null);
       setScheduleStartLocal(toLocalDateTimeInput(result.schedule.startsAtUtc));
       setScheduleEndLocal(toLocalDateTimeInput(result.schedule.endsAtUtc));
       setMessage(`A saved ${collectionLabel(collection)} homepage layout snapshot has been scheduled. Later draft edits will not change this scheduled version.`);
@@ -256,6 +259,7 @@ export const HomepageSectionManager: React.FC = () => {
       const result = await hostingerStorefrontService.cancelHomepageLayoutSchedule(collection === "shared" ? undefined : collection);
       setSchedule(result.schedule);
       setScheduleStatus(result.scheduleStatus);
+      setScheduleCollection(null);
       setScheduleStartLocal("");
       setScheduleEndLocal("");
       setShowScheduleConfirmation(false);
@@ -388,17 +392,18 @@ export const HomepageSectionManager: React.FC = () => {
         {scheduleStatus === "scheduled" ? "Scheduled — waiting to go live" : scheduleStatus === "published" ? "Scheduled layout is currently live" : scheduleStatus === "expired" ? "Schedule expired — previous published layout restored" : "Not scheduled"}
       </p>
       {schedule && <p className="text-xs text-[#6F6475]">Start: {new Date(schedule.startsAtUtc).toLocaleString()} {schedule.endsAtUtc ? ` · Expiry: ${new Date(schedule.endsAtUtc).toLocaleString()}` : " · No expiry"}</p>}
+      {schedule && scheduleCollection === "shared" && collection !== "shared" && <p className="rounded-lg bg-[#F7F0FA] p-3 text-xs text-[#563568]">This schedule is inherited from Shared and applies to both collections. Switch Homepage version to Shared to reschedule it. You can cancel it here to remove it for both collections.</p>}
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block text-xs font-medium text-[#302438]">Publish date & time (local)
-          <input type="datetime-local" value={scheduleStartLocal} disabled={busy || loading} onChange={event => setScheduleStartLocal(event.target.value)} className="mt-1 w-full rounded-lg border border-[#E7DCEB] bg-white px-3 py-2 text-sm" />
+          <input type="datetime-local" value={scheduleStartLocal} disabled={busy || loading || (scheduleCollection === "shared" && collection !== "shared")} onChange={event => setScheduleStartLocal(event.target.value)} className="mt-1 w-full rounded-lg border border-[#E7DCEB] bg-white px-3 py-2 text-sm" />
         </label>
         <label className="block text-xs font-medium text-[#302438]">Expiry date & time (optional)
-          <input type="datetime-local" value={scheduleEndLocal} disabled={busy || loading} onChange={event => setScheduleEndLocal(event.target.value)} className="mt-1 w-full rounded-lg border border-[#E7DCEB] bg-white px-3 py-2 text-sm" />
+          <input type="datetime-local" value={scheduleEndLocal} disabled={busy || loading || (scheduleCollection === "shared" && collection !== "shared")} onChange={event => setScheduleEndLocal(event.target.value)} className="mt-1 w-full rounded-lg border border-[#E7DCEB] bg-white px-3 py-2 text-sm" />
         </label>
       </div>
       <div className="flex flex-wrap gap-2">
-        <button type="button" disabled={busy || loading || !hasPreviewedCurrentDraft} onClick={requestSchedule} className="rounded-lg bg-[#563568] px-4 py-2 text-xs font-medium text-white disabled:opacity-50">{scheduleStatus === "scheduled" ? "Review reschedule" : "Review schedule"}</button>
-        {schedule && <button type="button" disabled={busy || loading} onClick={() => void cancelSchedule()} className="rounded-lg border border-[#DCCDE5] bg-white px-4 py-2 text-xs text-[#563568]">Cancel schedule</button>}
+        <button type="button" disabled={busy || loading || !hasPreviewedCurrentDraft || (scheduleCollection === "shared" && collection !== "shared")} onClick={requestSchedule} className="rounded-lg bg-[#563568] px-4 py-2 text-xs font-medium text-white disabled:opacity-50">{scheduleStatus === "scheduled" ? "Review reschedule" : "Review schedule"}</button>
+        {schedule && <button type="button" disabled={busy || loading} onClick={() => void cancelSchedule()} className="rounded-lg border border-[#DCCDE5] bg-white px-4 py-2 text-xs text-[#563568]">{scheduleCollection === "shared" && collection !== "shared" ? "Cancel Shared schedule (both collections)" : "Cancel schedule"}</button>}
       </div>
       {!hasPreviewedCurrentDraft && <p className="text-[11px] text-[#8A6B32]">Save draft & refresh preview before scheduling this exact layout.</p>}
     </div>
