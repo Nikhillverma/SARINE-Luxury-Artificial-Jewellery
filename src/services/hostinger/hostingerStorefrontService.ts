@@ -221,8 +221,8 @@ export const hostingerStorefrontService = {
     request<{ banner: StorefrontBanner }>(`/admin/storefront/banners/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(banner) }),
   deleteBanner: (id: string) =>
     request<{ success: boolean }>(`/admin/storefront/banners/${encodeURIComponent(id)}`, { method: "DELETE" }),
-  reorderBanners: (ids: string[]) =>
-    request<{ success: boolean }>("/admin/storefront/banners/reorder", { method: "PUT", body: JSON.stringify({ ids }) }),
+  reorderBanners: (ids: string[], collection?: "artificial" | "demi-fine") =>
+    request<{ success: boolean }>("/admin/storefront/banners/reorder", { method: "PUT", body: JSON.stringify({ ids, productCollection: collection }) }),
   getAnnouncement: () => request<{ announcement: { message: string; active: boolean; trustMessages?: string[] } }>("/admin/storefront/announcement"),
   getPublicAnnouncement: () => request<{ announcement: { message: string; active: boolean; trustMessages?: string[] } }>("/storefront/announcement"),
   saveAnnouncement: (message: string, active: boolean, trustMessages: string[]) =>
