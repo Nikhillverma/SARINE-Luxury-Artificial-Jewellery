@@ -112,6 +112,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const [rangeParams, setRangeParams] = useSearchParams();
   const rangeFromUrl = rangeParams.get('range');
   const [selectedProductCollection, setSelectedProductCollection] = useState<ProductCollection | undefined>(() => {
+    if (rangeFromUrl === 'home') return undefined;
     if (rangeFromUrl === 'artificial' || rangeFromUrl === 'demi-fine') return rangeFromUrl;
     const storedRange = window.sessionStorage.getItem('sarine_product_range');
     return storedRange === 'artificial' || storedRange === 'demi-fine' ? storedRange : undefined;
