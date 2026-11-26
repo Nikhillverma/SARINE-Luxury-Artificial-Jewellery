@@ -135,7 +135,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const [festivalCampaigns, setFestivalCampaigns] = useState<FestivalCampaign[]>([]);
   const sectionConfig = (id: string) => homepageLayout.sections.find(section => section.id === id);
   const sectionVisible = (id: string) => sectionConfig(id)?.enabled ?? true;
-  const sectionOrder = (id: string) => (sectionConfig(id)?.sortOrder ?? defaultHomepageLayout.sections.find(section => section.id === id)?.sortOrder ?? 0) + 1;
+  const sectionOrder = (id: string) => ((sectionConfig(id)?.sortOrder ?? defaultHomepageLayout.sections.find(section => section.id === id)?.sortOrder ?? 0) + 1) * 2;
 
   useEffect(() => {
     let cancelled = false;
@@ -524,7 +524,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   return (
     <div className="sarine-home w-full bg-[#FBF8F5] text-[#302438] font-sans selection:bg-[var(--pill)] selection:text-[#302438]" style={{ display: "flex", flexDirection: "column" }}>
-      <nav aria-label="Shop by jewellery range" className="w-full border-b border-[#E7DCEB] bg-white">
+      <nav aria-label="Shop by jewellery range" style={{ order: sectionOrder("hero") - 1 }} className="w-full border-b border-[#E7DCEB] bg-white">
         <div className="mx-auto flex min-h-11 w-full max-w-[1280px] items-center justify-center gap-5 px-4 text-xs sm:gap-8 sm:text-sm">
           <button type="button" onClick={() => selectProductCollection(undefined)} aria-current={!selectedProductCollection ? "page" : undefined} className={`min-h-11 border-b-2 px-1 font-medium transition-colors ${!selectedProductCollection ? "border-[#563568] text-[#563568]" : "border-transparent text-[#705E7B] hover:text-[#563568]"}`}>Home</button>
           <button type="button" onClick={() => selectProductCollection("artificial")} aria-current={selectedProductCollection === "artificial" ? "page" : undefined} className={`min-h-11 border-b-2 px-1 font-medium transition-colors ${selectedProductCollection === "artificial" ? "border-[#563568] text-[#563568]" : "border-transparent text-[#705E7B] hover:text-[#563568]"}`}>Artificial</button>
