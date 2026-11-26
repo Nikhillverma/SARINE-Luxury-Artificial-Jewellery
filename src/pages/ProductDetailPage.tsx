@@ -121,12 +121,17 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
   const [newReviewImages, setNewReviewImages] = useState<File[]>([]);
   const [newReviewImagePreviews, setNewReviewImagePreviews] = useState<string[]>([]);
 
-  // Fetch product details
+  // Fetch the primary product first. Reviews, recommendations and category
+  // breadcrumbs are secondary and must never hold the product page behind a
+  // chain of sequential network requests.
   useEffect(() => {
     let isCancelled = false;
 
     async function loadData() {
-      if (!slug) return;
+      if (!slug) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setActiveImageIndex(0);
       setQuantity(1);
@@ -134,50 +139,60 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
 
       try {
         const found = await productService.getProductBySlug(slug, { includeAll });
-        if (!isCancelled) {
-          setProduct(found);
+        if (isCancelled) return;
 
-          if (found) {
-            // Track in recently viewed
-            try {
-              const raw = localStorage.getItem(RECENTLY_VIEWED_KEY);
-              const list: string[] = raw ? JSON.parse(raw) : [];
-              const updated = [found.id, ...list.filter((id) => id !== found.id)].slice(0, 8);
-              localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(updated));
-            } catch {
-              // Ignore
-            }
+        setProduct(found);
+        setLoading(false);
 
-            // Load only customer reviews approved in the Hostinger database.
-            try {
-              const result = await hostingerStorefrontService.getReviews(found.id);
-              if (!isCancelled) {
-                setReviews(result.reviews.map(review => ({ ...review, date: new Date(review.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) })));
-                setReviewCount(result.count);
-                setReviewAverage(result.average);
-              }
-            } catch (reviewError) {
-              console.warn('[ProductDetailPage] Customer reviews are temporarily unavailable.', reviewError);
-              if (!isCancelled) { setReviews([]); setReviewCount(0); setReviewAverage(0); }
-            }
+        if (!found) return;
 
-            // Load related pieces
-            try {
-              const related = await productService.getRelatedProducts(found.id, 4);
-              if (!isCancelled) setRelatedProducts(related.filter((p) => p.status === 'active'));
-            } catch (relErr) {
-              console.warn('[ProductDetailPage] Could not load related pieces:', relErr);
-            }
+        // Track recently viewed without delaying the product page.
+        try {
+          const raw = localStorage.getItem(RECENTLY_VIEWED_KEY);
+          const list: string[] = raw ? JSON.parse(raw) : [];
+          const updated = [found.id, ...list.filter((id) => id !== found.id)].slice(0, 8);
+          localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(updated));
+        } catch {
+          // Ignore unavailable browser storage.
+        }
 
-            // Load category info
-            try {
-              const categories = await categoryService.getCategories();
-              const cat = categories.find((c) => c.id === found.categoryId || c.slug === found.categoryId);
-              if (!isCancelled && cat) setCategory(cat);
-            } catch (catErr) {
-              console.warn('[ProductDetailPage] Could not load category info:', catErr);
-            }
-          }
+        // Load non-critical product extras concurrently after the main product
+        // is already renderable. A slow reviews/recommendations endpoint can no
+        // longer delay the first product view.
+        const [reviewsResult, relatedResult, categoriesResult] = await Promise.allSettled([
+          hostingerStorefrontService.getReviews(found.id),
+          productService.getRelatedProducts(found.id, 4),
+          categoryService.getCategories()
+        ]);
+
+        if (isCancelled) return;
+
+        if (reviewsResult.status === 'fulfilled') {
+          const result = reviewsResult.value;
+          setReviews(result.reviews.map(review => ({
+            ...review,
+            date: new Date(review.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+          })));
+          setReviewCount(result.count);
+          setReviewAverage(result.average);
+        } else {
+          console.warn('[ProductDetailPage] Customer reviews are temporarily unavailable.', reviewsResult.reason);
+          setReviews([]);
+          setReviewCount(0);
+          setReviewAverage(0);
+        }
+
+        if (relatedResult.status === 'fulfilled') {
+          setRelatedProducts(relatedResult.value.filter((item) => item.status === 'active'));
+        } else {
+          console.warn('[ProductDetailPage] Could not load related pieces:', relatedResult.reason);
+        }
+
+        if (categoriesResult.status === 'fulfilled') {
+          const cat = categoriesResult.value.find((item) => item.id === found.categoryId || item.slug === found.categoryId);
+          if (cat) setCategory(cat);
+        } else {
+          console.warn('[ProductDetailPage] Could not load category info:', categoriesResult.reason);
         }
       } catch (err) {
         console.error('Failed to load product detail', err);
