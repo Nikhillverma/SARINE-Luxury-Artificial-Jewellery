@@ -28,7 +28,7 @@ export const HomepageCategoryImagesManager: React.FC = () => {
       setCategories(categoryList);
       setImages(result.draft || {});
       setPublished(result.published || {});
-      setSavedPreview(null);
+      setSavedPreview(result.published || {});
       setShowPublishReview(false);
     } catch (e) {
       if (!isCancelled()) setError(e instanceof Error ? e.message : "Homepage category images could not be loaded.");
