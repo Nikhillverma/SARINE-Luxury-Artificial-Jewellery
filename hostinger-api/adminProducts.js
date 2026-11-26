@@ -10,9 +10,14 @@ import { isValidVariantSku, formatVariantLabel } from "./productVariantPolicy.js
 import { ensureProductVideoColumn } from "./productVideoSchema.js";
 import { ensureProductCollectionSchema } from "./productCollectionSchema.js";
 import { validateProductCollection, normalizeProductCollection } from "./productCollectionPolicy.js";
+import { ensureProductSortOrderSchema } from "./productSortOrderSchema.js";
 
 const router = Router();
 router.use(requireAdminAuth);
+router.use(async (_req, _res, next) => {
+  try { await ensureProductSortOrderSchema(); next(); }
+  catch (error) { next(error); }
+});
 
 const STATUSES = new Set(["active", "draft", "archived"]);
 const MEN_PRODUCT_TAG = "__sarine_men_catalogue__";
@@ -138,7 +143,7 @@ router.get("/", async (req, res, next) => {
     const where = conditions.length ? "WHERE " + conditions.join(" AND ") : "";
     const [[countRows], [rows]] = await Promise.all([
       pool.execute("SELECT COUNT(*) AS total FROM products " + where, params),
-      pool.execute("SELECT * FROM products " + where + " ORDER BY updated_at DESC, name ASC LIMIT ? OFFSET ?", [...params, limit, (page - 1) * limit])
+      pool.execute("SELECT * FROM products " + where + " ORDER BY sort_order ASC, created_at DESC, name ASC LIMIT ? OFFSET ?", [...params, limit, (page - 1) * limit])
     ]);
     await ensureProductVariantSchema();
     const ids = rows.map(row => row.id);
@@ -456,6 +461,43 @@ router.put("/:id", async (req, res, next) => {
   }
 });
 
+
+router.post("/reorder", async (req, res, next) => {
+  let connection;
+  try {
+    const productIds = req.body?.productIds;
+    if (!Array.isArray(productIds) || productIds.length > 5000 ||
+        productIds.some(id => typeof id !== "string" || !id.trim() || id.length > 64) ||
+        new Set(productIds).size !== productIds.length) {
+      return res.status(400).json({ error: "Provide a unique ordered list of up to 5,000 product IDs." });
+    }
+    const [[countRow]] = await pool.execute("SELECT COUNT(*) AS total FROM products");
+    if (Number(countRow.total) !== productIds.length) {
+      return res.status(409).json({ error: "The catalogue changed while ordering. Refresh the product list and try again." });
+    }
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    for (let offset = 0; offset < productIds.length; offset += 400) {
+      const batch = productIds.slice(offset, offset + 400);
+      if (!batch.length) continue;
+      const cases = batch.map(() => "WHEN id = ? THEN ?").join(" ");
+      const where = batch.map(() => "?").join(",");
+      const values = batch.flatMap((id, index) => [id, offset + index + 1]);
+      await connection.execute(
+        `UPDATE products SET sort_order = CASE ${cases} ELSE sort_order END, updated_at = updated_at WHERE id IN (${where})`,
+        [...values, ...batch]
+      );
+    }
+    await connection.commit();
+    res.set("Cache-Control", "no-store");
+    res.json({ success: true, reordered: productIds.length });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    next(error);
+  } finally {
+    connection?.release();
+  }
+});
 
 router.post("/bulk", async (req, res, next) => {
   let connection;
