@@ -78,6 +78,11 @@ export const AdminProductsPage: React.FC = () => {
 
   useEffect(() => { setSearch(searchParams.get('search') || ''); }, [searchParams]);
 
+  const formCategories = useMemo(() => {
+    if (!form.productCollection) return categories;
+    return categories.filter(category => category.categoryCollection === "both" || category.categoryCollection === form.productCollection);
+  }, [categories, form.productCollection]);
+
   const visibleProducts = useMemo(() => {
     const filtered = products.filter(product => {
       const term = search.trim().toLowerCase();
@@ -410,7 +415,7 @@ export const AdminProductsPage: React.FC = () => {
             </label>
             <label className="text-[10px] text-[#806B8D]">Category
               <select aria-label="Filter products by category" value={categoryFilter} onChange={event => setCategoryFilter(event.target.value)} className="mt-1 w-full min-h-10 px-3 border border-[#E7DCEB] rounded-lg text-xs text-[#302438]">
-                <option value="all">All categories</option>{categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
+                <option value="all">All categories</option>{formCategories.map(category => <option key={category.id} value={category.id}>{category.name}{category.categoryCollection === "both" ? " (Shared)" : ""}</option>)}
               </select>
             </label>
             <label className="text-[10px] text-[#806B8D]">Product range
@@ -495,7 +500,7 @@ export const AdminProductsPage: React.FC = () => {
             {error && <div className="mb-3 p-3 bg-red-50 text-red-700 rounded-lg text-xs">{error}</div>}
             <form onSubmit={save} className="space-y-4 text-xs">
               <label className="block">Product name *<input required maxLength={255} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
-              <label className="block">Product range {editing && !editing.productCollection ? "(Unassigned)" : "*"}<select required={!editing || Boolean(editing.productCollection)} value={form.productCollection} onChange={e => setForm({ ...form, productCollection: e.target.value as '' | ProductCollection })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"><option value="">{editing && !editing.productCollection ? "Unassigned — leave unchanged" : "Choose a product range"}</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select><span className="mt-1 block text-[10px] text-[#806B8D]">This determines which storefront collection displays this product.</span></label>
+              <label className="block">Product range {editing && !editing.productCollection ? "(Unassigned)" : "*"}<select required={!editing || Boolean(editing.productCollection)} value={form.productCollection} onChange={e => { const productCollection = e.target.value as '' | ProductCollection; const matching = !productCollection ? categories : categories.filter(category => category.categoryCollection === "both" || category.categoryCollection === productCollection); setForm(current => ({ ...current, productCollection, categoryId: matching.some(category => category.id === current.categoryId) ? current.categoryId : matching[0]?.id || "" })); }} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"><option value="">{editing && !editing.productCollection ? "Unassigned — leave unchanged" : "Choose a product range"}</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select><span className="mt-1 block text-[10px] text-[#806B8D]">This determines which storefront collection displays this product.</span></label>
               <div className="grid grid-cols-2 gap-3">
                 <label>Selling price (₹) *<input required type="number" min="0" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
                 <label>Cost price (₹)<input type="number" min="0" step="0.01" value={form.costPrice} onChange={e => setForm({ ...form, costPrice: e.target.value })} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
