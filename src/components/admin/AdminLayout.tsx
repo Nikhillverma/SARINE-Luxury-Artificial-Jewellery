@@ -211,102 +211,119 @@ interface NavItem {
   icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
   badge?: string;
   badgeColor?: string;
+  group: string;
   match: (p: string) => boolean;
 }
 
   const navItems: NavItem[] = [
     {
       name: 'Dashboard',
+      group: 'Overview',
       path: '/admin',
       icon: Home,
       match: (p: string) => p === '/admin' || p === '/admin/dashboard'
     },
     {
       name: 'Products & Catalogue',
+      group: 'Catalogue',
       path: '/admin/products',
       icon: Package,
       match: (p: string) => p.startsWith('/admin/products')
     },
     {
       name: 'Categories',
+      group: 'Catalogue',
       path: '/admin/categories',
       icon: Tag,
       match: (p: string) => p.startsWith('/admin/categories')
     },
     {
       name: 'Inventory & Suppliers',
+      group: 'Catalogue',
       path: '/admin/inventory',
       icon: Boxes,
       match: (p: string) => p.startsWith('/admin/inventory')
     },
     {
       name: 'Orders & Fulfilment',
+      group: 'Store Operations',
       path: '/admin/orders',
       icon: ShoppingBag,
       match: (p: string) => p.startsWith('/admin/orders')
     },
     {
       name: 'Customers',
+      group: 'Store Operations',
       path: '/admin/customers',
       icon: UserCheck,
       match: (p: string) => p.startsWith('/admin/customers')
     },
     {
       name: 'Returns & Refunds',
+      group: 'Store Operations',
       path: '/admin/returns',
       icon: RotateCcw,
       match: (p: string) => p.startsWith('/admin/returns')
     },
     {
       name: 'Customer Enquiries',
+      group: 'Store Operations',
       path: '/admin/contact-inquiries',
       icon: MessageSquare,
       match: (p: string) => p.startsWith('/admin/contact-inquiries')
     },
     {
       name: 'Reviews & Ratings',
+      group: 'Store Operations',
       path: '/admin/reviews',
       icon: Star,
       match: (p: string) => p.startsWith('/admin/reviews')
     },
     {
       name: 'Marketing & Coupons',
+      group: 'Marketing',
       path: '/admin/marketing',
       icon: Tag,
       match: (p: string) => p.startsWith('/admin/marketing')
     },
     {
       name: 'Campaigns & Promotions',
+      group: 'Marketing',
       path: '/admin/campaigns',
       icon: CalendarHeart,
       match: (p: string) => p.startsWith('/admin/campaigns')
     },
     {
       name: 'Carousel Features',
+      group: 'Storefront & Content',
       path: '/admin/carousel-features',
       icon: LayoutTemplate,
       match: (p: string) => p.startsWith('/admin/carousel-features')
     },
     {
       name: 'Storefront Studio',
+      group: 'Storefront & Content',
       path: '/admin/storefront',
       icon: LayoutTemplate,
       match: (p: string) => p.startsWith('/admin/storefront')
     },
     {
       name: 'Analytics & Reports',
+      group: 'Insights & Administration',
       path: '/admin/analytics',
       icon: BarChart3,
       match: (p: string) => p.startsWith('/admin/analytics')
     },
     {
       name: 'Admin Activity & Audit Log',
+      group: 'Insights & Administration',
       path: '/admin/activity',
       icon: Activity,
       match: (p: string) => p.startsWith('/admin/activity')
     },
     {
       name: 'Settings & Security',
+      group: 'Insights & Administration',
       path: '/admin/settings',
       icon: Settings,
       match: (p: string) => p.startsWith('/admin/settings')
@@ -407,10 +424,14 @@ interface NavItem {
 
         {/* Navigation Items (Scrollable) */}
         <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1 scrollbar-thin scrollbar-thumb-[#361A42]">
-          {navItems.map((item) => {
+          {navItems.map((item, index) => {
             const isActive = item.match(location.pathname);
             const Icon = item.icon;
             return (
+              <React.Fragment key={item.path}>
+                {(index === 0 || navItems[index - 1].group !== item.group) && (
+                  <p className="px-3.5 pt-4 pb-1 text-[9px] uppercase font-semibold tracking-[0.16em] text-[#A694B3]">{item.group}</p>
+                )}
               <Link
                 key={item.path}
                 to={item.path}
@@ -441,6 +462,7 @@ interface NavItem {
                   )}
                 </div>
               </Link>
+              </React.Fragment>
             );
           })}
 
@@ -831,10 +853,14 @@ interface NavItem {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-1">
-              {navItems.map((item) => {
+              {navItems.map((item, index) => {
                 const isActive = item.match(location.pathname);
                 const Icon = item.icon;
                 return (
+                  <React.Fragment key={item.path}>
+                    {(index === 0 || navItems[index - 1].group !== item.group) && (
+                      <p className="px-3 pt-4 pb-1 text-[9px] uppercase font-semibold tracking-[0.16em] text-[#A694B3]">{item.group}</p>
+                    )}
                   <Link
                     key={item.path}
                     to={item.path}
@@ -853,6 +879,7 @@ interface NavItem {
                       </span>
                     )}
                   </Link>
+                  </React.Fragment>
                 );
               })}
             </div>
