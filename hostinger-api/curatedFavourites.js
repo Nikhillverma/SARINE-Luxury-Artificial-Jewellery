@@ -132,10 +132,10 @@ publicRouter.get("/", async (req, res, next) => {
       return;
     }
     const placeholders = curation.productIds.map(() => "?").join(",");
+    const collectionCondition = productCollection ? " AND product_collection = ?" : "";
     const [rows] = await pool.execute(
-      `SELECT * FROM products WHERE id IN (${placeholders}) AND status='active' AND stock > 0
-         AND (? = '' OR product_collection = ?)`,
-      [...curation.productIds, productCollection || "", productCollection || ""]
+      `SELECT * FROM products WHERE id IN (${placeholders}) AND status='active' AND stock > 0${collectionCondition}`,
+      productCollection ? [...curation.productIds, productCollection] : curation.productIds
     );
     const byId = new Map(rows.map((row) => [String(row.id), row]));
     const products = curation.productIds
