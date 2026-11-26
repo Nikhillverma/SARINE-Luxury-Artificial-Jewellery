@@ -447,7 +447,8 @@ export const AdminProductsPage: React.FC = () => {
             { label: 'Published', value: catalogueStats.active, icon: Eye, tone: 'text-emerald-700 bg-emerald-50' },
             { label: 'Drafts', value: catalogueStats.drafts, icon: Copy, tone: 'text-violet-700 bg-violet-50' },
             { label: 'Out of stock', value: catalogueStats.outOfStock, icon: AlertTriangle, tone: 'text-amber-700 bg-amber-50' },
-            { label: 'Missing images', value: catalogueStats.missingImages, icon: ImageIcon, tone: 'text-rose-700 bg-rose-50' }
+            { label: 'Missing images', value: catalogueStats.missingImages, icon: ImageIcon, tone: 'text-rose-700 bg-rose-50' },
+            { label: 'Incomplete details', value: catalogueStats.incomplete, icon: AlertTriangle, tone: 'text-amber-700 bg-amber-50' }
           ].map(item => { const Icon = item.icon; return <div key={item.label} className="rounded-xl border border-[#EADFF0] bg-white p-4"><span className={'inline-flex h-8 w-8 items-center justify-center rounded-lg ' + item.tone}><Icon size={16}/></span><p className="mt-3 text-xl font-semibold text-[#2C1838]">{loading ? '—' : item.value.toLocaleString('en-IN')}</p><p className="mt-0.5 text-[10px] text-[#806B8D]">{item.label}</p></div>; })}
         </div>
 
@@ -459,7 +460,7 @@ export const AdminProductsPage: React.FC = () => {
             </div>
             <button type="button" onClick={exportCsv} disabled={loading || visibleProducts.length === 0} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#E7DCEB] px-3 text-xs font-semibold text-[#563568] hover:bg-[#FAF5FC] disabled:opacity-50"><Download size={14}/> Export CSV ({visibleProducts.length})</button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-2">
             <label className="text-[10px] text-[#806B8D]">Status
               <select aria-label="Filter products by status" value={statusFilter} onChange={event => setStatusFilter(event.target.value)} className="mt-1 w-full min-h-10 px-3 border border-[#E7DCEB] rounded-lg text-xs text-[#302438]">
                 <option value="all">All statuses</option><option value="active">Active</option><option value="draft">Draft</option><option value="archived">Archived</option>
@@ -480,15 +481,20 @@ export const AdminProductsPage: React.FC = () => {
                 <option value="all">All stock levels</option><option value="out">Out of stock</option><option value="low">Low stock (1–5)</option><option value="available">Available (6+)</option><option value="missing-image">Missing product images</option>
               </select>
             </label>
+            <label className="text-[10px] text-[#806B8D]">Completeness
+              <select aria-label="Filter products by completeness" value={completenessFilter} onChange={event => setCompletenessFilter(event.target.value)} className="mt-1 w-full min-h-10 px-3 border border-[#E7DCEB] rounded-lg text-xs text-[#302438]">
+                <option value="all">All products</option><option value="incomplete">Needs attention</option><option value="complete">Complete essentials</option>
+              </select>
+            </label>
             <label className="text-[10px] text-[#806B8D]">Sort by
-              <select aria-label="Sort products" value={sortBy} onChange={event => setSortBy(event.target.value)} className="mt-1 w-full min-h-10 px-3 border border-[#E7DCEB] rounded-lg text-xs text-[#302438]">
-                <option value="name">Name (A–Z)</option><option value="newest">Newest first</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="stock-low">Stock: low to high</option><option value="stock-high">Stock: high to low</option>
+              <select aria-label="Sort products" value={sortBy} onChange={event => changeSortMode(event.target.value)} className="mt-1 w-full min-h-10 px-3 border border-[#E7DCEB] rounded-lg text-xs text-[#302438]">
+                <option value="name">Name (A–Z)</option><option value="newest">Newest first</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="stock-low">Stock: low to high</option><option value="stock-high">Stock: high to low</option><option value="manual">Manual product order</option>
               </select>
             </label>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-[#806B8D]">
             <span><Filter size={12} className="inline mr-1"/>Showing <strong className="text-[#563568]">{visibleProducts.length}</strong> of {products.length} products</span>
-            {(search || statusFilter !== 'all' || categoryFilter !== 'all' || productCollectionFilter !== 'all' || stockFilter !== 'all' || sortBy !== 'name') && <button type="button" onClick={() => { setSearch(''); setStatusFilter('all'); setCategoryFilter('all'); setProductCollectionFilter('all'); setStockFilter('all'); setSortBy('name'); }} className="min-h-9 px-2 font-semibold text-[#704A83] hover:underline">Clear filters</button>}
+            {(search || statusFilter !== 'all' || categoryFilter !== 'all' || productCollectionFilter !== 'all' || stockFilter !== 'all' || completenessFilter !== 'all' || sortBy !== 'name') && <button type="button" onClick={() => { setSearch(''); setStatusFilter('all'); setCategoryFilter('all'); setProductCollectionFilter('all'); setStockFilter('all'); setCompletenessFilter('all'); setSortBy('name'); }} className="min-h-9 px-2 font-semibold text-[#704A83] hover:underline">Clear filters</button>}
           </div>
         </div>
 
@@ -502,15 +508,17 @@ export const AdminProductsPage: React.FC = () => {
         </div>}
         {bulkOpen && <BulkProductEditor products={products.filter(product => selectedIds.includes(product.id))} categories={categories} onApply={applyBulkChanges} onClose={() => setBulkOpen(false)}/>}
         {variantProduct && <ProductVariantsManager product={variantProduct} onClose={() => setVariantProduct(null)} onSaved={(stock) => { setProducts(current => current.map(item => item.id === variantProduct.id ? { ...item, stock } : item)); void load(); }} />}
+        {sortBy === "manual" && !manualOrderingAvailable && <p className="text-[10px] text-amber-700 px-1">Clear filters to enable manual ordering across the full catalogue.</p>}
+        {sortBy === "manual" && manualOrderingAvailable && <p className="text-[10px] text-[#806B8D] px-1">{orderingSaving ? "Saving catalogue order…" : "Use the up/down arrows to save product positions. This affects the admin catalogue order only."}</p>}
         <div className="bg-white rounded-2xl border border-[#EADFF0] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-[#FAF5FC] text-[#705E7B] uppercase"><tr>
-                <th className="p-3"><input type="checkbox" aria-label="Select all products on this page" checked={allVisibleSelected} onChange={toggleVisibleSelection} className="accent-[#563568]"/></th><th className="p-3">Product</th><th className="p-3">Category</th><th className="p-3">Range</th><th className="p-3">Price</th><th className="p-3">Stock</th><th className="p-3">Status</th><th className="p-3 text-right">Actions</th>
+                <th className="p-3"><input type="checkbox" aria-label="Select all products on this page" checked={allVisibleSelected} onChange={toggleVisibleSelection} className="accent-[#563568]"/></th><th className="p-3">Product</th><th className="p-3">Category</th><th className="p-3">Range</th><th className="p-3">Price</th><th className="p-3">Stock</th><th className="p-3">Status</th><th className="p-3">Completeness</th><th className="p-3 text-right">Actions</th>
               </tr></thead>
               <tbody className="divide-y divide-[#F5EDF8]">
-                {loading ? <tr><td colSpan={8} className="p-10 text-center text-[#8E769E]">Loading catalogue…</td></tr> :
-                visibleProducts.length === 0 ? <tr><td colSpan={7} className="p-10 text-center text-[#8E769E]">No products found.</td></tr> :
+                {loading ? <tr><td colSpan={9} className="p-10 text-center text-[#8E769E]">Loading catalogue…</td></tr> :
+                visibleProducts.length === 0 ? <tr><td colSpan={9} className="p-10 text-center text-[#8E769E]">No products found.</td></tr> :
                 pageProducts.map(product => (
                   <tr key={product.id} className="hover:bg-[#FAF5FC]">
                     <td className="p-3"><input type="checkbox" aria-label={"Select " + product.name} checked={selectedIds.includes(product.id)} onChange={() => toggleProductSelection(product.id)} className="accent-[#563568]"/></td>
@@ -523,7 +531,9 @@ export const AdminProductsPage: React.FC = () => {
                     <td className="p-3 font-semibold">{formatInr(product.price)}</td>
                     <td className="p-3">{product.stock}</td>
                     <td className="p-3"><span className="capitalize">{product.status}</span></td>
+                    <td className="p-3"><span title={getProductCompleteness(product, categories).length ? "Missing: " + getProductCompleteness(product, categories).join(", ") : "Essential catalogue details are complete"} className={getProductCompleteness(product, categories).length ? "text-amber-700" : "text-emerald-700"}>{getProductCompleteness(product, categories).length ? getProductCompleteness(product, categories).length + " missing" : "Complete"}</span></td>
                     <td className="p-3 text-right whitespace-nowrap">
+                      {sortBy === 'manual' && <span className="inline-flex mr-1 gap-1"><button type="button" aria-label={"Move " + product.name + " up"} title="Move up in manual order" disabled={!manualOrderingAvailable || orderingSaving || visibleProducts.findIndex(item => item.id === product.id) === 0} onClick={() => void moveProduct(product.id, -1)} className="p-2 rounded-lg border border-[#E7DCEB] disabled:opacity-30"><ChevronUp size={14}/></button><button type="button" aria-label={"Move " + product.name + " down"} title="Move down in manual order" disabled={!manualOrderingAvailable || orderingSaving || visibleProducts.findIndex(item => item.id === product.id) === visibleProducts.length - 1} onClick={() => void moveProduct(product.id, 1)} className="p-2 rounded-lg border border-[#E7DCEB] disabled:opacity-30"><ChevronDown size={14}/></button></span>}
                       {product.status !== 'archived' && <button onClick={() => void toggleStatus(product)} title="Toggle active/draft" className="p-2 hover:bg-[#F3E8FF] rounded-lg text-[#563568]">{product.status === 'active' ? 'Unpublish' : 'Publish'}</button>}
                       <Link to={`/admin/products/${encodeURIComponent(product.id)}/preview`} title="Preview product privately (no purchasing)" className="inline-flex items-center gap-1 px-2 py-1.5 hover:bg-[#F3E8FF] rounded-lg text-[10px] font-semibold text-[#563568]"><Eye size={13}/> Preview</Link>
                       <button onClick={() => setVariantProduct(product)} title="Manage sizes, colours and variant stock" className="px-2 py-1.5 hover:bg-[#F3E8FF] rounded-lg text-[10px] font-semibold text-[#563568]">Variants{product.variants?.length ? ` (${product.variants.length})` : ''}</button>
@@ -537,7 +547,7 @@ export const AdminProductsPage: React.FC = () => {
             </table>
           </div>
           {!loading && visibleProducts.length > 0 && <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-[#F0E8F3] px-4 py-3">
-            <p className="text-[10px] text-[#806B8D]">Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, visibleProducts.length)} of {visibleProducts.length} filtered products</p>
+            <p className="text-[10px] text-[#806B8D]">Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, visibleProducts.length)} of {visibleProducts.length} filtered products{sortBy === "manual" ? " · Manual order" : ""}</p>
             <div className="flex items-center gap-2">
               <button type="button" disabled={page <= 1} onClick={() => setPage(current => Math.max(1, current - 1))} className="min-h-10 rounded-lg border border-[#E7DCEB] px-3 text-xs disabled:opacity-40">Previous</button>
               <span className="min-w-20 text-center text-[10px] text-[#806B8D]">Page {page} of {pageCount}</span>
