@@ -55,6 +55,17 @@ export interface HostingerMediaUsageReport {
   note: string;
 }
 
+export interface HostingerMediaArchivedAsset {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  uploadedBy: string;
+  createdAt: string;
+  archivedAt: string;
+  archivedBy: string;
+}
+
 export interface HostingerMediaDuplicateGroup {
   contentHash: string;
   copies: number;
@@ -108,6 +119,34 @@ export class HostingerMediaService {
       offset: Number(result.offset) || offset
     };
   }
+  async archiveImage(id: string, confirmFileName: string): Promise<void> {
+    const response = await fetch(`${API_BASE}/admin/media/${encodeURIComponent(id)}/archive`, {
+      method: "POST", credentials: "include",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({ confirmFileName })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const details = Array.isArray(data.references) ? " References: " + data.references.map((item: { source: string; location: string }) => item.source + " — " + item.location).join("; ") : "";
+      throw new Error((typeof data.error === "string" ? data.error : "Image could not be archived (" + response.status + ").") + details);
+    }
+  }
+
+  async listArchivedImages(): Promise<HostingerMediaArchivedAsset[]> {
+    const response = await fetch(API_BASE + "/admin/media/archived", { credentials: "include", headers: { Accept: "application/json" } });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : "Archived images could not be loaded (" + response.status + ").");
+    return Array.isArray(data.media) ? data.media : [];
+  }
+
+  async restoreImage(id: string): Promise<void> {
+    const response = await fetch(`${API_BASE}/admin/media/${encodeURIComponent(id)}/restore`, {
+      method: "POST", credentials: "include", headers: { Accept: "application/json" }
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : "Image could not be restored (" + response.status + ").");
+  }
+
   async uploadImage(file: File): Promise<string> {
     const { base64, mimeType, fileName } = await compressForUpload(file);
     const response = await fetch(`${API_BASE}/admin/media`, {
