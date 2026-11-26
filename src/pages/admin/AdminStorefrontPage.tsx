@@ -306,7 +306,7 @@ export const AdminStorefrontPage: React.FC = () => {
           <label className="block text-xs font-medium">Promotional announcement</label>
           <input value={announcement} maxLength={300} onChange={e => setAnnouncement(e.target.value)} placeholder="e.g. Diwali Sale — Extra 10% Off Today" className="w-full border rounded-lg p-3 text-sm" />
           {announcementActive && /christmas|diwali|new year|black friday|sale|today|limited time|ends? (today|soon|on)/i.test(announcement) && <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">Time-sensitive promotion detected. Verify the offer, dates and eligibility before saving it live.</p>}
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={announcementActive} onChange={e => setAnnouncementActive(e.target.checked)} /> Publish promotional announcement</label>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={announcementActive} onChange={e => setAnnouncementActive(e.target.checked)} /> Show announcement when this draft is published</label>
         </div>
         <section className="rounded-xl border border-[#E7DCEB] bg-[#FBF8FC] p-4 space-y-3">
           <div><h3 className="text-sm font-semibold text-[#563568]">Saved draft preview</h3><p className="text-xs text-[#705E7B]">This preview reflects the last saved draft. Visitors continue seeing the published version until confirmation.</p></div>
