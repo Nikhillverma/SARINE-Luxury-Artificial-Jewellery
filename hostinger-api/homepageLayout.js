@@ -35,6 +35,15 @@ async function readSetting(key, fallback) {
   }
 }
 
+function layoutSettingKey(kind, collection) {
+  return collection ? "homepage_layout_" + kind + "_" + collection : "homepage_layout_" + kind;
+}
+async function readLayout(kind, collection) {
+  const shared = await readSetting(layoutSettingKey(kind, null), DEFAULT_HOMEPAGE_LAYOUT);
+  if (!collection) return shared;
+  return readSetting(layoutSettingKey(kind, collection), shared);
+}
+
 async function writeSetting(key, value) {
   await ensureSchema();
   await pool.execute(
@@ -43,23 +52,25 @@ async function writeSetting(key, value) {
   );
 }
 
-adminOnly.get("/", async (_req, res, next) => {
+adminOnly.get("/", async (req, res, next) => {
   try {
+    const collection = collectionFrom(req.query.productCollection);
     const [draft, published] = await Promise.all([
-      readSetting("homepage_layout_draft", DEFAULT_HOMEPAGE_LAYOUT),
-      readSetting("homepage_layout_published", DEFAULT_HOMEPAGE_LAYOUT)
+      readLayout("draft", collection),
+      readLayout("published", collection)
     ]);
-    res.set("Cache-Control", "no-store").json({ draft, published });
-  } catch (error) { next(error); }
+    res.set("Cache-Control", "no-store").json({ draft, published, collection: collection || "shared" });
+  } catch (error) { if (error instanceof Error && /product collection/i.test(error.message)) return res.status(400).json({ error: error.message }); next(error); }
 });
 
 adminOnly.put("/draft", async (req, res, next) => {
   try {
     const layout = validateHomepageLayout(req.body);
-    await writeSetting("homepage_layout_draft", layout);
-    res.set("Cache-Control", "no-store").json({ success: true, draft: layout });
+    const collection = collectionFrom(req.body?.productCollection);
+    await writeSetting(layoutSettingKey("draft", collection), layout);
+    res.set("Cache-Control", "no-store").json({ success: true, draft: layout, collection: collection || "shared" });
   } catch (error) {
-    if (error instanceof Error && /homepage|section|position|supported|duplicated|enabled|order|exactly once|cards per view|carousel/i.test(error.message)) {
+    if (error instanceof Error && /homepage|section|position|supported|duplicated|enabled|order|exactly once|cards per view|carousel|product collection/i.test(error.message)) {
       return res.status(400).json({ error: error.message });
     }
     next(error);
@@ -68,17 +79,19 @@ adminOnly.put("/draft", async (req, res, next) => {
 
 adminOnly.post("/publish", async (_req, res, next) => {
   try {
-    const draft = await readSetting("homepage_layout_draft", DEFAULT_HOMEPAGE_LAYOUT);
-    await writeSetting("homepage_layout_published", draft);
-    res.set("Cache-Control", "no-store").json({ success: true, published: draft });
-  } catch (error) { next(error); }
+    const collection = collectionFrom(_req.body?.productCollection);
+    const draft = await readLayout("draft", collection);
+    await writeSetting(layoutSettingKey("published", collection), draft);
+    res.set("Cache-Control", "no-store").json({ success: true, published: draft, collection: collection || "shared" });
+  } catch (error) { if (error instanceof Error && /product collection/i.test(error.message)) return res.status(400).json({ error: error.message }); next(error); }
 });
 
-publicRouter.get("/", async (_req, res, next) => {
+publicRouter.get("/", async (req, res, next) => {
   try {
-    const layout = await readSetting("homepage_layout_published", DEFAULT_HOMEPAGE_LAYOUT);
-    res.set("Cache-Control", "no-store").json({ layout });
-  } catch (error) { next(error); }
+    const collection = collectionFrom(req.query.productCollection);
+    const layout = await readLayout("published", collection);
+    res.set("Cache-Control", "no-store").json({ layout, collection: collection || "shared" });
+  } catch (error) { if (error instanceof Error && /product collection/i.test(error.message)) return res.status(400).json({ error: error.message }); next(error); }
 });
 
 admin.use("/", adminOnly);
