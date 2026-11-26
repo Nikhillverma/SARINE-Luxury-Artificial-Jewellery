@@ -208,7 +208,7 @@ adminMediaRouter.get("/duplicates", async (req, res, next) => {
     const [groups] = await pool.execute(
       `SELECT content_hash, COUNT(*) AS copies, MAX(created_at) AS latest_upload
        FROM media_assets
-       WHERE content_hash IS NOT NULL
+       WHERE content_hash IS NOT NULL AND archived_at IS NULL
        GROUP BY content_hash
        HAVING COUNT(*) > 1
        ORDER BY latest_upload DESC, content_hash ASC
@@ -218,7 +218,7 @@ adminMediaRouter.get("/duplicates", async (req, res, next) => {
     const [countRows] = await pool.query(
       `SELECT COUNT(*) AS total FROM (
          SELECT content_hash FROM media_assets
-         WHERE content_hash IS NOT NULL
+         WHERE content_hash IS NOT NULL AND archived_at IS NULL
          GROUP BY content_hash HAVING COUNT(*) > 1
        ) duplicate_groups`
     );
@@ -273,6 +273,7 @@ adminMediaRouter.get("/usage", async (req, res, next) => {
   try {
     await ensureMediaTable();
     await ensureMediaHashSchema();
+    await ensureMediaArchiveSchema();
 
     const parsedLimit = Number.parseInt(String(req.query.limit || "40"), 10);
     const parsedOffset = Number.parseInt(String(req.query.offset || "0"), 10);
