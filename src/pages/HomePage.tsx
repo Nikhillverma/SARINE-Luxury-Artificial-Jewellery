@@ -206,7 +206,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       .then(result => { if (!cancelled && result.settings) setShopByGender(result.settings); })
       .catch(error => console.warn("[HomePage] Shop by Gender settings unavailable; using empty image placeholders.", error));
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedProductCollection]);
 
   useEffect(() => {
     let cancelled = false;
@@ -214,7 +214,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       .then(result => { if (!cancelled && Array.isArray(result.occasions)) setOccasions(result.occasions); })
       .catch(error => console.warn("[HomePage] Published occasion cards unavailable; using defaults.", error));
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedProductCollection]);
 
   // Hero Slider State
   const [activeSlide, setActiveSlide] = useState<number>(0);
@@ -341,7 +341,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       .then(result => { if (!cancelled && result.editorial) setEditorial(result.editorial); else if (!cancelled && result.editorial === null) setEditorial(current => ({ ...current, active: false })); })
       .catch(error => console.warn('[HomePage] Editorial content unavailable; using default content.', error));
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedProductCollection]);
 
   useEffect(() => {
     let cancelled = false;
@@ -349,15 +349,15 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       .then(result => { if (!cancelled && result.content) setHomepageContent(result.content); })
       .catch(error => console.warn('[HomePage] Editable homepage content unavailable; using the built-in defaults.', error));
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedProductCollection]);
 
   useEffect(() => {
     let cancelled = false;
     hostingerStorefrontService.getPublicBanners()
-      .then(result => { if (!cancelled && result.banners.length) { setManagedHeroSlides(result.banners); setActiveSlide(0); } })
+      .then(result => { if (!cancelled && result.banners.length) { setManagedHeroSlides(result.banners); setActiveSlide(0); } else if (!cancelled) setManagedHeroSlides([]); })
       .catch(error => console.warn('[HomePage] Published hero banners unavailable; using defaults.', error));
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedProductCollection]);
 
   // 1. Fetch Hostinger storefront data
   useEffect(() => {
