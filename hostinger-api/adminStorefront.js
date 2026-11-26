@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import { validateImageUpload } from "./mediaValidation.js";
 import { getCheckoutConfig, saveCheckoutConfig } from "./checkoutPolicy.js";
 import { buildAnnouncementSettings, normalizeAnnouncementSettings } from "./announcementPolicy.js";
+import { ensureProductCollectionSchema } from "./productCollectionSchema.js";
 
 const admin = Router();
 const publicRouter = Router();
