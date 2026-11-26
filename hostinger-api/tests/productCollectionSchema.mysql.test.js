@@ -15,7 +15,7 @@ test("MariaDB range migration keeps legacy products unassigned and isolates both
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD
   });
-  await adminConnection.query(`CREATE DATABASE IF NOT EXISTS `${isolatedDatabase}` CHARACTER SET utf8mb4`);
+  await adminConnection.query("CREATE DATABASE IF NOT EXISTS `" + isolatedDatabase + "` CHARACTER SET utf8mb4");
   process.env.DB_NAME = isolatedDatabase;
   assertSafeTestDatabase();
   let pool;
@@ -148,7 +148,7 @@ test("MariaDB range migration keeps legacy products unassigned and isolates both
       await pool.query("DROP TABLE IF EXISTS products").catch(() => {});
       await pool.end();
     }
-    await adminConnection.query(`DROP DATABASE IF EXISTS `${isolatedDatabase}``).catch(() => {});
+    await adminConnection.query("DROP DATABASE IF EXISTS `" + isolatedDatabase + "`").catch(() => {});
     await adminConnection.end();
   }
 });
