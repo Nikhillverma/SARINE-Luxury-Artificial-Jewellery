@@ -12,10 +12,10 @@ const HomepageCategoryImagesManager = React.lazy(() => import("../../components/
 const CmsPagesManager = React.lazy(() => import("../../components/admin/CmsPagesManager").then(module => ({ default: module.CmsPagesManager })));
 const StorefrontImageLibrary = React.lazy(() => import("../../components/admin/StorefrontImageLibrary").then(module => ({ default: module.StorefrontImageLibrary })));
 const SiteChromeManager = React.lazy(() => import("../../components/admin/SiteChromeManager").then(module => ({ default: module.SiteChromeManager })));
+const EditorialManager = React.lazy(() => import("../../components/admin/EditorialManager").then(module => ({ default: module.EditorialManager })));
 import { hostingerMediaService } from "../../services";
-import { hostingerStorefrontService, type StorefrontBanner, type EditorialContent, type ProductReview } from "../../services/hostinger/hostingerStorefrontService";
+import { hostingerStorefrontService, type StorefrontBanner, type ProductReview } from "../../services/hostinger/hostingerStorefrontService";
 
-const defaultEditorial: EditorialContent = { eyebrow: "EDITORIAL COLLECTION", title: "The Art of Everyday Elegance", description: "A curated collection that blends classic beauty with modern sensibilities.", ctaText: "Explore the Collection", ctaLink: "/shop", imageUrl: "/images/optimized/editorial-banner.webp", active: true };
 const emptyForm = { tagline: "", title: "", subtitle: "", ctaText: "Shop now", ctaLink: "/shop", imageUrl: "", active: false, startsAtUtc: "", endsAtUtc: "" };
 const toLocalDateTimeInput = (value?: string | null) => {
   if (!value) return "";
@@ -37,14 +37,10 @@ export const AdminStorefrontPage: React.FC = () => {
   const [banners, setBanners] = useState<StorefrontBanner[]>([]);
   const [homepageCollection, setHomepageCollection] = useState<"" | "artificial" | "demi-fine">("");
   const bannerLoadRequest = useRef(0);
-  const editorialLoadRequest = useRef(0);
   useEffect(() => { setEditingId(null); setForm(emptyForm); setFile(null); setMessage(""); setError(""); }, [homepageCollection]);
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [reviewStatus, setReviewStatus] = useState("pending");
   const [reviewReplies, setReviewReplies] = useState<Record<string,string>>({});
-  const [editorial, setEditorial] = useState<EditorialContent>(defaultEditorial);
-  const [editorialFile, setEditorialFile] = useState<File | null>(null);
-  const [editorialUploading, setEditorialUploading] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const [announcementActive, setAnnouncementActive] = useState(false);
   const [trustMessages, setTrustMessages] = useState([
@@ -94,22 +90,6 @@ export const AdminStorefrontPage: React.FC = () => {
     }
   };
 
-  const loadEditorial = async () => {
-    const requestId = ++editorialLoadRequest.current;
-    setLoading(true);
-    setError("");
-    setEditorial({ ...defaultEditorial, active: false });
-    try {
-      const result = await hostingerStorefrontService.getEditorial(homepageCollection || undefined);
-      if (requestId !== editorialLoadRequest.current) return;
-      setEditorial({ ...defaultEditorial, ...result.editorial });
-    } catch (e) {
-      if (requestId === editorialLoadRequest.current) setError(e instanceof Error ? e.message : "Unable to load editorial settings.");
-    } finally {
-      if (requestId === editorialLoadRequest.current) setLoading(false);
-    }
-  };
-
   const loadReviews = async (status = reviewStatus) => {
     try {
       const result = await hostingerStorefrontService.getAdminReviews(status);
@@ -126,8 +106,6 @@ export const AdminStorefrontPage: React.FC = () => {
       void loadBanners();
     } else if (activeSection === "announcements") {
       void loadAnnouncement();
-    } else if (activeSection === "editorial") {
-      void loadEditorial();
     } else if (activeSection === "reviews") {
       setLoading(false);
       void loadReviews("pending");
@@ -222,18 +200,6 @@ export const AdminStorefrontPage: React.FC = () => {
     finally { setBusy(false); }
   };
 
-  const saveEditorial = async () => {
-    setBusy(true); setError(""); setMessage("");
-    try {
-      let imageUrl = editorial.imageUrl;
-      if (editorialFile) imageUrl = await hostingerMediaService.uploadImage(editorialFile);
-      const saved = await hostingerStorefrontService.saveEditorial({ ...editorial, imageUrl }, homepageCollection || undefined);
-      setEditorial(saved.editorial); setEditorialFile(null);
-      setMessage("Editorial Collection saved to MariaDB. Its publish setting controls customer visibility.");
-    } catch (e) { setError(e instanceof Error ? e.message : "Editorial Collection could not be saved."); }
-    finally { setBusy(false); }
-  };
-
   const saveAnnouncement = async () => {
     if (announcementActive && /christmas|diwali|new year|black friday|sale|today|limited time|ends? (today|soon|on)/i.test(announcement) && !window.confirm("This announcement contains time-sensitive promotional wording. Have you checked that the offer and dates are currently valid?")) return;
     setBusy(true); setError(""); setMessage("");
@@ -324,24 +290,7 @@ export const AdminStorefrontPage: React.FC = () => {
         </div>
       )}
 
-      {activeSection === "editorial" && (
-        <div className="space-y-5">
-        <section id="editorial" className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
-        <label className="block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={homepageCollection} disabled={loading || busy || artworkUploading || editorialUploading} onChange={event => setHomepageCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global content)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
-        <div><h2 className="font-semibold text-[#2C1838]">Homepage Sections · Editorial Collection</h2><p className="text-xs text-gray-500">Independent of hero banners. Edit the image, copy and destination shown in the Editorial Collection block.</p></div>
-        <div className="grid md:grid-cols-2 gap-3">
-          <label className="text-xs space-y-1"><span>Eyebrow</span><input value={editorial.eyebrow} maxLength={120} onChange={e=>setEditorial({...editorial,eyebrow:e.target.value})} className="w-full border rounded-lg p-3 text-sm" /></label>
-          <label className="text-xs space-y-1"><span>Heading</span><input value={editorial.title} maxLength={180} onChange={e=>setEditorial({...editorial,title:e.target.value})} className="w-full border rounded-lg p-3 text-sm" /></label>
-          <label className="text-xs space-y-1 md:col-span-2"><span>Description</span><textarea value={editorial.description} maxLength={500} onChange={e=>setEditorial({...editorial,description:e.target.value})} rows={3} className="w-full border rounded-lg p-3 text-sm" /></label>
-          <label className="text-xs space-y-1"><span>Button label</span><input value={editorial.ctaText} maxLength={80} onChange={e=>setEditorial({...editorial,ctaText:e.target.value})} className="w-full border rounded-lg p-3 text-sm" /></label>
-          <label className="text-xs space-y-1"><span>Button destination</span><input value={editorial.ctaLink} maxLength={500} onChange={e=>setEditorial({...editorial,ctaLink:e.target.value})} placeholder="/shop" className="w-full border rounded-lg p-3 text-sm" /></label>
-          <div className="md:col-span-2 space-y-2"><label className="block text-xs font-medium">Background artwork (JPEG, PNG or WebP)</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>setEditorialFile(e.target.files?.[0] || null)} className="block w-full text-sm" />{editorialFile && <button type="button" disabled={editorialUploading || busy} onClick={async()=>{setEditorialUploading(true);setError("");try{const imageUrl=await hostingerMediaService.uploadImage(editorialFile);setEditorial({...editorial,imageUrl});setEditorialFile(null);setMessage("Editorial artwork uploaded. Save changes to publish it.");}catch(e){setError(e instanceof Error?e.message:"Artwork upload failed.");}finally{setEditorialUploading(false);}}} className="px-3 py-2 rounded-lg bg-[#563568] text-white text-xs disabled:opacity-50">{editorialUploading?"Uploading…":"Upload artwork"}</button>}{editorial.imageUrl && <img src={editorial.imageUrl} alt="Editorial Collection preview" className="max-h-48 rounded-lg border object-contain" />}</div>
-          <label className="flex items-center gap-2 text-sm md:col-span-2"><input type="checkbox" checked={editorial.active} onChange={e=>setEditorial({...editorial,active:e.target.checked})} /> Publish Editorial Collection on homepage</label>
-          <div className="flex gap-2 md:col-span-2"><button disabled={busy || loading || editorialUploading} onClick={()=>void saveEditorial()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy?"Saving…":"Save Editorial Collection"}</button><a href="/" target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg border text-sm">Preview homepage</a></div>
-        </div>
-      </section>
-        </div>
-      )}
+      {activeSection === "editorial" && <EditorialManager />}
 
       {activeSection === "reviews" && (
         <div className="space-y-5">
@@ -355,7 +304,7 @@ export const AdminStorefrontPage: React.FC = () => {
       {activeSection === "hero-banners" && (
         <div className="space-y-5">
         <section id="banners" className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
-        <label className="block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={homepageCollection} disabled={loading || busy || artworkUploading || editorialUploading} onChange={event => setHomepageCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Shared (shown in both collections)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
+        <label className="block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={homepageCollection} disabled={loading || busy || artworkUploading} onChange={event => setHomepageCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Shared (shown in both collections)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
         <div className="flex justify-between items-center gap-3"><div><h2 className="font-semibold text-[#2C1838]">Homepage hero banners</h2><p className="text-xs text-gray-500">Shared banners appear in both Artificial and Demi-Fine storefronts. Changes are saved in MariaDB.</p></div><button disabled={busy || loading} onClick={beginAdd} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">Add banner</button></div>
         {loading ? <p className="text-sm text-gray-500">Loading banners…</p> : banners.length === 0 ? <p className="text-sm text-gray-500">No banners created yet. Add a banner and publish it when ready.</p> :
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">{banners.map((banner, index) => <article key={banner.id} className="border rounded-xl overflow-hidden">
