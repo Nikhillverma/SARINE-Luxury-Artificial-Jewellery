@@ -502,17 +502,18 @@ function normalizeMenStorefront(value) {
     }
   };
 }
-async function readMenStorefrontRecord() {
+async function readMenStorefrontRecord(collection = null) {
   await ensureSchema();
-  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='men_storefront' LIMIT 1");
+  const key = settingKey("men_storefront", collection);
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [key]);
   if (!rows.length) return { draft: DEFAULT_MEN_STOREFRONT, published: DEFAULT_MEN_STOREFRONT };
   try {
     const saved = JSON.parse(rows[0].setting_value);
     return { draft: normalizeMenStorefront(saved.draft), published: normalizeMenStorefront(saved.published) };
   } catch { return { draft: DEFAULT_MEN_STOREFRONT, published: DEFAULT_MEN_STOREFRONT }; }
 }
-async function writeMenStorefrontRecord(record) {
-  await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('men_storefront', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [JSON.stringify(record)]);
+async function writeMenStorefrontRecord(record, collection = null) {
+  await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [settingKey("men_storefront", collection), JSON.stringify(record)]);
 }
 async function ensureMenSubscribersSchema() {
   await pool.execute(`CREATE TABLE IF NOT EXISTS men_launch_subscribers (
@@ -526,37 +527,46 @@ async function ensureMenSubscribersSchema() {
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 }
 const menSignupLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 8, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Too many signup attempts. Please try again later." } });
-adminOnly.get("/men-storefront", async (_req, res, next) => {
+adminOnly.get("/men-storefront", async (req, res, next) => {
   try {
-    const record = await readMenStorefrontRecord();
-    const [rows] = await pool.execute("SELECT id, name, slug, price, images, status, stock FROM products WHERE JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE(?)) ORDER BY created_at DESC LIMIT 500", ["__sarine_men_catalogue__"]);
+    const collection = collectionFrom(req.query.productCollection);
+    const record = await readMenStorefrontRecord(collection);
+    await ensureProductCollectionSchema();
+    const [rows] = await pool.execute(
+      "SELECT id, name, slug, price, images, status, stock, product_collection FROM products WHERE JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE(?)) AND (? = '' OR product_collection = ?) ORDER BY created_at DESC LIMIT 500",
+      ["__sarine_men_catalogue__", collection || "", collection || ""]
+    );
     const products = rows.map(row => {
       let images = []; try { images = JSON.parse(row.images || "[]"); } catch {}
-      return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price), images: Array.isArray(images) ? images : [], status: row.status, stock: Number(row.stock) };
+      return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price), images: Array.isArray(images) ? images : [], status: row.status, stock: Number(row.stock), productCollection: row.product_collection || null };
     });
     res.set("Cache-Control", "no-store").json({ ...record, products });
   } catch (error) { next(error); }
 });
 adminOnly.put("/men-storefront/draft", async (req, res, next) => {
   try {
+    const collection = collectionFrom(req.body?.productCollection);
     const draft = normalizeMenStorefront(req.body?.settings);
     if (!draft.title || !draft.description) return res.status(400).json({ error: "Add a title and description for the men's page." });
-    const record = await readMenStorefrontRecord();
-    await writeMenStorefrontRecord({ ...record, draft });
+    const record = await readMenStorefrontRecord(collection);
+    await writeMenStorefrontRecord({ ...record, draft }, collection);
     res.set("Cache-Control", "no-store").json({ success: true, draft });
   } catch (error) { next(error); }
 });
-adminOnly.post("/men-storefront/publish", async (_req, res, next) => {
+adminOnly.post("/men-storefront/publish", async (req, res, next) => {
   try {
-    const record = await readMenStorefrontRecord();
+    const collection = collectionFrom(req.body?.productCollection);
+    const record = await readMenStorefrontRecord(collection);
     const published = normalizeMenStorefront(record.draft);
-    await writeMenStorefrontRecord({ ...record, published });
+    await writeMenStorefrontRecord({ ...record, published }, collection);
     res.set("Cache-Control", "no-store").json({ success: true, published });
   } catch (error) { next(error); }
 });
-publicRouter.get("/men-storefront", async (_req, res, next) => {
+publicRouter.get("/men-storefront", async (req, res, next) => {
   try {
-    const { published } = await readMenStorefrontRecord();
+    const collection = collectionFrom(req.query.productCollection);
+    const { published } = await readMenStorefrontRecord(collection);
+    await ensureProductCollectionSchema();
     const productIds = [...new Set([
       ...(published.showProducts ? published.productIds : []),
       ...(published.showBestSellers ? published.bestSellerIds : []),
@@ -566,11 +576,14 @@ publicRouter.get("/men-storefront", async (_req, res, next) => {
     let products = [];
     if (productIds.length) {
       const placeholders = productIds.map(() => "?").join(",");
-      const [rows] = await pool.execute(`SELECT id, name, slug, price, compare_at_price, images, stock FROM products WHERE status='active' AND JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE('__sarine_men_catalogue__')) AND id IN (${placeholders})`, productIds);
+      const [rows] = await pool.execute(
+        `SELECT id, name, slug, price, compare_at_price, images, stock, product_collection FROM products WHERE status='active' AND JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE('__sarine_men_catalogue__')) AND id IN (${placeholders}) AND (? = '' OR product_collection = ?)`,
+        [...productIds, collection || "", collection || ""]
+      );
       const byId = new Map(rows.map(row => [row.id, row]));
       products = productIds.map(id => byId.get(id)).filter(Boolean).map(row => {
         let images = []; try { images = JSON.parse(row.images || "[]"); } catch {}
-        return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price), compareAtPrice: row.compare_at_price == null ? null : Number(row.compare_at_price), images: Array.isArray(images) ? images : [], stock: Number(row.stock) };
+        return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price), compareAtPrice: row.compare_at_price == null ? null : Number(row.compare_at_price), images: Array.isArray(images) ? images : [], stock: Number(row.stock), productCollection: row.product_collection || null };
       });
     }
     res.set("Cache-Control", "no-store").json({ settings: published, products });
@@ -578,24 +591,26 @@ publicRouter.get("/men-storefront", async (_req, res, next) => {
 });
 publicRouter.get("/men-storefront/categories/:categoryId", async (req, res, next) => {
   try {
-    const { published } = await readMenStorefrontRecord();
+    const collection = collectionFrom(req.query.productCollection);
+    const { published } = await readMenStorefrontRecord(collection);
     if (!published.enabled) return res.status(404).json({ error: "Men's storefront is unavailable." });
     const category = published.categories.find(item => item.id === req.params.categoryId && item.active);
     if (!category) return res.status(404).json({ error: "Men's category not found." });
     const ids = Array.isArray(category.productIds) ? [...new Set(category.productIds)].slice(0, 100) : [];
     let products = [];
     if (ids.length) {
+      await ensureProductCollectionSchema();
       const placeholders = ids.map(() => "?").join(",");
       const [rows] = await pool.execute(
-        `SELECT id, name, slug, price, compare_at_price, images, stock FROM products WHERE status='active' AND JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE('__sarine_men_catalogue__')) AND id IN (${placeholders})`,
-        ids
+        `SELECT id, name, slug, price, compare_at_price, images, stock, product_collection FROM products WHERE status='active' AND JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE('__sarine_men_catalogue__')) AND id IN (${placeholders}) AND (? = '' OR product_collection = ?)`,
+        [...ids, collection || "", collection || ""]
       );
       const byId = new Map(rows.map(row => [row.id, row]));
       products = ids.map(id => byId.get(id)).filter(Boolean).map(row => {
         let images = []; try { images = JSON.parse(row.images || "[]"); } catch {}
         return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price),
           compareAtPrice: row.compare_at_price == null ? null : Number(row.compare_at_price),
-          images: Array.isArray(images) ? images : [], stock: Number(row.stock) };
+          images: Array.isArray(images) ? images : [], stock: Number(row.stock), productCollection: row.product_collection || null };
       });
     }
     res.set("Cache-Control", "no-store").json({ category, products });
