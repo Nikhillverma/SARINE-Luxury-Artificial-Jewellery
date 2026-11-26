@@ -113,6 +113,7 @@ export interface VariantInventoryMovement {
 
 export interface IAdminProductService {
   getProducts(): Promise<Product[]>;
+  reorderProducts(productIds: string[]): Promise<{ reordered: number }>;
   createProduct(product: Omit<Product, 'id' | 'createdAt'>): Promise<Product>;
   updateProduct(id: string, updates: Partial<Product>): Promise<Product>;
   getProductVariants(productId: string): Promise<ProductVariant[]>;
