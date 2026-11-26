@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { hostingerMediaService } from "../../services";
-import type { HostingerMediaAsset, HostingerMediaDuplicateGroup, HostingerMediaUsageAsset } from "../../services/hostinger/hostingerMediaService";
+import type { HostingerMediaArchivedAsset, HostingerMediaAsset, HostingerMediaDuplicateGroup, HostingerMediaUsageAsset } from "../../services/hostinger/hostingerMediaService";
 
 const PAGE_SIZE = 40;
 type LibraryFilters = { mimeType: string; from: string; to: string; sort: "newest" | "oldest" | "filename" };
@@ -8,8 +8,9 @@ const DEFAULT_FILTERS: LibraryFilters = { mimeType: "", from: "", to: "", sort: 
 
 export const StorefrontImageLibrary: React.FC = () => {
   const [assets, setAssets] = useState<HostingerMediaAsset[]>([]);
-  const [viewMode, setViewMode] = useState<"all" | "duplicates" | "usage" | "cleanup">("all");
+  const [viewMode, setViewMode] = useState<"all" | "duplicates" | "usage" | "cleanup" | "archived">("all");
   const [duplicateGroups, setDuplicateGroups] = useState<HostingerMediaDuplicateGroup[]>([]);
+  const [archivedAssets, setArchivedAssets] = useState<HostingerMediaArchivedAsset[]>([]);
   const [duplicateTotal, setDuplicateTotal] = useState(0);
   const [usageAssets, setUsageAssets] = useState<HostingerMediaUsageAsset[]>([]);
   const [usageTotal, setUsageTotal] = useState(0);
@@ -46,6 +47,31 @@ export const StorefrontImageLibrary: React.FC = () => {
       const result = await hostingerMediaService.listDuplicateGroups(20, nextOffset);
       setDuplicateGroups(result.groups); setDuplicateTotal(result.total); setOffset(result.offset);
     } catch (e) { setError(e instanceof Error ? e.message : "Duplicate images could not be loaded."); }
+    finally { setLoading(false); }
+  };
+  const loadArchived = async () => {
+    setLoading(true); setError("");
+    try { setArchivedAssets(await hostingerMediaService.listArchivedImages()); }
+    catch (e) { setError(e instanceof Error ? e.message : "Archived images could not be loaded."); }
+    finally { setLoading(false); }
+  };
+  const restoreArchived = async (asset: HostingerMediaArchivedAsset) => {
+    if (!window.confirm("Restore " + asset.fileName + " to the active image library? Its original media URL will become available again.")) return;
+    setLoading(true); setError(""); setMessage("");
+    try { await hostingerMediaService.restoreImage(asset.id); await loadArchived(); setMessage(asset.fileName + " was restored to the active library."); }
+    catch (e) { setError(e instanceof Error ? e.message : "Image could not be restored."); }
+    finally { setLoading(false); }
+  };
+  const archiveCandidate = async (asset: HostingerMediaUsageAsset) => {
+    if (!backupConfirmed.includes(asset.id)) { setError("Download and confirm a backup copy before archiving this image."); return; }
+    const typedName = window.prompt("To archive this exact image, type its full filename:\n" + asset.fileName);
+    if (typedName !== asset.fileName) { if (typedName !== null) setError("Filename did not match. Nothing was changed."); return; }
+    setLoading(true); setError(""); setMessage("");
+    try {
+      await hostingerMediaService.archiveImage(asset.id, typedName);
+      setMessage(asset.fileName + " has been archived. The original image data is retained and can be restored from the Archived tab.");
+      await loadCleanup();
+    } catch (e) { setError(e instanceof Error ? e.message : "Image could not be archived."); }
     finally { setLoading(false); }
   };
   const loadUsage = async (nextOffset = 0) => {
@@ -139,7 +165,7 @@ export const StorefrontImageLibrary: React.FC = () => {
   return <section className="space-y-5 rounded-2xl border border-[#E7DCEB] bg-white p-5">
     <div>
       <h2 className="font-semibold text-[#2C1838]">Storefront Image Library</h2>
-      <p className="mt-1 text-xs leading-relaxed text-[#6F6475]">Browse images already uploaded to Hostinger, reuse their URLs in banners and homepage content, or add new artwork here. Existing media files are never replaced or deleted by this tool.</p>
+      <p className="mt-1 text-xs leading-relaxed text-[#6F6475]">Browse images already uploaded to Hostinger, reuse their URLs in banners and homepage content, or add new artwork here. Archived images are hidden from the active library but retained for recovery.</p>
     </div>
     {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     {message && <p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-800">{message}</p>}
@@ -155,6 +181,7 @@ export const StorefrontImageLibrary: React.FC = () => {
       <button type="button" aria-pressed={viewMode === "duplicates"} onClick={() => { setViewMode("duplicates"); void loadDuplicateGroups(0); }} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs font-medium text-[#563568]">Duplicate groups</button>
       <button type="button" aria-pressed={viewMode === "usage"} onClick={() => { setViewMode("usage"); void loadUsage(0); }} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs font-medium text-[#563568]">Image usage</button>
       <button type="button" aria-pressed={viewMode === "cleanup"} onClick={() => { setViewMode("cleanup"); void loadCleanup(); }} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs font-medium text-[#563568]">Cleanup review</button>
+      <button type="button" aria-pressed={viewMode === "archived"} onClick={() => { setViewMode("archived"); void loadArchived(); }} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs font-medium text-[#563568]">Archived</button>
     </div>
     <form onSubmit={applySearch} className="flex flex-wrap gap-2">
       <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search image filename…" aria-label="Search image filename" className="min-h-11 min-w-0 flex-1 rounded-lg border border-[#E7DCEB] px-3 text-sm" />
@@ -179,13 +206,16 @@ export const StorefrontImageLibrary: React.FC = () => {
       </label>
     </div>
     <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#6F6475]">
-      <span>{viewMode === "duplicates" ? `${duplicateTotal} duplicate groups` : viewMode === "usage" || viewMode === "cleanup" ? `${usageTotal} stored images · ${viewMode === "cleanup" ? "cleanup review" : "usage report"}` : `${total} matching stored images`}</span>
+      <span>{viewMode === "duplicates" ? `${duplicateTotal} duplicate groups` : viewMode === "usage" || viewMode === "cleanup" ? `${usageTotal} stored images · ${viewMode === "cleanup" ? "cleanup review" : "usage report"}` : viewMode === "archived" ? `${archivedAssets.length} archived images · recoverable` : `${total} matching stored images`}</span>
       <div className="flex gap-2">
         <button type="button" disabled={loading} onClick={clearFilters} className="rounded-lg border border-[#DCCDE5] px-3 py-2 text-[#563568]">Clear filters</button>
-        <button type="button" disabled={loading} onClick={() => viewMode === "cleanup" ? void loadCleanup() : viewMode === "usage" ? void loadUsage(0) : viewMode === "duplicates" ? void loadDuplicateGroups(0) : void load()} className="rounded-lg border border-[#DCCDE5] px-3 py-2 text-[#563568]">Refresh library</button>
+        <button type="button" disabled={loading} onClick={() => viewMode === "cleanup" ? void loadCleanup() : viewMode === "archived" ? void loadArchived() : viewMode === "usage" ? void loadUsage(0) : viewMode === "duplicates" ? void loadDuplicateGroups(0) : void load()} className="rounded-lg border border-[#DCCDE5] px-3 py-2 text-[#563568]">Refresh library</button>
       </div>
     </div>
-    {loading ? <p role="status" className="py-8 text-center text-sm text-[#6F6475]">Loading image library…</p> : viewMode === "cleanup" ? <div className="space-y-4">
+    {loading ? <p role="status" className="py-8 text-center text-sm text-[#6F6475]">Loading image library…</p> : viewMode === "archived" ? <div className="space-y-3">
+      <p className="rounded-lg border border-[#E7DCEB] bg-[#FBF8FC] p-3 text-xs text-[#6F6475]">Archived images are removed from the active library and public media URL, but their original bytes remain in Hostinger storage. Restore makes the original URL available again.</p>
+      {archivedAssets.length ? archivedAssets.map(asset => <article key={asset.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E7DCEB] p-3"><div className="min-w-0"><p className="truncate text-sm font-semibold text-[#302438]">{asset.fileName}</p><p className="mt-1 text-[11px] text-[#6F6475]">Archived {new Date(asset.archivedAt).toLocaleString("en-IN")} · {(asset.size / 1024).toFixed(1)} KB</p></div><button type="button" disabled={loading} onClick={() => void restoreArchived(asset)} className="min-h-10 rounded-lg border border-[#DCCDE5] px-3 text-xs font-medium text-[#563568]">Restore image</button></article>) : <p className="rounded-xl border border-dashed border-[#DCCDEB] p-8 text-center text-sm text-[#6F6475]">No archived images.</p>}
+    </div> : viewMode === "cleanup" ? <div className="space-y-4">
       <div className="rounded-xl border border-[#E7DCEB] bg-[#FBF8FC] p-4">
         <h3 className="text-sm font-semibold text-[#302438]">Safe cleanup review</h3>
         <p className="mt-1 text-xs leading-relaxed text-[#6F6475]">This screen identifies conservative review candidates only. A file is listed only when a fresh scan completed for every tracked source, it has no recorded reference, and it has no identical copies. Images in duplicate groups are excluded, even if currently unreferenced.</p>
@@ -204,7 +234,8 @@ export const StorefrontImageLibrary: React.FC = () => {
             <button type="button" onClick={() => void downloadBackup(asset)} className="min-h-10 rounded-lg bg-[#563568] px-3 text-xs font-medium text-white">Download backup copy</button>
             <button type="button" onClick={() => setSelected(asset)} className="min-h-10 rounded-lg border border-[#DCCDE5] px-3 text-xs font-medium text-[#563568]">Inspect image</button>
           </div>
-          <p className="mt-3 text-xs text-[#563568]">{backupConfirmed.includes(asset.id) ? "Backup download started. Confirm you have saved and checked the file before proceeding further." : "Download a backup before marking this candidate as reviewed."}</p>
+          <p className="mt-3 text-xs text-[#563568]">{backupConfirmed.includes(asset.id) ? "Backup download started and acknowledged for this session." : "Download a backup before archiving this image."}</p>
+          <button type="button" disabled={!backupConfirmed.includes(asset.id) || loading} onClick={() => void archiveCandidate(asset)} className="mt-2 min-h-10 rounded-lg border border-red-200 px-3 text-xs font-semibold text-red-700 disabled:opacity-40">Archive this image</button>
           {backupConfirmed.includes(asset.id) && <p className="mt-1 text-[11px] font-medium text-[#24613D]">Backup acknowledged for this review session.</p>}
         </div>
       </article>) : <p className="rounded-xl border border-dashed border-[#DCCDE5] p-8 text-center text-sm text-[#6F6475]">{usageCoverageComplete ? "No conservative cleanup candidates found. Duplicate files and uncertain references are intentionally excluded." : "Cleanup review is unavailable until every tracked source can be scanned."}</p>}
