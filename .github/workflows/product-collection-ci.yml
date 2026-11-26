@@ -7,6 +7,8 @@ on:
     paths:
       - "hostinger-api/productCollectionSchema.js"
       - "hostinger-api/productCollectionPolicy.js"
+      - "hostinger-api/curatedFavourites.js"
+      - "hostinger-api/exploreNow.js"
       - "hostinger-api/tests/productCollectionSchema.mysql.test.js"
       - ".github/workflows/product-collection-ci.yml"
   workflow_dispatch:
