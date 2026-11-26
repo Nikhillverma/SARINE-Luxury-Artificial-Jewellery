@@ -52,5 +52,7 @@ jobs:
           cache-dependency-path: hostinger-api/package-lock.json
       - name: Install backend dependencies
         run: npm ci
+      - name: Run complete backend regression suite
+        run: npm test
       - name: Test MariaDB range migration and isolation
         run: node --test tests/productCollectionSchema.mysql.test.js
