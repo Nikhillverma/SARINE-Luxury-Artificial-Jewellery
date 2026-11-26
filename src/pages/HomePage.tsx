@@ -129,7 +129,11 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   useEffect(() => {
     if (rangeFromUrl === "artificial" || rangeFromUrl === "demi-fine") {
       window.sessionStorage.setItem("sarine_product_range", rangeFromUrl);
+      setSelectedProductCollection(rangeFromUrl);
+      return;
     }
+    const storedRange = window.sessionStorage.getItem("sarine_product_range");
+    setSelectedProductCollection(storedRange === "artificial" || storedRange === "demi-fine" ? storedRange : undefined);
   }, [rangeFromUrl]);
   const [homepageLayout, setHomepageLayout] = useState<HomepageLayout>(defaultHomepageLayout);
   const [festivalCampaigns, setFestivalCampaigns] = useState<FestivalCampaign[]>([]);
