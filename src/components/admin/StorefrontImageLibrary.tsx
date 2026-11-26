@@ -82,16 +82,19 @@ export const StorefrontImageLibrary: React.FC = () => {
   const applySearch = (event: React.FormEvent) => {
     event.preventDefault();
     const next = search.trim();
+    setViewMode("all");
     setQuery(next);
     void load(0, next);
   };
 
   const applyFilters = (next: LibraryFilters) => {
+    setViewMode("all");
     setFilters(next);
     void load(0, query, next);
   };
 
   const clearFilters = () => {
+    setViewMode("all");
     setSearch(""); setQuery("");
     setFilters(DEFAULT_FILTERS);
     void load(0, "", DEFAULT_FILTERS);
@@ -142,7 +145,7 @@ export const StorefrontImageLibrary: React.FC = () => {
       <span>{viewMode === "duplicates" ? `${duplicateTotal} duplicate groups` : viewMode === "usage" ? `${usageTotal} stored images · usage report` : `${total} matching stored images`}</span>
       <div className="flex gap-2">
         <button type="button" disabled={loading} onClick={clearFilters} className="rounded-lg border border-[#DCCDE5] px-3 py-2 text-[#563568]">Clear filters</button>
-        <button type="button" disabled={loading} onClick={() => void load()} className="rounded-lg border border-[#DCCDE5] px-3 py-2 text-[#563568]">Refresh library</button>
+        <button type="button" disabled={loading} onClick={() => viewMode === "usage" ? void loadUsage(0) : viewMode === "duplicates" ? void loadDuplicateGroups(0) : void load()} className="rounded-lg border border-[#DCCDE5] px-3 py-2 text-[#563568]">Refresh library</button>
       </div>
     </div>
     {loading ? <p role="status" className="py-8 text-center text-sm text-[#6F6475]">Loading image library…</p> : viewMode === "usage" ? <div className="space-y-4">
