@@ -62,9 +62,28 @@ export const HomepageSectionManager: React.FC = () => {
   const [exploreBusy, setExploreBusy] = useState(false);
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
   const [previewVersion, setPreviewVersion] = useState(0);
+  const [previewSnapshot, setPreviewSnapshot] = useState<HomepageLayout | null>(null);
+  const [showPublishConfirmation, setShowPublishConfirmation] = useState(false);
 
   const ordered = useMemo(() => [...draft.sections].sort((a, b) => a.sortOrder - b.sortOrder), [draft]);
   const isPublished = JSON.stringify(draft) === JSON.stringify(published);
+  const hasPreviewedCurrentDraft = previewSnapshot !== null && JSON.stringify(draft) === JSON.stringify(previewSnapshot);
+  const sectionChanges = useMemo(() => {
+    const before = new Map(published.sections.map(section => [section.id, section]));
+    const after = new Map(draft.sections.map(section => [section.id, section]));
+    const changes: string[] = [];
+    for (const section of draft.sections) {
+      const previous = before.get(section.id);
+      const label = sectionLabels[section.id]?.title || section.id;
+      if (!previous) { changes.push(`${label}: added`); continue; }
+      if (previous.sortOrder !== section.sortOrder) changes.push(`${label}: position changed`);
+      if (previous.enabled !== section.enabled) changes.push(`${label}: ${section.enabled ? "shown" : "hidden"}`);
+      if (adjustableCarousels.has(section.id) && previous.carouselEnabled !== section.carouselEnabled) changes.push(`${label}: carousel ${section.carouselEnabled === false ? "off" : "on"}`);
+      if (adjustableCarousels.has(section.id) && (previous.cardsPerView ?? 5) !== (section.cardsPerView ?? 5)) changes.push(`${label}: desktop cards ${previous.cardsPerView ?? 5} → ${section.cardsPerView ?? 5}`);
+    }
+    for (const section of published.sections) if (!after.has(section.id)) changes.push(`${sectionLabels[section.id]?.title || section.id}: removed`);
+    return changes;
+  }, [draft, published]);
 
   const load = async () => {
     setLoading(true);
@@ -77,6 +96,8 @@ export const HomepageSectionManager: React.FC = () => {
       ]);
       setDraft(mergeKnownSections(result.draft));
       setPublished(mergeKnownSections(result.published));
+      setPreviewSnapshot(null);
+      setShowPublishConfirmation(false);
       setExploreDraft(explore.draft);
       setExplorePublished(explore.published);
       setProducts(catalogue);
@@ -114,20 +135,23 @@ export const HomepageSectionManager: React.FC = () => {
     updateSections(ordered.map(section => section.id === id ? { ...section, carouselEnabled } : section));
   };
 
-  const save = async () => {
+  const save = async (): Promise<boolean> => {
     setBusy(true); setError(""); setMessage("");
     try {
       const result = await hostingerStorefrontService.saveHomepageLayout(draft, collection === "shared" ? undefined : collection);
-      setDraft(result.draft);
+      const saved = mergeKnownSections(result.draft);
+      setDraft(saved);
+      setPreviewSnapshot(saved);
       setMessage("Draft saved. Customers will continue seeing the currently published homepage until you publish.");
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Homepage layout draft could not be saved.");
+      return false;
     } finally { setBusy(false); }
   };
 
   const saveAndRefreshPreview = async () => {
-    await save();
-    setPreviewVersion(value => value + 1);
+    if (await save()) setPreviewVersion(value => value + 1);
   };
 
   const saveExplore = async (publishAfterSave: boolean) => {
@@ -143,14 +167,24 @@ export const HomepageSectionManager: React.FC = () => {
     finally { setExploreBusy(false); }
   };
 
+  const requestPublish = () => {
+    if (!hasPreviewedCurrentDraft) {
+      setError("Save draft & refresh preview before publishing. This ensures you review the exact layout version that will go live.");
+      return;
+    }
+    setError("");
+    setShowPublishConfirmation(true);
+  };
+
   const publish = async () => {
-    setBusy(true); setError(""); setMessage("");
+    setBusy(true); setError(""); setMessage(""); setShowPublishConfirmation(false);
     try {
-      await hostingerStorefrontService.saveHomepageLayout(draft, collection === "shared" ? undefined : collection);
       const result = await hostingerStorefrontService.publishHomepageLayout(collection === "shared" ? undefined : collection);
-      setPublished(result.published);
-      setDraft(result.published);
-      setMessage("Homepage layout published successfully.");
+      const live = mergeKnownSections(result.published);
+      setPublished(live);
+      setDraft(live);
+      setPreviewSnapshot(live);
+      setMessage(`${collection === "shared" ? "Shared" : collection === "artificial" ? "Artificial" : "Demi-Fine"} homepage layout published successfully.`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Homepage layout could not be published.");
     } finally { setBusy(false); }
@@ -195,7 +229,7 @@ export const HomepageSectionManager: React.FC = () => {
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" disabled={busy || loading} onClick={() => void saveAndRefreshPreview()} className="rounded-lg bg-[#563568] px-4 py-2 text-xs font-medium text-white disabled:opacity-50">Save draft & refresh preview</button>
-        <span className="text-[11px] text-[#6F6475]">Draft layout only; other homepage content and product data remain on their currently published settings. Customers do not see draft changes until you publish.</span>
+        <span className="text-[11px] text-[#6F6475]">{hasPreviewedCurrentDraft ? "Preview is up to date with this saved draft." : "Preview needs refreshing after any draft changes. Customers continue seeing the published layout."}</span>
       </div>
     </div>
     {error && <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg p-3">{error}</p>}
@@ -262,9 +296,26 @@ export const HomepageSectionManager: React.FC = () => {
         <span className="self-center text-[11px] text-[#6F6475]">{JSON.stringify(exploreDraft) === JSON.stringify(explorePublished) ? "Published settings" : "Unpublished Explore Now changes"}</span>
       </div>
     </div>
+    <div className="rounded-xl border border-[#E7DCEB] bg-white p-4 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-[#302438]">Draft vs published comparison</h3>
+        <span className="text-xs text-[#6F6475]">{sectionChanges.length} change(s)</span>
+      </div>
+      {sectionChanges.length ? <ul className="space-y-1 text-xs text-[#6F6475]">{sectionChanges.map((change, index) => <li key={index}>• {change}</li>)}</ul> : <p className="text-xs text-[#6F6475]">The selected layout draft matches its published version.</p>}
+      <p className="text-[11px] text-[#6F6475]">This comparison covers section order, visibility and carousel settings for the selected homepage layout. It does not include Explore Now or separate Homepage Content settings.</p>
+    </div>
+    {showPublishConfirmation && <div className="rounded-xl border-2 border-[#B69ACF] bg-[#F7F0FA] p-4 space-y-3" role="alertdialog" aria-labelledby="homepage-publish-confirm-title" aria-describedby="homepage-publish-confirm-description">
+      <h3 id="homepage-publish-confirm-title" className="text-sm font-semibold text-[#302438]">Confirm homepage publication</h3>
+      <p id="homepage-publish-confirm-description" className="text-xs text-[#6F6475]">You are about to publish the <strong>{collection === "shared" ? "Shared (both collections)" : collection === "artificial" ? "Artificial" : "Demi-Fine"}</strong> homepage section layout. This will replace the currently published section order, visibility and carousel settings for this version.</p>
+      <p className="text-xs text-[#6F6475]">{sectionChanges.length ? `${sectionChanges.length} change(s) will go live.` : "No differences from the current published layout."} The preview was refreshed from this saved draft.</p>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" disabled={busy} onClick={() => void publish()} className="rounded-lg bg-[#563568] px-4 py-2 text-xs font-medium text-white disabled:opacity-50">Confirm and publish this version</button>
+        <button type="button" disabled={busy} onClick={() => setShowPublishConfirmation(false)} className="rounded-lg border border-[#DCCDE5] bg-white px-4 py-2 text-xs text-[#563568]">Cancel</button>
+      </div>
+    </div>}
     <div className="flex flex-wrap gap-2">
       <button type="button" disabled={busy || loading} onClick={() => void save()} className="px-4 py-2 rounded-lg border text-sm disabled:opacity-50">{busy ? "Saving…" : "Save draft"}</button>
-      <button type="button" disabled={busy || loading} onClick={() => void publish()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy ? "Publishing…" : "Publish homepage"}</button>
+      <button type="button" disabled={busy || loading || !hasPreviewedCurrentDraft} onClick={requestPublish} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy ? "Publishing…" : "Review & publish homepage"}</button>
       <button type="button" disabled={busy || loading} onClick={() => void load()} className="px-4 py-2 rounded-lg border text-sm disabled:opacity-50">Reload</button>
       <a href="/" target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg border text-sm">Preview storefront</a>
     </div>
