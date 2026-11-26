@@ -2,9 +2,14 @@ import { Router } from "express";
 import crypto from "node:crypto";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
+import { ensureCategoryCollectionSchema } from "./categoryCollectionSchema.js";
 
 const router = Router();
 router.use(requireAdminAuth);
+router.use(async (_req, _res, next) => {
+  try { await ensureCategoryCollectionSchema(); next(); }
+  catch (error) { next(error); }
+});
 
 const slugify = value => String(value || "")
   .normalize("NFKD").replace(/[\\u0300-\\u036f]/g, "")
@@ -19,12 +24,16 @@ function mapCategory(row) {
     description: row.description || "",
     image: row.image || "",
     isActive: Boolean(row.is_active),
-    sortOrder: Number(row.sort_order)
+    sortOrder: Number(row.sort_order),
+    categoryCollection: ["artificial", "demi-fine", "both"].includes(row.category_collection) ? row.category_collection : "both"
   };
 }
 
 function validate(body, partial = false) {
   const errors = [];
+  if (body.categoryCollection !== undefined && !["artificial", "demi-fine", "both"].includes(body.categoryCollection)) {
+    errors.push("Choose Artificial, Demi-Fine or Shared for this category.");
+  }
   if (!partial || body.name !== undefined) {
     if (typeof body.name !== "string" || !body.name.trim() || body.name.trim().length > 120) {
       errors.push("Category name is required and must be at most 120 characters.");
@@ -68,10 +77,10 @@ router.post("/", async (req, res, next) => {
     if (!slug) return res.status(400).json({ error: "A valid category slug is required." });
     const id = crypto.randomUUID();
     await pool.execute(
-      `INSERT INTO categories (id, slug, name, description, image, is_active, sort_order)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO categories (id, slug, name, description, image, is_active, sort_order, category_collection)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, slug, name, body.description?.trim() || "", body.image || "",
-       body.isActive === false ? 0 : 1, Number(body.sortOrder ?? 0)]
+       body.isActive === false ? 0 : 1, Number(body.sortOrder ?? 0), body.categoryCollection || "both"]
     );
     const [rows] = await pool.execute("SELECT * FROM categories WHERE id = ? LIMIT 1", [id]);
     res.status(201).json({ success: true, category: mapCategory(rows[0]) });
@@ -94,12 +103,13 @@ router.put("/:id", async (req, res, next) => {
     if (!slug) return res.status(400).json({ error: "A valid category slug is required." });
     await pool.execute(
       `UPDATE categories
-       SET slug = ?, name = ?, description = ?, image = ?, is_active = ?, sort_order = ?
+       SET slug = ?, name = ?, description = ?, image = ?, is_active = ?, sort_order = ?, category_collection = ?
        WHERE id = ?`,
       [slug, name, body.description === undefined ? existing.description : body.description.trim(),
        body.image === undefined ? existing.image : body.image,
        body.isActive === undefined ? (existing.isActive ? 1 : 0) : (body.isActive ? 1 : 0),
        body.sortOrder === undefined ? existing.sortOrder : Number(body.sortOrder),
+       body.categoryCollection === undefined ? existing.categoryCollection : body.categoryCollection,
        req.params.id]
     );
     const [rows] = await pool.execute("SELECT * FROM categories WHERE id = ? LIMIT 1", [req.params.id]);
