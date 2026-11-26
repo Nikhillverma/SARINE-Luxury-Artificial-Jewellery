@@ -125,6 +125,12 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     else next.delete('range');
     setRangeParams(next, { replace: false });
   };
+
+  useEffect(() => {
+    if (rangeFromUrl === "artificial" || rangeFromUrl === "demi-fine") {
+      window.sessionStorage.setItem("sarine_product_range", rangeFromUrl);
+    }
+  }, [rangeFromUrl]);
   const [homepageLayout, setHomepageLayout] = useState<HomepageLayout>(defaultHomepageLayout);
   const [festivalCampaigns, setFestivalCampaigns] = useState<FestivalCampaign[]>([]);
   const sectionConfig = (id: string) => homepageLayout.sections.find(section => section.id === id);
