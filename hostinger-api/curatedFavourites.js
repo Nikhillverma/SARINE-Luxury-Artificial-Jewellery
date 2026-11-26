@@ -73,11 +73,14 @@ function mapPublicProduct(row) {
   };
 }
 
-adminOnly.get("/", async (_req, res, next) => {
+function collectionFrom(value) { const v = String(value || "").trim().toLowerCase(); if (!v) return null; if (v !== "artificial" && v !== "demi-fine") throw new Error("Product collection must be artificial or demi-fine."); return v; }
+function collectionKey(base, collection) { return collection ? base + "_" + collection : base; }
+
+adminOnly.get("/", async (req, res, next) => {
   try {
     const [draft, published] = await Promise.all([
-      readCuration("curated_favourites_draft"),
-      readCuration("curated_favourites_published")
+      readCuration(collectionKey("curated_favourites_draft", collectionFrom(req.query.productCollection))),
+      readCuration(collectionKey("curated_favourites_published", collectionFrom(req.query.productCollection)))
     ]);
     res.set("Cache-Control", "no-store").json({ draft, published, maxProducts: MAX_CURATED_PRODUCTS });
   } catch (error) { next(error); }
@@ -86,7 +89,7 @@ adminOnly.get("/", async (_req, res, next) => {
 adminOnly.put("/draft", async (req, res, next) => {
   try {
     const draft = validateCuratedFavourites(req.body);
-    await writeCuration("curated_favourites_draft", draft);
+    await writeCuration(collectionKey("curated_favourites_draft", collectionFrom(req.body?.productCollection)), draft);
     res.set("Cache-Control", "no-store").json({ success: true, draft });
   } catch (error) {
     if (error instanceof Error && /curated|product|choose|valid|added/i.test(error.message)) {
@@ -96,10 +99,11 @@ adminOnly.put("/draft", async (req, res, next) => {
   }
 });
 
-adminOnly.post("/publish", async (_req, res, next) => {
+adminOnly.post("/publish", async (req, res, next) => {
   try {
-    const draft = await readCuration("curated_favourites_draft");
-    await writeCuration("curated_favourites_published", draft);
+    const collection = collectionFrom(req.body?.productCollection);
+    const draft = await readCuration(collectionKey("curated_favourites_draft", collection));
+    await writeCuration(collectionKey("curated_favourites_published", collection), draft);
     res.set("Cache-Control", "no-store").json({ success: true, published: draft });
   } catch (error) { next(error); }
 });
@@ -107,9 +111,8 @@ adminOnly.post("/publish", async (_req, res, next) => {
 publicRouter.get("/", async (req, res, next) => {
   try {
     await ensureProductCollectionSchema();
-    const productCollection = req.query.productCollection === undefined ? "" : String(req.query.productCollection);
-    if (productCollection && !["artificial", "demi-fine"].includes(productCollection)) return res.status(400).json({ error: "Product collection must be artificial or demi-fine." });
-    const curation = await readCuration("curated_favourites_published");
+    const productCollection = collectionFrom(req.query.productCollection);
+    const curation = await readCuration(collectionKey("curated_favourites_published", productCollection));
     if (!curation.productIds.length) {
       res.set("Cache-Control", "no-store").json({ products: [], configured: curation.configured === true });
       return;
@@ -118,7 +121,7 @@ publicRouter.get("/", async (req, res, next) => {
     const [rows] = await pool.execute(
       `SELECT * FROM products WHERE id IN (${placeholders}) AND status='active' AND stock > 0
          AND (? = '' OR product_collection = ?)`,
-      [...curation.productIds, productCollection, productCollection]
+      [...curation.productIds, productCollection || "", productCollection || ""]
     );
     const byId = new Map(rows.map((row) => [String(row.id), row]));
     const products = curation.productIds
