@@ -68,6 +68,7 @@ export const StorefrontImageLibrary: React.FC = () => {
       setFile(null);
       setSearch(""); setQuery("");
       setFilters(DEFAULT_FILTERS);
+      setViewMode("all");
       await load(0, "", DEFAULT_FILTERS);
       setMessage("Image uploaded and saved to Hostinger media storage.");
     } catch (e) { setError(e instanceof Error ? e.message : "Image upload failed."); }
