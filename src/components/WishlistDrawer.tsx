@@ -9,6 +9,7 @@ import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import type { Product } from '../types/product';
 import { formatInr } from '../utils/currency';
+import { getProductDetailHref } from '../utils/productLinks';
 import { X, Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
 
 export const WishlistDrawer: React.FC = () => {
@@ -113,7 +114,7 @@ export const WishlistDrawer: React.FC = () => {
                 <div key={product.id} className="py-4 first:pt-0 last:pb-0 flex gap-4">
                   {/* Image */}
                   <Link
-                    to={`/product/${product.slug}`}
+                    to={getProductDetailHref(product.slug, product.productCollection)}
                     onClick={closeWishlist}
                     className="w-20 h-24 bg-[var(--tint)] border border-[var(--border)] shrink-0 overflow-hidden rounded-xs"
                   >
@@ -129,7 +130,7 @@ export const WishlistDrawer: React.FC = () => {
                     <div>
                       <div className="flex items-start justify-between gap-2">
                         <Link
-                          to={`/product/${product.slug}`}
+                          to={getProductDetailHref(product.slug, product.productCollection)}
                           onClick={closeWishlist}
                           className="font-serif text-base text-[var(--heading)] hover:text-[var(--plum)] font-normal line-clamp-1 transition-colors"
                         >
