@@ -22,18 +22,19 @@ export const HomepageContentManager: React.FC = () => {
   const [preview, setPreview] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
 
-  const load = async () => {
+  const load = async (isCancelled: () => boolean = () => false) => {
     setLoading(true); setError(""); setMessage("");
     try {
       const result = await hostingerStorefrontService.getHomepageContent(collection || undefined);
+      if (isCancelled()) return;
       setDraft(result.draft);
       setPublished(result.published);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Homepage content could not be loaded.");
-    } finally { setLoading(false); }
+      if (!isCancelled()) setError(e instanceof Error ? e.message : "Homepage content could not be loaded.");
+    } finally { if (!isCancelled()) setLoading(false); }
   };
 
-  useEffect(() => { void load(); }, [collection]);
+  useEffect(() => { let cancelled = false; setDraft(DEFAULT_HOMEPAGE_CONTENT); setPublished(DEFAULT_HOMEPAGE_CONTENT); void load(() => cancelled); return () => { cancelled = true; }; }, [collection]);
 
   const update = (patch: Partial<HomepageContent>) => {
     setDraft(current => ({ ...current, ...patch }));
