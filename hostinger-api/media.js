@@ -196,7 +196,7 @@ adminMediaRouter.get("/usage", async (req, res, next) => {
     );
     const [countRows] = await pool.query("SELECT COUNT(*) AS total FROM media_assets");
     const usageById = new Map(mediaRows.map(row => [String(row.id), []]));
-    const mediaIdPattern = /(?:^|\\/)media\\/([a-f0-9-]{36})(?=$|[?#])/ig;
+    const mediaIdPattern = /(?:^|\/)media\/([a-f0-9-]{36})(?=$|[?#])/ig;
     const scanValue = (value, source, path = "") => {
       if (typeof value === "string") {
         mediaIdPattern.lastIndex = 0;
