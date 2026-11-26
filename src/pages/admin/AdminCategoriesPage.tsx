@@ -5,7 +5,7 @@ import { hostingerMediaService } from '../../services';
 import type { Category } from '../../types/category';
 import { Plus, RefreshCw, Edit2, Trash2, Upload, X, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
-const EMPTY_FORM = { name: '', description: '', image: '', sortOrder: '0', isActive: true, categoryCollection: 'both' as Category['categoryCollection'] };
+const EMPTY_FORM = { name: '', description: '', image: '', sortOrder: '0', isActive: true, categoryCollection: 'both' as Category['categoryCollection'], parentCategoryId: '' };
 
 function slugify(value: string): string {
   return value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
@@ -52,7 +52,8 @@ export const AdminCategoriesPage: React.FC = () => {
       image: category.image || '',
       sortOrder: String(category.sortOrder),
       isActive: category.isActive,
-      categoryCollection: category.categoryCollection || 'both'
+      categoryCollection: category.categoryCollection || 'both',
+      parentCategoryId: category.parentCategoryId || ''
     });
     setError('');
     setModalOpen(true);
@@ -95,7 +96,8 @@ export const AdminCategoriesPage: React.FC = () => {
         image: form.image,
         sortOrder,
         isActive: form.isActive,
-        categoryCollection: form.categoryCollection
+        categoryCollection: form.categoryCollection,
+        parentCategoryId: form.parentCategoryId || null
       };
       if (!payload.slug) throw new Error('Enter a valid category name.');
       if (editing) {
@@ -167,7 +169,7 @@ export const AdminCategoriesPage: React.FC = () => {
                   <tr key={category.id} className="hover:bg-[#FAF5FC]">
                     <td className="p-3"><div className="flex items-center gap-3">
                       {category.image ? <img src={category.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-[#EADFF0]"/> : <div className="w-12 h-12 rounded-lg bg-[#F7F0FA] flex items-center justify-center text-[#8E769E]">—</div>}
-                      <div><div className="font-semibold text-[#2C1838]">{category.name}</div><div className="text-[10px] text-[#8E769E] line-clamp-2">{category.description || 'No description'}</div></div>
+                      <div><div className="font-semibold text-[#2C1838]">{category.parentCategoryId ? <span className="text-[#8E769E] mr-1">↳</span> : null}{category.name}</div><div className="text-[10px] text-[#8E769E]">{category.parentCategoryId ? `Subcategory of ${categories.find(item => item.id === category.parentCategoryId)?.name || "another category"}` : "Top-level category"}</div><div className="text-[10px] text-[#8E769E] line-clamp-2">{category.description || 'No description'}</div></div>
                     </div></td>
                     <td className="p-3 font-mono text-[#705E7B]">{category.slug}</td>
                     <td className="p-3">{category.categoryCollection === "artificial" ? "Artificial" : category.categoryCollection === "demi-fine" ? "Demi-Fine" : "Shared"}</td>
@@ -193,6 +195,7 @@ export const AdminCategoriesPage: React.FC = () => {
             <form onSubmit={save} className="space-y-4 text-xs">
               <label className="block">Category name *<input required maxLength={120} value={form.name} onChange={e => setForm(current => ({ ...current, name: e.target.value }))} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
               <label className="block">Collection *<select required value={form.categoryCollection} onChange={e => setForm(current => ({ ...current, categoryCollection: e.target.value as Category['categoryCollection'] }))} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"><option value="artificial">Artificial Jewellery</option><option value="demi-fine">Demi-Fine Jewellery</option><option value="both">Shared — Both Collections</option></select><span className="mt-1 block text-[10px] text-[#8E769E]">Shared categories can be used by products in either range.</span></label>
+              <label className="block">Parent category (optional)<select value={form.parentCategoryId} onChange={e => setForm(current => ({ ...current, parentCategoryId: e.target.value }))} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"><option value="">Top-level category</option>{categories.filter(category => !category.parentCategoryId && category.id !== editing?.id && category.isActive && (category.categoryCollection === 'both' || form.categoryCollection === 'both' || category.categoryCollection === form.categoryCollection)).map(category => <option key={category.id} value={category.id}>{category.name} · {category.categoryCollection === 'artificial' ? 'Artificial' : category.categoryCollection === 'demi-fine' ? 'Demi-Fine' : 'Shared'}</option>)}</select><span className="mt-1 block text-[10px] text-[#8E769E]">Optional. Subcategories are limited to one level and must match the parent collection or use a Shared parent.</span></label>
               <label className="block">Description<textarea maxLength={2000} rows={3} value={form.description} onChange={e => setForm(current => ({ ...current, description: e.target.value }))} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
               <div className="grid grid-cols-2 gap-3">
                 <label className="block">Display order<input required type="number" min="0" step="1" value={form.sortOrder} onChange={e => setForm(current => ({ ...current, sortOrder: e.target.value }))} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
