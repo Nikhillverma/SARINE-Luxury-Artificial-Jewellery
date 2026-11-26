@@ -169,6 +169,8 @@ function publicRangeQuery(): string {
   return query ? "?" + query : "";
 }
 
+export type HomepageCategoryImages = Record<string, string>;
+
 export const hostingerStorefrontService = {
   getHomepageLayout: () => request<{ draft: HomepageLayout; published: HomepageLayout }>("/admin/homepage-layout"),
   getPublicHomepageLayout: () => request<{ layout: HomepageLayout }>("/homepage-layout"),
@@ -207,6 +209,9 @@ export const hostingerStorefrontService = {
   getPublicShopByGender: () => request<{ settings: ShopByGenderSettings }>("/storefront/shop-by-gender" + publicRangeQuery()),
   getOccasions: (collection?: "artificial" | "demi-fine") => request<{ occasions: OccasionCard[] }>("/admin/storefront/occasions" + collectionQuery(collection)),
   getPublicOccasions: () => request<{ occasions: OccasionCard[] }>("/storefront/occasions" + publicRangeQuery()),
+  getHomepageCategoryImages: (collection?: "artificial" | "demi-fine") => request<{ images: HomepageCategoryImages }>("/admin/storefront/category-images" + collectionQuery(collection)),
+  saveHomepageCategoryImages: (images: HomepageCategoryImages, collection?: "artificial" | "demi-fine") => request<{ success: boolean; images: HomepageCategoryImages }>("/admin/storefront/category-images", { method: "PUT", body: JSON.stringify({ images, productCollection: collection }) }),
+  getPublicHomepageCategoryImages: () => request<{ images: HomepageCategoryImages }>("/storefront/category-images" + publicRangeQuery()),
   saveOccasions: (occasions: OccasionCard[], collection?: "artificial" | "demi-fine") => request<{ success: boolean; occasions: OccasionCard[] }>("/admin/storefront/occasions", { method: "PUT", body: JSON.stringify({ occasions, productCollection: collection }) }),
   getBanners: (collection?: "artificial" | "demi-fine") => request<{ banners: StorefrontBanner[] }>("/admin/storefront/banners" + collectionQuery(collection)),
   getPublicBanners: () => request<{ banners: StorefrontBanner[] }>("/storefront/banners" + publicRangeQuery()),
