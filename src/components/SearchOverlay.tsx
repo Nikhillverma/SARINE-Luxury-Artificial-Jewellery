@@ -10,7 +10,6 @@ import { productService } from '../services';
 import { Product } from '../types/product';
 import { formatInr } from '../utils/currency';
 import { getCurrentProductCollection, getProductDetailHref } from '../utils/productLinks';
-import { getProductDetailHref } from '../utils/productLinks';
 import { Search, X, Clock, ArrowRight, Sparkles, Tag } from 'lucide-react';
 
 interface SearchOverlayProps {
