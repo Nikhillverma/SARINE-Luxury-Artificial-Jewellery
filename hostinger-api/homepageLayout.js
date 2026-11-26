@@ -53,14 +53,54 @@ async function writeSetting(key, value) {
   );
 }
 
+function layoutScheduleKey(collection) {
+  return collection ? "homepage_layout_schedule_" + collection : "homepage_layout_schedule";
+}
+async function readLayoutSchedule(collection) {
+  await ensureSchema();
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [layoutScheduleKey(collection)]);
+  if (!rows.length) return null;
+  try {
+    const schedule = normalizeEditorialSchedule(JSON.parse(rows[0].setting_value));
+    if (!schedule) return null;
+    return {
+      ...schedule,
+      content: validateHomepageLayout(schedule.content),
+      previousPublished: validateHomepageLayout(schedule.previousPublished)
+    };
+  } catch { return null; }
+}
+async function writeLayoutSchedule(collection, schedule) {
+  await ensureSchema();
+  if (!schedule) {
+    await pool.execute("DELETE FROM storefront_settings WHERE setting_key=?", [layoutScheduleKey(collection)]);
+    return;
+  }
+  await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [layoutScheduleKey(collection), JSON.stringify(schedule)]);
+}
+async function readLayoutRecord(collection) {
+  const [draft, published, schedule] = await Promise.all([
+    readLayout("draft", collection),
+    readLayout("published", collection),
+    readLayoutSchedule(collection)
+  ]);
+  return { draft, published, schedule };
+}
+function mapLayoutRecord(record, collection) {
+  return {
+    draft: record.draft,
+    published: record.published,
+    schedule: record.schedule ? { startsAtUtc: record.schedule.startsAtUtc, endsAtUtc: record.schedule.endsAtUtc } : null,
+    scheduleStatus: getEditorialScheduleStatus(record.schedule),
+    collection: collection || "shared"
+  };
+}
+
 adminOnly.get("/", async (req, res, next) => {
   try {
     const collection = collectionFrom(req.query.productCollection);
-    const [draft, published] = await Promise.all([
-      readLayout("draft", collection),
-      readLayout("published", collection)
-    ]);
-    res.set("Cache-Control", "no-store").json({ draft, published, collection: collection || "shared" });
+    const record = await readLayoutRecord(collection);
+    res.set("Cache-Control", "no-store").json(mapLayoutRecord(record, collection));
   } catch (error) { if (error instanceof Error && /product collection/i.test(error.message)) return res.status(400).json({ error: error.message }); next(error); }
 });
 
@@ -78,19 +118,43 @@ adminOnly.put("/draft", async (req, res, next) => {
   }
 });
 
-adminOnly.post("/publish", async (_req, res, next) => {
+adminOnly.post("/publish", async (req, res, next) => {
   try {
-    const collection = collectionFrom(_req.body?.productCollection);
+    const collection = collectionFrom(req.body?.productCollection);
     const draft = await readLayout("draft", collection);
     await writeSetting(layoutSettingKey("published", collection), draft);
-    res.set("Cache-Control", "no-store").json({ success: true, published: draft, collection: collection || "shared" });
+    await writeLayoutSchedule(collection, null);
+    res.set("Cache-Control", "no-store").json({ success: true, published: draft, schedule: null, scheduleStatus: "none", collection: collection || "shared" });
   } catch (error) { if (error instanceof Error && /product collection/i.test(error.message)) return res.status(400).json({ error: error.message }); next(error); }
+});
+
+adminOnly.post("/schedule", async (req, res, next) => {
+  try {
+    const collection = collectionFrom(req.body?.productCollection);
+    const record = await readLayoutRecord(collection);
+    const schedule = createEditorialSchedule(req.body || {}, record.draft, record.published);
+    await writeLayoutSchedule(collection, schedule);
+    res.set("Cache-Control", "no-store").json({ ...mapLayoutRecord({ ...record, schedule }, collection), success: true });
+  } catch (error) {
+    if (error instanceof Error && /date|time|future|expiry|end/i.test(error.message)) return res.status(400).json({ error: error.message });
+    next(error);
+  }
+});
+
+adminOnly.post("/schedule/cancel", async (req, res, next) => {
+  try {
+    const collection = collectionFrom(req.body?.productCollection);
+    await writeLayoutSchedule(collection, null);
+    const record = await readLayoutRecord(collection);
+    res.set("Cache-Control", "no-store").json({ ...mapLayoutRecord(record, collection), success: true });
+  } catch (error) { next(error); }
 });
 
 publicRouter.get("/", async (req, res, next) => {
   try {
     const collection = collectionFrom(req.query.productCollection);
-    const layout = await readLayout("published", collection);
+    const record = await readLayoutRecord(collection);
+    const layout = getEffectiveEditorial(record);
     res.set("Cache-Control", "no-store").json({ layout, collection: collection || "shared" });
   } catch (error) { if (error instanceof Error && /product collection/i.test(error.message)) return res.status(400).json({ error: error.message }); next(error); }
 });
