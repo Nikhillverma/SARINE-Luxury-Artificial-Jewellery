@@ -10,6 +10,7 @@ const HomepageSectionManager = React.lazy(() => import("../../components/admin/H
 const HomepageContentManager = React.lazy(() => import("../../components/admin/HomepageContentManager").then(module => ({ default: module.HomepageContentManager })));
 const HomepageCategoryImagesManager = React.lazy(() => import("../../components/admin/HomepageCategoryImagesManager").then(module => ({ default: module.HomepageCategoryImagesManager })));
 const CmsPagesManager = React.lazy(() => import("../../components/admin/CmsPagesManager").then(module => ({ default: module.CmsPagesManager })));
+const StorefrontImageLibrary = React.lazy(() => import("../../components/admin/StorefrontImageLibrary").then(module => ({ default: module.StorefrontImageLibrary })));
 const SiteChromeManager = React.lazy(() => import("../../components/admin/SiteChromeManager").then(module => ({ default: module.SiteChromeManager })));
 import { hostingerMediaService } from "../../services";
 import { hostingerStorefrontService, type StorefrontBanner, type EditorialContent, type ProductReview } from "../../services/hostinger/hostingerStorefrontService";
@@ -249,7 +250,8 @@ export const AdminStorefrontPage: React.FC = () => {
           ["announcements", "Announcements", "Trust ticker and promotions"],
           ["editorial", "Editorial", "Editorial feature content"],
           ["reviews", "Reviews", "Customer ratings and moderation"],
-          ["hero-banners", "Hero banners", "Homepage banner slides"]
+          ["hero-banners", "Hero banners", "Homepage banner slides"],
+          ["image-library", "Image library", "Browse and reuse uploaded storefront artwork"]
         ].map(([slug, label, description]) => (
           <Link key={slug} to={`/admin/storefront/${slug}`} aria-current={activeSection === slug ? "page" : undefined}
             className={`min-h-[92px] rounded-xl border p-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#563568] ${activeSection === slug ? "border-[#563568] bg-[#F7F0FA] ring-1 ring-[#563568]" : "border-[#E7DCEB] bg-white hover:border-[#B69ACF] hover:bg-[#FCFAFD]"}`}>
@@ -272,6 +274,7 @@ export const AdminStorefrontPage: React.FC = () => {
         {activeSection === "homepage-content" && <div id="homepage-content" className="scroll-mt-24"><HomepageContentManager /></div>}
         {activeSection === "category-images" && <div id="category-images" className="scroll-mt-24"><HomepageCategoryImagesManager /></div>}
         {activeSection === "website-pages" && <div id="pages" className="scroll-mt-24"><CmsPagesManager /></div>}
+        {activeSection === "image-library" && <div id="image-library" className="scroll-mt-24"><StorefrontImageLibrary /></div>}
         {activeSection === "curated-favourites" && <div id="favourites" className="scroll-mt-24"><CuratedFavouritesManager /></div>}
         {activeSection === "explore-now" && <div id="explore-now" className="scroll-mt-24"><ExploreNowManager /></div>}
       </React.Suspense>
