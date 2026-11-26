@@ -160,7 +160,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       })
       .catch(error => console.warn("[HomePage] Curated Favourites unavailable; using the existing automatic fallback.", error));
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedProductCollection]);
 
   useEffect(() => {
     let cancelled = false;
@@ -174,7 +174,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       })
       .catch(error => console.warn("[HomePage] Explore Now unavailable.", error));
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedProductCollection]);
 
   // Storefront Data
   const [categories, setCategories] = useState<Category[]>([]);
