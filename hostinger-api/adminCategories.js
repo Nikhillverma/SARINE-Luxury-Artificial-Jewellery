@@ -31,6 +31,9 @@ function mapCategory(row) {
 
 function validate(body, partial = false) {
   const errors = [];
+  if (body.categoryCollection !== undefined && !["artificial", "demi-fine", "both"].includes(body.categoryCollection)) {
+    errors.push("Choose Artificial, Demi-Fine or Shared for this category.");
+  }
   if (!partial || body.name !== undefined) {
     if (typeof body.name !== "string" || !body.name.trim() || body.name.trim().length > 120) {
       errors.push("Category name is required and must be at most 120 characters.");
@@ -74,8 +77,8 @@ router.post("/", async (req, res, next) => {
     if (!slug) return res.status(400).json({ error: "A valid category slug is required." });
     const id = crypto.randomUUID();
     await pool.execute(
-      `INSERT INTO categories (id, slug, name, description, image, is_active, sort_order)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO categories (id, slug, name, description, image, is_active, sort_order, category_collection)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, slug, name, body.description?.trim() || "", body.image || "",
        body.isActive === false ? 0 : 1, Number(body.sortOrder ?? 0), body.categoryCollection || "both"]
     );
@@ -100,12 +103,13 @@ router.put("/:id", async (req, res, next) => {
     if (!slug) return res.status(400).json({ error: "A valid category slug is required." });
     await pool.execute(
       `UPDATE categories
-       SET slug = ?, name = ?, description = ?, image = ?, is_active = ?, sort_order = ?
+       SET slug = ?, name = ?, description = ?, image = ?, is_active = ?, sort_order = ?, category_collection = ?
        WHERE id = ?`,
       [slug, name, body.description === undefined ? existing.description : body.description.trim(),
        body.image === undefined ? existing.image : body.image,
        body.isActive === undefined ? (existing.isActive ? 1 : 0) : (body.isActive ? 1 : 0),
        body.sortOrder === undefined ? existing.sortOrder : Number(body.sortOrder),
+       body.categoryCollection === undefined ? existing.categoryCollection : body.categoryCollection,
        req.params.id]
     );
     const [rows] = await pool.execute("SELECT * FROM categories WHERE id = ? LIMIT 1", [req.params.id]);
