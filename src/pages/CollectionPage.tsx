@@ -104,6 +104,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     let isCancelled = false;
     async function loadProducts() {
       setLoading(true);
+      setAllProducts([]);
       try {
         const fetched = await productService.getProducts({
           // Let MariaDB return only the selected category instead of downloading
