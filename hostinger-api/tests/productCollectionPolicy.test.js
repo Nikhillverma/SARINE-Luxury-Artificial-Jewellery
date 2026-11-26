@@ -21,5 +21,6 @@ test("requires a collection for new products", () => {
 test("rejects unknown and explicitly cleared collections while preserving omitted legacy values", () => {
   assert.match(validateProductCollection("fine-jewellery"), /must be artificial or demi-fine/);
   assert.match(validateProductCollection(null), /must be artificial or demi-fine/);
+  assert.match(validateProductCollection(""), /must be artificial or demi-fine/);
   assert.equal(validateProductCollection(undefined), null);
 });
