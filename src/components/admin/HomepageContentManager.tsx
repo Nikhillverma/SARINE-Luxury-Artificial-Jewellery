@@ -21,6 +21,8 @@ export const HomepageContentManager: React.FC = () => {
   const [message, setMessage] = useState("");
   const [preview, setPreview] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
+  const [savedPreview, setSavedPreview] = useState<HomepageContent | null>(null);
+  const [showPublishConfirmation, setShowPublishConfirmation] = useState(false);
 
   const load = async (isCancelled: () => boolean = () => false) => {
     setLoading(true); setError(""); setMessage("");
@@ -29,6 +31,8 @@ export const HomepageContentManager: React.FC = () => {
       if (isCancelled()) return;
       setDraft(result.draft);
       setPublished(result.published);
+      setSavedPreview(null);
+      setShowPublishConfirmation(false);
     } catch (e) {
       if (!isCancelled()) setError(e instanceof Error ? e.message : "Homepage content could not be loaded.");
     } finally { if (!isCancelled()) setLoading(false); }
@@ -40,26 +44,33 @@ export const HomepageContentManager: React.FC = () => {
     setDraft(current => ({ ...current, ...patch }));
     setMessage("");
   };
-  const saveDraft = async () => {
+  const saveDraft = async (): Promise<boolean> => {
     setBusy(true); setError(""); setMessage("");
     try {
       const result = await hostingerStorefrontService.saveHomepageContent(draft, collection || undefined);
       setDraft(result.draft);
-      setMessage("Homepage content draft saved. The live homepage is unchanged until you publish.");
-    } catch (e) { setError(e instanceof Error ? e.message : "Homepage content draft could not be saved."); }
-    finally { setBusy(false); }
+      setSavedPreview(result.draft);
+      setPreview(true);
+      setShowPublishConfirmation(false);
+      setMessage("Draft saved. The preview now shows this exact saved version; customers still see the published content.");
+      return true;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Homepage content draft could not be saved.");
+      return false;
+    } finally { setBusy(false); }
   };
   const publish = async () => {
-    setBusy(true); setError(""); setMessage("");
+    setBusy(true); setError(""); setMessage(""); setShowPublishConfirmation(false);
     try {
-      await hostingerStorefrontService.saveHomepageContent(draft, collection || undefined);
       const result = await hostingerStorefrontService.publishHomepageContent(collection || undefined);
       setDraft(result.published);
       setPublished(result.published);
+      setSavedPreview(result.published);
       setMessage("Homepage content published successfully.");
     } catch (e) { setError(e instanceof Error ? e.message : "Homepage content could not be published."); }
     finally { setBusy(false); }
   };
+  const hasSavedPreview = savedPreview !== null && JSON.stringify(draft) === JSON.stringify(savedPreview);
   const uploadStoryImage = async (file?: File) => {
     if (!file) return;
     setUploading(true); setError(""); setMessage("");
@@ -72,6 +83,14 @@ export const HomepageContentManager: React.FC = () => {
   };
 
   const isPublished = JSON.stringify(draft) === JSON.stringify(published);
+  const contentChanges = [
+    ["Shop by Price", draft.price, published.price],
+    ["Our Story", draft.story, published.story],
+    ["Jewellery Care Guide", draft.care, published.care],
+    ["Stay in Touch", draft.contact, published.contact]
+  ].filter(([, current, live]) => JSON.stringify(current) !== JSON.stringify(live)).map(([label]) => label as string);
+  const previewContent = savedPreview || draft;
+  const selectedVersion = collection === "artificial" ? "Artificial" : collection === "demi-fine" ? "Demi-Fine" : "Shared (both collections)";
   const input = (value: string, onChange: (value: string) => void, maxLength: number, placeholder = "") =>
     <input value={value} maxLength={maxLength} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={fieldClass} />;
   const textarea = (value: string, onChange: (value: string) => void, maxLength: number, rows = 3) =>
@@ -82,7 +101,7 @@ export const HomepageContentManager: React.FC = () => {
       <div>
         <h2 className="font-semibold text-[#2C1838]">Homepage Content Editor</h2>
         <p className="mt-1 max-w-3xl text-xs leading-relaxed text-[#6F6475]">Edit the actual copy, buttons, destinations, story image and care cards used by the homepage. Changes are saved as a draft first; publishing updates the customer-facing content.</p>
-        <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={collection} disabled={loading || busy || uploading} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global content)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
+        <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={collection} disabled={loading || busy || uploading} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Shared (shown in both collections)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
       </div>
       <span className={isPublished ? "rounded-full bg-green-50 px-3 py-1 text-xs text-green-700" : "rounded-full bg-amber-50 px-3 py-1 text-xs text-amber-800"}>{isPublished ? "Published version" : "Unpublished changes"}</span>
     </div>
@@ -165,7 +184,7 @@ export const HomepageContentManager: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="font-semibold text-[#563568]">Live-style homepage preview</h3>
-            <p className="mt-1 text-xs text-[#6F6475]">A visual rendering of your four edited sections using the storefront layout. Draft only — nothing is published.</p>
+            <p className="mt-1 text-xs text-[#6F6475]">A visual rendering of the saved content version for ${selectedVersion}. Draft only — nothing is published.</p>
           </div>
           <div className="inline-flex rounded-lg border border-[#DCCDE5] bg-white p-1" role="group" aria-label="Preview screen size">
             <button type="button" aria-pressed={previewDevice === "desktop"} onClick={() => setPreviewDevice("desktop")} className={previewDevice === "desktop" ? "min-h-10 rounded-md bg-[#563568] px-3 text-xs font-medium text-white" : "min-h-10 rounded-md px-3 text-xs text-[#563568]"}>Desktop</button>
@@ -180,11 +199,11 @@ export const HomepageContentManager: React.FC = () => {
             </div>
 
             <section className="border-b border-[#E7DCEB] bg-white px-4 py-7 text-center sm:px-8 sm:py-9">
-              <span className="mb-2 block text-[9px] font-medium uppercase tracking-[0.25em] text-[#6F6475]">{draft.price.eyebrow}</span>
-              <h4 className="font-serif text-2xl font-normal text-[#302438] sm:text-3xl">{draft.price.title}</h4>
-              <p className="mx-auto mt-2 max-w-xl text-xs leading-relaxed text-[#6F6475]">{draft.price.description}</p>
+              <span className="mb-2 block text-[9px] font-medium uppercase tracking-[0.25em] text-[#6F6475]">{previewContent.price.eyebrow}</span>
+              <h4 className="font-serif text-2xl font-normal text-[#302438] sm:text-3xl">{previewContent.price.title}</h4>
+              <p className="mx-auto mt-2 max-w-xl text-xs leading-relaxed text-[#6F6475]">{previewContent.price.description}</p>
               <div className="mx-auto mt-5 flex max-w-2xl flex-wrap items-center justify-center gap-2">
-                {draft.price.links.map((link, index) => <span key={index} className="rounded-full border border-[#E7DCEB] bg-white px-4 py-2.5 text-[10px] font-medium text-[#302438] shadow-sm">{link.label}</span>)}
+                {previewContent.price.links.map((link, index) => <span key={index} className="rounded-full border border-[#E7DCEB] bg-white px-4 py-2.5 text-[10px] font-medium text-[#302438] shadow-sm">{link.label}</span>)}
               </div>
             </section>
 
@@ -192,18 +211,18 @@ export const HomepageContentManager: React.FC = () => {
               <div className="grid grid-cols-1 items-center gap-5 lg:grid-cols-12 lg:gap-8">
                 <div className="lg:col-span-5">
                   <div className="aspect-[4/3] overflow-hidden border border-[#E7DCEB] bg-[#EBDFF2] sm:aspect-[1/1]">
-                    <img src={draft.story.imageUrl} alt="Our Story draft" className="h-full w-full object-cover" />
+                    <img src={previewContent.story.imageUrl} alt="Our Story draft" className="h-full w-full object-cover" />
                   </div>
                 </div>
                 <div className="flex flex-col items-start gap-6 md:flex-row lg:col-span-7 lg:gap-8">
                   <div className="min-w-0 flex-1">
-                    <span className="mb-2 block text-[9px] font-medium uppercase tracking-[0.25em] text-[#6F6475]">{draft.story.eyebrow}</span>
-                    <h4 className="font-serif text-2xl font-normal leading-tight text-[#302438] sm:text-3xl">{draft.story.title}</h4>
-                    {draft.story.paragraphs.map((paragraph, index) => <p key={index} className="mt-3 text-xs leading-relaxed text-[#6F6475]">{paragraph}</p>)}
-                    <div className="mt-5 inline-flex items-center gap-2 rounded-sm bg-[#563568] px-5 py-3 text-[10px] font-medium text-white">{draft.story.ctaText}<ArrowRight size={13} /></div>
+                    <span className="mb-2 block text-[9px] font-medium uppercase tracking-[0.25em] text-[#6F6475]">{previewContent.story.eyebrow}</span>
+                    <h4 className="font-serif text-2xl font-normal leading-tight text-[#302438] sm:text-3xl">{previewContent.story.title}</h4>
+                    {previewContent.story.paragraphs.map((paragraph, index) => <p key={index} className="mt-3 text-xs leading-relaxed text-[#6F6475]">{paragraph}</p>)}
+                    <div className="mt-5 inline-flex items-center gap-2 rounded-sm bg-[#563568] px-5 py-3 text-[10px] font-medium text-white">{previewContent.story.ctaText}<ArrowRight size={13} /></div>
                   </div>
                   <div className="w-full space-y-4 border-t border-[#E7DCEB] pt-4 md:w-56 md:border-l md:border-t-0 md:pl-5 md:pt-1">
-                    {draft.story.pillars.map((pillar, index) => {
+                    {previewContent.story.pillars.map((pillar, index) => {
                       const PillarIcon = [Gem, Sparkles, ShieldCheck][index] || Gem;
                       return <div key={index} className="flex items-start gap-3">
                         <span className="shrink-0 border border-[#E7DCEB] bg-[#FAF5FC] p-2 text-[#563568]"><PillarIcon size={16} strokeWidth={1.5} /></span>
@@ -217,12 +236,12 @@ export const HomepageContentManager: React.FC = () => {
 
             <section className="border-t border-[#E7DCEB] bg-white px-4 py-7 sm:px-8 sm:py-9">
               <div className="mx-auto mb-6 max-w-2xl text-center">
-                <span className="mb-2 block text-[9px] font-medium uppercase tracking-[0.25em] text-[#6F6475]">{draft.care.eyebrow}</span>
-                <h4 className="font-serif text-2xl font-normal text-[#302438] sm:text-3xl">{draft.care.title}</h4>
-                <p className="mt-2 text-xs leading-relaxed text-[#6F6475]">{draft.care.description}</p>
+                <span className="mb-2 block text-[9px] font-medium uppercase tracking-[0.25em] text-[#6F6475]">{previewContent.care.eyebrow}</span>
+                <h4 className="font-serif text-2xl font-normal text-[#302438] sm:text-3xl">{previewContent.care.title}</h4>
+                <p className="mt-2 text-xs leading-relaxed text-[#6F6475]">{previewContent.care.description}</p>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {draft.care.steps.map((step, index) => <div key={index} className="space-y-2 border border-[#E7DCEB] bg-[#FAF5FC] p-4 text-center">
+                {previewContent.care.steps.map((step, index) => <div key={index} className="space-y-2 border border-[#E7DCEB] bg-[#FAF5FC] p-4 text-center">
                   <span className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-[#563568] font-serif text-xs text-white">{index + 1}</span>
                   <h5 className="font-serif text-base text-[#302438]">{step.title}</h5>
                   <p className="text-[10px] leading-relaxed text-[#6F6475]">{step.description}</p>
@@ -232,23 +251,43 @@ export const HomepageContentManager: React.FC = () => {
 
             <section className="bg-[#F7F0FA] px-4 py-7 text-center sm:px-8 sm:py-9">
               <div className="mx-auto max-w-[620px]">
-                <span className="mb-2 block text-[9px] font-medium uppercase tracking-[0.25em] text-[#6F6475]">{draft.contact.eyebrow}</span>
-                <h4 className="font-serif text-2xl font-normal text-[#302438] sm:text-3xl">{draft.contact.title}</h4>
-                <p className="mt-3 text-xs leading-relaxed text-[#6F6475]">{draft.contact.description} <span className="font-medium text-[#563568] underline underline-offset-4">{draft.contact.linkText}</span>.</p>
+                <span className="mb-2 block text-[9px] font-medium uppercase tracking-[0.25em] text-[#6F6475]">{previewContent.contact.eyebrow}</span>
+                <h4 className="font-serif text-2xl font-normal text-[#302438] sm:text-3xl">{previewContent.contact.title}</h4>
+                <p className="mt-3 text-xs leading-relaxed text-[#6F6475]">{previewContent.contact.description} <span className="font-medium text-[#563568] underline underline-offset-4">{previewContent.contact.linkText}</span>.</p>
               </div>
             </section>
             <div className="border-t border-[#E7DCEB] px-4 py-3 text-center text-[9px] tracking-[0.12em] text-[#8B7C91]">SARINE · LUXURY ARTIFICIAL JEWELLERY</div>
           </div>
         </div>
-        <p className="text-[11px] text-[#6F6475]">Preview width: {previewDevice === "mobile" ? "390px mobile" : "fluid desktop (up to 1120px)"}. The customer-facing homepage remains unchanged until you choose Publish homepage content.</p>
+        <p className="text-[11px] text-[#6F6475]">Preview width: {previewDevice === "mobile" ? "390px mobile" : "fluid desktop (up to 1120px)"}. This preview shows the saved version only. Any edits made since saving are not included until you save and refresh again.</p>
       </section>}
 
-      <div className="flex flex-wrap items-center gap-2 border-t border-[#E7DCEB] pt-4">
-        <button type="button" disabled={busy || uploading || loading} onClick={() => void saveDraft()} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm font-medium text-[#563568] disabled:opacity-50">{busy ? "Saving…" : "Save draft"}</button>
-        <button type="button" disabled={busy || uploading || loading} onClick={() => void publish()} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50">{busy ? "Publishing…" : "Publish homepage content"}</button>
-        <button type="button" disabled={busy || uploading || loading} onClick={() => setPreview(value => !value)} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm text-[#563568]">{preview ? "Hide preview" : "Preview draft"}</button>
-        <button type="button" disabled={busy || uploading || loading} onClick={() => void load()} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm text-[#563568]">Reload saved content</button>
-        <span className="text-[11px] text-[#6F6475]">Draft and published content are stored separately in MariaDB.</span>
+      <div className="space-y-3 border-t border-[#E7DCEB] pt-4">
+        <div className="rounded-xl border border-[#E7DCEB] bg-[#FCFAFD] p-4 space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold text-[#302438]">Draft vs published comparison</h3>
+            <span className="text-xs text-[#6F6475]">{contentChanges.length} changed section(s)</span>
+          </div>
+          {contentChanges.length ? <ul className="space-y-1 text-xs text-[#6F6475]">{contentChanges.map(label => <li key={label}>• {label} has unpublished changes</li>)}</ul> : <p className="text-xs text-[#6F6475]">The selected homepage content matches its published version.</p>}
+          <p className="text-[11px] text-[#6F6475]">Comparison covers all editable text, links, story image and care cards for this content version.</p>
+          <p className="text-[11px] text-[#6F6475]">{hasSavedPreview ? "Saved preview is up to date." : "Save draft & refresh preview after any edits before publishing."}</p>
+        </div>
+        {showPublishConfirmation && <div className="rounded-xl border-2 border-[#B69ACF] bg-[#F7F0FA] p-4 space-y-3" role="alertdialog" aria-labelledby="content-publish-confirm-title" aria-describedby="content-publish-confirm-description">
+          <h3 id="content-publish-confirm-title" className="text-sm font-semibold text-[#302438]">Confirm homepage content publication</h3>
+          <p id="content-publish-confirm-description" className="text-xs text-[#6F6475]">You are publishing the <strong>{selectedVersion}</strong> content version. This updates Shop by Price, Our Story, Jewellery Care Guide and Stay in Touch. The other collection and homepage section layout are not changed.</p>
+          <p className="text-xs text-[#6F6475]">{contentChanges.length} section(s) differ from the current published content.</p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" disabled={busy} onClick={() => void publish()} className="rounded-lg bg-[#563568] px-4 py-2.5 text-xs font-medium text-white disabled:opacity-50">Confirm and publish {selectedVersion}</button>
+            <button type="button" disabled={busy} onClick={() => setShowPublishConfirmation(false)} className="rounded-lg border border-[#DCCDE5] bg-white px-4 py-2.5 text-xs text-[#563568]">Cancel</button>
+          </div>
+        </div>}
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" disabled={busy || uploading || loading} onClick={() => void saveDraft()} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm font-medium text-[#563568] disabled:opacity-50">{busy ? "Saving…" : "Save draft & refresh preview"}</button>
+          <button type="button" disabled={busy || uploading || loading || !hasSavedPreview} onClick={() => { setError(""); setShowPublishConfirmation(true); }} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50">{busy ? "Publishing…" : "Review & publish content"}</button>
+          <button type="button" disabled={busy || uploading || loading || !savedPreview} onClick={() => setPreview(value => !value)} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm text-[#563568]">{preview ? "Hide preview" : "Show saved preview"}</button>
+          <button type="button" disabled={busy || uploading || loading} onClick={() => void load()} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm text-[#563568]">Reload saved content</button>
+        </div>
+        <p className="text-[11px] text-[#6F6475]">Draft and published content are stored separately in MariaDB. Customers see no changes until you confirm publication.</p>
       </div>
     </>}
   </section>;
