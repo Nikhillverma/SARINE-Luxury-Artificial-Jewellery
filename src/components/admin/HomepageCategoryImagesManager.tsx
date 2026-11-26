@@ -13,20 +13,21 @@ export const HomepageCategoryImagesManager: React.FC = () => {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const load = async () => {
+  const load = async (isCancelled: () => boolean = () => false) => {
     setLoading(true); setError(""); setMessage("");
     try {
       const [categoryList, result] = await Promise.all([
         categoryService.getCategories({ activeOnly: true }),
         hostingerStorefrontService.getHomepageCategoryImages(collection || undefined)
       ]);
+      if (isCancelled()) return;
       setCategories(categoryList);
       setImages(result.images || {});
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Homepage category images could not be loaded.");
-    } finally { setLoading(false); }
+      if (!isCancelled()) setError(e instanceof Error ? e.message : "Homepage category images could not be loaded.");
+    } finally { if (!isCancelled()) setLoading(false); }
   };
-  useEffect(() => { void load(); }, [collection]);
+  useEffect(() => { let cancelled = false; setImages({}); void load(() => cancelled); return () => { cancelled = true; }; }, [collection]);
 
   const upload = async (slug: string, file?: File) => {
     if (!file) return;
