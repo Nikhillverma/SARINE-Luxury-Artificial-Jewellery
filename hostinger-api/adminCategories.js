@@ -36,6 +36,10 @@ function validate(body, partial = false) {
   if (body.categoryCollection !== undefined && !["artificial", "demi-fine", "both"].includes(body.categoryCollection)) {
     errors.push("Choose Artificial, Demi-Fine or Shared for this category.");
   }
+  if (body.parentCategoryId !== undefined && body.parentCategoryId !== null &&
+      (typeof body.parentCategoryId !== "string" || !body.parentCategoryId.trim() || body.parentCategoryId.length > 64)) {
+    errors.push("Choose a valid parent category or leave this category at the top level.");
+  }
   if (!partial || body.name !== undefined) {
     if (typeof body.name !== "string" || !body.name.trim() || body.name.trim().length > 120) {
       errors.push("Category name is required and must be at most 120 characters.");
@@ -135,13 +139,13 @@ router.put("/:id", async (req, res, next) => {
     if (!slug) return res.status(400).json({ error: "A valid category slug is required." });
     await pool.execute(
       `UPDATE categories
-       SET slug = ?, name = ?, description = ?, image = ?, is_active = ?, sort_order = ?, category_collection = ?
+       SET slug = ?, name = ?, description = ?, image = ?, is_active = ?, sort_order = ?, category_collection = ?, parent_category_id = ?
        WHERE id = ?`,
       [slug, name, body.description === undefined ? existing.description : body.description.trim(),
        body.image === undefined ? existing.image : body.image,
        body.isActive === undefined ? (existing.isActive ? 1 : 0) : (body.isActive ? 1 : 0),
        body.sortOrder === undefined ? existing.sortOrder : Number(body.sortOrder),
-       body.categoryCollection === undefined ? existing.categoryCollection : body.categoryCollection,
+       categoryCollection, parentCategoryId,
        req.params.id]
     );
     const [rows] = await pool.execute("SELECT * FROM categories WHERE id = ? LIMIT 1", [req.params.id]);
