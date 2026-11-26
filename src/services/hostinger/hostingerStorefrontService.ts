@@ -174,16 +174,16 @@ export type HomepageCategoryImages = Record<string, string>;
 export const hostingerStorefrontService = {
   getHomepageLayout: () => request<{ draft: HomepageLayout; published: HomepageLayout }>("/admin/homepage-layout"),
   getPublicHomepageLayout: () => request<{ layout: HomepageLayout }>("/homepage-layout"),
-  getCuratedFavourites: () => request<{ draft: CuratedFavouritesConfig; published: CuratedFavouritesConfig; maxProducts: number }>("/admin/curated-favourites"),
-  saveCuratedFavourites: (config: CuratedFavouritesConfig) =>
-    request<{ success: boolean; draft: CuratedFavouritesConfig }>("/admin/curated-favourites/draft", { method: "PUT", body: JSON.stringify(config) }),
-  publishCuratedFavourites: () =>
-    request<{ success: boolean; published: CuratedFavouritesConfig }>("/admin/curated-favourites/publish", { method: "POST" }),
+  getCuratedFavourites: (collection?: "artificial" | "demi-fine") => request<{ draft: CuratedFavouritesConfig; published: CuratedFavouritesConfig; maxProducts: number }>("/admin/curated-favourites" + collectionQuery(collection)),
+  saveCuratedFavourites: (config: CuratedFavouritesConfig, collection?: "artificial" | "demi-fine") =>
+    request<{ success: boolean; draft: CuratedFavouritesConfig }>("/admin/curated-favourites/draft", { method: "PUT", body: JSON.stringify({ ...config, productCollection: collection }) }),
+  publishCuratedFavourites: (collection?: "artificial" | "demi-fine") =>
+    request<{ success: boolean; published: CuratedFavouritesConfig }>("/admin/curated-favourites/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
   getPublicCuratedFavourites: () =>
     request<{ products: import("../../types/product").Product[]; configured: boolean }>("/curated-favourites" + publicRangeQuery()),
-  getExploreNow: () => request<{ draft: ExploreNowConfig; published: ExploreNowConfig; maxProducts: number }>("/admin/explore-now"),
-  saveExploreNow: (config: ExploreNowConfig) => request<{ success: boolean; draft: ExploreNowConfig }>("/admin/explore-now/draft", { method: "PUT", body: JSON.stringify(config) }),
-  publishExploreNow: () => request<{ success: boolean; published: ExploreNowConfig }>("/admin/explore-now/publish", { method: "POST" }),
+  getExploreNow: (collection?: "artificial" | "demi-fine") => request<{ draft: ExploreNowConfig; published: ExploreNowConfig; maxProducts: number }>("/admin/explore-now" + collectionQuery(collection)),
+  saveExploreNow: (config: ExploreNowConfig, collection?: "artificial" | "demi-fine") => request<{ success: boolean; draft: ExploreNowConfig }>("/admin/explore-now/draft", { method: "PUT", body: JSON.stringify({ ...config, productCollection: collection }) }),
+  publishExploreNow: (collection?: "artificial" | "demi-fine") => request<{ success: boolean; published: ExploreNowConfig }>("/admin/explore-now/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
   getPublicExploreNow: () => request<{ products: import("../../types/product").Product[]; displayCount: number; configured: boolean }>("/explore-now" + publicRangeQuery()),
   saveHomepageLayout: (layout: HomepageLayout) =>
     request<{ success: boolean; draft: HomepageLayout }>("/admin/homepage-layout/draft", { method: "PUT", body: JSON.stringify(layout) }),
