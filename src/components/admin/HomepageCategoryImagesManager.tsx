@@ -56,7 +56,7 @@ export const HomepageCategoryImagesManager: React.FC = () => {
       <h2 className="font-semibold text-[#2C1838]">Shop by Category Images</h2>
       <p className="mt-1 text-xs text-[#6F6475]">Replace the category tile artwork independently for Home, Artificial and Demi-Fine. Category names, links and layout remain unchanged.</p>
       <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version
-        <select value={collection} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm">
+        <select value={collection} disabled={loading || saving || Boolean(busySlug)} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm">
           <option value="">Home (existing global content)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option>
         </select>
       </label>
