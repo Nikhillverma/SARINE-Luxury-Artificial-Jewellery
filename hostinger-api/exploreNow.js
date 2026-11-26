@@ -125,10 +125,10 @@ publicRouter.get("/", async (req, res, next) => {
     }
     const ids = config.productIds.slice(0, MAX_EXPLORE_PRODUCTS);
     const placeholders = ids.map(() => "?").join(",");
+    const collectionCondition = productCollection ? " AND product_collection = ?" : "";
     const [rows] = await pool.execute(
-      `SELECT * FROM products WHERE id IN (${placeholders}) AND status='active' AND stock > 0
-         AND (? = '' OR product_collection = ?)`,
-      [...ids, productCollection || "", productCollection || ""]
+      `SELECT * FROM products WHERE id IN (${placeholders}) AND status='active' AND stock > 0${collectionCondition}`,
+      productCollection ? [...ids, productCollection] : ids
     );
     const products = shuffleInPlace(rows.map(mapPublicProduct));
     res.set("Cache-Control", "no-store").json({
