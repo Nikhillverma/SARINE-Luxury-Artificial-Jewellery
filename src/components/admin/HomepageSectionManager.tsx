@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { hostingerStorefrontService, type HomepageLayout, type ExploreNowConfig } from "../../services/hostinger/hostingerStorefrontService";
+import { hostingerStorefrontService, type HomepageLayout, type ExploreNowConfig, type EditorialSchedule, type EditorialScheduleStatus } from "../../services/hostinger/hostingerStorefrontService";
 import { adminProductService } from "../../services";
 import type { Product } from "../../types/product";
 
@@ -48,6 +48,21 @@ function mergeKnownSections(layout: HomepageLayout): HomepageLayout {
   return { version: 1, sections: merged.map((section, sortOrder) => ({ ...section, sortOrder })) };
 }
 
+function toLocalDateTimeInput(value: string | null | undefined): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "";
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+function localDateTimeToUtc(value: string): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : null;
+}
+function collectionLabel(collection: "shared" | "artificial" | "demi-fine"): string {
+  return collection === "shared" ? "Shared (both collections)" : collection === "artificial" ? "Artificial" : "Demi-Fine";
+}
+
 export const HomepageSectionManager: React.FC = () => {
   const [collection, setCollection] = useState<"shared" | "artificial" | "demi-fine">("shared");
   const [draft, setDraft] = useState<HomepageLayout>(defaultLayout);
@@ -64,6 +79,11 @@ export const HomepageSectionManager: React.FC = () => {
   const [previewVersion, setPreviewVersion] = useState(0);
   const [previewSnapshot, setPreviewSnapshot] = useState<HomepageLayout | null>(null);
   const [showPublishConfirmation, setShowPublishConfirmation] = useState(false);
+  const [schedule, setSchedule] = useState<EditorialSchedule | null>(null);
+  const [scheduleStatus, setScheduleStatus] = useState<EditorialScheduleStatus>("none");
+  const [scheduleStartLocal, setScheduleStartLocal] = useState("");
+  const [scheduleEndLocal, setScheduleEndLocal] = useState("");
+  const [showScheduleConfirmation, setShowScheduleConfirmation] = useState(false);
 
   const ordered = useMemo(() => [...draft.sections].sort((a, b) => a.sortOrder - b.sortOrder), [draft]);
   const isPublished = JSON.stringify(draft) === JSON.stringify(published);
@@ -96,6 +116,11 @@ export const HomepageSectionManager: React.FC = () => {
       ]);
       setDraft(mergeKnownSections(result.draft));
       setPublished(mergeKnownSections(result.published));
+      setSchedule(result.schedule || null);
+      setScheduleStatus(result.scheduleStatus || "none");
+      setScheduleStartLocal(toLocalDateTimeInput(result.schedule?.startsAtUtc));
+      setScheduleEndLocal(toLocalDateTimeInput(result.schedule?.endsAtUtc));
+      setShowScheduleConfirmation(false);
       setPreviewSnapshot(null);
       setShowPublishConfirmation(false);
       setExploreDraft(explore.draft);
@@ -187,6 +212,56 @@ export const HomepageSectionManager: React.FC = () => {
       setMessage(`${collection === "shared" ? "Shared" : collection === "artificial" ? "Artificial" : "Demi-Fine"} homepage layout published successfully.`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Homepage layout could not be published.");
+    } finally { setBusy(false); }
+  };
+
+  const requestSchedule = () => {
+    if (!hasPreviewedCurrentDraft) {
+      setError("Save draft & refresh preview before scheduling. This ensures the exact saved layout is the one that will go live.");
+      return;
+    }
+    const startsAtUtc = localDateTimeToUtc(scheduleStartLocal);
+    const endsAtUtc = scheduleEndLocal ? localDateTimeToUtc(scheduleEndLocal) : null;
+    if (!startsAtUtc) { setError("Choose a valid publication date and time."); return; }
+    if (new Date(startsAtUtc).getTime() <= Date.now()) { setError("Choose a future publication date and time."); return; }
+    if (scheduleEndLocal && (!endsAtUtc || new Date(endsAtUtc).getTime() <= new Date(startsAtUtc).getTime())) {
+      setError("Expiry date and time must be later than publication.");
+      return;
+    }
+    setError("");
+    setShowScheduleConfirmation(true);
+  };
+
+  const confirmSchedule = async () => {
+    const startsAtUtc = localDateTimeToUtc(scheduleStartLocal);
+    const endsAtUtc = scheduleEndLocal ? localDateTimeToUtc(scheduleEndLocal) : null;
+    if (!startsAtUtc) return;
+    setBusy(true); setError(""); setMessage(""); setShowScheduleConfirmation(false);
+    try {
+      const result = await hostingerStorefrontService.scheduleHomepageLayout(startsAtUtc, endsAtUtc, collection === "shared" ? undefined : collection);
+      setSchedule(result.schedule);
+      setScheduleStatus(result.scheduleStatus);
+      setScheduleStartLocal(toLocalDateTimeInput(result.schedule.startsAtUtc));
+      setScheduleEndLocal(toLocalDateTimeInput(result.schedule.endsAtUtc));
+      setMessage(`A saved ${collectionLabel(collection)} homepage layout snapshot has been scheduled. Later draft edits will not change this scheduled version.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Homepage layout could not be scheduled.");
+    } finally { setBusy(false); }
+  };
+
+  const cancelSchedule = async () => {
+    if (!window.confirm("Clear this scheduled homepage layout? If it is already live, the previous published layout will be restored immediately.")) return;
+    setBusy(true); setError(""); setMessage("");
+    try {
+      const result = await hostingerStorefrontService.cancelHomepageLayoutSchedule(collection === "shared" ? undefined : collection);
+      setSchedule(result.schedule);
+      setScheduleStatus(result.scheduleStatus);
+      setScheduleStartLocal("");
+      setScheduleEndLocal("");
+      setShowScheduleConfirmation(false);
+      setMessage("The scheduled homepage layout was cleared. The currently published baseline is now in effect.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Homepage layout schedule could not be cleared.");
     } finally { setBusy(false); }
   };
 
@@ -304,6 +379,38 @@ export const HomepageSectionManager: React.FC = () => {
       {sectionChanges.length ? <ul className="space-y-1 text-xs text-[#6F6475]">{sectionChanges.map((change, index) => <li key={index}>• {change}</li>)}</ul> : <p className="text-xs text-[#6F6475]">The selected layout draft matches its published version.</p>}
       <p className="text-[11px] text-[#6F6475]">This comparison covers section order, visibility and carousel settings for the selected homepage layout. It does not include Explore Now or separate Homepage Content settings.</p>
     </div>
+    <div className="rounded-xl border border-[#E7DCEB] bg-white p-4 space-y-3">
+      <div>
+        <h3 className="text-sm font-semibold text-[#302438]">Scheduled homepage layout</h3>
+        <p className="mt-1 text-xs text-[#6F6475]">Uses your local time zone. A saved layout snapshot becomes active at the start time; the previous published layout returns at expiry. Later draft edits do not change an existing schedule.</p>
+      </div>
+      <p className="text-xs font-medium text-[#563568]">
+        {scheduleStatus === "scheduled" ? "Scheduled — waiting to go live" : scheduleStatus === "published" ? "Scheduled layout is currently live" : scheduleStatus === "expired" ? "Schedule expired — previous published layout restored" : "Not scheduled"}
+      </p>
+      {schedule && <p className="text-xs text-[#6F6475]">Start: {new Date(schedule.startsAtUtc).toLocaleString()} {schedule.endsAtUtc ? ` · Expiry: ${new Date(schedule.endsAtUtc).toLocaleString()}` : " · No expiry"}</p>}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block text-xs font-medium text-[#302438]">Publish date & time (local)
+          <input type="datetime-local" value={scheduleStartLocal} disabled={busy || loading} onChange={event => setScheduleStartLocal(event.target.value)} className="mt-1 w-full rounded-lg border border-[#E7DCEB] bg-white px-3 py-2 text-sm" />
+        </label>
+        <label className="block text-xs font-medium text-[#302438]">Expiry date & time (optional)
+          <input type="datetime-local" value={scheduleEndLocal} disabled={busy || loading} onChange={event => setScheduleEndLocal(event.target.value)} className="mt-1 w-full rounded-lg border border-[#E7DCEB] bg-white px-3 py-2 text-sm" />
+        </label>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" disabled={busy || loading || !hasPreviewedCurrentDraft} onClick={requestSchedule} className="rounded-lg bg-[#563568] px-4 py-2 text-xs font-medium text-white disabled:opacity-50">{scheduleStatus === "scheduled" ? "Review reschedule" : "Review schedule"}</button>
+        {schedule && <button type="button" disabled={busy || loading} onClick={() => void cancelSchedule()} className="rounded-lg border border-[#DCCDE5] bg-white px-4 py-2 text-xs text-[#563568]">Cancel schedule</button>}
+      </div>
+      {!hasPreviewedCurrentDraft && <p className="text-[11px] text-[#8A6B32]">Save draft & refresh preview before scheduling this exact layout.</p>}
+    </div>
+    {showScheduleConfirmation && <div className="rounded-xl border-2 border-[#B69ACF] bg-[#F7F0FA] p-4 space-y-3" role="alertdialog" aria-labelledby="homepage-schedule-confirm-title" aria-describedby="homepage-schedule-confirm-description">
+      <h3 id="homepage-schedule-confirm-title" className="text-sm font-semibold text-[#302438]">Confirm scheduled homepage layout</h3>
+      <p id="homepage-schedule-confirm-description" className="text-xs text-[#6F6475]">You are scheduling the saved <strong>{collectionLabel(collection)}</strong> section layout. It will become active at <strong>{scheduleStartLocal ? new Date(scheduleStartLocal).toLocaleString() : "the selected local time"}</strong>{scheduleEndLocal ? <> and expire at <strong>{new Date(scheduleEndLocal).toLocaleString()}</strong>.</> : " and remain active until you replace or clear the schedule."}</p>
+      <p className="text-xs text-[#6F6475]">{sectionChanges.length ? `${sectionChanges.length} change(s) compared with the current published layout are included.` : "The saved layout matches the current published baseline."} This does not publish Explore Now or Homepage Content settings.</p>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" disabled={busy} onClick={() => void confirmSchedule()} className="rounded-lg bg-[#563568] px-4 py-2 text-xs font-medium text-white disabled:opacity-50">Confirm schedule</button>
+        <button type="button" disabled={busy} onClick={() => setShowScheduleConfirmation(false)} className="rounded-lg border border-[#DCCDE5] bg-white px-4 py-2 text-xs text-[#563568]">Cancel</button>
+      </div>
+    </div>}
     {showPublishConfirmation && <div className="rounded-xl border-2 border-[#B69ACF] bg-[#F7F0FA] p-4 space-y-3" role="alertdialog" aria-labelledby="homepage-publish-confirm-title" aria-describedby="homepage-publish-confirm-description">
       <h3 id="homepage-publish-confirm-title" className="text-sm font-semibold text-[#302438]">Confirm homepage publication</h3>
       <p id="homepage-publish-confirm-description" className="text-xs text-[#6F6475]">You are about to publish the <strong>{collection === "shared" ? "Shared (both collections)" : collection === "artificial" ? "Artificial" : "Demi-Fine"}</strong> homepage section layout. This will replace the currently published section order, visibility and carousel settings for this version.</p>

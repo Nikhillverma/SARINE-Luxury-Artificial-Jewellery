@@ -176,7 +176,7 @@ function publicRangeQuery(): string {
 export type HomepageCategoryImages = Record<string, string>;
 
 export const hostingerStorefrontService = {
-  getHomepageLayout: (collection?: "artificial" | "demi-fine") => request<{ draft: HomepageLayout; published: HomepageLayout }>("/admin/homepage-layout" + collectionQuery(collection)),
+  getHomepageLayout: (collection?: "artificial" | "demi-fine") => request<{ draft: HomepageLayout; published: HomepageLayout; schedule: EditorialSchedule | null; scheduleStatus: EditorialScheduleStatus }>("/admin/homepage-layout" + collectionQuery(collection)),
 
   getPublicHomepageLayout: () => request<{ layout: HomepageLayout }>("/homepage-layout" + publicRangeQuery()),
   getCuratedFavourites: (collection?: "artificial" | "demi-fine") => request<{ draft: CuratedFavouritesConfig; published: CuratedFavouritesConfig; maxProducts: number }>("/admin/curated-favourites" + collectionQuery(collection)),
@@ -193,7 +193,11 @@ export const hostingerStorefrontService = {
   saveHomepageLayout: (layout: HomepageLayout, collection?: "artificial" | "demi-fine") =>
     request<{ success: boolean; draft: HomepageLayout }>("/admin/homepage-layout/draft", { method: "PUT", body: JSON.stringify({ ...layout, productCollection: collection }) }),
   publishHomepageLayout: (collection?: "artificial" | "demi-fine") =>
-    request<{ success: boolean; published: HomepageLayout }>("/admin/homepage-layout/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
+    request<{ success: boolean; published: HomepageLayout; schedule: null; scheduleStatus: EditorialScheduleStatus }>("/admin/homepage-layout/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
+  scheduleHomepageLayout: (startsAtUtc: string, endsAtUtc: string | null, collection?: "artificial" | "demi-fine") =>
+    request<{ draft: HomepageLayout; published: HomepageLayout; schedule: EditorialSchedule; scheduleStatus: EditorialScheduleStatus }>("/admin/homepage-layout/schedule", { method: "POST", body: JSON.stringify({ startsAtUtc, endsAtUtc, productCollection: collection }) }),
+  cancelHomepageLayoutSchedule: (collection?: "artificial" | "demi-fine") =>
+    request<{ draft: HomepageLayout; published: HomepageLayout; schedule: null; scheduleStatus: EditorialScheduleStatus }>("/admin/homepage-layout/schedule/cancel", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
   getHomepageContent: (collection?: "artificial" | "demi-fine") => request<{ draft: HomepageContent; published: HomepageContent; schedule: EditorialSchedule | null; scheduleStatus: EditorialScheduleStatus }>("/admin/homepage-layout/content" + collectionQuery(collection)),
   scheduleHomepageContent: (startsAtUtc: string, endsAtUtc: string | null, collection?: "artificial" | "demi-fine") => request<{ draft: HomepageContent; published: HomepageContent; schedule: EditorialSchedule; scheduleStatus: EditorialScheduleStatus }>("/admin/homepage-layout/content/schedule", { method: "POST", body: JSON.stringify({ startsAtUtc, endsAtUtc, productCollection: collection }) }),
   cancelHomepageContentSchedule: (collection?: "artificial" | "demi-fine") => request<{ draft: HomepageContent; published: HomepageContent; schedule: null; scheduleStatus: EditorialScheduleStatus }>("/admin/homepage-layout/content/schedule/cancel", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
