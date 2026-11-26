@@ -22,6 +22,13 @@ interface SingleProductResponse {
   product: Product;
 }
 
+function getSelectedProductCollection(): import('../../types/product').ProductCollection | undefined {
+  const fromUrl = new URLSearchParams(window.location.search).get('range');
+  if (fromUrl === 'artificial' || fromUrl === 'demi-fine') return fromUrl;
+  const stored = window.localStorage.getItem('sarine_product_range');
+  return stored === 'artificial' || stored === 'demi-fine' ? stored : undefined;
+}
+
 async function request<T>(path: string): Promise<T> {
   const apiBase = resolveApiBase();
   const response = await fetch(`${apiBase}${path}`);
@@ -40,6 +47,7 @@ export class HostingerProductService implements IProductService {
     if (filters.categorySlug) params.set('categorySlug', filters.categorySlug);
     if (filters.categoryId) params.set('categoryId', filters.categoryId);
     if (filters.collectionSlug) params.set('collectionSlug', filters.collectionSlug);
+    if (filters.productCollection) params.set('productCollection', filters.productCollection);
     if (filters.jewelleryType) params.set('jewelleryType', filters.jewelleryType);
     if (filters.inStockOnly) params.set('inStockOnly', 'true');
     if (filters.minPrice !== undefined) params.set('minPrice', String(filters.minPrice));
@@ -55,11 +63,15 @@ export class HostingerProductService implements IProductService {
 
   async getProductBySlug(
     slug: string,
-    _options?: { includeAll?: boolean }
+    options?: { includeAll?: boolean; productCollection?: import('../../types/product').ProductCollection }
   ): Promise<Product | null> {
     try {
+      const params = new URLSearchParams();
+      const productCollection = options?.productCollection || getSelectedProductCollection();
+      if (productCollection) params.set('productCollection', productCollection);
+      const query = params.toString();
       const result = await request<SingleProductResponse>(
-        `/products/${encodeURIComponent(slug)}`
+        `/products/${encodeURIComponent(slug)}${query ? `?${query}` : ''}`
       );
       return result.product;
     } catch (error) {
@@ -70,11 +82,11 @@ export class HostingerProductService implements IProductService {
 
   async getProductsByIds(
     ids: string[],
-    _options?: { includeAll?: boolean }
+    options?: { includeAll?: boolean; productCollection?: import('../../types/product').ProductCollection }
   ): Promise<Product[]> {
     if (!ids.length) return [];
 
-    const products = await this.getProducts({ pageSize: 100 });
+    const products = await this.getProducts({ pageSize: 100, productCollection: options?.productCollection || getSelectedProductCollection() });
     const requestedIds = new Set(ids);
 
     return products.filter(product => requestedIds.has(product.id));
@@ -98,12 +110,16 @@ export class HostingerProductService implements IProductService {
 
   async getBestSellingProducts(limit = 8): Promise<Product[]> {
     const safeLimit = Math.min(24, Math.max(1, Math.floor(limit) || 8));
-    const result = await request<ProductResponse>(`/bestsellers?limit=${safeLimit}`);
+    const params = new URLSearchParams({ limit: String(safeLimit) });
+    const productCollection = getSelectedProductCollection();
+    if (productCollection) params.set('productCollection', productCollection);
+    const result = await request<ProductResponse>(`/bestsellers?${params.toString()}`);
     return result.products;
   }
 
   async getFeaturedProducts(limit = 8): Promise<Product[]> {
     const products = await this.getProducts({
+      productCollection: getSelectedProductCollection(),
       inStockOnly: true,
       sortBy: 'newest',
       pageSize: 100
@@ -113,7 +129,7 @@ export class HostingerProductService implements IProductService {
   }
 
   async getRelatedProducts(productId: string, limit = 4): Promise<Product[]> {
-    const allProducts = await this.getProducts({ pageSize: 100 });
+    const allProducts = await this.getProducts({ pageSize: 100, productCollection: getSelectedProductCollection() });
     const current = allProducts.find(product => product.id === productId);
 
     if (!current) return [];
