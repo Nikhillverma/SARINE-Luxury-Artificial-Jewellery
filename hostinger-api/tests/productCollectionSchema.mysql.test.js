@@ -19,6 +19,7 @@ test("MariaDB range migration keeps legacy products unassigned and isolates both
     await pool.execute("INSERT INTO products (id, status) VALUES (?, ?)", ["legacy-unassigned", "active"]);
 
     await ensureProductCollectionSchema();
+    await ensureProductCollectionSchema(); // Re-running the migration must be safe.
 
     const [columns] = await pool.execute(
       "SELECT COLUMN_NAME, IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='products' AND COLUMN_NAME='product_collection'"
