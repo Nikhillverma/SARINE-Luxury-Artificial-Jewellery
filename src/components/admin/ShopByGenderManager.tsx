@@ -6,6 +6,7 @@ const emptySettings: ShopByGenderSettings = { version: 1, forHerImageUrl: "", fo
 
 export const ShopByGenderManager: React.FC = () => {
   const [settings, setSettings] = useState<ShopByGenderSettings>(emptySettings);
+  const [collection, setCollection] = useState<"" | "artificial" | "demi-fine">("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -14,14 +15,14 @@ export const ShopByGenderManager: React.FC = () => {
   const load = async () => {
     setLoading(true); setError(""); setMessage("");
     try {
-      const result = await hostingerStorefrontService.getShopByGender();
+      const result = await hostingerStorefrontService.getShopByGender(collection || undefined);
       setSettings(result.settings || emptySettings);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not load Shop by Gender settings.");
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); }, [collection]);
 
   const upload = async (key: "forHerImageUrl" | "forHimImageUrl", file?: File) => {
     if (!file) return;
@@ -38,7 +39,7 @@ export const ShopByGenderManager: React.FC = () => {
   const save = async () => {
     setBusy(true); setError(""); setMessage("");
     try {
-      const result = await hostingerStorefrontService.saveShopByGender(settings);
+      const result = await hostingerStorefrontService.saveShopByGender(settings, collection || undefined);
       setSettings(result.settings);
       setMessage("Shop by Gender images saved to Hostinger and are now available on the homepage.");
     } catch (e) {
@@ -55,6 +56,7 @@ export const ShopByGenderManager: React.FC = () => {
     <div>
       <h2 className="font-semibold text-[#2C1838]">Shop by Gender</h2>
       <p className="mt-1 text-xs text-gray-500">Upload and manage each homepage image independently. The preview adapts across phone, tablet and desktop sizes. Images are stored through Hostinger; save the settings after uploading.</p>
+      <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={collection} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global content)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
     </div>
     {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     {message && <p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-800">{message}</p>}
