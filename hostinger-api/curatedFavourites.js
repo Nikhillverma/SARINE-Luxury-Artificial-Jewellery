@@ -3,6 +3,7 @@ import { ensureProductCollectionSchema } from "./productCollectionSchema.js";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { MAX_CURATED_PRODUCTS, EMPTY_CURATED_FAVOURITES as EMPTY_CURATION, validateCuratedFavourites } from "./curatedFavouritesPolicy.js";
+import { createEditorialSchedule, normalizeEditorialSchedule, getEditorialScheduleStatus, getEffectiveEditorial } from "./editorialSchedulePolicy.js";
 
 const admin = Router();
 const publicRouter = Router();
@@ -25,26 +26,97 @@ async function ensureSchema() {
   await schemaReady;
 }
 
-async function readCuration(key) {
+async function readSetting(key) {
   await ensureSchema();
-  const [rows] = await pool.execute(
-    "SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1",
-    [key]
-  );
-  if (!rows.length) return EMPTY_CURATION;
-  try {
-    return validateCuratedFavourites(JSON.parse(rows[0].setting_value));
-  } catch {
-    return EMPTY_CURATION;
-  }
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [key]);
+  return rows.length ? rows[0].setting_value : null;
 }
-
-async function writeCuration(key, value) {
+async function writeSetting(key, value) {
   await ensureSchema();
   await pool.execute(
     "INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)",
     [key, JSON.stringify(value)]
   );
+}
+async function deleteSetting(key) {
+  await ensureSchema();
+  await pool.execute("DELETE FROM storefront_settings WHERE setting_key=?", [key]);
+}
+async function readCuration(key) {
+  const value = await readSetting(key);
+  if (value === null) return null;
+  try { return validateCuratedFavourites(JSON.parse(value)); } catch { return EMPTY_CURATION; }
+}
+function curationKey(kind, collection) {
+  return collectionKey("curated_favourites_" + kind, collection);
+}
+function scheduleKey(collection) {
+  return collectionKey("curated_favourites_schedule", collection);
+}
+async function readSchedule(collection) {
+  const value = await readSetting(scheduleKey(collection));
+  if (value === null) return null;
+  try {
+    const parsed = normalizeEditorialSchedule(JSON.parse(value));
+    if (!parsed) return null;
+    return {
+      ...parsed,
+      content: validateCuratedFavourites(parsed.content),
+      previousPublished: validateCuratedFavourites(parsed.previousPublished)
+    };
+  } catch { return null; }
+}
+async function writeSchedule(collection, schedule) {
+  if (schedule) await writeSetting(scheduleKey(collection), schedule);
+  else await deleteSetting(scheduleKey(collection));
+}
+async function readCurationRecord(collection) {
+  const [ownDraft, ownPublished, ownSchedule] = await Promise.all([
+    readCuration(curationKey("draft", collection)),
+    readCuration(curationKey("published", collection)),
+    readSchedule(collection)
+  ]);
+  let inheritedFrom = null;
+  let draft = ownDraft;
+  let published = ownPublished;
+  let schedule = ownSchedule;
+  let scheduleCollection = collection;
+  if (collection) {
+    const [sharedDraft, sharedPublished, sharedSchedule] = await Promise.all([
+      readCuration(curationKey("draft", null)),
+      readCuration(curationKey("published", null)),
+      readSchedule(null)
+    ]);
+    if (!draft) {
+      draft = ownPublished || sharedDraft || EMPTY_CURATION;
+      if (!ownPublished) inheritedFrom = "shared";
+    }
+    if (!published) { published = sharedPublished || EMPTY_CURATION; inheritedFrom = "shared"; }
+    if (!ownSchedule && !ownPublished && sharedSchedule && getEditorialScheduleStatus(sharedSchedule) !== "expired") {
+      schedule = sharedSchedule;
+      scheduleCollection = null;
+      inheritedFrom = "shared";
+    }
+  }
+  return {
+    draft: draft || EMPTY_CURATION,
+    published: published || EMPTY_CURATION,
+    schedule,
+    scheduleCollection: schedule ? (scheduleCollection || "shared") : null,
+    inheritedFrom
+  };
+}
+function mapCurationRecord(record, collection) {
+  return {
+    draft: record.draft,
+    published: record.published,
+    schedule: record.schedule ? { startsAtUtc: record.schedule.startsAtUtc, endsAtUtc: record.schedule.endsAtUtc } : null,
+    scheduleStatus: getEditorialScheduleStatus(record.schedule),
+    scheduleCollection: record.schedule ? record.scheduleCollection : null,
+    inheritedFrom: record.inheritedFrom,
+    maxProducts: MAX_CURATED_PRODUCTS,
+    collection: collection || "shared"
+  };
 }
 
 export function mapPublicProduct(row) {
@@ -89,11 +161,9 @@ export async function validateCollectionProductIds(productIds, collection) {
 
 adminOnly.get("/", async (req, res, next) => {
   try {
-    const [draft, published] = await Promise.all([
-      readCuration(collectionKey("curated_favourites_draft", collectionFrom(req.query.productCollection))),
-      readCuration(collectionKey("curated_favourites_published", collectionFrom(req.query.productCollection)))
-    ]);
-    res.set("Cache-Control", "no-store").json({ draft, published, maxProducts: MAX_CURATED_PRODUCTS });
+    const collection = collectionFrom(req.query.productCollection);
+    const record = await readCurationRecord(collection);
+    res.set("Cache-Control", "no-store").json(mapCurationRecord(record, collection));
   } catch (error) { next(error); }
 });
 
@@ -103,7 +173,7 @@ adminOnly.put("/draft", async (req, res, next) => {
     const collection = collectionFrom(req.body?.productCollection);
     const collectionError = await validateCollectionProductIds(draft.productIds, collection);
     if (collectionError) return res.status(400).json({ error: collectionError });
-    await writeCuration(collectionKey("curated_favourites_draft", collection), draft);
+    await writeSetting(curationKey("draft", collection), draft);
     res.set("Cache-Control", "no-store").json({ success: true, draft });
   } catch (error) {
     if (error instanceof Error && /curated|product|choose|valid|added/i.test(error.message)) {
@@ -113,12 +183,49 @@ adminOnly.put("/draft", async (req, res, next) => {
   }
 });
 
+adminOnly.post("/schedule", async (req, res, next) => {
+  try {
+    const collection = collectionFrom(req.body?.productCollection);
+    const record = await readCurationRecord(collection);
+    if (collection && record.schedule && record.scheduleCollection === "shared") {
+      return res.status(409).json({ error: "A Shared Curated Favourites schedule applies to both collections. Manage it from the Shared version first." });
+    }
+    const collectionError = await validateCollectionProductIds(record.draft.productIds, collection);
+    if (collectionError) return res.status(400).json({ error: collectionError });
+    const schedule = createEditorialSchedule(req.body || {}, record.draft, record.published);
+    await writeSchedule(collection, schedule);
+    const nextRecord = { ...record, schedule, scheduleCollection: collection || "shared" };
+    res.set("Cache-Control", "no-store").json({ ...mapCurationRecord(nextRecord, collection), success: true });
+  } catch (error) {
+    if (error instanceof Error && /date|time|future|expiry|end/i.test(error.message)) return res.status(400).json({ error: error.message });
+    next(error);
+  }
+});
+
+adminOnly.post("/schedule/cancel", async (req, res, next) => {
+  try {
+    const collection = collectionFrom(req.body?.productCollection);
+    const record = await readCurationRecord(collection);
+    const owner = record.scheduleCollection === "shared" ? null : record.scheduleCollection;
+    await writeSchedule(owner, null);
+    const nextRecord = await readCurationRecord(collection);
+    res.set("Cache-Control", "no-store").json({ ...mapCurationRecord(nextRecord, collection), success: true });
+  } catch (error) { next(error); }
+});
+
 adminOnly.post("/publish", async (req, res, next) => {
   try {
     const collection = collectionFrom(req.body?.productCollection);
-    const draft = await readCuration(collectionKey("curated_favourites_draft", collection));
-    await writeCuration(collectionKey("curated_favourites_published", collection), draft);
-    res.set("Cache-Control", "no-store").json({ success: true, published: draft });
+    const record = await readCurationRecord(collection);
+    if (collection && record.schedule && record.scheduleCollection === "shared") {
+      return res.status(409).json({ error: "A Shared Curated Favourites schedule is active for both collections. Clear it from Shared before publishing a collection-specific version." });
+    }
+    const draft = record.draft;
+    const collectionError = await validateCollectionProductIds(draft.productIds, collection);
+    if (collectionError) return res.status(400).json({ error: collectionError });
+    await writeSetting(curationKey("published", collection), draft);
+    await writeSchedule(collection, null);
+    res.set("Cache-Control", "no-store").json({ success: true, published: draft, schedule: null, scheduleStatus: "none" });
   } catch (error) { next(error); }
 });
 
@@ -126,7 +233,8 @@ publicRouter.get("/", async (req, res, next) => {
   try {
     await ensureProductCollectionSchema();
     const productCollection = collectionFrom(req.query.productCollection);
-    const curation = await readCuration(collectionKey("curated_favourites_published", productCollection));
+    const record = await readCurationRecord(productCollection);
+    const curation = getEffectiveEditorial(record);
     if (!curation.productIds.length) {
       res.set("Cache-Control", "no-store").json({ products: [], configured: curation.configured === true });
       return;
