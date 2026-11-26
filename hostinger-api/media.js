@@ -72,10 +72,29 @@ adminMediaRouter.get("/", async (req, res, next) => {
   try {
     await ensureMediaTable();
     const search = String(req.query.search || "").trim().slice(0, 120);
-    const limit = Math.min(100, Math.max(1, Number.parseInt(String(req.query.limit || "40"), 10) || 40));
-    const offset = Math.min(100000, Math.max(0, Number.parseInt(String(req.query.offset || "0"), 10) || 0));
+    const parsedLimit = Number.parseInt(String(req.query.limit || "40"), 10);
+    const parsedOffset = Number.parseInt(String(req.query.offset || "0"), 10);
+    const limit = Math.min(100, Math.max(1, Number.isFinite(parsedLimit) ? parsedLimit : 40));
+    const offset = Math.min(100000, Math.max(0, Number.isFinite(parsedOffset) ? parsedOffset : 0));
     const where = search ? "WHERE file_name LIKE ?" : "";
-    const params = search ? [`%${search.replace(/[\\\\%_]/g, "\\\\adminMediaRouter.use(requireAdminAuth);
+    const searchParams = search ? [`%${search}%`] : [];
+    const [rows] = await pool.execute(
+      `SELECT id, file_name, mime_type, file_size, uploaded_by, created_at
+       FROM media_assets ${where}
+       ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
+      [...searchParams, limit, offset]
+    );
+    const [countRows] = await pool.execute(`SELECT COUNT(*) AS total FROM media_assets ${where}`, searchParams);
+    res.set("Cache-Control", "no-store").json({
+      media: rows.map(row => ({
+        id: row.id, fileName: row.file_name, mimeType: row.mime_type,
+        size: Number(row.file_size), uploadedBy: row.uploaded_by,
+        createdAt: row.created_at, url: "/api/media/" + row.id
+      })),
+      total: Number(countRows[0]?.total || 0), limit, offset
+    });
+  } catch (error) { next(error); }
+});
 
 adminMediaRouter.post("/", async (req, res, next) => {")}%`, limit, offset] : [limit, offset];
     const [rows] = await pool.execute(
