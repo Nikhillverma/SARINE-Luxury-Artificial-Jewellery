@@ -232,11 +232,15 @@ export const hostingerStorefrontService = {
   getPublicAnnouncement: () => request<{ announcement: { message: string; active: boolean; trustMessages?: string[] } }>("/storefront/announcement"),
   saveAnnouncement: (message: string, active: boolean, trustMessages: string[]) =>
     request<{ success: boolean }>("/admin/storefront/announcement", { method: "PUT", body: JSON.stringify({ message, active, trustMessages }) }),
-  getEditorial: (collection?: "artificial" | "demi-fine") => request<{ draft: EditorialContent; published: EditorialContent }>("/admin/storefront/editorial" + collectionQuery(collection)),
+  getEditorial: (collection?: "artificial" | "demi-fine") => request<{ draft: EditorialContent; published: EditorialContent; schedule: EditorialSchedule | null; scheduleStatus: EditorialScheduleStatus }>("/admin/storefront/editorial" + collectionQuery(collection)),
   saveEditorial: (editorial: EditorialContent, collection?: "artificial" | "demi-fine") =>
-    request<{ draft: EditorialContent; published: EditorialContent }>("/admin/storefront/editorial", { method: "PUT", body: JSON.stringify({ ...editorial, productCollection: collection }) }),
+    request<{ draft: EditorialContent; published: EditorialContent; schedule: EditorialSchedule | null; scheduleStatus: EditorialScheduleStatus }>("/admin/storefront/editorial", { method: "PUT", body: JSON.stringify({ ...editorial, productCollection: collection }) }),
+  scheduleEditorial: (startsAtUtc: string, endsAtUtc: string | null, collection?: "artificial" | "demi-fine") =>
+    request<{ draft: EditorialContent; published: EditorialContent; schedule: EditorialSchedule; scheduleStatus: EditorialScheduleStatus }>("/admin/storefront/editorial/schedule", { method: "POST", body: JSON.stringify({ startsAtUtc, endsAtUtc, productCollection: collection }) }),
+  cancelEditorialSchedule: (collection?: "artificial" | "demi-fine") =>
+    request<{ draft: EditorialContent; published: EditorialContent; schedule: null; scheduleStatus: EditorialScheduleStatus }>("/admin/storefront/editorial/schedule/cancel", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
   publishEditorial: (collection?: "artificial" | "demi-fine") =>
-    request<{ editorial: EditorialContent; draft: EditorialContent; published: EditorialContent }>("/admin/storefront/editorial/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
+    request<{ editorial: EditorialContent; draft: EditorialContent; published: EditorialContent; schedule: null; scheduleStatus: EditorialScheduleStatus }>("/admin/storefront/editorial/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
   getPublicEditorial: () => request<{ editorial: EditorialContent | null }>("/storefront/editorial" + publicRangeQuery()),
   getPublicProductReviewSummary: async (productId: string) => {
     const summaries = await loadPublicProductReviewSummaries();
@@ -277,6 +281,8 @@ export interface EditorialContent {
   imageUrl: string;
   active: boolean;
 }
+export interface EditorialSchedule { startsAtUtc: string; endsAtUtc: string | null; }
+export type EditorialScheduleStatus = "none" | "scheduled" | "published" | "expired";
 function mapReviewMedia(review: ProductReview): ProductReview {
   return { ...review, imageUrls: (review.imageUrls || []).map(url => url.startsWith("/api/media/") ? `${API_BASE}${url.slice(4)}` : url) };
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { hostingerMediaService } from "../../services";
-import { hostingerStorefrontService, type EditorialContent } from "../../services/hostinger/hostingerStorefrontService";
+import { hostingerStorefrontService, type EditorialContent, type EditorialSchedule, type EditorialScheduleStatus } from "../../services/hostinger/hostingerStorefrontService";
 
 const defaults: EditorialContent = {
   eyebrow: "EDITORIAL COLLECTION",
@@ -13,6 +13,22 @@ const defaults: EditorialContent = {
 };
 type Collection = "" | "artificial" | "demi-fine";
 type PreviewMode = "desktop" | "tablet" | "mobile";
+
+function toLocalDateTimeInput(value?: string | null): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "";
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+}
+function fromLocalDateTimeInput(value: string): string {
+  return new Date(value).toISOString();
+}
+function scheduleStatusLabel(status: EditorialScheduleStatus): string {
+  if (status === "scheduled") return "Scheduled";
+  if (status === "published") return "Published";
+  if (status === "expired") return "Expired";
+  return "Not scheduled";
+}
 
 export const EditorialManager: React.FC = () => {
   const [collection, setCollection] = useState<Collection>("");
@@ -27,6 +43,12 @@ export const EditorialManager: React.FC = () => {
   const [previewMode, setPreviewMode] = useState<PreviewMode>("desktop");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [schedule, setSchedule] = useState<EditorialSchedule | null>(null);
+  const [scheduleStatus, setScheduleStatus] = useState<EditorialScheduleStatus>("none");
+  const [scheduleStartLocal, setScheduleStartLocal] = useState("");
+  const [scheduleEndLocal, setScheduleEndLocal] = useState("");
+  const [scheduleReviewOpen, setScheduleReviewOpen] = useState(false);
+  const [cancelScheduleOpen, setCancelScheduleOpen] = useState(false);
 
   const snapshot = JSON.stringify(draft);
   const previewCurrent = savedSnapshot === snapshot && !file;
@@ -40,12 +62,16 @@ export const EditorialManager: React.FC = () => {
 
   useEffect(() => {
     let current = true;
-    setLoading(true); setError(""); setMessage(""); setReviewOpen(false); setSavedSnapshot(null);
+    setLoading(true); setError(""); setMessage(""); setReviewOpen(false); setScheduleReviewOpen(false); setCancelScheduleOpen(false); setSavedSnapshot(null);
     void hostingerStorefrontService.getEditorial(collection || undefined).then(result => {
       if (!current) return;
       const nextDraft = { ...defaults, ...result.draft };
       setDraft(nextDraft);
       setPublished({ ...defaults, ...result.published });
+      setSchedule(result.schedule);
+      setScheduleStatus(result.scheduleStatus);
+      setScheduleStartLocal(toLocalDateTimeInput(result.schedule?.startsAtUtc));
+      setScheduleEndLocal(toLocalDateTimeInput(result.schedule?.endsAtUtc));
       setSavedSnapshot(JSON.stringify(nextDraft));
       setFile(null);
     }).catch(e => {
@@ -63,8 +89,12 @@ export const EditorialManager: React.FC = () => {
       const result = await hostingerStorefrontService.saveEditorial(payload, collection || undefined);
       const saved = { ...defaults, ...result.draft };
       setDraft(saved); setPublished({ ...defaults, ...result.published });
-      setSavedSnapshot(JSON.stringify(saved)); setFile(null); setReviewOpen(false);
-      setMessage("Editorial draft saved. It is not live until you confirm publication.");
+      setSchedule(result.schedule);
+      setScheduleStatus(result.scheduleStatus);
+      setSavedSnapshot(JSON.stringify(saved)); setFile(null); setReviewOpen(false); setScheduleReviewOpen(false);
+      setMessage(result.schedule
+        ? "Draft saved. The existing scheduled snapshot is unchanged; review and reschedule to include these edits."
+        : "Editorial draft saved. It is not live until you confirm publication.");
     } catch (e) { setError(e instanceof Error ? e.message : "Editorial draft could not be saved."); }
     finally { setBusy(false); }
   };
@@ -83,10 +113,65 @@ export const EditorialManager: React.FC = () => {
       const result = await hostingerStorefrontService.publishEditorial(collection || undefined);
       const next = { ...defaults, ...result.published };
       setDraft(next); setPublished(next); setSavedSnapshot(JSON.stringify(next)); setReviewOpen(false);
-      setMessage("The saved Editorial version is now published.");
+      setSchedule(result.schedule); setScheduleStatus(result.scheduleStatus);
+      setScheduleStartLocal(""); setScheduleEndLocal("");
+      setMessage("The saved Editorial version is now published. Any previous schedule was cleared.");
     } catch (e) { setError(e instanceof Error ? e.message : "Editorial publication failed."); }
     finally { setBusy(false); }
   };
+
+  const reviewSchedule = () => {
+    setError("");
+    if (!previewCurrent) { setError("Save draft & refresh preview before scheduling publication."); return; }
+    if (!scheduleStartLocal) { setError("Choose a publication date and time."); return; }
+    const startsAt = new Date(scheduleStartLocal);
+    const endsAt = scheduleEndLocal ? new Date(scheduleEndLocal) : null;
+    if (!Number.isFinite(startsAt.getTime()) || startsAt.getTime() <= Date.now()) { setError("Choose a future publication date and time."); return; }
+    if (endsAt && (!Number.isFinite(endsAt.getTime()) || endsAt.getTime() <= startsAt.getTime())) { setError("Expiry date and time must be later than publication."); return; }
+    setScheduleReviewOpen(true);
+  };
+
+  const confirmSchedule = async () => {
+    if (!previewCurrent || !scheduleStartLocal) { setScheduleReviewOpen(false); setError("Save the current draft before scheduling it."); return; }
+    setBusy(true); setError(""); setMessage("");
+    try {
+      const result = await hostingerStorefrontService.scheduleEditorial(
+        fromLocalDateTimeInput(scheduleStartLocal),
+        scheduleEndLocal ? fromLocalDateTimeInput(scheduleEndLocal) : null,
+        collection || undefined
+      );
+      setSchedule(result.schedule);
+      setScheduleStatus(result.scheduleStatus);
+      setScheduleReviewOpen(false);
+      setMessage("Editorial publication scheduled. The saved snapshot will go live automatically at the selected time.");
+    } catch (e) { setError(e instanceof Error ? e.message : "Editorial schedule could not be saved."); }
+    finally { setBusy(false); }
+  };
+
+  const cancelSchedule = async () => {
+    setBusy(true); setError(""); setMessage("");
+    try {
+      const result = await hostingerStorefrontService.cancelEditorialSchedule(collection || undefined);
+      setSchedule(result.schedule);
+      setScheduleStatus(result.scheduleStatus);
+      setScheduleStartLocal(""); setScheduleEndLocal(""); setCancelScheduleOpen(false);
+      setMessage("Editorial schedule cancelled. The previous published version remains live.");
+    } catch (e) { setError(e instanceof Error ? e.message : "Editorial schedule could not be cancelled."); }
+    finally { setBusy(false); }
+  };
+
+  useEffect(() => {
+    if (!schedule) return;
+    const refreshStatus = () => {
+      const now = Date.now();
+      const starts = new Date(schedule.startsAtUtc).getTime();
+      const ends = schedule.endsAtUtc ? new Date(schedule.endsAtUtc).getTime() : null;
+      setScheduleStatus(now < starts ? "scheduled" : ends !== null && now >= ends ? "expired" : "published");
+    };
+    refreshStatus();
+    const timer = window.setInterval(refreshStatus, 30_000);
+    return () => window.clearInterval(timer);
+  }, [schedule]);
 
   const update = <K extends keyof EditorialContent,>(key: K, value: EditorialContent[K]) => setDraft(current => ({ ...current, [key]: value }));
 
@@ -129,8 +214,35 @@ export const EditorialManager: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-semibold text-[#2C1838]">Draft & publication safety</h3><p className="mt-1 text-xs text-[#705E7B]">Only the selected editorial version is affected.</p></div><span className={previewCurrent ? "rounded-full bg-[#EAF7EF] px-3 py-1 text-xs font-semibold text-[#24613A]" : "rounded-full bg-[#FFF5E8] px-3 py-1 text-xs font-semibold text-[#8A5315]"}>{previewCurrent ? "Saved preview is current" : "Preview needs saving"}</span></div>
         <div className="grid gap-3 sm:grid-cols-2"><div className="rounded-lg bg-[#FCFAFD] p-3"><p className="text-xs font-semibold text-[#563568]">Draft vs published</p>{changedFields.length ? <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-[#705E7B]">{changedFields.map(field => <li key={field}>{field} changed</li>)}</ul> : <p className="mt-2 text-xs text-[#705E7B]">The draft matches the published version.</p>}</div>
           <div className="rounded-lg bg-[#FCFAFD] p-3"><p className="text-xs font-semibold text-[#563568]">Selected version</p><p className="mt-2 text-sm font-semibold text-[#302438]">{collection === "artificial" ? "Artificial" : collection === "demi-fine" ? "Demi-Fine" : "Shared (shown in both collections)"}</p><p className="mt-1 text-xs text-[#705E7B]">{previewCurrent ? "Preview represents the exact saved draft." : "Save draft & refresh preview before publication."}</p></div></div>
+        <div className="space-y-3 rounded-xl border border-[#E7DCEB] bg-[#FCFAFD] p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-sm font-semibold text-[#563568]">Scheduled publishing</h3><p className="mt-1 text-xs text-[#705E7B]">Times use your local time zone. The saved snapshot goes live at the start time; the previous published version returns at expiry. Later draft edits do not change an existing schedule until you reschedule.</p></div><span className="rounded-full bg-[#F0EAF5] px-3 py-1 text-xs font-semibold text-[#563568]">{scheduleStatusLabel(scheduleStatus)}</span></div>
+          {schedule && <div className="rounded-lg bg-white p-3 text-xs text-[#705E7B]">
+            <p><strong>Starts:</strong> {new Date(schedule.startsAtUtc).toLocaleString()}</p>
+            <p className="mt-1"><strong>Expires:</strong> {schedule.endsAtUtc ? new Date(schedule.endsAtUtc).toLocaleString() : "No expiry — remains live until cancelled or replaced"}</p>
+            {scheduleStatus === "scheduled" && <p className="mt-2">This saved editorial snapshot is waiting for its start time.</p>}
+            {scheduleStatus === "published" && <p className="mt-2">The scheduled editorial snapshot is currently live.</p>}
+            {scheduleStatus === "expired" && <p className="mt-2">The scheduled window has ended; the previous published version is live again.</p>}
+          </div>}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="space-y-1 text-xs"><span>Publish date & time (local)</span><input type="datetime-local" value={scheduleStartLocal} min={toLocalDateTimeInput(new Date().toISOString())} onChange={e => setScheduleStartLocal(e.target.value)} disabled={busy || loading} className="w-full rounded-lg border bg-white p-3 text-sm" /></label>
+            <label className="space-y-1 text-xs"><span>Expiry date & time (optional)</span><input type="datetime-local" value={scheduleEndLocal} min={scheduleStartLocal || undefined} onChange={e => setScheduleEndLocal(e.target.value)} disabled={busy || loading} className="w-full rounded-lg border bg-white p-3 text-sm" /></label>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" disabled={busy || uploading || !previewCurrent || !scheduleStartLocal} onClick={reviewSchedule} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{schedule ? "Review reschedule" : "Review schedule"}</button>
+            {schedule && <button type="button" disabled={busy} onClick={() => setCancelScheduleOpen(true)} className="rounded-lg border border-[#DCCCE4] px-4 py-2.5 text-sm font-semibold text-[#563568] disabled:opacity-50">Cancel schedule</button>}
+          </div>
+          {scheduleReviewOpen && <div role="dialog" aria-label="Confirm editorial schedule" className="space-y-3 rounded-lg border border-[#B69ACF] bg-white p-3">
+            <h4 className="text-sm font-semibold text-[#563568]">Confirm scheduled publication</h4>
+            <p className="text-xs text-[#705E7B]">The saved {collection === "artificial" ? "Artificial" : collection === "demi-fine" ? "Demi-Fine" : "Shared"} editorial snapshot will become visible at {new Date(scheduleStartLocal).toLocaleString()}{scheduleEndLocal ? " and expire at " + new Date(scheduleEndLocal).toLocaleString() : ", with no automatic expiry"}. {schedule ? "This replaces the current schedule." : ""}</p>
+            <div className="flex flex-wrap gap-2"><button type="button" disabled={busy} onClick={() => void confirmSchedule()} className="rounded-lg bg-[#563568] px-4 py-2.5 text-xs font-semibold text-white disabled:opacity-50">{busy ? "Scheduling…" : "Confirm schedule"}</button><button type="button" disabled={busy} onClick={() => setScheduleReviewOpen(false)} className="rounded-lg border px-4 py-2.5 text-xs">Keep editing</button></div>
+          </div>}
+          {cancelScheduleOpen && <div role="dialog" aria-label="Confirm schedule cancellation" className="space-y-3 rounded-lg border border-amber-200 bg-white p-3">
+            <p className="text-xs text-[#705E7B]">Cancel this schedule? The scheduled snapshot will stop being served and the previous published version will remain live.</p>
+            <div className="flex flex-wrap gap-2"><button type="button" disabled={busy} onClick={() => void cancelSchedule()} className="rounded-lg bg-[#563568] px-4 py-2.5 text-xs font-semibold text-white">Confirm cancellation</button><button type="button" disabled={busy} onClick={() => setCancelScheduleOpen(false)} className="rounded-lg border px-4 py-2.5 text-xs">Keep schedule</button></div>
+          </div>}
+        </div>
         <div className="flex flex-wrap gap-2"><button type="button" disabled={busy || uploading || loading} onClick={() => void saveDraft()} className="rounded-lg border border-[#DCCCE4] px-4 py-2.5 text-sm font-semibold text-[#563568] disabled:opacity-50">Save draft & refresh preview</button><button type="button" disabled={busy || !previewCurrent || !changedFields.length} onClick={reviewPublish} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Review & publish this version</button></div>
-        {reviewOpen && <div role="dialog" aria-label="Confirm editorial publication" className="space-y-3 rounded-xl border border-[#B69ACF] bg-[#F7F0FA] p-4"><div><h4 className="font-semibold text-[#563568]">Confirm editorial publication</h4><p className="mt-1 text-xs text-[#705E7B]">You are publishing the saved {collection === "artificial" ? "Artificial" : collection === "demi-fine" ? "Demi-Fine" : "Shared"} Editorial version. Other collection versions remain unchanged.</p></div><ul className="list-disc space-y-1 pl-4 text-xs text-[#705E7B]">{changedFields.map(field => <li key={field}>{field}</li>)}</ul><div className="flex flex-wrap gap-2"><button type="button" disabled={busy} onClick={() => void confirmPublish()} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy ? "Publishing…" : "Confirm and publish this version"}</button><button type="button" disabled={busy} onClick={() => setReviewOpen(false)} className="rounded-lg border border-[#DCCCE4] px-4 py-2.5 text-sm font-semibold text-[#563568]">Cancel</button></div></div>}
+        {reviewOpen && <div role="dialog" aria-label="Confirm editorial publication" className="space-y-3 rounded-xl border border-[#B69ACF] bg-[#F7F0FA] p-4"><div><h4 className="font-semibold text-[#563568]">Confirm editorial publication</h4><p className="mt-1 text-xs text-[#705E7B]">You are publishing the saved {collection === "artificial" ? "Artificial" : collection === "demi-fine" ? "Demi-Fine" : "Shared"} Editorial version immediately. Any scheduled window for this version will be cleared. Other collection versions remain unchanged.</p></div><ul className="list-disc space-y-1 pl-4 text-xs text-[#705E7B]">{changedFields.map(field => <li key={field}>{field}</li>)}</ul><div className="flex flex-wrap gap-2"><button type="button" disabled={busy} onClick={() => void confirmPublish()} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy ? "Publishing…" : "Confirm and publish this version"}</button><button type="button" disabled={busy} onClick={() => setReviewOpen(false)} className="rounded-lg border border-[#DCCCE4] px-4 py-2.5 text-sm font-semibold text-[#563568]">Cancel</button></div></div>}
       </section>
     </>}
     {error && <div role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
