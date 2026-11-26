@@ -121,7 +121,7 @@ export interface MenStorefrontSettings {
   offers: { enabled: boolean; label: string; description: string; ctaText: string; ctaLink: string };
   notification: { enabled: boolean; headline: string; description: string; buttonText: string };
 }
-export interface MenStorefrontProduct { id: string; name: string; slug: string; description?: string; price: number; compareAtPrice?: number | null; images: string[]; status: string; stock: number; }
+export interface MenStorefrontProduct { id: string; name: string; slug: string; description?: string; price: number; compareAtPrice?: number | null; images: string[]; status: string; stock: number; productCollection?: "artificial" | "demi-fine" | null; }
 export interface MenLaunchSubscriber { id: string; email: string; consent: boolean; source: string; createdAt: string; }
 
 
@@ -196,11 +196,11 @@ export const hostingerStorefrontService = {
     request<{ success: boolean; published: HomepageContent }>("/admin/homepage-layout/content/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
   getPublicHomepageContent: () => request<{ content: HomepageContent }>("/homepage-layout/content" + publicRangeQuery()),
 
-  getMenStorefront: () => request<{ draft: MenStorefrontSettings; published: MenStorefrontSettings; products: MenStorefrontProduct[] }>("/admin/storefront/men-storefront"),
-  saveMenStorefrontDraft: (settings: MenStorefrontSettings) => request<{ success: boolean; draft: MenStorefrontSettings }>("/admin/storefront/men-storefront/draft", { method: "PUT", body: JSON.stringify({ settings }) }),
-  publishMenStorefront: () => request<{ success: boolean; published: MenStorefrontSettings }>("/admin/storefront/men-storefront/publish", { method: "POST" }),
-  getPublicMenStorefront: () => request<{ settings: MenStorefrontSettings; products: MenStorefrontProduct[] }>("/storefront/men-storefront"),
-  getPublicMenCategory: (categoryId: string) => request<{ category: MenStorefrontCategory; products: MenStorefrontProduct[] }>(`/storefront/men-storefront/categories/${encodeURIComponent(categoryId)}`),
+  getMenStorefront: (collection?: "artificial" | "demi-fine") => request<{ draft: MenStorefrontSettings; published: MenStorefrontSettings; products: MenStorefrontProduct[] }>("/admin/storefront/men-storefront" + collectionQuery(collection)),
+  saveMenStorefrontDraft: (settings: MenStorefrontSettings, collection?: "artificial" | "demi-fine") => request<{ success: boolean; draft: MenStorefrontSettings }>("/admin/storefront/men-storefront/draft", { method: "PUT", body: JSON.stringify({ settings, productCollection: collection }) }),
+  publishMenStorefront: (collection?: "artificial" | "demi-fine") => request<{ success: boolean; published: MenStorefrontSettings }>("/admin/storefront/men-storefront/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
+  getPublicMenStorefront: () => request<{ settings: MenStorefrontSettings; products: MenStorefrontProduct[] }>("/storefront/men-storefront" + publicRangeQuery()),
+  getPublicMenCategory: (categoryId: string) => request<{ category: MenStorefrontCategory; products: MenStorefrontProduct[] }>(`/storefront/men-storefront/categories/${encodeURIComponent(categoryId)}` + publicRangeQuery()),
   subscribeMenLaunch: (email: string, consent: boolean) => request<{ success: boolean; message: string }>("/storefront/men-launch-signups", { method: "POST", body: JSON.stringify({ email, consent }) }),
   getMenLaunchSignups: () => request<{ subscribers: MenLaunchSubscriber[] }>("/admin/storefront/men-launch-signups"),
   deleteMenLaunchSignup: (id: string) => request<{ success: boolean }>(`/admin/storefront/men-launch-signups/${encodeURIComponent(id)}`, { method: "DELETE" }),
