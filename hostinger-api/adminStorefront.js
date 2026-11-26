@@ -24,12 +24,15 @@ async function ensureSchema() {
         cta_text VARCHAR(80) NOT NULL DEFAULT 'Shop now',
         cta_link VARCHAR(500) NOT NULL DEFAULT '/shop',
         image_url VARCHAR(2048) NOT NULL,
+        product_collection VARCHAR(24) NULL,
         is_active TINYINT(1) NOT NULL DEFAULT 0,
         sort_order INT NOT NULL DEFAULT 0,
         created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
         updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
         INDEX idx_storefront_banners_active_order (is_active, sort_order)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+      const [bannerColumns] = await pool.execute("SHOW COLUMNS FROM storefront_banners LIKE 'product_collection'");
+      if (!bannerColumns.length) await pool.execute("ALTER TABLE storefront_banners ADD COLUMN product_collection VARCHAR(24) NULL AFTER image_url, ADD INDEX idx_storefront_banners_collection_active (product_collection, is_active, sort_order)");
       await pool.execute(`CREATE TABLE IF NOT EXISTS storefront_settings (
         setting_key VARCHAR(100) NOT NULL PRIMARY KEY,
         setting_value TEXT NOT NULL,
@@ -46,7 +49,7 @@ function mapBanner(row) {
   return {
     id: row.id, tagline: row.tagline, title: row.title, subtitle: row.subtitle,
     ctaText: row.cta_text, ctaLink: row.cta_link, imageUrl: row.image_url,
-    active: Boolean(row.is_active), sortOrder: Number(row.sort_order)
+    active: Boolean(row.is_active), sortOrder: Number(row.sort_order), productCollection: row.product_collection || null
   };
 }
 function validate(input) {
@@ -60,10 +63,11 @@ function validate(input) {
   return null;
 }
 
-adminOnly.get("/banners", async (_req, res, next) => {
+adminOnly.get("/banners", async (req, res, next) => {
   try {
     await ensureSchema();
-    const [rows] = await pool.execute("SELECT * FROM storefront_banners ORDER BY sort_order ASC, created_at ASC");
+    const collection = collectionFrom(req.query.productCollection);
+    const [rows] = collection ? await pool.execute("SELECT * FROM storefront_banners WHERE product_collection=? ORDER BY sort_order ASC, created_at ASC", [collection]) : await pool.execute("SELECT * FROM storefront_banners WHERE product_collection IS NULL ORDER BY sort_order ASC, created_at ASC");
     res.set("Cache-Control", "no-store").json({ banners: rows.map(mapBanner) });
   } catch (error) { next(error); }
 });
@@ -73,15 +77,17 @@ adminOnly.post("/banners", async (req, res, next) => {
     const input = req.body || {};
     const invalid = validate(input);
     if (invalid) return res.status(400).json({ error: invalid });
+    let productCollection;
+    try { productCollection = collectionFrom(input.productCollection); } catch (error) { return res.status(400).json({ error: error.message }); }
     const id = crypto.randomUUID();
     const [count] = await pool.execute("SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM storefront_banners");
     await pool.execute(
       `INSERT INTO storefront_banners
-       (id, tagline, title, subtitle, cta_text, cta_link, image_url, is_active, sort_order)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, tagline, title, subtitle, cta_text, cta_link, image_url, product_collection, is_active, sort_order)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, String(input.tagline || "").slice(0,120), String(input.title).trim(),
        String(input.subtitle || "").slice(0,500), String(input.ctaText || "Shop now").slice(0,80),
-       String(input.ctaLink || "/shop").trim(), String(input.imageUrl).trim(),
+       String(input.ctaLink || "/shop").trim(), String(input.imageUrl).trim(), productCollection,
        input.active === true ? 1 : 0, Number.isInteger(input.sortOrder) ? input.sortOrder : Number(count[0].next_order)]
     );
     const [rows] = await pool.execute("SELECT * FROM storefront_banners WHERE id = ?", [id]);
@@ -96,14 +102,16 @@ adminOnly.put("/banners/:id", async (req, res, next) => {
     if (!existing.length) return res.status(404).json({ error: "Banner not found." });
     const current = mapBanner(existing[0]);
     const merged = { ...current, ...input };
+    let productCollection;
+    try { productCollection = collectionFrom(merged.productCollection); } catch (error) { return res.status(400).json({ error: error.message }); }
     const invalid = validate(merged);
     if (invalid) return res.status(400).json({ error: invalid });
     await pool.execute(
       `UPDATE storefront_banners SET tagline=?, title=?, subtitle=?, cta_text=?, cta_link=?,
-       image_url=?, is_active=?, sort_order=? WHERE id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci`,
+       image_url=?, product_collection=?, is_active=?, sort_order=? WHERE id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci`,
       [String(merged.tagline || "").slice(0,120), String(merged.title).trim(),
        String(merged.subtitle || "").slice(0,500), String(merged.ctaText || "Shop now").slice(0,80),
-       String(merged.ctaLink || "/shop").trim(), String(merged.imageUrl).trim(),
+       String(merged.ctaLink || "/shop").trim(), String(merged.imageUrl).trim(), productCollection,
        merged.active === true ? 1 : 0,
        Number.isInteger(merged.sortOrder) ? merged.sortOrder : current.sortOrder, req.params.id]
     );
@@ -256,10 +264,11 @@ publicRouter.get("/occasions", async (req, res, next) => {
   catch (error) { next(error); }
 });
 
-publicRouter.get("/banners", async (_req, res, next) => {
+publicRouter.get("/banners", async (req, res, next) => {
   try {
     await ensureSchema();
-    const [rows] = await pool.execute("SELECT * FROM storefront_banners WHERE is_active=1 ORDER BY sort_order ASC, created_at ASC");
+    const collection = collectionFrom(req.query.productCollection);
+    const [rows] = collection ? await pool.execute("SELECT * FROM storefront_banners WHERE product_collection=? AND is_active=1 ORDER BY sort_order ASC, created_at ASC", [collection]) : await pool.execute("SELECT * FROM storefront_banners WHERE product_collection IS NULL AND is_active=1 ORDER BY sort_order ASC, created_at ASC");
     res.set("Cache-Control", "no-store").json({ banners: rows.map(mapBanner) });
   } catch (error) { next(error); }
 });
