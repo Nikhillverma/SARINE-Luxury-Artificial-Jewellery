@@ -54,5 +54,9 @@ jobs:
         run: npm ci
       - name: Run complete backend regression suite
         run: npm test
+        env:
+          # This destructive schema test runs separately below to avoid racing
+          # the payment-settlement MariaDB tests in Node's parallel test runner.
+          SARINE_RUN_PRODUCT_COLLECTION_SCHEMA_TESTS: "false"
       - name: Test MariaDB range migration and isolation
         run: node --test tests/productCollectionSchema.mysql.test.js
