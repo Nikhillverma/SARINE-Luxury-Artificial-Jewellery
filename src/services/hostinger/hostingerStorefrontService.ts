@@ -161,6 +161,7 @@ function publicRangeQuery(): string {
   const params = new URLSearchParams();
   const fromUrl = new URLSearchParams(window.location.search).get("range");
   const stored = window.sessionStorage.getItem("sarine_product_range");
+  if (fromUrl === "home") window.sessionStorage.removeItem("sarine_product_range");
   const collection = fromUrl === "home" ? "" : fromUrl === "artificial" || fromUrl === "demi-fine"
     ? fromUrl
     : stored === "artificial" || stored === "demi-fine" ? stored : "";
