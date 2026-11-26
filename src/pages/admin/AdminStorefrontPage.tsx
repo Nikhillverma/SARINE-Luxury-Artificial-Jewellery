@@ -23,6 +23,7 @@ export const AdminStorefrontPage: React.FC = () => {
   const [banners, setBanners] = useState<StorefrontBanner[]>([]);
   const [homepageCollection, setHomepageCollection] = useState<"" | "artificial" | "demi-fine">("");
   const contentLoadRequest = useRef(0);
+  useEffect(() => { setEditingId(null); setForm(emptyForm); setFile(null); setMessage(""); setError(""); }, [homepageCollection]);
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [reviewStatus, setReviewStatus] = useState("pending");
   const [reviewReplies, setReviewReplies] = useState<Record<string,string>>({});
