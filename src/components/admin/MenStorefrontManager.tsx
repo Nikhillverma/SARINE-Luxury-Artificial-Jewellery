@@ -186,8 +186,13 @@ export const MenStorefrontManager: React.FC = () => {
       setProducts(current => [...current, { id: created.id, name: created.name, slug: created.slug, price: created.price, images: created.images, status: created.status, stock: created.stock, productCollection: collection }]);
       const nextCategories = settings.categories.map(item => item.id === category.id ? { ...item, productIds: [...new Set([...(item.productIds || []), created.id])] } : item);
       update("categories", nextCategories);
-      await hostingerStorefrontService.saveMenStorefrontDraft({ ...settings, categories: nextCategories }, collection);
-      if (newProduct.status === "active") await hostingerStorefrontService.publishMenStorefront(collection);
+      const nextSettings = { ...settings, categories: nextCategories };
+      await hostingerStorefrontService.saveMenStorefrontDraft(nextSettings, collection);
+      setSavedPreviewSnapshot(JSON.stringify(nextSettings));
+      if (newProduct.status === "active") {
+        const published = await hostingerStorefrontService.publishMenStorefront(collection);
+        setPublishedSettings(normalizeMenSettings(published.published));
+      }
       setNewProduct({ name: "", price: "", stock: "0", description: "", imageUrl: "", status: "draft" });
       setAddingProductTo(null);
       setMessage((newProduct.status === "active" ? "Product published" : "Product saved as a draft") + " and assigned to " + category.title + ".");
@@ -220,7 +225,10 @@ export const MenStorefrontManager: React.FC = () => {
       } : item));
       if (productEdit.status === "active") {
         await hostingerStorefrontService.saveMenStorefrontDraft(settings, collection || undefined);
-        await hostingerStorefrontService.publishMenStorefront(collection || undefined);
+        const published = await hostingerStorefrontService.publishMenStorefront(collection || undefined);
+        setPublishedSettings(normalizeMenSettings(published.published));
+        setSavedPreviewSnapshot(JSON.stringify(settings));
+        setPublishReview(false);
       }
       setEditingProductId(null);
       setMessage(productEdit.status === "active" ? "Product published. The current men's storefront settings were published too." : "Product settings saved as a draft.");
