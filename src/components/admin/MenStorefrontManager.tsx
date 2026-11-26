@@ -45,19 +45,26 @@ export const MenStorefrontManager: React.FC = () => {
   const [productEdit, setProductEdit] = useState({ name: "", price: "", description: "", status: "draft" as "draft" | "active" });
   const [updatingProduct, setUpdatingProduct] = useState(false);
 
-  const load = async () => {
+  const load = async (isCancelled: () => boolean = () => false) => {
     setLoading(true); setError("");
     try {
       const result = await hostingerStorefrontService.getMenStorefront(collection || undefined);
+      if (isCancelled()) return;
       setSettings({ ...defaults, ...result.draft, comingSoon: false, categories: (result.draft.categories || defaults.categories).map((category, index) => ({ ...category, productIds: category.productIds || [], sortOrder: category.sortOrder ?? index })), offers: { ...defaults.offers, ...result.draft.offers }, notification: { ...defaults.notification, ...result.draft.notification } });
       setProducts(result.products || []);
       const signups = await hostingerStorefrontService.getMenLaunchSignups().catch(() => ({ subscribers: [] }));
-      setSubscribers(signups.subscribers || []);
+      if (!isCancelled()) setSubscribers(signups.subscribers || []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load SARINE Men settings.");
-    } finally { setLoading(false); }
+      if (!isCancelled()) setError(e instanceof Error ? e.message : "Could not load SARINE Men settings.");
+    } finally { if (!isCancelled()) setLoading(false); }
   };
-  useEffect(() => { void load(); }, [collection]);
+  useEffect(() => {
+    let cancelled = false;
+    setSettings(defaults); setProducts([]); setEditingProductId(null); setAddingProductTo(null);
+    setNewProduct({ name: "", price: "", stock: "0", description: "", imageUrl: "", status: "draft" });
+    void load(() => cancelled);
+    return () => { cancelled = true; };
+  }, [collection]);
 
   const activeProducts = useMemo(() => products.filter(p => p.status === "active" && (!collection || p.productCollection === collection)), [products, collection]);
   const update = <K extends keyof MenStorefrontSettings,>(key: K, value: MenStorefrontSettings[K]) => setSettings(current => ({ ...current, [key]: value }));
