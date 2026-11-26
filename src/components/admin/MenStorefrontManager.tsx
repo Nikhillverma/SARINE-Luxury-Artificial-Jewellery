@@ -27,8 +27,18 @@ const defaults: MenStorefrontSettings = {
 const fieldClass = "w-full rounded-lg border border-[#E7DCEB] bg-white px-3 py-2.5 text-sm text-[#302438] focus:outline-none focus:ring-2 focus:ring-[#B69ACF]";
 const labelClass = "mb-1 block text-xs font-semibold text-[#563568]";
 
+function normalizeMenSettings(value: MenStorefrontSettings): MenStorefrontSettings {
+  return { ...defaults, ...value, comingSoon: false,
+    categories: (value.categories || defaults.categories).map((category, index) => ({ ...category, productIds: category.productIds || [], sortOrder: category.sortOrder ?? index })),
+    offers: { ...defaults.offers, ...value.offers }, notification: { ...defaults.notification, ...value.notification }
+  };
+}
+
 export const MenStorefrontManager: React.FC = () => {
   const [settings, setSettings] = useState<MenStorefrontSettings>(defaults);
+  const [publishedSettings, setPublishedSettings] = useState<MenStorefrontSettings>(defaults);
+  const [savedPreviewSnapshot, setSavedPreviewSnapshot] = useState<string | null>(null);
+  const [publishReview, setPublishReview] = useState(false);
   const [collection, setCollection] = useState<"" | "artificial" | "demi-fine">("");
   const [products, setProducts] = useState<MenStorefrontProduct[]>([]);
   const [subscribers, setSubscribers] = useState<MenLaunchSubscriber[]>([]);
@@ -51,7 +61,11 @@ export const MenStorefrontManager: React.FC = () => {
     try {
       const result = await hostingerStorefrontService.getMenStorefront(collection || undefined);
       if (isCancelled()) return;
-      setSettings({ ...defaults, ...result.draft, comingSoon: false, categories: (result.draft.categories || defaults.categories).map((category, index) => ({ ...category, productIds: category.productIds || [], sortOrder: category.sortOrder ?? index })), offers: { ...defaults.offers, ...result.draft.offers }, notification: { ...defaults.notification, ...result.draft.notification } });
+      const loadedDraft = normalizeMenSettings(result.draft);
+      setSettings(loadedDraft);
+      setPublishedSettings(normalizeMenSettings(result.published));
+      setSavedPreviewSnapshot(JSON.stringify(loadedDraft));
+      setPublishReview(false);
       setProducts(result.products || []);
       const signups = await hostingerStorefrontService.getMenLaunchSignups().catch(() => ({ subscribers: [] }));
       if (!isCancelled()) setSubscribers(signups.subscribers || []);
@@ -61,13 +75,28 @@ export const MenStorefrontManager: React.FC = () => {
   };
   useEffect(() => {
     let cancelled = false;
-    setSettings(defaults); setProducts([]); setEditingProductId(null); setAddingProductTo(null);
+    setSettings(defaults); setPublishedSettings(defaults); setSavedPreviewSnapshot(null); setPublishReview(false);
+    setProducts([]); setEditingProductId(null); setAddingProductTo(null);
     setNewProduct({ name: "", price: "", stock: "0", description: "", imageUrl: "", status: "draft" });
     void load(() => cancelled);
     return () => { cancelled = true; };
   }, [collection]);
 
   const activeProducts = useMemo(() => products.filter(p => p.status === "active" && (!collection || p.productCollection === collection)), [products, collection]);
+  const settingsSnapshot = JSON.stringify(settings);
+  const previewIsCurrent = savedPreviewSnapshot === settingsSnapshot;
+  const changedAreas = useMemo(() => {
+    const groups: Array<{ label: string; keys: (keyof MenStorefrontSettings)[] }> = [
+      { label: "Page identity & hero", keys: ["enabled", "eyebrow", "title", "description", "heroImageUrl"] },
+      { label: "Categories", keys: ["categories"] },
+      { label: "Featured products", keys: ["showProducts", "productIds", "featuredTitle"] },
+      { label: "Best sellers", keys: ["showBestSellers", "bestSellerIds"] },
+      { label: "Curated collections", keys: ["collections"] },
+      { label: "Offers", keys: ["offers"] },
+      { label: "Launch notifications", keys: ["notification"] }
+    ];
+    return groups.filter(group => group.keys.some(key => JSON.stringify(settings[key]) !== JSON.stringify(publishedSettings[key]))).map(group => group.label);
+  }, [settings, publishedSettings]);
   const update = <K extends keyof MenStorefrontSettings,>(key: K, value: MenStorefrontSettings[K]) => setSettings(current => ({ ...current, [key]: value }));
 
   const uploadImage = async (key: "heroImageUrl" | "category", file?: File, categoryId?: string) => {
@@ -84,16 +113,30 @@ export const MenStorefrontManager: React.FC = () => {
 
   const saveDraft = async () => {
     setBusy(true); setError(""); setMessage("");
-    try { await hostingerStorefrontService.saveMenStorefrontDraft(settings, collection || undefined); setMessage("Draft saved. It is not public until you publish."); }
+    try {
+      await hostingerStorefrontService.saveMenStorefrontDraft(settings, collection || undefined);
+      setSavedPreviewSnapshot(settingsSnapshot);
+      setPublishReview(false);
+      setMessage("Draft saved and preview refreshed. It is not public until you publish.");
+    }
     catch (e) { setError(e instanceof Error ? e.message : "Could not save the draft."); }
     finally { setBusy(false); }
   };
-  const publish = async () => {
+  const publish = () => {
+    setError("");
+    if (!previewIsCurrent) { setError("Save draft & refresh preview before reviewing publication. The current edits have not been saved."); return; }
+    if (changedAreas.length === 0) { setError("There are no changes to publish for this version."); return; }
+    setPublishReview(true);
+  };
+  const confirmPublish = async () => {
+    if (!previewIsCurrent) { setPublishReview(false); setError("The draft changed after review. Save draft & refresh preview, then review again."); return; }
     setBusy(true); setError(""); setMessage("");
     try {
-      await hostingerStorefrontService.saveMenStorefrontDraft(settings, collection || undefined);
-      await hostingerStorefrontService.publishMenStorefront(collection || undefined);
-      setMessage("SARINE Men changes are now published.");
+      const result = await hostingerStorefrontService.publishMenStorefront(collection || undefined);
+      setPublishedSettings(normalizeMenSettings(result.published));
+      setSavedPreviewSnapshot(JSON.stringify(settings));
+      setPublishReview(false);
+      setMessage("The saved SARINE Men version is now published.");
     } catch (e) { setError(e instanceof Error ? e.message : "Could not publish SARINE Men."); }
     finally { setBusy(false); }
   };
@@ -218,6 +261,25 @@ export const MenStorefrontManager: React.FC = () => {
       </div>
     </header>
 
+    <section className="space-y-3 rounded-2xl border border-[#E7DCEB] bg-white p-4 sm:p-5" aria-label="Draft and publication review">
+      <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-semibold text-[#302438]">Draft & publication safety</h3><p className="mt-1 text-xs text-[#705E7B]">Review the selected version before publishing. Other collection versions remain separate.</p></div>
+        <span className={previewIsCurrent ? "rounded-full bg-[#EAF7EF] px-3 py-1 text-xs font-semibold text-[#24613A]" : "rounded-full bg-[#FFF5E8] px-3 py-1 text-xs font-semibold text-[#8A5315]"}>{previewIsCurrent ? "Saved preview is current" : "Preview needs saving"}</span></div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="rounded-lg bg-[#FCFAFD] p-3"><p className="text-xs font-semibold text-[#563568]">Draft vs published</p>
+          {changedAreas.length ? <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-[#705E7B]">{changedAreas.map(area => <li key={area}>{area} changed</li>)}</ul> : <p className="mt-2 text-xs text-[#705E7B]">The saved draft matches the published version.</p>}</div>
+        <div className="rounded-lg bg-[#FCFAFD] p-3"><p className="text-xs font-semibold text-[#563568]">Selected version</p>
+          <p className="mt-2 text-sm font-semibold text-[#302438]">{collection === "artificial" ? "Artificial" : collection === "demi-fine" ? "Demi-Fine" : "Shared (default for both collections)"}</p>
+          <p className="mt-1 text-xs text-[#705E7B]">{previewIsCurrent ? "The preview represents the exact saved draft." : "Save the current edits to refresh the saved preview before publication."}</p></div>
+      </div>
+      <div className="flex flex-wrap gap-2"><button type="button" disabled={busy || Boolean(uploading) || savingNewProduct || updatingProduct} onClick={() => void saveDraft()} className="rounded-lg border border-[#DCCCE4] px-4 py-2.5 text-sm font-semibold text-[#563568] disabled:opacity-50">Save draft & refresh preview</button>
+        <button type="button" disabled={busy || !previewIsCurrent || changedAreas.length === 0} onClick={publish} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Review & publish this version</button></div>
+      {publishReview && <div className="space-y-3 rounded-xl border border-[#B69ACF] bg-[#F7F0FA] p-4" role="dialog" aria-label="Confirm SARINE Men publication">
+        <div><h4 className="font-semibold text-[#563568]">Confirm publication</h4><p className="mt-1 text-xs text-[#705E7B]">You are about to publish the saved {collection === "artificial" ? "Artificial" : collection === "demi-fine" ? "Demi-Fine" : "Shared"} SARINE Men version. This does not publish the other collection version.</p></div>
+        <ul className="list-disc space-y-1 pl-4 text-xs text-[#705E7B]">{changedAreas.map(area => <li key={area}>{area}</li>)}</ul>
+        <p className="text-xs font-semibold text-[#563568]">Only saved page settings for this version will be published. Product-level publishing actions remain separate.</p>
+        <div className="flex flex-wrap gap-2"><button type="button" disabled={busy} onClick={() => void confirmPublish()} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy ? "Publishing…" : "Confirm and publish this version"}</button><button type="button" disabled={busy} onClick={() => setPublishReview(false)} className="rounded-lg border border-[#DCCCE4] px-4 py-2.5 text-sm font-semibold text-[#563568]">Cancel</button></div>
+      </div>}
+    </section>
     {error && <div role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
     {message && <div role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-800">{message}</div>}
 
@@ -236,7 +298,7 @@ export const MenStorefrontManager: React.FC = () => {
         {settings.heroImageUrl && <img src={settings.heroImageUrl} alt="Men's hero preview" className="max-h-56 w-full rounded-xl object-cover" />}
       </div>
       <p className="rounded-lg bg-[#F7F0FA] p-3 text-xs text-[#705E7B]">Coming Soon mode is retired. The men's storefront and category pages are managed as live catalogue pages.</p>
-      <div className="flex flex-wrap gap-2"><button disabled={busy} onClick={() => void saveDraft()} className="rounded-lg border px-4 py-2.5 text-sm font-semibold text-[#563568] disabled:opacity-50">Save draft</button><button disabled={busy} onClick={() => void publish()} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy ? "Publishing…" : "Publish changes"}</button></div>
+      <div className="flex flex-wrap gap-2"><button disabled={busy} onClick={() => void saveDraft()} className="rounded-lg border px-4 py-2.5 text-sm font-semibold text-[#563568] disabled:opacity-50">Save draft</button><button disabled={busy} onClick={publish} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy ? "Publishing…" : "Publish changes"}</button></div>
     </section>}
 
     {tab === "content" && <section className="space-y-3 rounded-2xl border border-[#E7DCEB] bg-white p-4 sm:p-5" aria-label="Responsive SARINE Men draft preview">
