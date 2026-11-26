@@ -183,16 +183,18 @@ router.post("/", async (req, res, next) => {
     await ensureInventoryTable();
     connection = await pool.getConnection();
     await connection.beginTransaction();
+    const [[sortRow]] = await connection.execute("SELECT COALESCE(MAX(sort_order), 0) + 1 AS nextSortOrder FROM products");
+    const nextSortOrder = Number(sortRow.nextSortOrder);
     await connection.execute(
       `INSERT INTO products
        (id, slug, name, product_collection, description, short_description, price, compare_at_price, cost_price,
         images, category_id, collection_slugs, jewellery_type, stock, status, tags,
-        base_metal, plating_finish, stone_type, closure_type, care_instructions, product_video_url, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))`,
+        base_metal, plating_finish, stone_type, closure_type, care_instructions, product_video_url, sort_order, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))`,
       [id, data.slug, data.name, data.product_collection, data.description, data.short_description, data.price,
        data.compare_at_price, data.cost_price, data.images, data.category_id,
        data.collection_slugs, data.jewellery_type, data.stock, data.status, data.tags,
-       data.base_metal, data.plating_finish, data.stone_type, data.closure_type, data.care_instructions, data.product_video_url]
+       data.base_metal, data.plating_finish, data.stone_type, data.closure_type, data.care_instructions, data.product_video_url, nextSortOrder]
     );
 
     if (data.stock > 0) {
@@ -472,12 +474,14 @@ router.post("/reorder", async (req, res, next) => {
         new Set(productIds).size !== productIds.length) {
       return res.status(400).json({ error: "Provide a unique ordered list of up to 5,000 product IDs." });
     }
-    const [[countRow]] = await pool.execute("SELECT COUNT(*) AS total FROM products");
-    if (Number(countRow.total) !== productIds.length) {
-      return res.status(409).json({ error: "The catalogue changed while ordering. Refresh the product list and try again." });
-    }
     connection = await pool.getConnection();
     await connection.beginTransaction();
+    const [catalogueRows] = await connection.execute("SELECT id FROM products FOR UPDATE");
+    const catalogueIds = new Set(catalogueRows.map(row => row.id));
+    if (catalogueIds.size !== productIds.length || productIds.some(id => !catalogueIds.has(id))) {
+      await connection.rollback();
+      return res.status(409).json({ error: "The catalogue changed while ordering. Refresh the product list and try again." });
+    }
     for (let offset = 0; offset < productIds.length; offset += 400) {
       const batch = productIds.slice(offset, offset + 400);
       if (!batch.length) continue;
