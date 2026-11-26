@@ -24,12 +24,16 @@ export interface HostingerMediaAsset {
   uploadedBy: string;
   createdAt: string;
   url: string;
+  duplicateCount?: number;
 }
 
 export class HostingerMediaService {
-  async listImages(search = "", limit = 40, offset = 0): Promise<{ media: HostingerMediaAsset[]; total: number; limit: number; offset: number }> {
-    const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+  async listImages(search = "", limit = 40, offset = 0, filters: { mimeType?: string; from?: string; to?: string; sort?: "newest" | "oldest" | "filename" } = {}): Promise<{ media: HostingerMediaAsset[]; total: number; limit: number; offset: number }> {
+    const params = new URLSearchParams({ limit: String(limit), offset: String(offset), sort: filters.sort || "newest" });
     if (search.trim()) params.set("search", search.trim());
+    if (filters.mimeType) params.set("mimeType", filters.mimeType);
+    if (filters.from) params.set("from", filters.from);
+    if (filters.to) params.set("to", filters.to);
     const response = await fetch(`${API_BASE}/admin/media?${params.toString()}`, {
       credentials: "include",
       headers: { Accept: "application/json" }
