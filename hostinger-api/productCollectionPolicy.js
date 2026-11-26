@@ -7,9 +7,9 @@ export function normalizeProductCollection(value) {
 }
 
 export function validateProductCollection(value, { required = false } = {}) {
-  if (value === undefined || value === "") {
+  if (value === undefined) {
     return required ? "Choose Artificial or Demi-Fine for this product." : null;
   }
-  if (value === null) return "Product collection must be artificial or demi-fine.";
+  if (value === "" || value === null) return "Product collection must be artificial or demi-fine.";
   return normalizeProductCollection(value) ? null : "Product collection must be artificial or demi-fine.";
 }
