@@ -2,6 +2,7 @@ import { Router } from "express";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { mapPublicProduct } from "./publicProductMapper.js";
+import { ensureProductCollectionSchema } from "./productCollectionSchema.js";
 import {
   EMPTY_EXPLORE_NOW,
   MAX_EXPLORE_PRODUCTS,
@@ -58,11 +59,24 @@ function shuffleInPlace(items) {
   return items;
 }
 
-adminOnly.get("/", async (_req, res, next) => {
+function collectionFrom(value) { const v = String(value || "").trim().toLowerCase(); if (!v) return null; if (v !== "artificial" && v !== "demi-fine") throw new Error("Product collection must be artificial or demi-fine."); return v; }
+function collectionKey(base, collection) { return collection ? base + "_" + collection : base; }
+export async function validateCollectionProductIds(productIds, collection) {
+  if (!collection || !productIds.length) return null;
+  await ensureProductCollectionSchema();
+  const placeholders = productIds.map(() => "?").join(",");
+  const [rows] = await pool.execute(
+    `SELECT id FROM products WHERE id IN (${placeholders}) AND product_collection = ?`,
+    [...productIds, collection]
+  );
+  return rows.length === productIds.length ? null : "Every selected product must belong to the chosen homepage range.";
+}
+
+adminOnly.get("/", async (req, res, next) => {
   try {
     const [draft, published] = await Promise.all([
-      readExploreNow("explore_now_draft"),
-      readExploreNow("explore_now_published")
+      readExploreNow(collectionKey("explore_now_draft", collectionFrom(req.query.productCollection))),
+      readExploreNow(collectionKey("explore_now_published", collectionFrom(req.query.productCollection)))
     ]);
     res.set("Cache-Control", "no-store").json({
       draft,
@@ -75,7 +89,10 @@ adminOnly.get("/", async (_req, res, next) => {
 adminOnly.put("/draft", async (req, res, next) => {
   try {
     const draft = validateExploreNow(req.body);
-    await writeExploreNow("explore_now_draft", draft);
+    const collection = collectionFrom(req.body?.productCollection);
+    const collectionError = await validateCollectionProductIds(draft.productIds, collection);
+    if (collectionError) return res.status(400).json({ error: collectionError });
+    await writeExploreNow(collectionKey("explore_now_draft", collection), draft);
     res.set("Cache-Control", "no-store").json({ success: true, draft });
   } catch (error) {
     if (error instanceof Error && /explore now|product|choose|valid|added|count/i.test(error.message)) {
@@ -85,17 +102,20 @@ adminOnly.put("/draft", async (req, res, next) => {
   }
 });
 
-adminOnly.post("/publish", async (_req, res, next) => {
+adminOnly.post("/publish", async (req, res, next) => {
   try {
-    const draft = await readExploreNow("explore_now_draft");
-    await writeExploreNow("explore_now_published", draft);
+    const collection = collectionFrom(req.body?.productCollection);
+    const draft = await readExploreNow(collectionKey("explore_now_draft", collection));
+    await writeExploreNow(collectionKey("explore_now_published", collection), draft);
     res.set("Cache-Control", "no-store").json({ success: true, published: draft });
   } catch (error) { next(error); }
 });
 
-publicRouter.get("/", async (_req, res, next) => {
+publicRouter.get("/", async (req, res, next) => {
   try {
-    const config = await readExploreNow("explore_now_published");
+    await ensureProductCollectionSchema();
+    const productCollection = collectionFrom(req.query.productCollection);
+    const config = await readExploreNow(collectionKey("explore_now_published", productCollection));
     if (!config.configured || !config.productIds.length) {
       return res.set("Cache-Control", "no-store").json({
         products: [],
@@ -106,8 +126,9 @@ publicRouter.get("/", async (_req, res, next) => {
     const ids = config.productIds.slice(0, MAX_EXPLORE_PRODUCTS);
     const placeholders = ids.map(() => "?").join(",");
     const [rows] = await pool.execute(
-      `SELECT * FROM products WHERE id IN (${placeholders}) AND status='active' AND stock > 0`,
-      ids
+      `SELECT * FROM products WHERE id IN (${placeholders}) AND status='active' AND stock > 0
+         AND (? = '' OR product_collection = ?)`,
+      [...ids, productCollection || "", productCollection || ""]
     );
     const products = shuffleInPlace(rows.map(mapPublicProduct));
     res.set("Cache-Control", "no-store").json({

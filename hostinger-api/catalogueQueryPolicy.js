@@ -40,7 +40,7 @@ function readOptionalPrice(query, key) {
 
 /** Validate and bound untrusted public catalogue query parameters before SQL work. */
 export function parseCatalogueQuery(query = {}) {
-  const textFilters = { categorySlug: 120, categoryId: 191, jewelleryType: 80, collectionSlug: 120, search: MAX_CATALOGUE_SEARCH_LENGTH };
+  const textFilters = { categorySlug: 120, categoryId: 191, jewelleryType: 80, collectionSlug: 120, productCollection: 24, search: MAX_CATALOGUE_SEARCH_LENGTH };
   const filters = {};
   for (const [key, maxLength] of Object.entries(textFilters)) {
     const parsed = readOptionalText(query, key, maxLength);
@@ -59,6 +59,9 @@ export function parseCatalogueQuery(query = {}) {
     return { filters: null, error: "Minimum price cannot exceed maximum price." };
   }
   const sortBy = typeof query.sortBy === "string" ? query.sortBy : undefined;
+  if (filters.productCollection !== undefined && !["artificial", "demi-fine"].includes(filters.productCollection)) {
+    return { filters: null, error: "Product collection must be artificial or demi-fine." };
+  }
   filters.page = page.value;
   filters.pageSize = pageSize.value;
   filters.minPrice = minPrice.value;

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { ensureProductCollectionSchema } from "./productCollectionSchema.js";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { MAX_CURATED_PRODUCTS, EMPTY_CURATED_FAVOURITES as EMPTY_CURATION, validateCuratedFavourites } from "./curatedFavouritesPolicy.js";
@@ -46,7 +47,7 @@ async function writeCuration(key, value) {
   );
 }
 
-function mapPublicProduct(row) {
+export function mapPublicProduct(row) {
   let images = [];
   let tags = [];
   let collectionSlugs = [];
@@ -57,6 +58,7 @@ function mapPublicProduct(row) {
     id: row.id,
     slug: row.slug,
     name: row.name,
+    productCollection: row.product_collection || undefined,
     description: row.description || "",
     shortDescription: row.short_description || "",
     price: Number(row.price),
@@ -72,11 +74,24 @@ function mapPublicProduct(row) {
   };
 }
 
-adminOnly.get("/", async (_req, res, next) => {
+function collectionFrom(value) { const v = String(value || "").trim().toLowerCase(); if (!v) return null; if (v !== "artificial" && v !== "demi-fine") throw new Error("Product collection must be artificial or demi-fine."); return v; }
+function collectionKey(base, collection) { return collection ? base + "_" + collection : base; }
+export async function validateCollectionProductIds(productIds, collection) {
+  if (!collection || !productIds.length) return null;
+  await ensureProductCollectionSchema();
+  const placeholders = productIds.map(() => "?").join(",");
+  const [rows] = await pool.execute(
+    `SELECT id FROM products WHERE id IN (${placeholders}) AND product_collection = ?`,
+    [...productIds, collection]
+  );
+  return rows.length === productIds.length ? null : "Every selected product must belong to the chosen homepage range.";
+}
+
+adminOnly.get("/", async (req, res, next) => {
   try {
     const [draft, published] = await Promise.all([
-      readCuration("curated_favourites_draft"),
-      readCuration("curated_favourites_published")
+      readCuration(collectionKey("curated_favourites_draft", collectionFrom(req.query.productCollection))),
+      readCuration(collectionKey("curated_favourites_published", collectionFrom(req.query.productCollection)))
     ]);
     res.set("Cache-Control", "no-store").json({ draft, published, maxProducts: MAX_CURATED_PRODUCTS });
   } catch (error) { next(error); }
@@ -85,7 +100,10 @@ adminOnly.get("/", async (_req, res, next) => {
 adminOnly.put("/draft", async (req, res, next) => {
   try {
     const draft = validateCuratedFavourites(req.body);
-    await writeCuration("curated_favourites_draft", draft);
+    const collection = collectionFrom(req.body?.productCollection);
+    const collectionError = await validateCollectionProductIds(draft.productIds, collection);
+    if (collectionError) return res.status(400).json({ error: collectionError });
+    await writeCuration(collectionKey("curated_favourites_draft", collection), draft);
     res.set("Cache-Control", "no-store").json({ success: true, draft });
   } catch (error) {
     if (error instanceof Error && /curated|product|choose|valid|added/i.test(error.message)) {
@@ -95,25 +113,29 @@ adminOnly.put("/draft", async (req, res, next) => {
   }
 });
 
-adminOnly.post("/publish", async (_req, res, next) => {
+adminOnly.post("/publish", async (req, res, next) => {
   try {
-    const draft = await readCuration("curated_favourites_draft");
-    await writeCuration("curated_favourites_published", draft);
+    const collection = collectionFrom(req.body?.productCollection);
+    const draft = await readCuration(collectionKey("curated_favourites_draft", collection));
+    await writeCuration(collectionKey("curated_favourites_published", collection), draft);
     res.set("Cache-Control", "no-store").json({ success: true, published: draft });
   } catch (error) { next(error); }
 });
 
-publicRouter.get("/", async (_req, res, next) => {
+publicRouter.get("/", async (req, res, next) => {
   try {
-    const curation = await readCuration("curated_favourites_published");
+    await ensureProductCollectionSchema();
+    const productCollection = collectionFrom(req.query.productCollection);
+    const curation = await readCuration(collectionKey("curated_favourites_published", productCollection));
     if (!curation.productIds.length) {
       res.set("Cache-Control", "no-store").json({ products: [], configured: curation.configured === true });
       return;
     }
     const placeholders = curation.productIds.map(() => "?").join(",");
     const [rows] = await pool.execute(
-      `SELECT * FROM products WHERE id IN (${placeholders}) AND status='active' AND stock > 0`,
-      curation.productIds
+      `SELECT * FROM products WHERE id IN (${placeholders}) AND status='active' AND stock > 0
+         AND (? = '' OR product_collection = ?)`,
+      [...curation.productIds, productCollection || "", productCollection || ""]
     );
     const byId = new Map(rows.map((row) => [String(row.id), row]));
     const products = curation.productIds

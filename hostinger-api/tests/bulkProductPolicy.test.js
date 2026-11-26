@@ -24,3 +24,9 @@ test("validates money, category and publication status", () => {
   assert.match(validateBulkProductRequest(["p1"], { status: "archived" }), /active or draft/);
   assert.equal(validateBulkProductRequest(["p1"], { compareAtPrice: null }), null);
 });
+
+test("accepts only the two supported product ranges in bulk updates", () => {
+  assert.equal(validateBulkProductRequest(["p1"], { productCollection: "artificial" }), null);
+  assert.equal(validateBulkProductRequest(["p1"], { productCollection: "demi-fine" }), null);
+  assert.match(validateBulkProductRequest(["p1"], { productCollection: "fine-jewellery" }), /Artificial or Demi-Fine/);
+});

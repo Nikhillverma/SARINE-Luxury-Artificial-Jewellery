@@ -14,6 +14,7 @@ export function mapPublicProduct(row) {
     id: row.id,
     slug: row.slug,
     name: row.name,
+    productCollection: row.product_collection || undefined,
     description: row.description || "",
     shortDescription: row.short_description || "",
     price: Number(row.price),

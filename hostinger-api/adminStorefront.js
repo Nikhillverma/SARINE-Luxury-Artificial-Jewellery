@@ -24,12 +24,17 @@ async function ensureSchema() {
         cta_text VARCHAR(80) NOT NULL DEFAULT 'Shop now',
         cta_link VARCHAR(500) NOT NULL DEFAULT '/shop',
         image_url VARCHAR(2048) NOT NULL,
+        product_collection VARCHAR(24) NULL,
         is_active TINYINT(1) NOT NULL DEFAULT 0,
         sort_order INT NOT NULL DEFAULT 0,
         created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
         updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
         INDEX idx_storefront_banners_active_order (is_active, sort_order)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+      const [bannerColumns] = await pool.execute("SHOW COLUMNS FROM storefront_banners LIKE 'product_collection'");
+      if (!bannerColumns.length) await pool.execute("ALTER TABLE storefront_banners ADD COLUMN product_collection VARCHAR(24) NULL AFTER image_url");
+      const [bannerIndexes] = await pool.execute("SHOW INDEX FROM storefront_banners WHERE Key_name='idx_storefront_banners_collection_active'");
+      if (!bannerIndexes.length) await pool.execute("ALTER TABLE storefront_banners ADD INDEX idx_storefront_banners_collection_active (product_collection, is_active, sort_order)");
       await pool.execute(`CREATE TABLE IF NOT EXISTS storefront_settings (
         setting_key VARCHAR(100) NOT NULL PRIMARY KEY,
         setting_value TEXT NOT NULL,
@@ -40,11 +45,13 @@ async function ensureSchema() {
   await schemaReady;
 }
 
+function collectionFrom(value) { const v = String(value || "").trim().toLowerCase(); if (!v) return null; if (v !== "artificial" && v !== "demi-fine") throw new Error("Product collection must be artificial or demi-fine."); return v; }
+function settingKey(base, collection) { return collection ? base + "_" + collection : base; }
 function mapBanner(row) {
   return {
     id: row.id, tagline: row.tagline, title: row.title, subtitle: row.subtitle,
     ctaText: row.cta_text, ctaLink: row.cta_link, imageUrl: row.image_url,
-    active: Boolean(row.is_active), sortOrder: Number(row.sort_order)
+    active: Boolean(row.is_active), sortOrder: Number(row.sort_order), productCollection: row.product_collection || null
   };
 }
 function validate(input) {
@@ -58,10 +65,49 @@ function validate(input) {
   return null;
 }
 
-adminOnly.get("/banners", async (_req, res, next) => {
+async function readHomepageCategoryImages(collection = null) {
+  await ensureSchema();
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [settingKey("homepage_category_images", collection)]);
+  if (!rows.length) return {};
+  try {
+    const value = JSON.parse(rows[0].setting_value);
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    return Object.fromEntries(Object.entries(value).filter(([slug, url]) =>
+      /^[a-z0-9][a-z0-9-]{0,79}$/.test(slug) && typeof url === "string" &&
+      url.length <= 2048 && (url === "" || url.startsWith("/") && !url.startsWith("//") || /^https:\/\//i.test(url))
+    ));
+  } catch { return {}; }
+}
+adminOnly.get("/category-images", async (req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ images: await readHomepageCategoryImages(collectionFrom(req.query.productCollection)) }); }
+  catch (error) { next(error); }
+});
+adminOnly.put("/category-images", async (req, res, next) => {
+  try {
+    const collection = collectionFrom(req.body?.productCollection);
+    const input = req.body?.images;
+    if (!input || typeof input !== "object" || Array.isArray(input) || Object.keys(input).length > 50) return res.status(400).json({ error: "Provide a valid category image map." });
+    const images = {};
+    for (const [slug, rawUrl] of Object.entries(input)) {
+      const url = typeof rawUrl === "string" ? rawUrl.trim() : "";
+      if (!/^[a-z0-9][a-z0-9-]{0,79}$/.test(slug) || url.length > 2048 || (url && !(url.startsWith("/") && !url.startsWith("//")) && !/^https:\/\//i.test(url))) return res.status(400).json({ error: "Each category image must use a valid category slug and site or HTTPS image URL." });
+      if (url) images[slug] = url;
+    }
+    await ensureSchema();
+    await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [settingKey("homepage_category_images", collection), JSON.stringify(images)]);
+    res.set("Cache-Control", "no-store").json({ success: true, images });
+  } catch (error) { next(error); }
+});
+publicRouter.get("/category-images", async (req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ images: await readHomepageCategoryImages(collectionFrom(req.query.productCollection)) }); }
+  catch (error) { next(error); }
+});
+
+adminOnly.get("/banners", async (req, res, next) => {
   try {
     await ensureSchema();
-    const [rows] = await pool.execute("SELECT * FROM storefront_banners ORDER BY sort_order ASC, created_at ASC");
+    const collection = collectionFrom(req.query.productCollection);
+    const [rows] = collection ? await pool.execute("SELECT * FROM storefront_banners WHERE product_collection=? ORDER BY sort_order ASC, created_at ASC", [collection]) : await pool.execute("SELECT * FROM storefront_banners WHERE product_collection IS NULL ORDER BY sort_order ASC, created_at ASC");
     res.set("Cache-Control", "no-store").json({ banners: rows.map(mapBanner) });
   } catch (error) { next(error); }
 });
@@ -71,15 +117,17 @@ adminOnly.post("/banners", async (req, res, next) => {
     const input = req.body || {};
     const invalid = validate(input);
     if (invalid) return res.status(400).json({ error: invalid });
+    let productCollection;
+    try { productCollection = collectionFrom(input.productCollection); } catch (error) { return res.status(400).json({ error: error.message }); }
     const id = crypto.randomUUID();
-    const [count] = await pool.execute("SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM storefront_banners");
+    const [count] = await pool.execute("SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM storefront_banners WHERE product_collection <=> ?", [productCollection]);
     await pool.execute(
       `INSERT INTO storefront_banners
-       (id, tagline, title, subtitle, cta_text, cta_link, image_url, is_active, sort_order)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, tagline, title, subtitle, cta_text, cta_link, image_url, product_collection, is_active, sort_order)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, String(input.tagline || "").slice(0,120), String(input.title).trim(),
        String(input.subtitle || "").slice(0,500), String(input.ctaText || "Shop now").slice(0,80),
-       String(input.ctaLink || "/shop").trim(), String(input.imageUrl).trim(),
+       String(input.ctaLink || "/shop").trim(), String(input.imageUrl).trim(), productCollection,
        input.active === true ? 1 : 0, Number.isInteger(input.sortOrder) ? input.sortOrder : Number(count[0].next_order)]
     );
     const [rows] = await pool.execute("SELECT * FROM storefront_banners WHERE id = ?", [id]);
@@ -94,14 +142,16 @@ adminOnly.put("/banners/:id", async (req, res, next) => {
     if (!existing.length) return res.status(404).json({ error: "Banner not found." });
     const current = mapBanner(existing[0]);
     const merged = { ...current, ...input };
+    let productCollection;
+    try { productCollection = collectionFrom(merged.productCollection); } catch (error) { return res.status(400).json({ error: error.message }); }
     const invalid = validate(merged);
     if (invalid) return res.status(400).json({ error: invalid });
     await pool.execute(
       `UPDATE storefront_banners SET tagline=?, title=?, subtitle=?, cta_text=?, cta_link=?,
-       image_url=?, is_active=?, sort_order=? WHERE id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci`,
+       image_url=?, product_collection=?, is_active=?, sort_order=? WHERE id COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci`,
       [String(merged.tagline || "").slice(0,120), String(merged.title).trim(),
        String(merged.subtitle || "").slice(0,500), String(merged.ctaText || "Shop now").slice(0,80),
-       String(merged.ctaLink || "/shop").trim(), String(merged.imageUrl).trim(),
+       String(merged.ctaLink || "/shop").trim(), String(merged.imageUrl).trim(), productCollection,
        merged.active === true ? 1 : 0,
        Number.isInteger(merged.sortOrder) ? merged.sortOrder : current.sortOrder, req.params.id]
     );
@@ -122,10 +172,13 @@ adminOnly.put("/banners/reorder", async (req, res, next) => {
   if (!Array.isArray(ids) || ids.length > 30 || ids.some(id => typeof id !== "string")) return res.status(400).json({ error: "Provide a valid ordered list of banner IDs." });
   let connection;
   try {
+    const collection = collectionFrom(req.body?.productCollection);
     await ensureSchema();
     connection = await pool.getConnection();
     await connection.beginTransaction();
-    for (let i = 0; i < ids.length; i++) await connection.execute("UPDATE storefront_banners SET sort_order=? WHERE id=?", [i, ids[i]]);
+    for (let i = 0; i < ids.length; i++) {
+      await connection.execute("UPDATE storefront_banners SET sort_order=? WHERE id=? AND product_collection <=> ?", [i, ids[i], collection]);
+    }
     await connection.commit();
     res.json({ success: true });
   } catch (error) {
@@ -176,15 +229,15 @@ function validateShopByGender(input) {
     forHimImageUrl: imageUrl(input.forHimImageUrl, "For Him image")
   };
 }
-async function readShopByGender() {
+async function readShopByGender(collection = null) {
   await ensureSchema();
-  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='shop_by_gender' LIMIT 1");
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [settingKey("shop_by_gender", collection)]);
   if (!rows.length) return DEFAULT_SHOP_BY_GENDER;
   try { return validateShopByGender(JSON.parse(rows[0].setting_value)); }
   catch { return DEFAULT_SHOP_BY_GENDER; }
 }
-adminOnly.get("/shop-by-gender", async (_req, res, next) => {
-  try { res.set("Cache-Control", "no-store").json({ settings: await readShopByGender() }); }
+adminOnly.get("/shop-by-gender", async (req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ settings: await readShopByGender(collectionFrom(req.query.productCollection)) }); }
   catch (error) { next(error); }
 });
 adminOnly.put("/shop-by-gender", async (req, res, next) => {
@@ -194,14 +247,14 @@ adminOnly.put("/shop-by-gender", async (req, res, next) => {
     catch (error) { return res.status(400).json({ error: error.message }); }
     await ensureSchema();
     await pool.execute(
-      "INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('shop_by_gender', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)",
-      [JSON.stringify(settings)]
+      "INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)",
+      [settingKey("shop_by_gender", collectionFrom(req.body?.productCollection)), JSON.stringify(settings)]
     );
     res.set("Cache-Control", "no-store").json({ success: true, settings });
   } catch (error) { next(error); }
 });
-publicRouter.get("/shop-by-gender", async (_req, res, next) => {
-  try { res.set("Cache-Control", "no-store").json({ settings: await readShopByGender() }); }
+publicRouter.get("/shop-by-gender", async (req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ settings: await readShopByGender(collectionFrom(req.query.productCollection)) }); }
   catch (error) { next(error); }
 });
 
@@ -229,14 +282,14 @@ function validateOccasions(input) {
     return { id, title, subtitle, image, link, active: item.active === true, sortOrder: index };
   });
 }
-async function readOccasions() {
+async function readOccasions(collection = null) {
   await ensureSchema();
-  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='shop_by_occasion' LIMIT 1");
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [settingKey("shop_by_occasion", collection)]);
   if (!rows.length) return defaultOccasions;
   try { return validateOccasions(JSON.parse(rows[0].setting_value)); } catch { return defaultOccasions; }
 }
-adminOnly.get("/occasions", async (_req, res, next) => {
-  try { res.set("Cache-Control", "no-store").json({ occasions: await readOccasions() }); }
+adminOnly.get("/occasions", async (req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ occasions: await readOccasions(collectionFrom(req.query.productCollection)) }); }
   catch (error) { next(error); }
 });
 adminOnly.put("/occasions", async (req, res, next) => {
@@ -245,19 +298,20 @@ adminOnly.put("/occasions", async (req, res, next) => {
     try { occasions = validateOccasions(req.body?.occasions); }
     catch (error) { return res.status(400).json({ error: error.message }); }
     await ensureSchema();
-    await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('shop_by_occasion', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [JSON.stringify(occasions)]);
+    await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [settingKey("shop_by_occasion", collectionFrom(req.body?.productCollection)), JSON.stringify(occasions)]);
     res.set("Cache-Control", "no-store").json({ success: true, occasions });
   } catch (error) { next(error); }
 });
-publicRouter.get("/occasions", async (_req, res, next) => {
-  try { res.set("Cache-Control", "no-store").json({ occasions: (await readOccasions()).filter(item => item.active).sort((a,b) => a.sortOrder-b.sortOrder) }); }
+publicRouter.get("/occasions", async (req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ occasions: (await readOccasions(collectionFrom(req.query.productCollection))).filter(item => item.active).sort((a,b) => a.sortOrder-b.sortOrder) }); }
   catch (error) { next(error); }
 });
 
-publicRouter.get("/banners", async (_req, res, next) => {
+publicRouter.get("/banners", async (req, res, next) => {
   try {
     await ensureSchema();
-    const [rows] = await pool.execute("SELECT * FROM storefront_banners WHERE is_active=1 ORDER BY sort_order ASC, created_at ASC");
+    const collection = collectionFrom(req.query.productCollection);
+    const [rows] = collection ? await pool.execute("SELECT * FROM storefront_banners WHERE product_collection=? AND is_active=1 ORDER BY sort_order ASC, created_at ASC", [collection]) : await pool.execute("SELECT * FROM storefront_banners WHERE product_collection IS NULL AND is_active=1 ORDER BY sort_order ASC, created_at ASC");
     res.set("Cache-Control", "no-store").json({ banners: rows.map(mapBanner) });
   } catch (error) { next(error); }
 });
@@ -453,17 +507,18 @@ function normalizeMenStorefront(value) {
     }
   };
 }
-async function readMenStorefrontRecord() {
+async function readMenStorefrontRecord(collection = null) {
   await ensureSchema();
-  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='men_storefront' LIMIT 1");
+  const key = settingKey("men_storefront", collection);
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [key]);
   if (!rows.length) return { draft: DEFAULT_MEN_STOREFRONT, published: DEFAULT_MEN_STOREFRONT };
   try {
     const saved = JSON.parse(rows[0].setting_value);
     return { draft: normalizeMenStorefront(saved.draft), published: normalizeMenStorefront(saved.published) };
   } catch { return { draft: DEFAULT_MEN_STOREFRONT, published: DEFAULT_MEN_STOREFRONT }; }
 }
-async function writeMenStorefrontRecord(record) {
-  await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('men_storefront', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [JSON.stringify(record)]);
+async function writeMenStorefrontRecord(record, collection = null) {
+  await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [settingKey("men_storefront", collection), JSON.stringify(record)]);
 }
 async function ensureMenSubscribersSchema() {
   await pool.execute(`CREATE TABLE IF NOT EXISTS men_launch_subscribers (
@@ -477,37 +532,46 @@ async function ensureMenSubscribersSchema() {
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 }
 const menSignupLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 8, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Too many signup attempts. Please try again later." } });
-adminOnly.get("/men-storefront", async (_req, res, next) => {
+adminOnly.get("/men-storefront", async (req, res, next) => {
   try {
-    const record = await readMenStorefrontRecord();
-    const [rows] = await pool.execute("SELECT id, name, slug, price, images, status, stock FROM products WHERE JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE(?)) ORDER BY created_at DESC LIMIT 500", ["__sarine_men_catalogue__"]);
+    const collection = collectionFrom(req.query.productCollection);
+    const record = await readMenStorefrontRecord(collection);
+    await ensureProductCollectionSchema();
+    const [rows] = await pool.execute(
+      "SELECT id, name, slug, price, images, status, stock, product_collection FROM products WHERE JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE(?)) AND (? = '' OR product_collection = ?) ORDER BY created_at DESC LIMIT 500",
+      ["__sarine_men_catalogue__", collection || "", collection || ""]
+    );
     const products = rows.map(row => {
       let images = []; try { images = JSON.parse(row.images || "[]"); } catch {}
-      return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price), images: Array.isArray(images) ? images : [], status: row.status, stock: Number(row.stock) };
+      return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price), images: Array.isArray(images) ? images : [], status: row.status, stock: Number(row.stock), productCollection: row.product_collection || null };
     });
     res.set("Cache-Control", "no-store").json({ ...record, products });
   } catch (error) { next(error); }
 });
 adminOnly.put("/men-storefront/draft", async (req, res, next) => {
   try {
+    const collection = collectionFrom(req.body?.productCollection);
     const draft = normalizeMenStorefront(req.body?.settings);
     if (!draft.title || !draft.description) return res.status(400).json({ error: "Add a title and description for the men's page." });
-    const record = await readMenStorefrontRecord();
-    await writeMenStorefrontRecord({ ...record, draft });
+    const record = await readMenStorefrontRecord(collection);
+    await writeMenStorefrontRecord({ ...record, draft }, collection);
     res.set("Cache-Control", "no-store").json({ success: true, draft });
   } catch (error) { next(error); }
 });
-adminOnly.post("/men-storefront/publish", async (_req, res, next) => {
+adminOnly.post("/men-storefront/publish", async (req, res, next) => {
   try {
-    const record = await readMenStorefrontRecord();
+    const collection = collectionFrom(req.body?.productCollection);
+    const record = await readMenStorefrontRecord(collection);
     const published = normalizeMenStorefront(record.draft);
-    await writeMenStorefrontRecord({ ...record, published });
+    await writeMenStorefrontRecord({ ...record, published }, collection);
     res.set("Cache-Control", "no-store").json({ success: true, published });
   } catch (error) { next(error); }
 });
-publicRouter.get("/men-storefront", async (_req, res, next) => {
+publicRouter.get("/men-storefront", async (req, res, next) => {
   try {
-    const { published } = await readMenStorefrontRecord();
+    const collection = collectionFrom(req.query.productCollection);
+    const { published } = await readMenStorefrontRecord(collection);
+    await ensureProductCollectionSchema();
     const productIds = [...new Set([
       ...(published.showProducts ? published.productIds : []),
       ...(published.showBestSellers ? published.bestSellerIds : []),
@@ -517,11 +581,14 @@ publicRouter.get("/men-storefront", async (_req, res, next) => {
     let products = [];
     if (productIds.length) {
       const placeholders = productIds.map(() => "?").join(",");
-      const [rows] = await pool.execute(`SELECT id, name, slug, price, compare_at_price, images, stock FROM products WHERE status='active' AND JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE('__sarine_men_catalogue__')) AND id IN (${placeholders})`, productIds);
+      const [rows] = await pool.execute(
+        `SELECT id, name, slug, price, compare_at_price, images, stock, product_collection FROM products WHERE status='active' AND JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE('__sarine_men_catalogue__')) AND id IN (${placeholders}) AND (? = '' OR product_collection = ?)`,
+        [...productIds, collection || "", collection || ""]
+      );
       const byId = new Map(rows.map(row => [row.id, row]));
       products = productIds.map(id => byId.get(id)).filter(Boolean).map(row => {
         let images = []; try { images = JSON.parse(row.images || "[]"); } catch {}
-        return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price), compareAtPrice: row.compare_at_price == null ? null : Number(row.compare_at_price), images: Array.isArray(images) ? images : [], stock: Number(row.stock) };
+        return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price), compareAtPrice: row.compare_at_price == null ? null : Number(row.compare_at_price), images: Array.isArray(images) ? images : [], stock: Number(row.stock), productCollection: row.product_collection || null };
       });
     }
     res.set("Cache-Control", "no-store").json({ settings: published, products });
@@ -529,24 +596,26 @@ publicRouter.get("/men-storefront", async (_req, res, next) => {
 });
 publicRouter.get("/men-storefront/categories/:categoryId", async (req, res, next) => {
   try {
-    const { published } = await readMenStorefrontRecord();
+    const collection = collectionFrom(req.query.productCollection);
+    const { published } = await readMenStorefrontRecord(collection);
     if (!published.enabled) return res.status(404).json({ error: "Men's storefront is unavailable." });
     const category = published.categories.find(item => item.id === req.params.categoryId && item.active);
     if (!category) return res.status(404).json({ error: "Men's category not found." });
     const ids = Array.isArray(category.productIds) ? [...new Set(category.productIds)].slice(0, 100) : [];
     let products = [];
     if (ids.length) {
+      await ensureProductCollectionSchema();
       const placeholders = ids.map(() => "?").join(",");
       const [rows] = await pool.execute(
-        `SELECT id, name, slug, price, compare_at_price, images, stock FROM products WHERE status='active' AND JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE('__sarine_men_catalogue__')) AND id IN (${placeholders})`,
-        ids
+        `SELECT id, name, slug, price, compare_at_price, images, stock, product_collection FROM products WHERE status='active' AND JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE('__sarine_men_catalogue__')) AND id IN (${placeholders}) AND (? = '' OR product_collection = ?)`,
+        [...ids, collection || "", collection || ""]
       );
       const byId = new Map(rows.map(row => [row.id, row]));
       products = ids.map(id => byId.get(id)).filter(Boolean).map(row => {
         let images = []; try { images = JSON.parse(row.images || "[]"); } catch {}
         return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price),
           compareAtPrice: row.compare_at_price == null ? null : Number(row.compare_at_price),
-          images: Array.isArray(images) ? images : [], stock: Number(row.stock) };
+          images: Array.isArray(images) ? images : [], stock: Number(row.stock), productCollection: row.product_collection || null };
       });
     }
     res.set("Cache-Control", "no-store").json({ category, products });
@@ -595,15 +664,15 @@ const editorialDefaults = {
   imageUrl: "/images/editorial-banner.jpg",
   active: true
 };
-async function readEditorial() {
+async function readEditorial(collection = null) {
   await ensureSchema();
-  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='editorial_collection' LIMIT 1");
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [settingKey("editorial_collection", collection)]);
   if (!rows.length) return editorialDefaults;
   try { return { ...editorialDefaults, ...JSON.parse(rows[0].setting_value) }; }
   catch { return editorialDefaults; }
 }
-adminOnly.get("/editorial", async (_req, res, next) => {
-  try { res.set("Cache-Control", "no-store").json({ editorial: await readEditorial() }); }
+adminOnly.get("/editorial", async (req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ editorial: await readEditorial(collectionFrom(req.query.productCollection)) }); }
   catch (error) { next(error); }
 });
 adminOnly.put("/editorial", async (req, res, next) => {
@@ -623,13 +692,13 @@ adminOnly.put("/editorial", async (req, res, next) => {
     if (!editorial.imageUrl || editorial.imageUrl.length > 2048 || (!editorial.imageUrl.startsWith("/") && !/^https:\/\//i.test(editorial.imageUrl))) return res.status(400).json({ error: "Choose a valid uploaded image." });
     if (!(editorial.ctaLink.startsWith("/") && !editorial.ctaLink.startsWith("//")) && !/^https:\/\//i.test(editorial.ctaLink)) return res.status(400).json({ error: "Button destination must be a site path or HTTPS URL." });
     if (editorial.ctaLink.length > 500) return res.status(400).json({ error: "Button destination is too long." });
-    await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('editorial_collection', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [JSON.stringify(editorial)]);
+    await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [settingKey("editorial_collection", collectionFrom(req.body?.productCollection)), JSON.stringify(editorial)]);
     res.json({ editorial });
   } catch (error) { next(error); }
 });
-publicRouter.get("/editorial", async (_req, res, next) => {
+publicRouter.get("/editorial", async (req, res, next) => {
   try {
-    const editorial = await readEditorial();
+    const editorial = await readEditorial(collectionFrom(req.query.productCollection));
     res.set("Cache-Control", "no-store").json({ editorial: editorial.active ? editorial : null });
   } catch (error) { next(error); }
 });

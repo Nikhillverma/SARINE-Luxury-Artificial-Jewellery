@@ -1,0 +1,62 @@
+name: SARINE product range database CI
+
+on:
+  pull_request:
+    branches:
+      - fix/order-timestamps
+    paths:
+      - "hostinger-api/productCollectionSchema.js"
+      - "hostinger-api/productCollectionPolicy.js"
+      - "hostinger-api/curatedFavourites.js"
+      - "hostinger-api/exploreNow.js"
+      - "hostinger-api/tests/productCollectionSchema.mysql.test.js"
+      - ".github/workflows/product-collection-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  product-collection:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: sarine-test
+          MARIADB_DATABASE: sarine_product_collection_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    defaults:
+      run:
+        working-directory: hostinger-api
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: sarine_product_collection_test
+      DB_USER: root
+      DB_PASSWORD: sarine-test
+      SARINE_ALLOW_DESTRUCTIVE_TEST_DB: "true"
+      SARINE_RUN_PRODUCT_COLLECTION_SCHEMA_TESTS: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: hostinger-api/package-lock.json
+      - name: Install backend dependencies
+        run: npm ci
+      - name: Run complete backend regression suite
+        run: npm test
+        env:
+          # This destructive schema test runs separately below to avoid racing
+          # the payment-settlement MariaDB tests in Node's parallel test runner.
+          SARINE_RUN_PRODUCT_COLLECTION_SCHEMA_TESTS: "false"
+      - name: Test MariaDB range migration and isolation
+        run: node --test tests/productCollectionSchema.mysql.test.js
