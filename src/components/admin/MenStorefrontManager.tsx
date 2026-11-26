@@ -208,7 +208,7 @@ export const MenStorefrontManager: React.FC = () => {
         <a href="/men" target="_blank" rel="noreferrer" className="rounded-lg border px-3 py-2 text-xs font-semibold text-[#563568]">Preview men's page ↗</a>
       </div>
       <label className="mt-4 block max-w-xs space-y-1 text-xs font-semibold text-[#563568]">Homepage version
-        <select value={collection} disabled={loading || busy || uploading || savingNewProduct || updatingProduct} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm">
+        <select value={collection} disabled={loading || busy || Boolean(uploading) || savingNewProduct || updatingProduct} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm">
           <option value="">Home (existing global content)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option>
         </select>
       </label>
