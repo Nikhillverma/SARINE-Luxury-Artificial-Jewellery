@@ -74,7 +74,7 @@ export interface InventoryMovementPage {
   totalPages: number;
 }
 
-export interface BulkProductUpdates { price?: number; compareAtPrice?: number | null; categoryId?: string; status?: "active" | "draft"; }
+export interface BulkProductUpdates { price?: number; compareAtPrice?: number | null; categoryId?: string; status?: "active" | "draft"; productCollection?: import("../types/product").ProductCollection; }
 
 export interface BulkProductUpdateResult {
   summary: { requested: number; updated: number; skipped: number };
