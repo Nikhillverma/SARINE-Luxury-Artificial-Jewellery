@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, CheckCircle2, Mail, Sparkles } from "lucide-react";
 import { hostingerStorefrontService, type MenStorefrontSettings, type MenStorefrontProduct } from "../services/hostinger/hostingerStorefrontService";
+import { getProductDetailHref } from "../utils/productLinks";
 
 const fallbackSettings: MenStorefrontSettings = {
   version: 1, enabled: true, heroImageUrl: "", eyebrow: "SARINE · MEN", title: "A New Standard of Style",
@@ -14,7 +15,7 @@ const fallbackSettings: MenStorefrontSettings = {
 };
 
 const ProductTile: React.FC<{ product: MenStorefrontProduct }> = ({ product }) => (
-  <Link to={menProductHref(product.slug)} className="group block min-w-0">
+  <Link to={getProductDetailHref(product.slug, product.productCollection)} className="group block min-w-0">
     <div className="aspect-[4/5] overflow-hidden rounded-xl bg-[#F7F0FA]">
       {product.images?.[0] ? <img src={product.images[0]} alt={product.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" /> : <div className="flex h-full items-center justify-center font-serif text-xl text-[#563568]">SARINE</div>}
     </div>
@@ -22,13 +23,6 @@ const ProductTile: React.FC<{ product: MenStorefrontProduct }> = ({ product }) =
     <p className="mt-1 text-sm text-[#563568]">₹{product.price.toLocaleString("en-IN")}</p>
   </Link>
 );
-
-function menProductHref(slug: string): string {
-  const fromUrl = new URLSearchParams(window.location.search).get("range");
-  const stored = window.sessionStorage.getItem("sarine_product_range");
-  const range = fromUrl === "artificial" || fromUrl === "demi-fine" ? fromUrl : stored === "artificial" || stored === "demi-fine" ? stored : "";
-  return "/product/" + encodeURIComponent(slug) + (range ? "?range=" + range : "");
-}
 
 export const MensCollectionPage: React.FC = () => {
   const [settings, setSettings] = useState<MenStorefrontSettings>(fallbackSettings);
