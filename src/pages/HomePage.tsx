@@ -161,9 +161,16 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   useEffect(() => {
     let cancelled = false;
-    hostingerStorefrontService.getPublicHomepageLayout()
+    const params = new URLSearchParams(window.location.search);
+    const adminPreview = params.get("adminPreview") === "1";
+    const previewCollection = params.get("previewCollection");
+    const collection = previewCollection === "artificial" || previewCollection === "demi-fine" ? previewCollection : undefined;
+    const layoutRequest = adminPreview
+      ? hostingerStorefrontService.getHomepageLayout(collection).then(result => ({ layout: result.draft }))
+      : hostingerStorefrontService.getPublicHomepageLayout();
+    layoutRequest
       .then(result => { if (!cancelled && result.layout?.sections?.length) setHomepageLayout(result.layout); })
-      .catch(error => console.warn('[HomePage] Published section layout unavailable; using the default order.', error));
+      .catch(error => console.warn('[HomePage] Homepage layout preview unavailable; using published/default settings.', error));
     return () => { cancelled = true; };
   }, [selectedProductCollection]);
 
