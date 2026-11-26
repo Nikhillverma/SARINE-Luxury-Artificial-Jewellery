@@ -460,6 +460,7 @@ router.put("/:id", async (req, res, next) => {
 router.post("/bulk", async (req, res, next) => {
   let connection;
   try {
+    await ensureProductCollectionSchema();
     const { productIds, updates } = req.body || {};
     const validation = validateBulkProductRequest(productIds, updates);
     if (validation) return res.status(400).json({ error: validation });
