@@ -256,6 +256,7 @@ app.get("/api/bestsellers", async (req, res, next) => {
     if (productCollection && !["artificial", "demi-fine"].includes(productCollection)) return res.status(400).json({ error: "Product collection must be artificial or demi-fine." });
     const rawLimit = Number.parseInt(req.query.limit, 10);
     const limit = Math.min(24, Math.max(1, Number.isFinite(rawLimit) ? rawLimit : 8));
+    const collectionCondition = productCollection ? " AND p.product_collection = ?" : "";
     const [rows] = await pool.execute(
       `SELECT p.*
        FROM products p
@@ -271,11 +272,10 @@ app.get("/api/bestsellers", async (req, res, next) => {
            AND (LOWER(COALESCE(o.payment_method, 'online')) <> 'cod' OR o.order_status = 'delivered')
          GROUP BY oi.product_id
        ) sales ON sales.product_id = p.id
-       WHERE p.status = 'active' AND p.stock > 0
-         AND (? = '' OR p.product_collection = ?)
+       WHERE p.status = 'active' AND p.stock > 0${collectionCondition}
        ORDER BY sales.units_sold DESC, sales.item_sales DESC, p.created_at DESC
        LIMIT ?`,
-      [productCollection, productCollection, limit]
+      [...(productCollection ? [productCollection] : []), limit]
     );
     res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
     res.json({ products: await mapProductsWithVariants(rows) });
@@ -289,13 +289,13 @@ app.get("/api/products/:slug", async (req, res, next) => {
     await ensureProductCollectionSchema();
     const productCollection = req.query.productCollection === undefined ? "" : String(req.query.productCollection);
     if (productCollection && !["artificial", "demi-fine"].includes(productCollection)) return res.status(400).json({ error: "Product collection must be artificial or demi-fine." });
+    const collectionCondition = productCollection ? " AND product_collection = ?" : "";
     const [rows] = await pool.execute(
       `SELECT *
        FROM products
-       WHERE slug = ? AND status = 'active'
-         AND (? = '' OR product_collection = ?)
+       WHERE slug = ? AND status = 'active'${collectionCondition}
        LIMIT 1`,
-      [req.params.slug, productCollection, productCollection]
+      [req.params.slug, ...(productCollection ? [productCollection] : [])]
     );
 
     if (!rows.length) {
