@@ -132,7 +132,7 @@ export const MenStorefrontManager: React.FC = () => {
         jewelleryType: /ring/i.test(category.title) ? "ring" : /chain/i.test(category.title) ? "necklace" : "bracelet",
         stock, status: newProduct.status, tags: [], gender: "men"
       });
-      setProducts(current => [...current, { id: created.id, name: created.name, slug: created.slug, price: created.price, images: created.images, status: created.status, stock: created.stock }]);
+      setProducts(current => [...current, { id: created.id, name: created.name, slug: created.slug, price: created.price, images: created.images, status: created.status, stock: created.stock, productCollection: collection }]);
       const nextCategories = settings.categories.map(item => item.id === category.id ? { ...item, productIds: [...new Set([...(item.productIds || []), created.id])] } : item);
       update("categories", nextCategories);
       await hostingerStorefrontService.saveMenStorefrontDraft({ ...settings, categories: nextCategories }, collection);
@@ -168,8 +168,8 @@ export const MenStorefrontManager: React.FC = () => {
         ...item, name: updated.name, description: updated.description, price: updated.price, status: updated.status
       } : item));
       if (productEdit.status === "active") {
-        await hostingerStorefrontService.saveMenStorefrontDraft(settings);
-        await hostingerStorefrontService.publishMenStorefront();
+        await hostingerStorefrontService.saveMenStorefrontDraft(settings, collection || undefined);
+        await hostingerStorefrontService.publishMenStorefront(collection || undefined);
       }
       setEditingProductId(null);
       setMessage(productEdit.status === "active" ? "Product published. The current men's storefront settings were published too." : "Product settings saved as a draft.");
