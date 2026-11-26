@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { ensureProductCollectionSchema } from "./productCollectionSchema.js";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { MAX_CURATED_PRODUCTS, EMPTY_CURATED_FAVOURITES as EMPTY_CURATION, validateCuratedFavourites } from "./curatedFavouritesPolicy.js";
@@ -103,8 +104,11 @@ adminOnly.post("/publish", async (_req, res, next) => {
   } catch (error) { next(error); }
 });
 
-publicRouter.get("/", async (_req, res, next) => {
+publicRouter.get("/", async (req, res, next) => {
   try {
+    await ensureProductCollectionSchema();
+    const productCollection = req.query.productCollection === undefined ? "" : String(req.query.productCollection);
+    if (productCollection && !["artificial", "demi-fine"].includes(productCollection)) return res.status(400).json({ error: "Product collection must be artificial or demi-fine." });
     const curation = await readCuration("curated_favourites_published");
     if (!curation.productIds.length) {
       res.set("Cache-Control", "no-store").json({ products: [], configured: curation.configured === true });
@@ -112,8 +116,9 @@ publicRouter.get("/", async (_req, res, next) => {
     }
     const placeholders = curation.productIds.map(() => "?").join(",");
     const [rows] = await pool.execute(
-      `SELECT * FROM products WHERE id IN (${placeholders}) AND status='active' AND stock > 0`,
-      curation.productIds
+      `SELECT * FROM products WHERE id IN (${placeholders}) AND status='active' AND stock > 0
+         AND (? = '' OR product_collection = ?)`,
+      [...curation.productIds, productCollection, productCollection]
     );
     const byId = new Map(rows.map((row) => [String(row.id), row]));
     const products = curation.productIds
