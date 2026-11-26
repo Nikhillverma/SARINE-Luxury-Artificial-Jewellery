@@ -165,7 +165,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       .then(result => { if (!cancelled && result.layout?.sections?.length) setHomepageLayout(result.layout); })
       .catch(error => console.warn('[HomePage] Published section layout unavailable; using the default order.', error));
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedProductCollection]);
 
   useEffect(() => {
     let cancelled = false;
