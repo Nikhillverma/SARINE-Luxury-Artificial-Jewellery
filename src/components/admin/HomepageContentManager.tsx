@@ -51,7 +51,7 @@ export const HomepageContentManager: React.FC = () => {
   const publish = async () => {
     setBusy(true); setError(""); setMessage("");
     try {
-      await hostingerStorefrontService.saveHomepageContent(draft);
+      await hostingerStorefrontService.saveHomepageContent(draft, collection || undefined);
       const result = await hostingerStorefrontService.publishHomepageContent(collection || undefined);
       setDraft(result.published);
       setPublished(result.published);
