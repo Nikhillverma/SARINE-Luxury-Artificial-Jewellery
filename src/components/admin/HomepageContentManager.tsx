@@ -38,7 +38,7 @@ export const HomepageContentManager: React.FC = () => {
     } finally { if (!isCancelled()) setLoading(false); }
   };
 
-  useEffect(() => { let cancelled = false; setDraft(DEFAULT_HOMEPAGE_CONTENT); setPublished(DEFAULT_HOMEPAGE_CONTENT); void load(() => cancelled); return () => { cancelled = true; }; }, [collection]);
+  useEffect(() => { let cancelled = false; setDraft(DEFAULT_HOMEPAGE_CONTENT); setPublished(DEFAULT_HOMEPAGE_CONTENT); setSavedPreview(null); setPreview(false); setShowPublishConfirmation(false); void load(() => cancelled); return () => { cancelled = true; }; }, [collection]);
 
   const update = (patch: Partial<HomepageContent>) => {
     setDraft(current => ({ ...current, ...patch }));
@@ -83,12 +83,12 @@ export const HomepageContentManager: React.FC = () => {
   };
 
   const isPublished = JSON.stringify(draft) === JSON.stringify(published);
-  const contentChanges = [
+  const contentChanges: string[] = ([
     ["Shop by Price", draft.price, published.price],
     ["Our Story", draft.story, published.story],
     ["Jewellery Care Guide", draft.care, published.care],
     ["Stay in Touch", draft.contact, published.contact]
-  ].filter(([, current, live]) => JSON.stringify(current) !== JSON.stringify(live)).map(([label]) => label as string);
+  ] as const).filter(([, current, live]) => JSON.stringify(current) !== JSON.stringify(live)).map(([label]) => label);
   const previewContent = savedPreview || draft;
   const selectedVersion = collection === "artificial" ? "Artificial" : collection === "demi-fine" ? "Demi-Fine" : "Shared (both collections)";
   const input = (value: string, onChange: (value: string) => void, maxLength: number, placeholder = "") =>
@@ -184,7 +184,7 @@ export const HomepageContentManager: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="font-semibold text-[#563568]">Live-style homepage preview</h3>
-            <p className="mt-1 text-xs text-[#6F6475]">A visual rendering of the saved content version for ${selectedVersion}. Draft only — nothing is published.</p>
+            <p className="mt-1 text-xs text-[#6F6475]">A visual rendering of the saved content version for {selectedVersion}. Draft only — nothing is published.</p>
           </div>
           <div className="inline-flex rounded-lg border border-[#DCCDE5] bg-white p-1" role="group" aria-label="Preview screen size">
             <button type="button" aria-pressed={previewDevice === "desktop"} onClick={() => setPreviewDevice("desktop")} className={previewDevice === "desktop" ? "min-h-10 rounded-md bg-[#563568] px-3 text-xs font-medium text-white" : "min-h-10 rounded-md px-3 text-xs text-[#563568]"}>Desktop</button>
