@@ -49,6 +49,7 @@ function mergeKnownSections(layout: HomepageLayout): HomepageLayout {
 }
 
 export const HomepageSectionManager: React.FC = () => {
+  const [collection, setCollection] = useState<"shared" | "artificial" | "demi-fine">("shared");
   const [draft, setDraft] = useState<HomepageLayout>(defaultLayout);
   const [published, setPublished] = useState<HomepageLayout>(defaultLayout);
   const [busy, setBusy] = useState(false);
@@ -68,7 +69,7 @@ export const HomepageSectionManager: React.FC = () => {
     setError("");
     try {
       const [result, explore, catalogue] = await Promise.all([
-        hostingerStorefrontService.getHomepageLayout(),
+        hostingerStorefrontService.getHomepageLayout(collection === "shared" ? undefined : collection),
         hostingerStorefrontService.getExploreNow(),
         adminProductService.getProducts()
       ]);
@@ -84,7 +85,7 @@ export const HomepageSectionManager: React.FC = () => {
     }
   };
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); }, [collection]);
 
   const updateSections = (next: HomepageLayout["sections"]) => {
     setDraft({ version: 1, sections: next.map((section, sortOrder) => ({ ...section, sortOrder })) });
@@ -114,7 +115,7 @@ export const HomepageSectionManager: React.FC = () => {
   const save = async () => {
     setBusy(true); setError(""); setMessage("");
     try {
-      const result = await hostingerStorefrontService.saveHomepageLayout(draft);
+      const result = await hostingerStorefrontService.saveHomepageLayout(draft, collection === "shared" ? undefined : collection);
       setDraft(result.draft);
       setMessage("Draft saved. Customers will continue seeing the currently published homepage until you publish.");
     } catch (e) {
@@ -138,8 +139,8 @@ export const HomepageSectionManager: React.FC = () => {
   const publish = async () => {
     setBusy(true); setError(""); setMessage("");
     try {
-      await hostingerStorefrontService.saveHomepageLayout(draft);
-      const result = await hostingerStorefrontService.publishHomepageLayout();
+      await hostingerStorefrontService.saveHomepageLayout(draft, collection === "shared" ? undefined : collection);
+      const result = await hostingerStorefrontService.publishHomepageLayout(collection === "shared" ? undefined : collection);
       setPublished(result.published);
       setDraft(result.published);
       setMessage("Homepage layout published successfully.");
@@ -152,11 +153,20 @@ export const HomepageSectionManager: React.FC = () => {
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h2 className="font-semibold text-[#2C1838]">Homepage Sections</h2>
-        <p className="text-xs text-gray-500 mt-1">Reorder homepage sections, control visibility, and adjust carousel layouts. Explore Now has its own product pool and display-count controls below. Save a draft, then publish your changes.</p>
+        <p className="text-xs text-gray-500 mt-1">Reorder homepage sections, control visibility, and adjust carousel layouts. Each collection can have its own layout; new collection layouts inherit Shared settings until saved separately.</p>
       </div>
       <span className={isPublished ? "text-xs rounded-full px-3 py-1 bg-green-50 text-green-700" : "text-xs rounded-full px-3 py-1 bg-amber-50 text-amber-700"}>
         {isPublished ? "Published version" : "Unpublished changes"}
       </span>
+    </div>
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[#E7DCEB] bg-[#F7F0FA]/50 p-3">
+      <label className="text-xs font-medium text-[#302438]" htmlFor="homepage-layout-collection">Homepage version</label>
+      <select id="homepage-layout-collection" value={collection} disabled={busy || loading} onChange={event => { setCollection(event.target.value as typeof collection); setMessage(\"\"); }} className="rounded-lg border border-[#E7DCEB] bg-white px-3 py-2 text-sm text-[#563568]">
+        <option value="shared">Shared (both collections)</option>
+        <option value="artificial">Artificial</option>
+        <option value="demi-fine">Demi-Fine</option>
+      </select>
+      <span className="text-xs text-[#6F6475]">{collection === "shared" ? "Changes apply to the shared homepage layout." : `This ${collection === "artificial" ? "Artificial" : "Demi-Fine"} layout starts from Shared settings until you save a collection-specific draft.`}</span>
     </div>
     {error && <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg p-3">{error}</p>}
     {message && <p role="status" className="text-sm text-green-800 bg-green-50 rounded-lg p-3">{message}</p>}
