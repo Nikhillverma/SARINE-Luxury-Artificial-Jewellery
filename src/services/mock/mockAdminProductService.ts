@@ -28,6 +28,20 @@ export class MockAdminProductService implements IAdminProductService {
     return this.productService.getProducts({ includeAll: true });
   }
 
+  async reorderProducts(productIds: string[]): Promise<{ reordered: number }> {
+    await sleep(NETWORK_DELAY_MS);
+    const all = this.productService._getAllInternal();
+    if (productIds.length !== all.length || new Set(productIds).size !== productIds.length) {
+      throw new Error('Refresh the catalogue before reordering.');
+    }
+    const byId = new Map(all.map(item => [item.id, item]));
+    const ordered = productIds.map(id => byId.get(id));
+    if (ordered.some(item => !item)) throw new Error('A product is missing from the catalogue.');
+    ordered.forEach((item, index) => { item!.sortOrder = index + 1; });
+    all.splice(0, all.length, ...ordered as Product[]);
+    return { reordered: ordered.length };
+  }
+
   async createProduct(productData: Omit<Product, 'id' | 'createdAt'>): Promise<Product> {
     await sleep(NETWORK_DELAY_MS);
 

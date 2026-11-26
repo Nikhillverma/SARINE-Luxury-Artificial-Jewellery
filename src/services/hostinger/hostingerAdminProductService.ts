@@ -47,6 +47,10 @@ export class HostingerAdminProductService implements IAdminProductService {
     return products;
   }
 
+  async reorderProducts(productIds: string[]): Promise<{ reordered: number }> {
+    return request<{ reordered: number }>("/admin/products/reorder", { method: "POST", body: JSON.stringify({ productIds }) });
+  }
+
   async createProduct(product: Omit<Product, 'id' | 'createdAt'>): Promise<Product> {
     const result = await request<ProductResponse>('/admin/products', {
       method: 'POST',

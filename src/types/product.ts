@@ -69,6 +69,8 @@ export interface Product {
   status: ProductStatus;
   /** Creation timestamp in ISO string format */
   createdAt: string;
+  /** Persisted admin catalogue position; storefront ordering remains unchanged. */
+  sortOrder?: number;
   /** Search and filtering tags */
   tags: string[];
 
