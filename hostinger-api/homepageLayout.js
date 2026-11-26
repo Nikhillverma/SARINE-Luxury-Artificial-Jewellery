@@ -35,12 +35,6 @@ async function readSetting(key, fallback) {
   }
 }
 
-function collectionFrom(value) {
-  const collection = String(value || "").trim().toLowerCase();
-  if (!collection) return null;
-  if (collection !== "artificial" && collection !== "demi-fine") throw new Error("Product collection must be artificial or demi-fine.");
-  return collection;
-}
 function layoutSettingKey(kind, collection) {
   return collection ? "homepage_layout_" + kind + "_" + collection : "homepage_layout_" + kind;
 }
