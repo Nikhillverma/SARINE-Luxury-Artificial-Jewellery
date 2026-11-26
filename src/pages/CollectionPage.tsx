@@ -131,6 +131,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
 
   // Load recently viewed
   useEffect(() => {
+    setRecentlyViewed([]);
     try {
       const raw = localStorage.getItem(RECENTLY_VIEWED_KEY);
       if (raw) {
@@ -144,7 +145,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     } catch {
       // Ignore
     }
-  }, [includeAll]);
+  }, [includeAll, rangeParam]);
 
   // Category mapping
   const categoryMap = useMemo(() => {
