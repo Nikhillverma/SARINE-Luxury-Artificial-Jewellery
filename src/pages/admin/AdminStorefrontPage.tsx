@@ -20,6 +20,7 @@ export const AdminStorefrontPage: React.FC = () => {
   const location = useLocation();
   const activeSection = location.pathname.split("/").filter(Boolean)[2] || "overview";
   const [banners, setBanners] = useState<StorefrontBanner[]>([]);
+  const [homepageCollection, setHomepageCollection] = useState<"" | "artificial" | "demi-fine">("");
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [reviewStatus, setReviewStatus] = useState("pending");
   const [reviewReplies, setReviewReplies] = useState<Record<string,string>>({});
@@ -46,7 +47,7 @@ export const AdminStorefrontPage: React.FC = () => {
     setLoading(true);
     setError("");
     try {
-      const result = await hostingerStorefrontService.getBanners();
+      const result = await hostingerStorefrontService.getBanners(homepageCollection || undefined);
       setBanners(result.banners);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to load hero banners.");
@@ -76,7 +77,7 @@ export const AdminStorefrontPage: React.FC = () => {
     setLoading(true);
     setError("");
     try {
-      const result = await hostingerStorefrontService.getEditorial();
+      const result = await hostingerStorefrontService.getEditorial(homepageCollection || undefined);
       setEditorial({ ...defaultEditorial, ...result.editorial });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to load editorial settings.");
@@ -109,7 +110,7 @@ export const AdminStorefrontPage: React.FC = () => {
     } else {
       setLoading(false);
     }
-  }, [activeSection]);
+  }, [activeSection, homepageCollection]);
 
   const beginAdd = () => { setEditingId(null); setForm(emptyForm); setFile(null); setMessage(""); setError(""); };
   const beginEdit = (banner: StorefrontBanner) => {
@@ -150,7 +151,7 @@ export const AdminStorefrontPage: React.FC = () => {
       let imageUrl = form.imageUrl;
       if (file) imageUrl = await hostingerMediaService.uploadImage(file);
       if (!imageUrl) throw new Error("Upload a banner image before saving.");
-      const payload = { ...form, imageUrl };
+      const payload = { ...form, imageUrl, productCollection: homepageCollection || null };
       if (editingId) await hostingerStorefrontService.updateBanner(editingId, payload);
       else await hostingerStorefrontService.createBanner(payload);
       setForm(emptyForm); setEditingId(null); setFile(null);
@@ -202,7 +203,7 @@ export const AdminStorefrontPage: React.FC = () => {
     try {
       let imageUrl = editorial.imageUrl;
       if (editorialFile) imageUrl = await hostingerMediaService.uploadImage(editorialFile);
-      const saved = await hostingerStorefrontService.saveEditorial({ ...editorial, imageUrl });
+      const saved = await hostingerStorefrontService.saveEditorial({ ...editorial, imageUrl }, homepageCollection || undefined);
       setEditorial(saved.editorial); setEditorialFile(null);
       setMessage("Editorial Collection saved to MariaDB. Its publish setting controls customer visibility.");
     } catch (e) { setError(e instanceof Error ? e.message : "Editorial Collection could not be saved."); }
@@ -298,6 +299,7 @@ export const AdminStorefrontPage: React.FC = () => {
       {activeSection === "editorial" && (
         <div className="space-y-5">
         <section id="editorial" className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
+        <label className="block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={homepageCollection} onChange={event => setHomepageCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global content)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
         <div><h2 className="font-semibold text-[#2C1838]">Homepage Sections · Editorial Collection</h2><p className="text-xs text-gray-500">Independent of hero banners. Edit the image, copy and destination shown in the Editorial Collection block.</p></div>
         <div className="grid md:grid-cols-2 gap-3">
           <label className="text-xs space-y-1"><span>Eyebrow</span><input value={editorial.eyebrow} maxLength={120} onChange={e=>setEditorial({...editorial,eyebrow:e.target.value})} className="w-full border rounded-lg p-3 text-sm" /></label>
@@ -325,6 +327,7 @@ export const AdminStorefrontPage: React.FC = () => {
       {activeSection === "hero-banners" && (
         <div className="space-y-5">
         <section id="banners" className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
+        <label className="block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={homepageCollection} onChange={event => setHomepageCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global content)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
         <div className="flex justify-between items-center gap-3"><div><h2 className="font-semibold text-[#2C1838]">Homepage hero banners</h2><p className="text-xs text-gray-500">Changes are saved in MariaDB, not browser memory.</p></div><button disabled={busy || loading} onClick={beginAdd} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">Add banner</button></div>
         {loading ? <p className="text-sm text-gray-500">Loading banners…</p> : banners.length === 0 ? <p className="text-sm text-gray-500">No banners created yet. Add a banner and publish it when ready.</p> :
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">{banners.map((banner, index) => <article key={banner.id} className="border rounded-xl overflow-hidden">
