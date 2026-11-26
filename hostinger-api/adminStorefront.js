@@ -40,6 +40,8 @@ async function ensureSchema() {
   await schemaReady;
 }
 
+function collectionFrom(value) { const v = String(value || "").trim().toLowerCase(); if (!v) return null; if (v !== "artificial" && v !== "demi-fine") throw new Error("Product collection must be artificial or demi-fine."); return v; }
+function settingKey(base, collection) { return collection ? base + "_" + collection : base; }
 function mapBanner(row) {
   return {
     id: row.id, tagline: row.tagline, title: row.title, subtitle: row.subtitle,
@@ -176,15 +178,15 @@ function validateShopByGender(input) {
     forHimImageUrl: imageUrl(input.forHimImageUrl, "For Him image")
   };
 }
-async function readShopByGender() {
+async function readShopByGender(collection = null) {
   await ensureSchema();
-  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='shop_by_gender' LIMIT 1");
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [settingKey("shop_by_gender", collection)]);
   if (!rows.length) return DEFAULT_SHOP_BY_GENDER;
   try { return validateShopByGender(JSON.parse(rows[0].setting_value)); }
   catch { return DEFAULT_SHOP_BY_GENDER; }
 }
-adminOnly.get("/shop-by-gender", async (_req, res, next) => {
-  try { res.set("Cache-Control", "no-store").json({ settings: await readShopByGender() }); }
+adminOnly.get("/shop-by-gender", async (req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ settings: await readShopByGender(collectionFrom(req.query.productCollection)) }); }
   catch (error) { next(error); }
 });
 adminOnly.put("/shop-by-gender", async (req, res, next) => {
@@ -194,14 +196,14 @@ adminOnly.put("/shop-by-gender", async (req, res, next) => {
     catch (error) { return res.status(400).json({ error: error.message }); }
     await ensureSchema();
     await pool.execute(
-      "INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('shop_by_gender', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)",
-      [JSON.stringify(settings)]
+      "INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)",
+      [settingKey("shop_by_gender", collectionFrom(req.body?.productCollection)), JSON.stringify(settings)]
     );
     res.set("Cache-Control", "no-store").json({ success: true, settings });
   } catch (error) { next(error); }
 });
-publicRouter.get("/shop-by-gender", async (_req, res, next) => {
-  try { res.set("Cache-Control", "no-store").json({ settings: await readShopByGender() }); }
+publicRouter.get("/shop-by-gender", async (req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ settings: await readShopByGender(collectionFrom(req.query.productCollection)) }); }
   catch (error) { next(error); }
 });
 
@@ -229,14 +231,14 @@ function validateOccasions(input) {
     return { id, title, subtitle, image, link, active: item.active === true, sortOrder: index };
   });
 }
-async function readOccasions() {
+async function readOccasions(collection = null) {
   await ensureSchema();
-  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='shop_by_occasion' LIMIT 1");
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [settingKey("shop_by_occasion", collection)]);
   if (!rows.length) return defaultOccasions;
   try { return validateOccasions(JSON.parse(rows[0].setting_value)); } catch { return defaultOccasions; }
 }
-adminOnly.get("/occasions", async (_req, res, next) => {
-  try { res.set("Cache-Control", "no-store").json({ occasions: await readOccasions() }); }
+adminOnly.get("/occasions", async (req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ occasions: await readOccasions(collectionFrom(req.query.productCollection)) }); }
   catch (error) { next(error); }
 });
 adminOnly.put("/occasions", async (req, res, next) => {
@@ -245,12 +247,12 @@ adminOnly.put("/occasions", async (req, res, next) => {
     try { occasions = validateOccasions(req.body?.occasions); }
     catch (error) { return res.status(400).json({ error: error.message }); }
     await ensureSchema();
-    await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('shop_by_occasion', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [JSON.stringify(occasions)]);
+    await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [settingKey("shop_by_occasion", collectionFrom(req.body?.productCollection)), JSON.stringify(occasions)]);
     res.set("Cache-Control", "no-store").json({ success: true, occasions });
   } catch (error) { next(error); }
 });
-publicRouter.get("/occasions", async (_req, res, next) => {
-  try { res.set("Cache-Control", "no-store").json({ occasions: (await readOccasions()).filter(item => item.active).sort((a,b) => a.sortOrder-b.sortOrder) }); }
+publicRouter.get("/occasions", async (req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ occasions: (await readOccasions(collectionFrom(req.query.productCollection))).filter(item => item.active).sort((a,b) => a.sortOrder-b.sortOrder) }); }
   catch (error) { next(error); }
 });
 
@@ -595,15 +597,15 @@ const editorialDefaults = {
   imageUrl: "/images/editorial-banner.jpg",
   active: true
 };
-async function readEditorial() {
+async function readEditorial(collection = null) {
   await ensureSchema();
-  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key='editorial_collection' LIMIT 1");
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [settingKey("editorial_collection", collection)]);
   if (!rows.length) return editorialDefaults;
   try { return { ...editorialDefaults, ...JSON.parse(rows[0].setting_value) }; }
   catch { return editorialDefaults; }
 }
-adminOnly.get("/editorial", async (_req, res, next) => {
-  try { res.set("Cache-Control", "no-store").json({ editorial: await readEditorial() }); }
+adminOnly.get("/editorial", async (req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ editorial: await readEditorial(collectionFrom(req.query.productCollection)) }); }
   catch (error) { next(error); }
 });
 adminOnly.put("/editorial", async (req, res, next) => {
@@ -623,13 +625,13 @@ adminOnly.put("/editorial", async (req, res, next) => {
     if (!editorial.imageUrl || editorial.imageUrl.length > 2048 || (!editorial.imageUrl.startsWith("/") && !/^https:\/\//i.test(editorial.imageUrl))) return res.status(400).json({ error: "Choose a valid uploaded image." });
     if (!(editorial.ctaLink.startsWith("/") && !editorial.ctaLink.startsWith("//")) && !/^https:\/\//i.test(editorial.ctaLink)) return res.status(400).json({ error: "Button destination must be a site path or HTTPS URL." });
     if (editorial.ctaLink.length > 500) return res.status(400).json({ error: "Button destination is too long." });
-    await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES ('editorial_collection', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [JSON.stringify(editorial)]);
+    await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [settingKey("editorial_collection", collectionFrom(req.body?.productCollection)), JSON.stringify(editorial)]);
     res.json({ editorial });
   } catch (error) { next(error); }
 });
-publicRouter.get("/editorial", async (_req, res, next) => {
+publicRouter.get("/editorial", async (req, res, next) => {
   try {
-    const editorial = await readEditorial();
+    const editorial = await readEditorial(collectionFrom(req.query.productCollection));
     res.set("Cache-Control", "no-store").json({ editorial: editorial.active ? editorial : null });
   } catch (error) { next(error); }
 });
