@@ -164,6 +164,7 @@ function publicRangeQuery(): string {
   const collection = fromUrl === "artificial" || fromUrl === "demi-fine"
     ? fromUrl
     : stored === "artificial" || stored === "demi-fine" ? stored : "";
+  if (fromUrl === "artificial" || fromUrl === "demi-fine") window.sessionStorage.setItem("sarine_product_range", fromUrl);
   if (collection) params.set("productCollection", collection);
   const query = params.toString();
   return query ? "?" + query : "";
