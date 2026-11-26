@@ -456,6 +456,7 @@ adminMediaRouter.get("/", async (req, res, next) => {
   try {
     await ensureMediaTable();
     await ensureMediaHashSchema();
+    await ensureMediaArchiveSchema();
 
     const search = String(req.query.search || "").trim().slice(0, 120);
     const mimeType = String(req.query.mimeType || "").trim().toLowerCase();
