@@ -77,7 +77,7 @@ export const ShopByOccasionManager: React.FC = () => {
     try {
       const image = await hostingerMediaService.uploadImage(file);
       update(index, { image });
-      setMessage("Image uploaded to Hostinger. Save changes to publish it.");
+      setMessage("Image uploaded to Hostinger. Save a draft, then review and publish it when ready.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Occasion image upload failed.");
     } finally { setBusy(false); }
