@@ -9,6 +9,7 @@ const MAX_PRODUCTS = 100;
 
 export const ExploreNowManager: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [collection, setCollection] = useState<"" | "artificial" | "demi-fine">("");
   const [draft, setDraft] = useState<ExploreNowConfig>(EMPTY);
   const [published, setPublished] = useState<ExploreNowConfig>(EMPTY);
   const [search, setSearch] = useState("");
@@ -25,15 +26,16 @@ export const ExploreNowManager: React.FC = () => {
     (!search.trim() || product.name.toLowerCase().includes(search.trim().toLowerCase()) || product.slug.toLowerCase().includes(search.trim().toLowerCase())));
   const unchanged = JSON.stringify(draft) === JSON.stringify(published);
 
-  const load = async () => {
+  const load = async (isCancelled: () => boolean = () => false) => {
     setLoading(true); setError("");
     try {
-      const [catalogue, config] = await Promise.all([adminProductService.getProducts(), hostingerStorefrontService.getExploreNow()]);
-      setProducts(catalogue); setDraft(config.draft); setPublished(config.published);
-    } catch (e) { setError(e instanceof Error ? e.message : "Could not load Explore Now settings."); }
-    finally { setLoading(false); }
+      const [catalogue, config] = await Promise.all([adminProductService.getProducts(), hostingerStorefrontService.getExploreNow(collection || undefined)]);
+      if (isCancelled()) return;
+      setProducts(collection ? catalogue.filter(product => product.productCollection === collection) : catalogue); setDraft(config.draft); setPublished(config.published);
+    } catch (e) { if (!isCancelled()) setError(e instanceof Error ? e.message : "Could not load Explore Now settings."); }
+    finally { if (!isCancelled()) setLoading(false); }
   };
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { let cancelled = false; setProducts([]); setDraft(EMPTY); setPublished(EMPTY); void load(() => cancelled); return () => { cancelled = true; }; }, [collection]);
 
   const update = (productIds: string[], displayCount = draft.displayCount) => {
     setDraft({ version: 1, productIds, displayCount, configured: productIds.length > 0 });
@@ -43,7 +45,7 @@ export const ExploreNowManager: React.FC = () => {
   const save = async () => {
     setBusy(true); setError(""); setMessage("");
     try {
-      const result = await hostingerStorefrontService.saveExploreNow(draft);
+      const result = await hostingerStorefrontService.saveExploreNow(draft, collection || undefined);
       setDraft(result.draft); setMessage("Explore Now draft saved. The live homepage is unchanged until you publish.");
     } catch (e) { setError(e instanceof Error ? e.message : "Draft could not be saved."); }
     finally { setBusy(false); }
@@ -51,8 +53,8 @@ export const ExploreNowManager: React.FC = () => {
   const publish = async () => {
     setBusy(true); setError(""); setMessage("");
     try {
-      await hostingerStorefrontService.saveExploreNow(draft);
-      const result = await hostingerStorefrontService.publishExploreNow();
+      await hostingerStorefrontService.saveExploreNow(draft, collection || undefined);
+      const result = await hostingerStorefrontService.publishExploreNow(collection || undefined);
       setDraft(result.published); setPublished(result.published);
       setMessage("Explore Now published. The homepage will randomly select from this eligible product pool on each visit.");
     } catch (e) { setError(e instanceof Error ? e.message : "Explore Now could not be published."); }
@@ -63,6 +65,7 @@ export const ExploreNowManager: React.FC = () => {
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div><h2 className="font-semibold text-[#2C1838]">Explore Now</h2>
         <p className="mt-1 text-xs text-gray-500">Choose the eligible products, then set how many appear in a clean, non-carousel grid. The storefront shuffles this pool on each visit.</p>
+        <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={collection} disabled={loading || busy} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global selection)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
       </div>
       <span className={unchanged ? "text-xs rounded-full px-3 py-1 bg-green-50 text-green-700" : "text-xs rounded-full px-3 py-1 bg-amber-50 text-amber-700"}>{unchanged ? "Published version" : "Unpublished changes"}</span>
     </div>

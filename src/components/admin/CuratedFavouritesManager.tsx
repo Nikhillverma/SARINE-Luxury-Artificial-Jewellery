@@ -8,6 +8,7 @@ const MAX_PRODUCTS = 12;
 
 export const CuratedFavouritesManager: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [collection, setCollection] = useState<"" | "artificial" | "demi-fine">("");
   const [draft, setDraft] = useState<CuratedFavouritesConfig>(emptyConfig);
   const [published, setPublished] = useState<CuratedFavouritesConfig>(emptyConfig);
   const [search, setSearch] = useState("");
@@ -26,22 +27,23 @@ export const CuratedFavouritesManager: React.FC = () => {
   );
   const isPublished = JSON.stringify(draft) === JSON.stringify(published);
 
-  const load = async () => {
+  const load = async (isCancelled: () => boolean = () => false) => {
     setLoading(true); setError("");
     try {
       const [catalogue, config] = await Promise.all([
         adminProductService.getProducts(),
-        hostingerStorefrontService.getCuratedFavourites()
+        hostingerStorefrontService.getCuratedFavourites(collection || undefined)
       ]);
-      setProducts(catalogue);
+      if (isCancelled()) return;
+      setProducts(collection ? catalogue.filter(product => product.productCollection === collection) : catalogue);
       setDraft(config.draft);
       setPublished(config.published);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load Curated Favourites.");
-    } finally { setLoading(false); }
+      if (!isCancelled()) setError(e instanceof Error ? e.message : "Could not load Curated Favourites.");
+    } finally { if (!isCancelled()) setLoading(false); }
   };
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { let cancelled = false; setProducts([]); setDraft(emptyConfig); setPublished(emptyConfig); void load(() => cancelled); return () => { cancelled = true; }; }, [collection]);
 
   const updateIds = (productIds: string[]) => {
     setDraft({ version: 1, productIds, configured: true });
@@ -66,7 +68,7 @@ export const CuratedFavouritesManager: React.FC = () => {
   const save = async () => {
     setBusy(true); setError(""); setMessage("");
     try {
-      const result = await hostingerStorefrontService.saveCuratedFavourites(draft);
+      const result = await hostingerStorefrontService.saveCuratedFavourites(draft, collection || undefined);
       setDraft(result.draft);
       setMessage("Curated Favourites draft saved. The live homepage is unchanged until you publish.");
     } catch (e) { setError(e instanceof Error ? e.message : "Draft could not be saved."); }
@@ -76,8 +78,8 @@ export const CuratedFavouritesManager: React.FC = () => {
   const publish = async () => {
     setBusy(true); setError(""); setMessage("");
     try {
-      await hostingerStorefrontService.saveCuratedFavourites(draft);
-      const result = await hostingerStorefrontService.publishCuratedFavourites();
+      await hostingerStorefrontService.saveCuratedFavourites(draft, collection || undefined);
+      const result = await hostingerStorefrontService.publishCuratedFavourites(collection || undefined);
       setDraft(result.published);
       setPublished(result.published);
       setMessage("Curated Favourites published. The homepage now uses this manual selection.");
@@ -90,6 +92,7 @@ export const CuratedFavouritesManager: React.FC = () => {
       <div>
         <h2 className="font-semibold text-[#2C1838]">Curated Favourites</h2>
         <p className="text-xs text-gray-500 mt-1">Choose up to {MAX_PRODUCTS} active, in-stock products and arrange the exact order customers see.</p>
+        <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={collection} disabled={loading || busy} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global curation)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
       </div>
       <span className={isPublished ? "text-xs rounded-full px-3 py-1 bg-green-50 text-green-700" : "text-xs rounded-full px-3 py-1 bg-amber-50 text-amber-700"}>
         {isPublished ? "Published version" : "Unpublished changes"}

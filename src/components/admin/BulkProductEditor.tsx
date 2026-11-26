@@ -19,6 +19,8 @@ export const BulkProductEditor: React.FC<Props> = ({ products, categories, onApp
   const [categoryEnabled, setCategoryEnabled] = useState(false);
   const [categoryId, setCategoryId] = useState(categories[0]?.id || "");
   const [statusEnabled, setStatusEnabled] = useState(false);
+  const [rangeEnabled, setRangeEnabled] = useState(false);
+  const [productCollection, setProductCollection] = useState<"artificial" | "demi-fine">("artificial");
   const [status, setStatus] = useState<"active" | "draft">("draft");
   const [review, setReview] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -31,8 +33,9 @@ export const BulkProductEditor: React.FC<Props> = ({ products, categories, onApp
     if (compareEnabled) value.compareAtPrice = comparePrice.trim() === "" ? null : Number(comparePrice);
     if (categoryEnabled) value.categoryId = categoryId;
     if (statusEnabled) value.status = status;
+    if (rangeEnabled) value.productCollection = productCollection;
     return value;
-  }, [priceEnabled, price, compareEnabled, comparePrice, categoryEnabled, categoryId, statusEnabled, status]);
+  }, [priceEnabled, price, compareEnabled, comparePrice, categoryEnabled, categoryId, statusEnabled, status, rangeEnabled, productCollection]);
 
   const validate = () => {
     if (!Object.keys(updates).length) return "Choose at least one field to update.";
@@ -78,6 +81,7 @@ export const BulkProductEditor: React.FC<Props> = ({ products, categories, onApp
         <label className="flex items-start gap-3 rounded-xl border border-[#EADFF0] p-3"><input type="checkbox" checked={compareEnabled} onChange={e=>setCompareEnabled(e.target.checked)} className="mt-1 accent-[#563568]"/><span className="flex-1"><strong className="block text-xs">Comparison price (₹)</strong><input type="number" min="0" max="99999999" step="0.01" disabled={!compareEnabled} value={comparePrice} onChange={e=>setComparePrice(e.target.value)} placeholder="Empty clears comparison price" className="mt-2 min-h-10 w-full rounded-lg border border-[#E7DCEB] px-3 disabled:bg-gray-100"/><small className="text-[10px] text-[#806B8D]">Must exceed each product's selling price.</small></span></label>
         <label className="flex items-start gap-3 rounded-xl border border-[#EADFF0] p-3"><input type="checkbox" checked={categoryEnabled} onChange={e=>setCategoryEnabled(e.target.checked)} className="mt-1 accent-[#563568]"/><span className="flex-1"><strong className="block text-xs">Category</strong><select disabled={!categoryEnabled} value={categoryId} onChange={e=>setCategoryId(e.target.value)} className="mt-2 min-h-10 w-full rounded-lg border border-[#E7DCEB] px-3 disabled:bg-gray-100">{categories.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></span></label>
         <label className="flex items-start gap-3 rounded-xl border border-[#EADFF0] p-3"><input type="checkbox" checked={statusEnabled} onChange={e=>setStatusEnabled(e.target.checked)} className="mt-1 accent-[#563568]"/><span className="flex-1"><strong className="block text-xs">Publication status</strong><select disabled={!statusEnabled} value={status} onChange={e=>setStatus(e.target.value as "active"|"draft")} className="mt-2 min-h-10 w-full rounded-lg border border-[#E7DCEB] px-3 disabled:bg-gray-100"><option value="draft">Draft / unpublished</option><option value="active">Active / published</option></select></span></label>
+        <label className="flex items-start gap-3 rounded-xl border border-[#EADFF0] p-3"><input type="checkbox" checked={rangeEnabled} onChange={e=>setRangeEnabled(e.target.checked)} className="mt-1 accent-[#563568]"/><span className="flex-1"><strong className="block text-xs">Product range</strong><select disabled={!rangeEnabled} value={productCollection} onChange={e=>setProductCollection(e.target.value as "artificial"|"demi-fine")} className="mt-2 min-h-10 w-full rounded-lg border border-[#E7DCEB] px-3 disabled:bg-gray-100"><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></span></label>
       </div>
       <div className="flex flex-wrap justify-end gap-2 border-t border-[#F0E8F3] pt-3"><button onClick={onClose} className="min-h-10 rounded-lg border border-[#E7DCEB] px-4 text-xs">Cancel</button><button onClick={()=>{const message=validate();setError(message);if(!message)setReview(true);}} className="min-h-10 rounded-lg bg-[#563568] px-4 text-xs font-semibold text-white">Review changes</button></div>
     </> : <>
@@ -87,6 +91,7 @@ export const BulkProductEditor: React.FC<Props> = ({ products, categories, onApp
         {compareEnabled && <p><strong>Comparison price:</strong> {comparePrice.trim() ? "₹"+Number(comparePrice).toLocaleString("en-IN") : "Clear existing comparison prices"}</p>}
         {categoryEnabled && <p><strong>New category:</strong> {selectedCategory}</p>}
         {statusEnabled && <p><strong>Publication status:</strong> {status === "active" ? "Active / published" : "Draft / unpublished"}</p>}
+        {rangeEnabled && <p><strong>Product range:</strong> {productCollection === "artificial" ? "Artificial" : "Demi-Fine"}</p>}
       </div>
       <div className="max-h-44 overflow-y-auto rounded-xl border border-[#EADFF0] divide-y divide-[#F0E8F3]">{products.map(item=><div key={item.id} className="flex justify-between gap-3 px-3 py-2 text-xs"><span>{item.name}</span><span className="text-[#806B8D]">{item.status}</span></div>)}</div>
       <p className="text-[11px] text-[#806B8D]">Archived or missing products are skipped. Products whose comparison price would not exceed their selling price are skipped and identified in the results. No stock, orders or customer data is changed.</p>

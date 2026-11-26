@@ -121,12 +121,13 @@ export interface MenStorefrontSettings {
   offers: { enabled: boolean; label: string; description: string; ctaText: string; ctaLink: string };
   notification: { enabled: boolean; headline: string; description: string; buttonText: string };
 }
-export interface MenStorefrontProduct { id: string; name: string; slug: string; description?: string; price: number; compareAtPrice?: number | null; images: string[]; status: string; stock: number; }
+export interface MenStorefrontProduct { id: string; name: string; slug: string; description?: string; price: number; compareAtPrice?: number | null; images: string[]; status: string; stock: number; productCollection?: "artificial" | "demi-fine" | null; }
 export interface MenLaunchSubscriber { id: string; email: string; consent: boolean; source: string; createdAt: string; }
 
 
 export interface StorefrontBanner {
   id: string;
+  productCollection?: "artificial" | "demi-fine" | null;
   tagline: string;
   title: string;
   subtitle: string;
@@ -152,63 +153,86 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return body as T;
 }
 
+function collectionQuery(collection?: "artificial" | "demi-fine"): string {
+  return collection ? "?productCollection=" + encodeURIComponent(collection) : "";
+}
+
+function publicRangeQuery(): string {
+  const params = new URLSearchParams();
+  const fromUrl = new URLSearchParams(window.location.search).get("range");
+  const stored = window.sessionStorage.getItem("sarine_product_range");
+  if (fromUrl === "home") window.sessionStorage.removeItem("sarine_product_range");
+  const collection = fromUrl === "home" ? "" : fromUrl === "artificial" || fromUrl === "demi-fine"
+    ? fromUrl
+    : stored === "artificial" || stored === "demi-fine" ? stored : "";
+  if (fromUrl === "artificial" || fromUrl === "demi-fine") window.sessionStorage.setItem("sarine_product_range", fromUrl);
+  if (collection) params.set("productCollection", collection);
+  const query = params.toString();
+  return query ? "?" + query : "";
+}
+
+export type HomepageCategoryImages = Record<string, string>;
+
 export const hostingerStorefrontService = {
   getHomepageLayout: () => request<{ draft: HomepageLayout; published: HomepageLayout }>("/admin/homepage-layout"),
   getPublicHomepageLayout: () => request<{ layout: HomepageLayout }>("/homepage-layout"),
-  getCuratedFavourites: () => request<{ draft: CuratedFavouritesConfig; published: CuratedFavouritesConfig; maxProducts: number }>("/admin/curated-favourites"),
-  saveCuratedFavourites: (config: CuratedFavouritesConfig) =>
-    request<{ success: boolean; draft: CuratedFavouritesConfig }>("/admin/curated-favourites/draft", { method: "PUT", body: JSON.stringify(config) }),
-  publishCuratedFavourites: () =>
-    request<{ success: boolean; published: CuratedFavouritesConfig }>("/admin/curated-favourites/publish", { method: "POST" }),
+  getCuratedFavourites: (collection?: "artificial" | "demi-fine") => request<{ draft: CuratedFavouritesConfig; published: CuratedFavouritesConfig; maxProducts: number }>("/admin/curated-favourites" + collectionQuery(collection)),
+  saveCuratedFavourites: (config: CuratedFavouritesConfig, collection?: "artificial" | "demi-fine") =>
+    request<{ success: boolean; draft: CuratedFavouritesConfig }>("/admin/curated-favourites/draft", { method: "PUT", body: JSON.stringify({ ...config, productCollection: collection }) }),
+  publishCuratedFavourites: (collection?: "artificial" | "demi-fine") =>
+    request<{ success: boolean; published: CuratedFavouritesConfig }>("/admin/curated-favourites/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
   getPublicCuratedFavourites: () =>
-    request<{ products: import("../../types/product").Product[]; configured: boolean }>("/curated-favourites"),
-  getExploreNow: () => request<{ draft: ExploreNowConfig; published: ExploreNowConfig; maxProducts: number }>("/admin/explore-now"),
-  saveExploreNow: (config: ExploreNowConfig) => request<{ success: boolean; draft: ExploreNowConfig }>("/admin/explore-now/draft", { method: "PUT", body: JSON.stringify(config) }),
-  publishExploreNow: () => request<{ success: boolean; published: ExploreNowConfig }>("/admin/explore-now/publish", { method: "POST" }),
-  getPublicExploreNow: () => request<{ products: import("../../types/product").Product[]; displayCount: number; configured: boolean }>("/explore-now"),
+    request<{ products: import("../../types/product").Product[]; configured: boolean }>("/curated-favourites" + publicRangeQuery()),
+  getExploreNow: (collection?: "artificial" | "demi-fine") => request<{ draft: ExploreNowConfig; published: ExploreNowConfig; maxProducts: number }>("/admin/explore-now" + collectionQuery(collection)),
+  saveExploreNow: (config: ExploreNowConfig, collection?: "artificial" | "demi-fine") => request<{ success: boolean; draft: ExploreNowConfig }>("/admin/explore-now/draft", { method: "PUT", body: JSON.stringify({ ...config, productCollection: collection }) }),
+  publishExploreNow: (collection?: "artificial" | "demi-fine") => request<{ success: boolean; published: ExploreNowConfig }>("/admin/explore-now/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
+  getPublicExploreNow: () => request<{ products: import("../../types/product").Product[]; displayCount: number; configured: boolean }>("/explore-now" + publicRangeQuery()),
   saveHomepageLayout: (layout: HomepageLayout) =>
     request<{ success: boolean; draft: HomepageLayout }>("/admin/homepage-layout/draft", { method: "PUT", body: JSON.stringify(layout) }),
   publishHomepageLayout: () =>
     request<{ success: boolean; published: HomepageLayout }>("/admin/homepage-layout/publish", { method: "POST" }),
-  getHomepageContent: () => request<{ draft: HomepageContent; published: HomepageContent }>("/admin/homepage-layout/content"),
-  saveHomepageContent: (content: HomepageContent) =>
-    request<{ success: boolean; draft: HomepageContent }>("/admin/homepage-layout/content/draft", { method: "PUT", body: JSON.stringify(content) }),
-  publishHomepageContent: () =>
-    request<{ success: boolean; published: HomepageContent }>("/admin/homepage-layout/content/publish", { method: "POST" }),
-  getPublicHomepageContent: () => request<{ content: HomepageContent }>("/homepage-layout/content"),
+  getHomepageContent: (collection?: "artificial" | "demi-fine") => request<{ draft: HomepageContent; published: HomepageContent }>("/admin/homepage-layout/content" + collectionQuery(collection)),
+  saveHomepageContent: (content: HomepageContent, collection?: "artificial" | "demi-fine") =>
+    request<{ success: boolean; draft: HomepageContent }>("/admin/homepage-layout/content/draft", { method: "PUT", body: JSON.stringify({ ...content, productCollection: collection }) }),
+  publishHomepageContent: (collection?: "artificial" | "demi-fine") =>
+    request<{ success: boolean; published: HomepageContent }>("/admin/homepage-layout/content/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
+  getPublicHomepageContent: () => request<{ content: HomepageContent }>("/homepage-layout/content" + publicRangeQuery()),
 
-  getMenStorefront: () => request<{ draft: MenStorefrontSettings; published: MenStorefrontSettings; products: MenStorefrontProduct[] }>("/admin/storefront/men-storefront"),
-  saveMenStorefrontDraft: (settings: MenStorefrontSettings) => request<{ success: boolean; draft: MenStorefrontSettings }>("/admin/storefront/men-storefront/draft", { method: "PUT", body: JSON.stringify({ settings }) }),
-  publishMenStorefront: () => request<{ success: boolean; published: MenStorefrontSettings }>("/admin/storefront/men-storefront/publish", { method: "POST" }),
-  getPublicMenStorefront: () => request<{ settings: MenStorefrontSettings; products: MenStorefrontProduct[] }>("/storefront/men-storefront"),
-  getPublicMenCategory: (categoryId: string) => request<{ category: MenStorefrontCategory; products: MenStorefrontProduct[] }>(`/storefront/men-storefront/categories/${encodeURIComponent(categoryId)}`),
+  getMenStorefront: (collection?: "artificial" | "demi-fine") => request<{ draft: MenStorefrontSettings; published: MenStorefrontSettings; products: MenStorefrontProduct[] }>("/admin/storefront/men-storefront" + collectionQuery(collection)),
+  saveMenStorefrontDraft: (settings: MenStorefrontSettings, collection?: "artificial" | "demi-fine") => request<{ success: boolean; draft: MenStorefrontSettings }>("/admin/storefront/men-storefront/draft", { method: "PUT", body: JSON.stringify({ settings, productCollection: collection }) }),
+  publishMenStorefront: (collection?: "artificial" | "demi-fine") => request<{ success: boolean; published: MenStorefrontSettings }>("/admin/storefront/men-storefront/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
+  getPublicMenStorefront: () => request<{ settings: MenStorefrontSettings; products: MenStorefrontProduct[] }>("/storefront/men-storefront" + publicRangeQuery()),
+  getPublicMenCategory: (categoryId: string) => request<{ category: MenStorefrontCategory; products: MenStorefrontProduct[] }>(`/storefront/men-storefront/categories/${encodeURIComponent(categoryId)}` + publicRangeQuery()),
   subscribeMenLaunch: (email: string, consent: boolean) => request<{ success: boolean; message: string }>("/storefront/men-launch-signups", { method: "POST", body: JSON.stringify({ email, consent }) }),
   getMenLaunchSignups: () => request<{ subscribers: MenLaunchSubscriber[] }>("/admin/storefront/men-launch-signups"),
   deleteMenLaunchSignup: (id: string) => request<{ success: boolean }>(`/admin/storefront/men-launch-signups/${encodeURIComponent(id)}`, { method: "DELETE" }),
-  getShopByGender: () => request<{ settings: ShopByGenderSettings }>("/admin/storefront/shop-by-gender"),
-  saveShopByGender: (settings: ShopByGenderSettings) => request<{ success: boolean; settings: ShopByGenderSettings }>("/admin/storefront/shop-by-gender", { method: "PUT", body: JSON.stringify(settings) }),
-  getPublicShopByGender: () => request<{ settings: ShopByGenderSettings }>("/storefront/shop-by-gender"),
-  getOccasions: () => request<{ occasions: OccasionCard[] }>("/admin/storefront/occasions"),
-  getPublicOccasions: () => request<{ occasions: OccasionCard[] }>("/storefront/occasions"),
-  saveOccasions: (occasions: OccasionCard[]) => request<{ success: boolean; occasions: OccasionCard[] }>("/admin/storefront/occasions", { method: "PUT", body: JSON.stringify({ occasions }) }),
-  getBanners: () => request<{ banners: StorefrontBanner[] }>("/admin/storefront/banners"),
-  getPublicBanners: () => request<{ banners: StorefrontBanner[] }>("/storefront/banners"),
+  getShopByGender: (collection?: "artificial" | "demi-fine") => request<{ settings: ShopByGenderSettings }>("/admin/storefront/shop-by-gender" + collectionQuery(collection)),
+  saveShopByGender: (settings: ShopByGenderSettings, collection?: "artificial" | "demi-fine") => request<{ success: boolean; settings: ShopByGenderSettings }>("/admin/storefront/shop-by-gender", { method: "PUT", body: JSON.stringify({ ...settings, productCollection: collection }) }),
+  getPublicShopByGender: () => request<{ settings: ShopByGenderSettings }>("/storefront/shop-by-gender" + publicRangeQuery()),
+  getOccasions: (collection?: "artificial" | "demi-fine") => request<{ occasions: OccasionCard[] }>("/admin/storefront/occasions" + collectionQuery(collection)),
+  getPublicOccasions: () => request<{ occasions: OccasionCard[] }>("/storefront/occasions" + publicRangeQuery()),
+  getHomepageCategoryImages: (collection?: "artificial" | "demi-fine") => request<{ images: HomepageCategoryImages }>("/admin/storefront/category-images" + collectionQuery(collection)),
+  saveHomepageCategoryImages: (images: HomepageCategoryImages, collection?: "artificial" | "demi-fine") => request<{ success: boolean; images: HomepageCategoryImages }>("/admin/storefront/category-images", { method: "PUT", body: JSON.stringify({ images, productCollection: collection }) }),
+  getPublicHomepageCategoryImages: () => request<{ images: HomepageCategoryImages }>("/storefront/category-images" + publicRangeQuery()),
+  saveOccasions: (occasions: OccasionCard[], collection?: "artificial" | "demi-fine") => request<{ success: boolean; occasions: OccasionCard[] }>("/admin/storefront/occasions", { method: "PUT", body: JSON.stringify({ occasions, productCollection: collection }) }),
+  getBanners: (collection?: "artificial" | "demi-fine") => request<{ banners: StorefrontBanner[] }>("/admin/storefront/banners" + collectionQuery(collection)),
+  getPublicBanners: () => request<{ banners: StorefrontBanner[] }>("/storefront/banners" + publicRangeQuery()),
   createBanner: (banner: Omit<StorefrontBanner, "id" | "sortOrder">) =>
     request<{ banner: StorefrontBanner }>("/admin/storefront/banners", { method: "POST", body: JSON.stringify(banner) }),
   updateBanner: (id: string, banner: Partial<StorefrontBanner>) =>
     request<{ banner: StorefrontBanner }>(`/admin/storefront/banners/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(banner) }),
   deleteBanner: (id: string) =>
     request<{ success: boolean }>(`/admin/storefront/banners/${encodeURIComponent(id)}`, { method: "DELETE" }),
-  reorderBanners: (ids: string[]) =>
-    request<{ success: boolean }>("/admin/storefront/banners/reorder", { method: "PUT", body: JSON.stringify({ ids }) }),
+  reorderBanners: (ids: string[], collection?: "artificial" | "demi-fine") =>
+    request<{ success: boolean }>("/admin/storefront/banners/reorder", { method: "PUT", body: JSON.stringify({ ids, productCollection: collection }) }),
   getAnnouncement: () => request<{ announcement: { message: string; active: boolean; trustMessages?: string[] } }>("/admin/storefront/announcement"),
   getPublicAnnouncement: () => request<{ announcement: { message: string; active: boolean; trustMessages?: string[] } }>("/storefront/announcement"),
   saveAnnouncement: (message: string, active: boolean, trustMessages: string[]) =>
     request<{ success: boolean }>("/admin/storefront/announcement", { method: "PUT", body: JSON.stringify({ message, active, trustMessages }) }),
-  getEditorial: () => request<{ editorial: EditorialContent }>("/admin/storefront/editorial"),
-  saveEditorial: (editorial: EditorialContent) =>
-    request<{ editorial: EditorialContent }>("/admin/storefront/editorial", { method: "PUT", body: JSON.stringify(editorial) }),
-  getPublicEditorial: () => request<{ editorial: EditorialContent | null }>("/storefront/editorial"),
+  getEditorial: (collection?: "artificial" | "demi-fine") => request<{ editorial: EditorialContent }>("/admin/storefront/editorial" + collectionQuery(collection)),
+  saveEditorial: (editorial: EditorialContent, collection?: "artificial" | "demi-fine") =>
+    request<{ editorial: EditorialContent }>("/admin/storefront/editorial", { method: "PUT", body: JSON.stringify({ ...editorial, productCollection: collection }) }),
+  getPublicEditorial: () => request<{ editorial: EditorialContent | null }>("/storefront/editorial" + publicRangeQuery()),
   getPublicProductReviewSummary: async (productId: string) => {
     const summaries = await loadPublicProductReviewSummaries();
     return summaries[productId] || null;

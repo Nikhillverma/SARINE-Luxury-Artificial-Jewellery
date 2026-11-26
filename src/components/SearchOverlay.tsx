@@ -9,6 +9,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { productService } from '../services';
 import { Product } from '../types/product';
 import { formatInr } from '../utils/currency';
+import { getCurrentProductCollection, getProductDetailHref } from '../utils/productLinks';
 import { Search, X, Clock, ArrowRight, Sparkles, Tag } from 'lucide-react';
 
 interface SearchOverlayProps {
@@ -126,14 +127,16 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
     if (query.trim()) {
       saveRecentSearch(query.trim());
       onClose();
-      navigate(`/shop?search=${encodeURIComponent(query.trim())}`);
+      const range = getCurrentProductCollection();
+      navigate(`/shop?search=${encodeURIComponent(query.trim())}${range ? `&range=${range}` : ""}`);
     }
   };
 
   const handleSelectTerm = (term: string) => {
     saveRecentSearch(term);
     onClose();
-    navigate(`/shop?search=${encodeURIComponent(term)}`);
+    const range = getCurrentProductCollection();
+    navigate(`/shop?search=${encodeURIComponent(term)}${range ? `&range=${range}` : ""}`);
   };
 
   const handleClearRecents = () => {
@@ -214,7 +217,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
                   {results.map((product) => (
                     <Link
                       key={product.id}
-                      to={`/product/${product.slug}`}
+                      to={getProductDetailHref(product.slug, product.productCollection)}
                       onClick={() => {
                         saveRecentSearch(product.name);
                         onClose();

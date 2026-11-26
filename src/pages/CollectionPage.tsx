@@ -28,6 +28,7 @@ const RECENTLY_VIEWED_KEY = 'sarine_recently_viewed_v1';
 
 export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const rangeParam = searchParams.get("range");
 
   // State
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -103,6 +104,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     let isCancelled = false;
     async function loadProducts() {
       setLoading(true);
+      setAllProducts([]);
       try {
         const fetched = await productService.getProducts({
           // Let MariaDB return only the selected category instead of downloading
@@ -125,10 +127,11 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     return () => {
       isCancelled = true;
     };
-  }, [includeAll, selectedCategorySlug]);
+  }, [includeAll, selectedCategorySlug, rangeParam]);
 
   // Load recently viewed
   useEffect(() => {
+    setRecentlyViewed([]);
     try {
       const raw = localStorage.getItem(RECENTLY_VIEWED_KEY);
       if (raw) {
@@ -142,7 +145,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     } catch {
       // Ignore
     }
-  }, [includeAll]);
+  }, [includeAll, rangeParam]);
 
   // Category mapping
   const categoryMap = useMemo(() => {
@@ -182,7 +185,9 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     setSelectedPlating('');
     setSelectedStone('');
     setInStockOnly(false);
-    setSearchParams({});
+    const next = new URLSearchParams();
+    if (rangeParam === "home" || rangeParam === "artificial" || rangeParam === "demi-fine") next.set("range", rangeParam);
+    setSearchParams(next);
   };
 
   // Filter & Sort Pipeline

@@ -11,9 +11,9 @@
  */
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { productService, categoryService } from '../services';
-import { Product } from '../types/product';
+import { Product, type ProductCollection } from '../types/product';
 import { Category } from '../types/category';
 import { ProductCard } from '../components/ProductCard';
 import { formatInr } from '../utils/currency';
@@ -109,11 +109,43 @@ const defaultHomepageLayout: HomepageLayout = {
 };
 
 export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
+  const [rangeParams, setRangeParams] = useSearchParams();
+  const rangeFromUrl = rangeParams.get('range');
+  const [selectedProductCollection, setSelectedProductCollection] = useState<ProductCollection | undefined>(() => {
+    if (rangeFromUrl === 'home') return undefined;
+    if (rangeFromUrl === 'artificial' || rangeFromUrl === 'demi-fine') return rangeFromUrl;
+    const storedRange = window.sessionStorage.getItem('sarine_product_range');
+    return storedRange === 'artificial' || storedRange === 'demi-fine' ? storedRange : undefined;
+  });
+  const selectProductCollection = (collection?: ProductCollection) => {
+    setSelectedProductCollection(collection);
+    if (collection) window.sessionStorage.setItem('sarine_product_range', collection);
+    else window.sessionStorage.removeItem('sarine_product_range');
+    const next = new URLSearchParams(rangeParams);
+    if (collection) next.set('range', collection);
+    else next.delete('range');
+    setRangeParams(next, { replace: false });
+  };
+
+  useEffect(() => {
+    if (rangeFromUrl === "home") {
+      window.sessionStorage.removeItem("sarine_product_range");
+      setSelectedProductCollection(undefined);
+      return;
+    }
+    if (rangeFromUrl === "artificial" || rangeFromUrl === "demi-fine") {
+      window.sessionStorage.setItem("sarine_product_range", rangeFromUrl);
+      setSelectedProductCollection(rangeFromUrl);
+      return;
+    }
+    const storedRange = window.sessionStorage.getItem("sarine_product_range");
+    setSelectedProductCollection(storedRange === "artificial" || storedRange === "demi-fine" ? storedRange : undefined);
+  }, [rangeFromUrl]);
   const [homepageLayout, setHomepageLayout] = useState<HomepageLayout>(defaultHomepageLayout);
   const [festivalCampaigns, setFestivalCampaigns] = useState<FestivalCampaign[]>([]);
   const sectionConfig = (id: string) => homepageLayout.sections.find(section => section.id === id);
   const sectionVisible = (id: string) => sectionConfig(id)?.enabled ?? true;
-  const sectionOrder = (id: string) => (sectionConfig(id)?.sortOrder ?? defaultHomepageLayout.sections.find(section => section.id === id)?.sortOrder ?? 0) + 1;
+  const sectionOrder = (id: string) => ((sectionConfig(id)?.sortOrder ?? defaultHomepageLayout.sections.find(section => section.id === id)?.sortOrder ?? 0) + 1) * 2;
 
   useEffect(() => {
     let cancelled = false;
@@ -137,6 +169,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   useEffect(() => {
     let cancelled = false;
+    setManualCuratedFavourites([]);
+    setHasPublishedCuratedFavourites(false);
     hostingerStorefrontService.getPublicCuratedFavourites()
       .then(result => {
         if (!cancelled) {
@@ -146,10 +180,12 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       })
       .catch(error => console.warn("[HomePage] Curated Favourites unavailable; using the existing automatic fallback.", error));
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedProductCollection]);
 
   useEffect(() => {
     let cancelled = false;
+    setExploreProducts([]);
+    setHasPublishedExploreNow(false);
     hostingerStorefrontService.getPublicExploreNow()
       .then(result => {
         if (!cancelled) {
@@ -160,10 +196,11 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
       })
       .catch(error => console.warn("[HomePage] Explore Now unavailable.", error));
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedProductCollection]);
 
   // Storefront Data
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryImageOverrides, setCategoryImageOverrides] = useState<Record<string, string>>({});
   const [bestsellers, setBestsellers] = useState<Product[]>([]);
   const [curatedFavourites, setCuratedFavourites] = useState<Product[]>([]);
   const [manualCuratedFavourites, setManualCuratedFavourites] = useState<Product[]>([]);
@@ -177,6 +214,15 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   const [shopByGender, setShopByGender] = useState<ShopByGenderSettings>({ version: 1, forHerImageUrl: "", forHimImageUrl: "" });
 
+  useEffect(() => {
+    let cancelled = false;
+    setCategoryImageOverrides({});
+    hostingerStorefrontService.getPublicHomepageCategoryImages()
+      .then(result => { if (!cancelled) setCategoryImageOverrides(result.images || {}); })
+      .catch(error => console.warn("[HomePage] Category image overrides unavailable; using category defaults.", error));
+    return () => { cancelled = true; };
+  }, [selectedProductCollection]);
+
   const [occasions, setOccasions] = useState([
     { id: "daily-wear", title: "Daily Wear", subtitle: "Effortless everyday minimalism", image: "/images/optimized/ananya-temple-coin-bracelet.webp", link: "/shop?search=everyday", active: true, sortOrder: 0 },
     { id: "festive", title: "Festive", subtitle: "Celebratory sparkle and classic motifs", image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=80", link: "/shop?search=festive", active: true, sortOrder: 1 },
@@ -186,19 +232,21 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   useEffect(() => {
     let cancelled = false;
+    setShopByGender({ version: 1, forHerImageUrl: "", forHimImageUrl: "" });
     hostingerStorefrontService.getPublicShopByGender()
       .then(result => { if (!cancelled && result.settings) setShopByGender(result.settings); })
       .catch(error => console.warn("[HomePage] Shop by Gender settings unavailable; using empty image placeholders.", error));
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedProductCollection]);
 
   useEffect(() => {
     let cancelled = false;
+    setOccasions([]);
     hostingerStorefrontService.getPublicOccasions()
       .then(result => { if (!cancelled && Array.isArray(result.occasions)) setOccasions(result.occasions); })
       .catch(error => console.warn("[HomePage] Published occasion cards unavailable; using defaults.", error));
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedProductCollection]);
 
   // Hero Slider State
   const [activeSlide, setActiveSlide] = useState<number>(0);
@@ -321,27 +369,30 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   useEffect(() => {
     let cancelled = false;
+    setEditorial(current => ({ ...current, active: false }));
     hostingerStorefrontService.getPublicEditorial()
       .then(result => { if (!cancelled && result.editorial) setEditorial(result.editorial); else if (!cancelled && result.editorial === null) setEditorial(current => ({ ...current, active: false })); })
       .catch(error => console.warn('[HomePage] Editorial content unavailable; using default content.', error));
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedProductCollection]);
 
   useEffect(() => {
     let cancelled = false;
+    setHomepageContent(DEFAULT_HOMEPAGE_CONTENT);
     hostingerStorefrontService.getPublicHomepageContent()
       .then(result => { if (!cancelled && result.content) setHomepageContent(result.content); })
       .catch(error => console.warn('[HomePage] Editable homepage content unavailable; using the built-in defaults.', error));
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedProductCollection]);
 
   useEffect(() => {
     let cancelled = false;
+    setManagedHeroSlides([]);
     hostingerStorefrontService.getPublicBanners()
-      .then(result => { if (!cancelled && result.banners.length) { setManagedHeroSlides(result.banners); setActiveSlide(0); } })
+      .then(result => { if (!cancelled && result.banners.length) { setManagedHeroSlides(result.banners); setActiveSlide(0); } else if (!cancelled) setManagedHeroSlides([]); })
       .catch(error => console.warn('[HomePage] Published hero banners unavailable; using defaults.', error));
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedProductCollection]);
 
   // 1. Fetch Hostinger storefront data
   useEffect(() => {
@@ -350,6 +401,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     async function loadData() {
       setLoading(true);
       setLoadError(false);
+      setCategories([]);
+      setBestsellers([]);
+      setCuratedFavourites([]);
+      setNewArrivals([]);
       try {
         // Keep each homepage collection independent: one unavailable endpoint must
         // not prevent the other sections from rendering their successfully loaded data.
@@ -422,7 +477,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     return () => {
       isCancelled = true;
     };
-  }, [includeAll]);
+  }, [includeAll, selectedProductCollection]);
 
   // Regular slides use 5 seconds; campaign slides use their admin-configured hold time.
   // The timer restarts on every slide change so a featured offer gets its full viewing time.
@@ -479,6 +534,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   return (
     <div className="sarine-home w-full bg-[#FBF8F5] text-[#302438] font-sans selection:bg-[var(--pill)] selection:text-[#302438]" style={{ display: "flex", flexDirection: "column" }}>
+      <nav aria-label="Shop by jewellery range" style={{ order: sectionOrder("hero") - 1 }} className="w-full border-b border-[#E7DCEB] bg-white">
+        <div className="mx-auto flex min-h-11 w-full max-w-[1280px] items-center justify-center gap-5 px-4 text-xs sm:gap-8 sm:text-sm">
+          <button type="button" onClick={() => selectProductCollection(undefined)} aria-current={!selectedProductCollection ? "page" : undefined} className={`min-h-11 border-b-2 px-1 font-medium transition-colors ${!selectedProductCollection ? "border-[#563568] text-[#563568]" : "border-transparent text-[#705E7B] hover:text-[#563568]"}`}>Home</button>
+          <button type="button" onClick={() => selectProductCollection("artificial")} aria-current={selectedProductCollection === "artificial" ? "page" : undefined} className={`min-h-11 border-b-2 px-1 font-medium transition-colors ${selectedProductCollection === "artificial" ? "border-[#563568] text-[#563568]" : "border-transparent text-[#705E7B] hover:text-[#563568]"}`}>Artificial</button>
+          <button type="button" onClick={() => selectProductCollection("demi-fine")} aria-current={selectedProductCollection === "demi-fine" ? "page" : undefined} className={`min-h-11 border-b-2 px-1 font-medium transition-colors ${selectedProductCollection === "demi-fine" ? "border-[#563568] text-[#563568]" : "border-transparent text-[#705E7B] hover:text-[#563568]"}`}>Demi-Fine</button>
+        </div>
+      </nav>
+
       {/* =========================================================================
           3. HERO SLIDER
           Fixed responsive height: h-[420px] md:h-[520px] lg:h-[600px]
@@ -572,7 +635,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 >
                   <div className="sarine-category-card__media relative aspect-square overflow-hidden rounded-sm border border-[var(--border)] bg-[var(--pill)] transition-colors group-hover:border-[var(--gold)]">
                     <img
-                      src={cat.image}
+                      src={categoryImageOverrides[cat.slug] || cat.image}
                       alt={cat.name}
                       loading="lazy"
                       decoding="async"

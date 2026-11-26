@@ -1,7 +1,7 @@
 /**
  * Core service interfaces defining contracts for all data access in SARINE.
  */
-import { Product, ProductVariant, JewelleryType } from '../types/product';
+import { Product, ProductVariant, JewelleryType, ProductCollection } from '../types/product';
 import { Category } from '../types/category';
 import { Order, CreateOrderInput, VerifyPaymentInput, VerifyPaymentResult } from '../types/order';
 
@@ -9,6 +9,7 @@ export interface ProductFilterOptions {
   categorySlug?: string;
   categoryId?: string;
   collectionSlug?: string;
+  productCollection?: ProductCollection;
   jewelleryType?: JewelleryType;
   inStockOnly?: boolean;
   includeAll?: boolean;
@@ -20,7 +21,7 @@ export interface ProductFilterOptions {
 }
 export interface IProductService {
   getProducts(filters?: ProductFilterOptions): Promise<Product[]>;
-  getProductBySlug(slug: string, options?: { includeAll?: boolean }): Promise<Product | null>;
+  getProductBySlug(slug: string, options?: { includeAll?: boolean; productCollection?: ProductCollection }): Promise<Product | null>;
   getProductsByIds(ids: string[], options?: { includeAll?: boolean }): Promise<Product[]>;
   searchProducts(query: string, options?: { includeAll?: boolean }): Promise<Product[]>;
   getFeaturedProducts(limit?: number): Promise<Product[]>;
@@ -73,7 +74,7 @@ export interface InventoryMovementPage {
   totalPages: number;
 }
 
-export interface BulkProductUpdates { price?: number; compareAtPrice?: number | null; categoryId?: string; status?: "active" | "draft"; }
+export interface BulkProductUpdates { price?: number; compareAtPrice?: number | null; categoryId?: string; status?: "active" | "draft"; productCollection?: import("../types/product").ProductCollection; }
 
 export interface BulkProductUpdateResult {
   summary: { requested: number; updated: number; skipped: number };

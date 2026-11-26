@@ -29,6 +29,7 @@ const labelClass = "mb-1 block text-xs font-semibold text-[#563568]";
 
 export const MenStorefrontManager: React.FC = () => {
   const [settings, setSettings] = useState<MenStorefrontSettings>(defaults);
+  const [collection, setCollection] = useState<"" | "artificial" | "demi-fine">("");
   const [products, setProducts] = useState<MenStorefrontProduct[]>([]);
   const [subscribers, setSubscribers] = useState<MenLaunchSubscriber[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,21 +45,28 @@ export const MenStorefrontManager: React.FC = () => {
   const [productEdit, setProductEdit] = useState({ name: "", price: "", description: "", status: "draft" as "draft" | "active" });
   const [updatingProduct, setUpdatingProduct] = useState(false);
 
-  const load = async () => {
+  const load = async (isCancelled: () => boolean = () => false) => {
     setLoading(true); setError("");
     try {
-      const result = await hostingerStorefrontService.getMenStorefront();
+      const result = await hostingerStorefrontService.getMenStorefront(collection || undefined);
+      if (isCancelled()) return;
       setSettings({ ...defaults, ...result.draft, comingSoon: false, categories: (result.draft.categories || defaults.categories).map((category, index) => ({ ...category, productIds: category.productIds || [], sortOrder: category.sortOrder ?? index })), offers: { ...defaults.offers, ...result.draft.offers }, notification: { ...defaults.notification, ...result.draft.notification } });
       setProducts(result.products || []);
       const signups = await hostingerStorefrontService.getMenLaunchSignups().catch(() => ({ subscribers: [] }));
-      setSubscribers(signups.subscribers || []);
+      if (!isCancelled()) setSubscribers(signups.subscribers || []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load SARINE Men settings.");
-    } finally { setLoading(false); }
+      if (!isCancelled()) setError(e instanceof Error ? e.message : "Could not load SARINE Men settings.");
+    } finally { if (!isCancelled()) setLoading(false); }
   };
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    setSettings(defaults); setProducts([]); setEditingProductId(null); setAddingProductTo(null);
+    setNewProduct({ name: "", price: "", stock: "0", description: "", imageUrl: "", status: "draft" });
+    void load(() => cancelled);
+    return () => { cancelled = true; };
+  }, [collection]);
 
-  const activeProducts = useMemo(() => products.filter(p => p.status === "active"), [products]);
+  const activeProducts = useMemo(() => products.filter(p => p.status === "active" && (!collection || p.productCollection === collection)), [products, collection]);
   const update = <K extends keyof MenStorefrontSettings,>(key: K, value: MenStorefrontSettings[K]) => setSettings(current => ({ ...current, [key]: value }));
 
   const uploadImage = async (key: "heroImageUrl" | "category", file?: File, categoryId?: string) => {
@@ -75,15 +83,15 @@ export const MenStorefrontManager: React.FC = () => {
 
   const saveDraft = async () => {
     setBusy(true); setError(""); setMessage("");
-    try { await hostingerStorefrontService.saveMenStorefrontDraft(settings); setMessage("Draft saved. It is not public until you publish."); }
+    try { await hostingerStorefrontService.saveMenStorefrontDraft(settings, collection || undefined); setMessage("Draft saved. It is not public until you publish."); }
     catch (e) { setError(e instanceof Error ? e.message : "Could not save the draft."); }
     finally { setBusy(false); }
   };
   const publish = async () => {
     setBusy(true); setError(""); setMessage("");
     try {
-      await hostingerStorefrontService.saveMenStorefrontDraft(settings);
-      await hostingerStorefrontService.publishMenStorefront();
+      await hostingerStorefrontService.saveMenStorefrontDraft(settings, collection || undefined);
+      await hostingerStorefrontService.publishMenStorefront(collection || undefined);
       setMessage("SARINE Men changes are now published.");
     } catch (e) { setError(e instanceof Error ? e.message : "Could not publish SARINE Men."); }
     finally { setBusy(false); }
@@ -114,6 +122,7 @@ export const MenStorefrontManager: React.FC = () => {
   };
 
   const createMenProduct = async (category: MenStorefrontSettings["categories"][number]) => {
+    if (!collection) { setError("Choose Artificial or Demi-Fine before creating a new men's product."); return; }
     if (!newProduct.name.trim() || !newProduct.price.trim() || !newProduct.imageUrl) {
       setError("Add a product name, selling price and at least one product image."); return;
     }
@@ -126,15 +135,15 @@ export const MenStorefrontManager: React.FC = () => {
       const slug = newProduct.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       const created = await adminProductService.createProduct({
         slug, name: newProduct.name.trim(), description: newProduct.description.trim(), shortDescription: "",
-        price, images: [newProduct.imageUrl], categoryId: "", collectionSlugs: [],
+        price, images: [newProduct.imageUrl], categoryId: "", collectionSlugs: [], productCollection: collection,
         jewelleryType: /ring/i.test(category.title) ? "ring" : /chain/i.test(category.title) ? "necklace" : "bracelet",
         stock, status: newProduct.status, tags: [], gender: "men"
       });
-      setProducts(current => [...current, { id: created.id, name: created.name, slug: created.slug, price: created.price, images: created.images, status: created.status, stock: created.stock }]);
+      setProducts(current => [...current, { id: created.id, name: created.name, slug: created.slug, price: created.price, images: created.images, status: created.status, stock: created.stock, productCollection: collection }]);
       const nextCategories = settings.categories.map(item => item.id === category.id ? { ...item, productIds: [...new Set([...(item.productIds || []), created.id])] } : item);
       update("categories", nextCategories);
-      await hostingerStorefrontService.saveMenStorefrontDraft({ ...settings, categories: nextCategories });
-      if (newProduct.status === "active") await hostingerStorefrontService.publishMenStorefront();
+      await hostingerStorefrontService.saveMenStorefrontDraft({ ...settings, categories: nextCategories }, collection);
+      if (newProduct.status === "active") await hostingerStorefrontService.publishMenStorefront(collection);
       setNewProduct({ name: "", price: "", stock: "0", description: "", imageUrl: "", status: "draft" });
       setAddingProductTo(null);
       setMessage((newProduct.status === "active" ? "Product published" : "Product saved as a draft") + " and assigned to " + category.title + ".");
@@ -166,8 +175,8 @@ export const MenStorefrontManager: React.FC = () => {
         ...item, name: updated.name, description: updated.description, price: updated.price, status: updated.status
       } : item));
       if (productEdit.status === "active") {
-        await hostingerStorefrontService.saveMenStorefrontDraft(settings);
-        await hostingerStorefrontService.publishMenStorefront();
+        await hostingerStorefrontService.saveMenStorefrontDraft(settings, collection || undefined);
+        await hostingerStorefrontService.publishMenStorefront(collection || undefined);
       }
       setEditingProductId(null);
       setMessage(productEdit.status === "active" ? "Product published. The current men's storefront settings were published too." : "Product settings saved as a draft.");
@@ -198,6 +207,11 @@ export const MenStorefrontManager: React.FC = () => {
         <div><h2 className="font-serif text-2xl text-[#563568]">SARINE Men Studio</h2><p className="mt-1 text-xs text-[#705E7B]">Manage the men's landing page, imagery, product curation, offers and launch signups.</p></div>
         <a href="/men" target="_blank" rel="noreferrer" className="rounded-lg border px-3 py-2 text-xs font-semibold text-[#563568]">Preview men's page ↗</a>
       </div>
+      <label className="mt-4 block max-w-xs space-y-1 text-xs font-semibold text-[#563568]">Homepage version
+        <select value={collection} disabled={loading || busy || Boolean(uploading) || savingNewProduct || updatingProduct} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm">
+          <option value="">Home (existing global content)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option>
+        </select>
+      </label>
       <div className="mt-4 flex flex-wrap gap-2">
         {(["content", "catalogue", "advanced"] as const).map(item => <button key={item} type="button" onClick={() => setTab(item)} className={`min-h-10 rounded-lg px-3 text-xs font-semibold ${tab === item ? "bg-[#563568] text-white" : "border border-[#E7DCEB] text-[#563568]"}`}>{item === "content" ? "Page" : item === "catalogue" ? "Products & categories" : "Advanced"}</button>)}
       </div>

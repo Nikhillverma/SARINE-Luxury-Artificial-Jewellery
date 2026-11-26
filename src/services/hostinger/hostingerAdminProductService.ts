@@ -28,8 +28,23 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export class HostingerAdminProductService implements IAdminProductService {
   async getProducts(): Promise<Product[]> {
-    const result = await request<ProductsResponse>('/admin/products?limit=100&page=1');
-    return result.products;
+    const pageSize = 100;
+    const first = await request<ProductsResponse>(`/admin/products?limit=${pageSize}&page=1`);
+    const products = [...first.products];
+    const pageCount = Math.ceil(first.total / pageSize);
+
+    // The admin screens use client-side filtering and pagination, so load every
+    // server page rather than silently omitting products after the first 100.
+    for (let startPage = 2; startPage <= pageCount; startPage += 5) {
+      const endPage = Math.min(pageCount, startPage + 4);
+      const pages = await Promise.all(
+        Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index)
+          .map(page => request<ProductsResponse>(`/admin/products?limit=${pageSize}&page=${page}`))
+      );
+      for (const page of pages) products.push(...page.products);
+    }
+
+    return products;
   }
 
   async createProduct(product: Omit<Product, 'id' | 'createdAt'>): Promise<Product> {

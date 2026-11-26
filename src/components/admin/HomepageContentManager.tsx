@@ -12,6 +12,7 @@ const labelClass = "block space-y-1.5 text-xs font-medium text-[#563568]";
 
 export const HomepageContentManager: React.FC = () => {
   const [draft, setDraft] = useState<HomepageContent>(DEFAULT_HOMEPAGE_CONTENT);
+  const [collection, setCollection] = useState<"" | "artificial" | "demi-fine">("");
   const [published, setPublished] = useState<HomepageContent>(DEFAULT_HOMEPAGE_CONTENT);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -21,18 +22,19 @@ export const HomepageContentManager: React.FC = () => {
   const [preview, setPreview] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
 
-  const load = async () => {
+  const load = async (isCancelled: () => boolean = () => false) => {
     setLoading(true); setError(""); setMessage("");
     try {
-      const result = await hostingerStorefrontService.getHomepageContent();
+      const result = await hostingerStorefrontService.getHomepageContent(collection || undefined);
+      if (isCancelled()) return;
       setDraft(result.draft);
       setPublished(result.published);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Homepage content could not be loaded.");
-    } finally { setLoading(false); }
+      if (!isCancelled()) setError(e instanceof Error ? e.message : "Homepage content could not be loaded.");
+    } finally { if (!isCancelled()) setLoading(false); }
   };
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { let cancelled = false; setDraft(DEFAULT_HOMEPAGE_CONTENT); setPublished(DEFAULT_HOMEPAGE_CONTENT); void load(() => cancelled); return () => { cancelled = true; }; }, [collection]);
 
   const update = (patch: Partial<HomepageContent>) => {
     setDraft(current => ({ ...current, ...patch }));
@@ -41,7 +43,7 @@ export const HomepageContentManager: React.FC = () => {
   const saveDraft = async () => {
     setBusy(true); setError(""); setMessage("");
     try {
-      const result = await hostingerStorefrontService.saveHomepageContent(draft);
+      const result = await hostingerStorefrontService.saveHomepageContent(draft, collection || undefined);
       setDraft(result.draft);
       setMessage("Homepage content draft saved. The live homepage is unchanged until you publish.");
     } catch (e) { setError(e instanceof Error ? e.message : "Homepage content draft could not be saved."); }
@@ -50,8 +52,8 @@ export const HomepageContentManager: React.FC = () => {
   const publish = async () => {
     setBusy(true); setError(""); setMessage("");
     try {
-      await hostingerStorefrontService.saveHomepageContent(draft);
-      const result = await hostingerStorefrontService.publishHomepageContent();
+      await hostingerStorefrontService.saveHomepageContent(draft, collection || undefined);
+      const result = await hostingerStorefrontService.publishHomepageContent(collection || undefined);
       setDraft(result.published);
       setPublished(result.published);
       setMessage("Homepage content published successfully.");
@@ -80,6 +82,7 @@ export const HomepageContentManager: React.FC = () => {
       <div>
         <h2 className="font-semibold text-[#2C1838]">Homepage Content Editor</h2>
         <p className="mt-1 max-w-3xl text-xs leading-relaxed text-[#6F6475]">Edit the actual copy, buttons, destinations, story image and care cards used by the homepage. Changes are saved as a draft first; publishing updates the customer-facing content.</p>
+        <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={collection} disabled={loading || busy || uploading} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global content)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
       </div>
       <span className={isPublished ? "rounded-full bg-green-50 px-3 py-1 text-xs text-green-700" : "rounded-full bg-amber-50 px-3 py-1 text-xs text-amber-800"}>{isPublished ? "Published version" : "Unpublished changes"}</span>
     </div>
@@ -122,7 +125,7 @@ export const HomepageContentManager: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px]">
             <div className="space-y-2">
               <label className={labelClass}>Story image (JPEG, PNG or WebP)
-                <input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || uploading} onChange={e => { void uploadStoryImage(e.target.files?.[0]); e.currentTarget.value = ""; }} className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#F7F0FA] file:px-3 file:py-2 file:text-xs file:font-medium file:text-[#563568]" />
+                <input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || uploading || loading} onChange={e => { void uploadStoryImage(e.target.files?.[0]); e.currentTarget.value = ""; }} className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#F7F0FA] file:px-3 file:py-2 file:text-xs file:font-medium file:text-[#563568]" />
               </label>
               <p className="text-[11px] text-[#6F6475]">The image is uploaded to Hostinger media storage. It becomes customer-facing only after publishing the content draft.</p>
             </div>
@@ -241,10 +244,10 @@ export const HomepageContentManager: React.FC = () => {
       </section>}
 
       <div className="flex flex-wrap items-center gap-2 border-t border-[#E7DCEB] pt-4">
-        <button type="button" disabled={busy || uploading} onClick={() => void saveDraft()} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm font-medium text-[#563568] disabled:opacity-50">{busy ? "Saving…" : "Save draft"}</button>
-        <button type="button" disabled={busy || uploading} onClick={() => void publish()} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50">{busy ? "Publishing…" : "Publish homepage content"}</button>
-        <button type="button" disabled={busy || uploading} onClick={() => setPreview(value => !value)} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm text-[#563568]">{preview ? "Hide preview" : "Preview draft"}</button>
-        <button type="button" disabled={busy || uploading} onClick={() => void load()} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm text-[#563568]">Reload saved content</button>
+        <button type="button" disabled={busy || uploading || loading} onClick={() => void saveDraft()} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm font-medium text-[#563568] disabled:opacity-50">{busy ? "Saving…" : "Save draft"}</button>
+        <button type="button" disabled={busy || uploading || loading} onClick={() => void publish()} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50">{busy ? "Publishing…" : "Publish homepage content"}</button>
+        <button type="button" disabled={busy || uploading || loading} onClick={() => setPreview(value => !value)} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm text-[#563568]">{preview ? "Hide preview" : "Preview draft"}</button>
+        <button type="button" disabled={busy || uploading || loading} onClick={() => void load()} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm text-[#563568]">Reload saved content</button>
         <span className="text-[11px] text-[#6F6475]">Draft and published content are stored separately in MariaDB.</span>
       </div>
     </>}

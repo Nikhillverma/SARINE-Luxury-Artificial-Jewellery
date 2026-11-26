@@ -2,9 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { hostingerStorefrontService, type MenStorefrontCategory, type MenStorefrontProduct } from "../services/hostinger/hostingerStorefrontService";
+import { getProductDetailHref } from "../utils/productLinks";
 
 const ProductCard: React.FC<{ product: MenStorefrontProduct }> = ({ product }) => (
-  <Link to={`/product/${encodeURIComponent(product.slug)}`} className="group block min-w-0">
+  <Link to={getProductDetailHref(product.slug, product.productCollection)} className="group block min-w-0">
     <div className="aspect-[4/5] overflow-hidden rounded-xl bg-[#F7F0FA]">
       {product.images?.[0] ? <img src={product.images[0]} alt={product.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" /> : <div className="flex h-full items-center justify-center font-serif text-xl text-[#563568]">SARINE</div>}
     </div>
