@@ -115,9 +115,8 @@ adminOnly.post("/schedule",async(req,res)=>{
  }catch(error){res.status(error.status||400).json({error:error.message||"Invalid schedule."});}
 });
 adminOnly.post("/schedule/cancel",async(req,res,next)=>{
- try{const collection=collectionFrom(req.body?.productCollection),key=collectionKey("explore_now_schedule",collection);let schedule=await readSchedule(key);
- if(!schedule&&collection)schedule=await readSchedule("explore_now_schedule");
- if(schedule)await writeSchedule(schedule===await readSchedule("explore_now_schedule")&&collection?"explore_now_schedule":key,null);
+ try{const collection=collectionFrom(req.body?.productCollection),key=collectionKey("explore_now_schedule",collection);const own=await readSchedule(key);
+ if(own)await writeSchedule(key,null);else if(collection&&await readSchedule("explore_now_schedule"))await writeSchedule("explore_now_schedule",null);
  res.set("Cache-Control","no-store").json({schedule:null,scheduleStatus:"none",scheduleCollection:null});
  }catch(error){next(error);}
 });
