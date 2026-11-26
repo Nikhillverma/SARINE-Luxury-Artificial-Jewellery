@@ -125,7 +125,8 @@ adminOnly.post("/publish", async (req, res, next) => {
   try {
     const collection = collectionFrom(req.body?.productCollection);
     const draft = await readExploreNow(collectionKey("explore_now_draft", collection));
-    await writeExploreNow(collectionKey("explore_now_published", collection), draft);\n    await writeSchedule(collectionKey("explore_now_schedule", collection), null);
+    await writeExploreNow(collectionKey("explore_now_published", collection), draft);
+    await writeSchedule(collectionKey("explore_now_schedule", collection), null);
     res.set("Cache-Control", "no-store").json({ success: true, published: draft });
   } catch (error) { next(error); }
 });
