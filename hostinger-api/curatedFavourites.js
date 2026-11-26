@@ -87,7 +87,10 @@ async function readCurationRecord(collection) {
       readCuration(curationKey("published", null)),
       readSchedule(null)
     ]);
-    if (!draft) { draft = sharedDraft || EMPTY_CURATION; inheritedFrom = "shared"; }
+    if (!draft) {
+      draft = ownPublished || sharedDraft || EMPTY_CURATION;
+      if (!ownPublished) inheritedFrom = "shared";
+    }
     if (!published) { published = sharedPublished || EMPTY_CURATION; inheritedFrom = "shared"; }
     if (!ownSchedule && !ownPublished && sharedSchedule && getEditorialScheduleStatus(sharedSchedule) !== "expired") {
       schedule = sharedSchedule;
