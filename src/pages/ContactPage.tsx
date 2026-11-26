@@ -9,6 +9,7 @@ export const ContactPage: React.FC = () => {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [inquiryId, setInquiryId] = useState<number | null>(null);
   const [error, setError] = useState('');
 
   const update = (field: keyof typeof EMPTY_FORM, value: string) => {
@@ -21,7 +22,8 @@ export const ContactPage: React.FC = () => {
     setError('');
     setSubmitting(true);
     try {
-      await hostingerContactInquiryService.submit(formData);
+      const result = await hostingerContactInquiryService.submit(formData);
+      setInquiryId(typeof result.inquiryId === 'number' ? result.inquiryId : null);
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Your message could not be submitted. Please try again.');
@@ -46,7 +48,12 @@ export const ContactPage: React.FC = () => {
             <p className="text-sm text-[var(--body)] max-w-lg mx-auto leading-relaxed">
               Thank you for contacting SARINE. Your enquiry is saved securely for our team to review. Keep a copy of your message and order number for reference.
             </p>
-            <button type="button" onClick={() => { setFormData(EMPTY_FORM); setSubmitted(false); }} className="min-h-11 px-6 text-xs uppercase tracking-wider text-[var(--plum)] underline underline-offset-4">
+            {inquiryId !== null && (
+              <p className="text-sm text-[var(--heading)]" role="status">
+                Reference number: <strong>SARINE-{inquiryId}</strong>
+              </p>
+            )}
+            <button type="button" onClick={() => { setFormData(EMPTY_FORM); setInquiryId(null); setSubmitted(false); }} className="min-h-11 px-6 text-xs uppercase tracking-wider text-[var(--plum)] underline underline-offset-4">
               Send another enquiry
             </button>
           </div>
