@@ -351,6 +351,7 @@ app.use("/api/admin/storefront", adminStorefrontRouter);
 // Public category catalogue
 app.get("/api/categories", async (_req, res, next) => {
   try {
+    await ensureCategoryCollectionSchema();
     const [rows] = await pool.execute(
       `SELECT *
        FROM categories
@@ -368,6 +369,7 @@ app.get("/api/categories", async (_req, res, next) => {
 
 app.get("/api/categories/:slug", async (req, res, next) => {
   try {
+    await ensureCategoryCollectionSchema();
     const [rows] = await pool.execute(
       `SELECT *
        FROM categories
