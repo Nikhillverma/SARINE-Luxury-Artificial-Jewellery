@@ -38,7 +38,7 @@ export const ShopByGenderManager: React.FC = () => {
     try {
       const imageUrl = await hostingerMediaService.uploadImage(file);
       setSettings(current => ({ ...current, [key]: imageUrl }));
-      setMessage(key === "forHerImageUrl" ? "For Her image uploaded. Save changes to show it on the homepage." : "For Him image uploaded. Save changes to show it on the homepage.");
+      setMessage(key === "forHerImageUrl" ? "For Her image uploaded. Save a draft, then review and publish it when ready." : "For Him image uploaded. Save changes to show it on the homepage.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Image upload failed. Please try again.");
     } finally { setBusy(false); }
