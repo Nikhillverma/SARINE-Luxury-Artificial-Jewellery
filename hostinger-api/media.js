@@ -126,7 +126,7 @@ adminMediaRouter.get("/", async (req, res, next) => {
     const limit = Math.min(100, Math.max(1, Number.isFinite(parsedLimit) ? parsedLimit : 40));
     const offset = Math.min(100000, Math.max(0, Number.isFinite(parsedOffset) ? parsedOffset : 0));
 
-    const validDate = value => !value || /^\\d{4}-\\d{2}-\\d{2}$/.test(value);
+    const validDate = value => !value || /^\d{4}-\d{2}-\d{2}$/.test(value);
     if (!validDate(from) || !validDate(to) || (from && to && from > to)) {
       return res.status(400).json({ error: "Choose a valid upload date range." });
     }
