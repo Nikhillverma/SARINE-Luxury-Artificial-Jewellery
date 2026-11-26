@@ -66,7 +66,7 @@ adminOnly.get("/", async (req, res, next) => {
       readLayout("published", collection)
     ]);
     res.set("Cache-Control", "no-store").json({ draft, published, collection: collection || "shared" });
-  } catch (error) { next(error); }
+  } catch (error) { if (error instanceof Error && /product collection/i.test(error.message)) return res.status(400).json({ error: error.message }); next(error); }
 });
 
 adminOnly.put("/draft", async (req, res, next) => {
@@ -76,7 +76,7 @@ adminOnly.put("/draft", async (req, res, next) => {
     await writeSetting(layoutSettingKey("draft", collection), layout);
     res.set("Cache-Control", "no-store").json({ success: true, draft: layout, collection: collection || "shared" });
   } catch (error) {
-    if (error instanceof Error && /homepage|section|position|supported|duplicated|enabled|order|exactly once|cards per view|carousel/i.test(error.message)) {
+    if (error instanceof Error && /homepage|section|position|supported|duplicated|enabled|order|exactly once|cards per view|carousel|product collection/i.test(error.message)) {
       return res.status(400).json({ error: error.message });
     }
     next(error);
@@ -89,7 +89,7 @@ adminOnly.post("/publish", async (_req, res, next) => {
     const draft = await readLayout("draft", collection);
     await writeSetting(layoutSettingKey("published", collection), draft);
     res.set("Cache-Control", "no-store").json({ success: true, published: draft, collection: collection || "shared" });
-  } catch (error) { next(error); }
+  } catch (error) { if (error instanceof Error && /product collection/i.test(error.message)) return res.status(400).json({ error: error.message }); next(error); }
 });
 
 publicRouter.get("/", async (req, res, next) => {
@@ -97,7 +97,7 @@ publicRouter.get("/", async (req, res, next) => {
     const collection = collectionFrom(req.query.productCollection);
     const layout = await readLayout("published", collection);
     res.set("Cache-Control", "no-store").json({ layout, collection: collection || "shared" });
-  } catch (error) { next(error); }
+  } catch (error) { if (error instanceof Error && /product collection/i.test(error.message)) return res.status(400).json({ error: error.message }); next(error); }
 });
 
 admin.use("/", adminOnly);
