@@ -39,6 +39,7 @@ import { mapPublicProduct } from "./publicProductMapper.js";
 import { parseCatalogueQuery } from "./catalogueQueryPolicy.js";
 import { ensureProductVideoColumn } from "./productVideoSchema.js";
 import { ensureProductCollectionSchema } from "./productCollectionSchema.js";
+import { ensureCategoryCollectionSchema } from "./categoryCollectionSchema.js";
 import { ensureOrderStatusSchema } from "./orderStatusSchema.js";
 
 const app = express();
@@ -114,7 +115,8 @@ function mapCategory(row) {
     description: row.description || "",
     image: row.image || "",
     isActive: Boolean(row.is_active),
-    sortOrder: Number(row.sort_order)
+    sortOrder: Number(row.sort_order),
+    categoryCollection: ["artificial", "demi-fine", "both"].includes(row.category_collection) ? row.category_collection : "both"
   };
 }
 
