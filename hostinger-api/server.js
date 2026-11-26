@@ -38,6 +38,7 @@ import { isAllowedBrowserOrigin } from "./adminOriginPolicy.js";
 import { mapPublicProduct } from "./publicProductMapper.js";
 import { parseCatalogueQuery } from "./catalogueQueryPolicy.js";
 import { ensureProductVideoColumn } from "./productVideoSchema.js";
+import { ensureProductCollectionSchema } from "./productCollectionSchema.js";
 import { ensureOrderStatusSchema } from "./orderStatusSchema.js";
 
 const app = express();
@@ -156,7 +157,8 @@ app.get("/api/products", async (req, res, next) => {
   try {
     const parsedQuery = parseCatalogueQuery(req.query);
     if (parsedQuery.error) return res.status(400).json({ error: parsedQuery.error });
-    const { categorySlug, categoryId, jewelleryType, collectionSlug, inStockOnly, minPrice, maxPrice, sortBy, page: currentPage, pageSize: limit, search } = parsedQuery.filters;
+    const { categorySlug, categoryId, jewelleryType, collectionSlug, productCollection, inStockOnly, minPrice, maxPrice, sortBy, page: currentPage, pageSize: limit, search } = parsedQuery.filters;
+    await ensureProductCollectionSchema();
     const conditions = ["p.status = 'active'", "NOT JSON_CONTAINS(COALESCE(p.tags, '[]'), JSON_QUOTE('__sarine_men_catalogue__'))"];
     const values = [];
 
@@ -173,6 +175,11 @@ app.get("/api/products", async (req, res, next) => {
     if (jewelleryType) {
       conditions.push("p.jewellery_type = ?");
       values.push(String(jewelleryType));
+    }
+
+    if (productCollection) {
+      conditions.push("p.product_collection = ?");
+      values.push(productCollection);
     }
 
     if (collectionSlug) {
@@ -244,6 +251,9 @@ app.get("/api/products", async (req, res, next) => {
 // Public best sellers: rank by units in completed, paid orders only.
 app.get("/api/bestsellers", async (req, res, next) => {
   try {
+    await ensureProductCollectionSchema();
+    const productCollection = req.query.productCollection === undefined ? "" : String(req.query.productCollection);
+    if (productCollection && !["artificial", "demi-fine"].includes(productCollection)) return res.status(400).json({ error: "Product collection must be artificial or demi-fine." });
     const rawLimit = Number.parseInt(req.query.limit, 10);
     const limit = Math.min(24, Math.max(1, Number.isFinite(rawLimit) ? rawLimit : 8));
     const [rows] = await pool.execute(
@@ -262,9 +272,10 @@ app.get("/api/bestsellers", async (req, res, next) => {
          GROUP BY oi.product_id
        ) sales ON sales.product_id = p.id
        WHERE p.status = 'active' AND p.stock > 0
+         AND (? = '' OR p.product_collection = ?)
        ORDER BY sales.units_sold DESC, sales.item_sales DESC, p.created_at DESC
        LIMIT ?`,
-      [limit]
+      [productCollection, productCollection, limit]
     );
     res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
     res.json({ products: await mapProductsWithVariants(rows) });
@@ -275,12 +286,16 @@ app.get("/api/bestsellers", async (req, res, next) => {
 
 app.get("/api/products/:slug", async (req, res, next) => {
   try {
+    await ensureProductCollectionSchema();
+    const productCollection = req.query.productCollection === undefined ? "" : String(req.query.productCollection);
+    if (productCollection && !["artificial", "demi-fine"].includes(productCollection)) return res.status(400).json({ error: "Product collection must be artificial or demi-fine." });
     const [rows] = await pool.execute(
       `SELECT *
        FROM products
        WHERE slug = ? AND status = 'active'
+         AND (? = '' OR product_collection = ?)
        LIMIT 1`,
-      [req.params.slug]
+      [req.params.slug, productCollection, productCollection]
     );
 
     if (!rows.length) {
