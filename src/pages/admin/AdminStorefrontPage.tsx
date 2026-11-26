@@ -185,7 +185,7 @@ export const AdminStorefrontPage: React.FC = () => {
     if (target < 0 || target >= next.length) return;
     [next[index], next[target]] = [next[target], next[index]];
     setBusy(true); setError("");
-    try { await hostingerStorefrontService.reorderBanners(next.map(b => b.id)); await loadBanners(); }
+    try { await hostingerStorefrontService.reorderBanners(next.map(b => b.id), homepageCollection || undefined); await loadBanners(); }
     catch (e) { setError(e instanceof Error ? e.message : "Could not reorder banners."); }
     finally { setBusy(false); }
   };
