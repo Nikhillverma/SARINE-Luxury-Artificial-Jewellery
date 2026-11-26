@@ -47,7 +47,7 @@ async function writeCuration(key, value) {
   );
 }
 
-function mapPublicProduct(row) {
+export function mapPublicProduct(row) {
   let images = [];
   let tags = [];
   let collectionSlugs = [];
