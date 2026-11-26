@@ -24,7 +24,10 @@ interface SingleProductResponse {
 
 function getSelectedProductCollection(): import('../../types/product').ProductCollection | undefined {
   const fromUrl = new URLSearchParams(window.location.search).get('range');
-  if (fromUrl === 'artificial' || fromUrl === 'demi-fine') return fromUrl;
+  if (fromUrl === 'artificial' || fromUrl === 'demi-fine') {
+    window.sessionStorage.setItem('sarine_product_range', fromUrl);
+    return fromUrl;
+  }
   const stored = window.sessionStorage.getItem('sarine_product_range');
   return stored === 'artificial' || stored === 'demi-fine' ? stored : undefined;
 }
