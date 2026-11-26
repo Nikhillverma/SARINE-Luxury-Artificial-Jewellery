@@ -5,6 +5,7 @@ import { requireAdminAuth } from "./adminAuth.js";
 import { validateImageUpload } from "./mediaValidation.js";
 
 let tableReady;
+let hashSchemaReady;
 
 async function ensureMediaTable() {
   if (!tableReady) {
@@ -25,6 +26,51 @@ async function ensureMediaTable() {
     });
   }
   await tableReady;
+}
+
+// Hashes are backfilled in small batches so existing media remains untouched and
+// the first enhanced library request does not load every image into memory at once.
+async function ensureMediaHashSchema() {
+  if (!hashSchemaReady) {
+    hashSchemaReady = (async () => {
+      const [columns] = await pool.execute(
+        "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'media_assets' AND COLUMN_NAME = 'content_hash'"
+      );
+      if (!columns.length) {
+        try {
+          await pool.query("ALTER TABLE media_assets ADD COLUMN content_hash CHAR(64) NULL");
+        } catch (error) {
+          if (error.code !== "ER_DUP_FIELDNAME") throw error;
+        }
+      }
+
+      const [indexes] = await pool.execute(
+        "SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'media_assets' AND INDEX_NAME = 'idx_media_content_hash'"
+      );
+      if (!indexes.length) {
+        try {
+          await pool.query("CREATE INDEX idx_media_content_hash ON media_assets (content_hash)");
+        } catch (error) {
+          if (error.code !== "ER_DUP_KEYNAME") throw error;
+        }
+      }
+
+      while (true) {
+        const [pending] = await pool.query(
+          "SELECT id, image_data FROM media_assets WHERE content_hash IS NULL ORDER BY created_at ASC, id ASC LIMIT 20"
+        );
+        if (!pending.length) break;
+        for (const row of pending) {
+          const hash = crypto.createHash("sha256").update(Buffer.from(row.image_data)).digest("hex");
+          await pool.execute("UPDATE media_assets SET content_hash = ? WHERE id = ? AND content_hash IS NULL", [hash, row.id]);
+        }
+      }
+    })().catch(error => {
+      hashSchemaReady = undefined;
+      throw error;
+    });
+  }
+  await hashSchemaReady;
 }
 
 export const publicMediaRouter = Router();
@@ -66,23 +112,50 @@ adminMediaRouter.use(requireAdminAuth);
 adminMediaRouter.get("/", async (req, res, next) => {
   try {
     await ensureMediaTable();
+    await ensureMediaHashSchema();
+
     const search = String(req.query.search || "").trim().slice(0, 120);
+    const mimeType = String(req.query.mimeType || "").trim().toLowerCase();
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
+    const from = String(req.query.from || "").trim();
+    const to = String(req.query.to || "").trim();
+    const requestedSort = String(req.query.sort || "newest");
+    const sort = ["newest", "oldest", "filename"].includes(requestedSort) ? requestedSort : "newest";
     const parsedLimit = Number.parseInt(String(req.query.limit || "40"), 10);
     const parsedOffset = Number.parseInt(String(req.query.offset || "0"), 10);
     const limit = Math.min(100, Math.max(1, Number.isFinite(parsedLimit) ? parsedLimit : 40));
     const offset = Math.min(100000, Math.max(0, Number.isFinite(parsedOffset) ? parsedOffset : 0));
-    const where = search ? "WHERE file_name LIKE ?" : "";
-    const searchParams = search ? [`%${search}%`] : [];
+
+    const validDate = value => !value || /^\\d{4}-\\d{2}-\\d{2}$/.test(value);
+    if (!validDate(from) || !validDate(to) || (from && to && from > to)) {
+      return res.status(400).json({ error: "Choose a valid upload date range." });
+    }
+    if (mimeType && !allowedMimeTypes.includes(mimeType)) {
+      return res.status(400).json({ error: "Choose a supported image format." });
+    }
+
+    const conditions = [];
+    const params = [];
+    if (search) { conditions.push("file_name LIKE ?"); params.push(`%${search}%`); }
+    if (mimeType) { conditions.push("mime_type = ?"); params.push(mimeType); }
+    if (from) { conditions.push("created_at >= ?"); params.push(`${from} 00:00:00`); }
+    if (to) { conditions.push("created_at < DATE_ADD(?, INTERVAL 1 DAY)"); params.push(`${to} 00:00:00`); }
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const orderBy = sort === "oldest" ? "created_at ASC, id ASC" : sort === "filename" ? "file_name ASC, id ASC" : "created_at DESC, id DESC";
+
     const [rows] = await pool.execute(
-      `SELECT id, file_name, mime_type, file_size, uploaded_by, created_at
-       FROM media_assets ${where}
-       ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
-      [...searchParams, limit, offset]
+      `SELECT id, file_name, mime_type, file_size, uploaded_by, created_at, content_hash
+       FROM media_assets ${where} ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
     );
     const [countRows] = await pool.execute(
       `SELECT COUNT(*) AS total FROM media_assets ${where}`,
-      searchParams
+      params
     );
+    const [duplicateRows] = await pool.execute(
+      "SELECT content_hash, COUNT(*) AS copies FROM media_assets WHERE content_hash IS NOT NULL GROUP BY content_hash HAVING COUNT(*) > 1"
+    );
+    const duplicateCounts = new Map(duplicateRows.map(row => [row.content_hash, Number(row.copies)]));
     res.set("Cache-Control", "no-store").json({
       media: rows.map(row => ({
         id: row.id,
@@ -91,6 +164,7 @@ adminMediaRouter.get("/", async (req, res, next) => {
         size: Number(row.file_size),
         uploadedBy: row.uploaded_by,
         createdAt: row.created_at,
+        duplicateCount: row.content_hash ? (duplicateCounts.get(row.content_hash) || 1) : 1,
         url: "/api/media/" + row.id
       })),
       total: Number(countRows[0]?.total || 0),
@@ -106,13 +180,15 @@ adminMediaRouter.post("/", async (req, res, next) => {
   try {
     const { buffer, fileName, mimeType } = validateImageUpload(req.body || {});
     await ensureMediaTable();
+    await ensureMediaHashSchema();
 
     const id = crypto.randomUUID();
+    const contentHash = crypto.createHash("sha256").update(buffer).digest("hex");
     await pool.execute(
       `INSERT INTO media_assets
-       (id, file_name, mime_type, file_size, image_data, uploaded_by)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [id, fileName, mimeType, buffer.length, buffer, String(req.admin?.id || "admin")]
+       (id, file_name, mime_type, file_size, image_data, uploaded_by, content_hash)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [id, fileName, mimeType, buffer.length, buffer, String(req.admin?.id || "admin"), contentHash]
     );
 
     return res.status(201).json({
