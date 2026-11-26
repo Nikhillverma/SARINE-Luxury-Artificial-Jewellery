@@ -118,7 +118,7 @@ adminOnly.post("/banners", async (req, res, next) => {
     let productCollection;
     try { productCollection = collectionFrom(input.productCollection); } catch (error) { return res.status(400).json({ error: error.message }); }
     const id = crypto.randomUUID();
-    const [count] = await pool.execute("SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM storefront_banners");
+    const [count] = await pool.execute("SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM storefront_banners WHERE product_collection <=> ?", [productCollection]);
     await pool.execute(
       `INSERT INTO storefront_banners
        (id, tagline, title, subtitle, cta_text, cta_link, image_url, product_collection, is_active, sort_order)
@@ -170,10 +170,13 @@ adminOnly.put("/banners/reorder", async (req, res, next) => {
   if (!Array.isArray(ids) || ids.length > 30 || ids.some(id => typeof id !== "string")) return res.status(400).json({ error: "Provide a valid ordered list of banner IDs." });
   let connection;
   try {
+    const collection = collectionFrom(req.body?.productCollection);
     await ensureSchema();
     connection = await pool.getConnection();
     await connection.beginTransaction();
-    for (let i = 0; i < ids.length; i++) await connection.execute("UPDATE storefront_banners SET sort_order=? WHERE id=?", [i, ids[i]]);
+    for (let i = 0; i < ids.length; i++) {
+      await connection.execute("UPDATE storefront_banners SET sort_order=? WHERE id=? AND product_collection <=> ?", [i, ids[i], collection]);
+    }
     await connection.commit();
     res.json({ success: true });
   } catch (error) {
