@@ -20,6 +20,6 @@ export function getProductDetailHref(
   const selected = getCurrentProductCollection();
   const productRange = productCollection === "artificial" || productCollection === "demi-fine"
     ? productCollection : undefined;
-  const range = (preferProductRange ? productRange : undefined) || selected || "home";
+  const range = preferProductRange ? (productRange || "home") : (selected || "home");
   return "/product/" + encodeURIComponent(slug) + "?range=" + range;
 }
