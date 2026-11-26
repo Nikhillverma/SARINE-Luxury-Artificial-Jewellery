@@ -14,6 +14,9 @@ export function getCurrentProductCollection(): ProductCollection | undefined {
 /** Keep a product detail URL tied to the product range, even after a range switch. */
 export function getProductDetailHref(slug: string, productCollection?: ProductCollection | null): string {
   const selected = getCurrentProductCollection();
-  const range = productCollection === "artificial" || productCollection === "demi-fine" ? productCollection : selected;
+  const hasProductRange = arguments.length > 1;
+  const range = hasProductRange
+    ? productCollection === "artificial" || productCollection === "demi-fine" ? productCollection : "home"
+    : selected;
   return "/product/" + encodeURIComponent(slug) + (range ? "?range=" + range : "");
 }
