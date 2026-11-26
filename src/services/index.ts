@@ -31,6 +31,16 @@ export const orderService: IOrderService = hostingerOrderService;
 export const adminProductService: IAdminProductService =
   DATA_SOURCE === 'hostinger' ? hostingerAdminProductService : {
     getProducts: () => mockProductService.getProducts({ includeAll: true }),
+    reorderProducts: async productIds => {
+      const all = mockProductService._getAllInternal();
+      if (productIds.length !== all.length || new Set(productIds).size !== productIds.length) throw new Error('Refresh the catalogue before reordering.');
+      const byId = new Map(all.map(item => [item.id, item]));
+      const ordered = productIds.map(id => byId.get(id));
+      if (ordered.some(item => !item)) throw new Error('A product is missing from the catalogue.');
+      ordered.forEach((item, index) => { item!.sortOrder = index + 1; });
+      all.splice(0, all.length, ...ordered as typeof all);
+      return { reordered: ordered.length };
+    },
     createProduct: async product => {
       const created = { ...product, id: `prod-${Date.now()}`, createdAt: new Date().toISOString() };
       mockProductService._getAllInternal().unshift(created);
