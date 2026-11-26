@@ -569,9 +569,11 @@ adminOnly.get("/men-storefront", async (req, res, next) => {
     const collection = collectionFrom(req.query.productCollection);
     const record = await readMenStorefrontRecord(collection);
     await ensureProductCollectionSchema();
+    const collectionFilter = collection ? " AND product_collection = ?" : "";
+    const productParams = collection ? ["__sarine_men_catalogue__", collection] : ["__sarine_men_catalogue__"];
     const [rows] = await pool.execute(
-      "SELECT id, name, slug, price, images, status, stock, product_collection FROM products WHERE JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE(?)) AND (? = '' OR product_collection = ?) ORDER BY created_at DESC LIMIT 500",
-      ["__sarine_men_catalogue__", collection || "", collection || ""]
+      `SELECT id, name, slug, price, images, status, stock, product_collection FROM products WHERE JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE(?))${collectionFilter} ORDER BY created_at DESC LIMIT 500`,
+      productParams
     );
     const products = rows.map(row => {
       let images = []; try { images = JSON.parse(row.images || "[]"); } catch {}
@@ -613,9 +615,11 @@ publicRouter.get("/men-storefront", async (req, res, next) => {
     let products = [];
     if (productIds.length) {
       const placeholders = productIds.map(() => "?").join(",");
+      const collectionFilter = collection ? " AND product_collection = ?" : "";
+      const productParams = collection ? [...productIds, collection] : [...productIds];
       const [rows] = await pool.execute(
-        `SELECT id, name, slug, price, compare_at_price, images, stock, product_collection FROM products WHERE status='active' AND JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE('__sarine_men_catalogue__')) AND id IN (${placeholders}) AND (? = '' OR product_collection = ?)`,
-        [...productIds, collection || "", collection || ""]
+        `SELECT id, name, slug, price, compare_at_price, images, stock, product_collection FROM products WHERE status='active' AND JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE('__sarine_men_catalogue__')) AND id IN (${placeholders})${collectionFilter}`,
+        productParams
       );
       const byId = new Map(rows.map(row => [row.id, row]));
       products = productIds.map(id => byId.get(id)).filter(Boolean).map(row => {
@@ -638,9 +642,11 @@ publicRouter.get("/men-storefront/categories/:categoryId", async (req, res, next
     if (ids.length) {
       await ensureProductCollectionSchema();
       const placeholders = ids.map(() => "?").join(",");
+      const collectionFilter = collection ? " AND product_collection = ?" : "";
+      const productParams = collection ? [...ids, collection] : [...ids];
       const [rows] = await pool.execute(
-        `SELECT id, name, slug, price, compare_at_price, images, stock, product_collection FROM products WHERE status='active' AND JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE('__sarine_men_catalogue__')) AND id IN (${placeholders}) AND (? = '' OR product_collection = ?)`,
-        [...ids, collection || "", collection || ""]
+        `SELECT id, name, slug, price, compare_at_price, images, stock, product_collection FROM products WHERE status='active' AND JSON_CONTAINS(COALESCE(tags, '[]'), JSON_QUOTE('__sarine_men_catalogue__')) AND id IN (${placeholders})${collectionFilter}`,
+        productParams
       );
       const byId = new Map(rows.map(row => [row.id, row]));
       products = ids.map(id => byId.get(id)).filter(Boolean).map(row => {
