@@ -88,7 +88,7 @@ export const EditorialManager: React.FC = () => {
     finally { setBusy(false); }
   };
 
-  const update = <K extends keyof EditorialContent>(key: K, value: EditorialContent[K]) => setDraft(current => ({ ...current, [key]: value }));
+  const update = <K extends keyof EditorialContent,>(key: K, value: EditorialContent[K]) => setDraft(current => ({ ...current, [key]: value }));
 
   return <div className="space-y-5">
     <section className="scroll-mt-24 rounded-2xl border bg-white p-5 space-y-4">
