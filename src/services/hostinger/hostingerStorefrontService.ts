@@ -232,9 +232,11 @@ export const hostingerStorefrontService = {
   getPublicAnnouncement: () => request<{ announcement: { message: string; active: boolean; trustMessages?: string[] } }>("/storefront/announcement"),
   saveAnnouncement: (message: string, active: boolean, trustMessages: string[]) =>
     request<{ success: boolean }>("/admin/storefront/announcement", { method: "PUT", body: JSON.stringify({ message, active, trustMessages }) }),
-  getEditorial: (collection?: "artificial" | "demi-fine") => request<{ editorial: EditorialContent }>("/admin/storefront/editorial" + collectionQuery(collection)),
+  getEditorial: (collection?: "artificial" | "demi-fine") => request<{ draft: EditorialContent; published: EditorialContent }>("/admin/storefront/editorial" + collectionQuery(collection)),
   saveEditorial: (editorial: EditorialContent, collection?: "artificial" | "demi-fine") =>
-    request<{ editorial: EditorialContent }>("/admin/storefront/editorial", { method: "PUT", body: JSON.stringify({ ...editorial, productCollection: collection }) }),
+    request<{ draft: EditorialContent; published: EditorialContent }>("/admin/storefront/editorial", { method: "PUT", body: JSON.stringify({ ...editorial, productCollection: collection }) }),
+  publishEditorial: (collection?: "artificial" | "demi-fine") =>
+    request<{ editorial: EditorialContent; draft: EditorialContent; published: EditorialContent }>("/admin/storefront/editorial/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
   getPublicEditorial: () => request<{ editorial: EditorialContent | null }>("/storefront/editorial" + publicRangeQuery()),
   getPublicProductReviewSummary: async (productId: string) => {
     const summaries = await loadPublicProductReviewSummaries();
