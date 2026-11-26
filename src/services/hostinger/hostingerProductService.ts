@@ -24,7 +24,7 @@ interface SingleProductResponse {
 
 function getSelectedProductCollection(): import('../../types/product').ProductCollection | undefined {
   const fromUrl = new URLSearchParams(window.location.search).get('range');
-  if (fromUrl === 'home') return undefined;
+  if (fromUrl === 'home') { window.sessionStorage.removeItem('sarine_product_range'); return undefined; }
   if (fromUrl === 'artificial' || fromUrl === 'demi-fine') {
     window.sessionStorage.setItem('sarine_product_range', fromUrl);
     return fromUrl;
