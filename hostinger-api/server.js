@@ -26,6 +26,7 @@ import adminCustomersRouter from "./adminCustomers.js";
 import adminMarketingRouter from "./adminMarketing.js";
 import publicCouponsRouter from "./publicCoupons.js";
 import adminStorefrontRouter, { publicStorefrontRouter } from "./adminStorefront.js";
+import adminStorefrontPublishingRouter, { publicStorefrontPublishingRouter } from "./storefrontPublishing.js";
 import adminHomepageLayoutRouter, { publicHomepageLayoutRouter } from "./homepageLayout.js";
 import adminCmsPagesRouter, { publicCmsPagesRouter } from "./cmsPages.js";
 import adminCuratedFavouritesRouter, { publicCuratedFavouritesRouter } from "./curatedFavourites.js";
@@ -339,6 +340,7 @@ app.use("/api/admin/marketing", adminMarketingRouter);
 // Public storefront content managed from the admin panel.
 app.use("/api/pages", publicCmsPagesRouter);
 app.use("/api/admin/pages", adminCmsPagesRouter);
+app.use("/api/storefront", publicStorefrontPublishingRouter);
 app.use("/api/storefront", publicStorefrontRouter);
 app.use("/api/homepage-layout", publicHomepageLayoutRouter);
 app.use("/api/curated-favourites", publicCuratedFavouritesRouter);
@@ -346,6 +348,7 @@ app.use("/api/explore-now", publicExploreNowRouter);
 app.use("/api/admin/curated-favourites", adminCuratedFavouritesRouter);
 app.use("/api/admin/explore-now", adminExploreNowRouter);
 app.use("/api/admin/homepage-layout", adminHomepageLayoutRouter);
+app.use("/api/admin/storefront", adminStorefrontPublishingRouter);
 app.use("/api/admin/storefront", adminStorefrontRouter);
 
 // Public category catalogue
