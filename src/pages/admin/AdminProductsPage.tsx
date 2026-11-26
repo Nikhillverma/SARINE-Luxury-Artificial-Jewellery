@@ -261,10 +261,11 @@ export const AdminProductsPage: React.FC = () => {
       }
       const baseSlug = slugify(form.name);
       if (!baseSlug) throw new Error('Please enter a valid product title.');
+      if (!editing && !form.productCollection) throw new Error('Choose Artificial or Demi-Fine before creating a new product.');
       const payload = {
         slug: editing && editing.name === form.name ? editing.slug : baseSlug,
         name: form.name.trim(),
-        productCollection: form.productCollection,
+        ...(editing && !form.productCollection ? {} : { productCollection: form.productCollection }),
         description: form.description.trim(),
         shortDescription: form.shortDescription.trim(),
         price,
@@ -325,6 +326,7 @@ export const AdminProductsPage: React.FC = () => {
 
   const duplicate = async (product: Product) => {
     try {
+      if (!product.productCollection) throw new Error('Assign this legacy product to Artificial or Demi-Fine before duplicating it.');
       await adminProductService.createProduct({
         slug: `${product.slug}-copy-${Date.now().toString().slice(-6)}`,
         name: `${product.name} (Copy)`,
