@@ -477,11 +477,13 @@ router.post("/bulk", async (req, res, next) => {
     await connection.beginTransaction();
     const placeholders = productIds.map(() => "?").join(",");
     const [rows] = await connection.execute(
-      `SELECT id, name, status, price, compare_at_price
+      `SELECT id, name, status, price, compare_at_price, product_collection, category_id
        FROM products WHERE id IN (${placeholders}) FOR UPDATE`,
       productIds
     );
     const byId = new Map(rows.map(row => [row.id, row]));
+    const [categoryRows] = await connection.execute("SELECT id, category_collection FROM categories");
+    const categoriesById = new Map(categoryRows.map(row => [row.id, row]));
     const results = [];
 
     for (const id of productIds) {
@@ -493,6 +495,23 @@ router.post("/bulk", async (req, res, next) => {
       if (product.status === "archived") {
         results.push({ productId: id, productName: product.name, status: "skipped", message: "Archived products cannot be bulk edited." });
         continue;
+      }
+
+      const targetCollection = updates.productCollection !== undefined
+        ? updates.productCollection
+        : normalizeProductCollection(product.product_collection);
+      const targetCategoryId = updates.categoryId !== undefined ? updates.categoryId : product.category_id;
+      if (targetCategoryId) {
+        const targetCategory = categoriesById.get(targetCategoryId);
+        if (!targetCategory) {
+          results.push({ productId: id, productName: product.name, status: "skipped", message: "The assigned category no longer exists." });
+          continue;
+        }
+        const allowedCollection = targetCategory.category_collection || "both";
+        if (allowedCollection !== "both" && allowedCollection !== targetCollection) {
+          results.push({ productId: id, productName: product.name, status: "skipped", message: "The selected category is not available for this product range. Change the category or product range together." });
+          continue;
+        }
       }
 
       const nextPrice = updates.price !== undefined ? updates.price : Number(product.price);
