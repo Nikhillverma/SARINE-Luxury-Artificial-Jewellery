@@ -10,6 +10,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { formatInr } from '../utils/currency';
+import { getProductDetailHref } from '../utils/productLinks';
 import { calculateShippingFee } from '../config/store';
 import { useCheckoutConfig } from '../hooks/useCheckoutConfig';
 import { validateStorefrontCoupon } from '../services/hostinger/hostingerMarketingService';
@@ -217,7 +218,7 @@ export const BagPage: React.FC = () => {
                           {/* Product Preview & Title (6 cols) */}
                           <div className="sm:col-span-6 flex gap-4">
                             <Link
-                              to={`/product/${item.product.slug}`}
+                              to={getProductDetailHref(item.product.slug, item.product.productCollection)}
                               className="w-20 h-24 bg-[var(--tint)] border border-[var(--border)] shrink-0 overflow-hidden rounded-xs"
                             >
                               <img
@@ -229,7 +230,7 @@ export const BagPage: React.FC = () => {
                             <div className="flex flex-col justify-between">
                               <div>
                                 <Link
-                                  to={`/product/${item.product.slug}`}
+                                  to={getProductDetailHref(item.product.slug, item.product.productCollection)}
                                   className="font-serif text-base sm:text-lg text-[var(--heading)] hover:text-[var(--plum)] font-medium transition-colors"
                                 >
                                   {item.product.name}
