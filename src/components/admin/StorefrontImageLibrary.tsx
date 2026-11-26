@@ -8,7 +8,7 @@ const DEFAULT_FILTERS: LibraryFilters = { mimeType: "", from: "", to: "", sort: 
 
 export const StorefrontImageLibrary: React.FC = () => {
   const [assets, setAssets] = useState<HostingerMediaAsset[]>([]);
-  const [viewMode, setViewMode] = useState<"all" | "duplicates" | "usage">("all");
+  const [viewMode, setViewMode] = useState<"all" | "duplicates" | "usage" | "cleanup">("all");
   const [duplicateGroups, setDuplicateGroups] = useState<HostingerMediaDuplicateGroup[]>([]);
   const [duplicateTotal, setDuplicateTotal] = useState(0);
   const [usageAssets, setUsageAssets] = useState<HostingerMediaUsageAsset[]>([]);
@@ -17,6 +17,8 @@ export const StorefrontImageLibrary: React.FC = () => {
   const [usageCoverageWarnings, setUsageCoverageWarnings] = useState<string[]>([]);
   const [usageCoverageComplete, setUsageCoverageComplete] = useState(false);
   const [usageNote, setUsageNote] = useState("");
+  const [backupConfirmed, setBackupConfirmed] = useState<string[]>([]);
+  const [cleanupScanAt, setCleanupScanAt] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
@@ -54,6 +56,16 @@ export const StorefrontImageLibrary: React.FC = () => {
     } catch (e) { setError(e instanceof Error ? e.message : "Image usage could not be loaded."); }
     finally { setLoading(false); }
   };
+  const loadCleanup = async () => {
+    setLoading(true); setError(""); setBackupConfirmed([]);
+    try {
+      // A fresh server-side scan is required whenever this review is opened or refreshed.
+      const result = await hostingerMediaService.listImageUsage(100, 0);
+      setUsageAssets(result.media); setUsageTotal(result.total); setUsageCoverage(result.coverage); setUsageCoverageWarnings(result.coverageWarnings || []); setUsageCoverageComplete(Boolean(result.coverageComplete)); setUsageNote(result.note); setOffset(0); setCleanupScanAt(new Date().toISOString());
+    } catch (e) { setError(e instanceof Error ? e.message : "A fresh cleanup scan could not be completed."); }
+    finally { setLoading(false); }
+  };
+  const cleanupCandidates = usageAssets.filter(asset => usageCoverageComplete && asset.usageStatus === "no-recorded-reference" && asset.duplicateCopies === 1);
   useEffect(() => { void load(0, "", DEFAULT_FILTERS); }, []);
   useEffect(() => {
     if (!selected) return;
@@ -121,6 +133,7 @@ export const StorefrontImageLibrary: React.FC = () => {
       <button type="button" aria-pressed={viewMode === "all"} onClick={() => { setViewMode("all"); void load(0); }} className="min-h-10 rounded-lg border border-[#DCCDE5] bg-[#563568] px-4 text-xs font-medium text-white">All images</button>
       <button type="button" aria-pressed={viewMode === "duplicates"} onClick={() => { setViewMode("duplicates"); void loadDuplicateGroups(0); }} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs font-medium text-[#563568]">Duplicate groups</button>
       <button type="button" aria-pressed={viewMode === "usage"} onClick={() => { setViewMode("usage"); void loadUsage(0); }} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs font-medium text-[#563568]">Image usage</button>
+      <button type="button" aria-pressed={viewMode === "cleanup"} onClick={() => { setViewMode("cleanup"); void loadCleanup(); }} className="min-h-10 rounded-lg border border-[#DCCDE5] px-4 text-xs font-medium text-[#563568]">Cleanup review</button>
     </div>
     <form onSubmit={applySearch} className="flex flex-wrap gap-2">
       <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search image filename…" aria-label="Search image filename" className="min-h-11 min-w-0 flex-1 rounded-lg border border-[#E7DCEB] px-3 text-sm" />
@@ -145,13 +158,37 @@ export const StorefrontImageLibrary: React.FC = () => {
       </label>
     </div>
     <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#6F6475]">
-      <span>{viewMode === "duplicates" ? `${duplicateTotal} duplicate groups` : viewMode === "usage" ? `${usageTotal} stored images · usage report` : `${total} matching stored images`}</span>
+      <span>{viewMode === "duplicates" ? `${duplicateTotal} duplicate groups` : viewMode === "usage" || viewMode === "cleanup" ? `${usageTotal} stored images · ${viewMode === "cleanup" ? "cleanup review" : "usage report"}` : `${total} matching stored images`}</span>
       <div className="flex gap-2">
         <button type="button" disabled={loading} onClick={clearFilters} className="rounded-lg border border-[#DCCDE5] px-3 py-2 text-[#563568]">Clear filters</button>
-        <button type="button" disabled={loading} onClick={() => viewMode === "usage" ? void loadUsage(0) : viewMode === "duplicates" ? void loadDuplicateGroups(0) : void load()} className="rounded-lg border border-[#DCCDE5] px-3 py-2 text-[#563568]">Refresh library</button>
+        <button type="button" disabled={loading} onClick={() => viewMode === "cleanup" ? void loadCleanup() : viewMode === "usage" ? void loadUsage(0) : viewMode === "duplicates" ? void loadDuplicateGroups(0) : void load()} className="rounded-lg border border-[#DCCDE5] px-3 py-2 text-[#563568]">Refresh library</button>
       </div>
     </div>
-    {loading ? <p role="status" className="py-8 text-center text-sm text-[#6F6475]">Loading image library…</p> : viewMode === "usage" ? <div className="space-y-4">
+    {loading ? <p role="status" className="py-8 text-center text-sm text-[#6F6475]">Loading image library…</p> : viewMode === "cleanup" ? <div className="space-y-4">
+      <div className="rounded-xl border border-[#E7DCEB] bg-[#FBF8FC] p-4">
+        <h3 className="text-sm font-semibold text-[#302438]">Safe cleanup review</h3>
+        <p className="mt-1 text-xs leading-relaxed text-[#6F6475]">This screen identifies conservative review candidates only. A file is listed only when a fresh scan completed for every tracked source, it has no recorded reference, and it has no identical copies. Images in duplicate groups are excluded, even if currently unreferenced.</p>
+        <p className="mt-2 text-xs font-medium text-[#563568]">{cleanupScanAt ? "Fresh scan: " + new Date(cleanupScanAt).toLocaleString("en-IN") : "No fresh scan completed."} · {cleanupCandidates.length} conservative candidate(s)</p>
+        {usageCoverageWarnings.length > 0 && <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">Cleanup review is blocked because some sources could not be scanned: {usageCoverageWarnings.join("; ")}</div>}
+        {!usageCoverageComplete && <p className="mt-2 text-xs font-semibold text-amber-800">No cleanup candidates can be approved while scan coverage is incomplete.</p>}
+        <button type="button" disabled={loading} onClick={() => void loadCleanup()} className="mt-3 min-h-10 rounded-lg border border-[#DCCDE5] px-3 text-xs font-medium text-[#563568]">Run fresh usage scan</button>
+      </div>
+      {cleanupCandidates.length ? cleanupCandidates.map(asset => <article key={asset.id} className="grid gap-3 rounded-xl border border-[#E7DCEB] p-3 sm:grid-cols-[112px_minmax(0,1fr)]">
+        <img src={asset.url} alt={asset.fileName} loading="lazy" className="aspect-square w-full rounded-lg bg-[#F7F0FA] object-contain" />
+        <div className="min-w-0">
+          <h4 className="truncate text-sm font-semibold text-[#302438]">{asset.fileName}</h4>
+          <p className="mt-1 text-[10px] text-[#6F6475]">{(asset.size / 1024).toFixed(1)} KB · {asset.mimeType.replace("image/", "").toUpperCase()} · {new Date(asset.createdAt).toLocaleDateString("en-IN")}</p>
+          <p className="mt-2 text-xs text-[#805500]">No reference found in the tracked sources. This is a review candidate, not proof that deletion is safe.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <a href={asset.url} download={asset.fileName} className="inline-flex min-h-10 items-center rounded-lg bg-[#563568] px-3 text-xs font-medium text-white">Download backup copy</a>
+            <button type="button" onClick={() => setSelected(asset)} className="min-h-10 rounded-lg border border-[#DCCDE5] px-3 text-xs font-medium text-[#563568]">Inspect image</button>
+          </div>
+          <label className="mt-3 flex items-start gap-2 text-xs text-[#563568]"><input type="checkbox" checked={backupConfirmed.includes(asset.id)} onChange={event => setBackupConfirmed(current => event.target.checked ? [...current, asset.id] : current.filter(id => id !== asset.id))} className="mt-0.5" /> I have downloaded and checked a backup copy of this image.</label>
+          {backupConfirmed.includes(asset.id) && <p className="mt-1 text-[11px] font-medium text-[#24613D]">Backup acknowledged for this review session.</p>}
+        </div>
+      </article>) : <p className="rounded-xl border border-dashed border-[#DCCDE5] p-8 text-center text-sm text-[#6F6475]">{usageCoverageComplete ? "No conservative cleanup candidates found. Duplicate files and uncertain references are intentionally excluded." : "Cleanup review is unavailable until every tracked source can be scanned."}</p>}
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900"><strong>No deletion is available in this step.</strong> Downloaded copies are your manual backup. A later deletion action must require a new usage scan, verify the exact media ID again on the server, preserve a recoverable server-side backup, and ask for explicit confirmation for each image. Checking the box above does not delete or alter anything.</div>
+    </div> : viewMode === "usage" ? <div className="space-y-4">
       <div className="rounded-xl border border-[#E7DCEB] bg-[#FBF8FC] p-3">
         <h3 className="text-sm font-semibold text-[#302438]">Where image references were found</h3>
         <p className="mt-1 text-xs leading-relaxed text-[#6F6475]">Matches exact SHA-256 image copies and checks product images, categories, hero banners, homepage and Storefront Studio settings, Shop by Gender and Occasion, SARINE Men, editorial and campaign content, curated favourites, Explore Now, and website page drafts and published pages.</p>
