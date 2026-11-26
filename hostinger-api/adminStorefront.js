@@ -543,9 +543,16 @@ async function readMenStorefrontRecord(collection = null) {
   await ensureSchema();
   const key = settingKey("men_storefront", collection);
   const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [key]);
-  if (!rows.length) return { draft: DEFAULT_MEN_STOREFRONT, published: DEFAULT_MEN_STOREFRONT };
+  // Collection-specific versions inherit Shared until that collection has its own saved record.
+  let sourceRows = rows;
+  if (!sourceRows.length && collection) {
+    const sharedKey = settingKey("men_storefront", null);
+    const [sharedRows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [sharedKey]);
+    sourceRows = sharedRows;
+  }
+  if (!sourceRows.length) return { draft: DEFAULT_MEN_STOREFRONT, published: DEFAULT_MEN_STOREFRONT };
   try {
-    const saved = JSON.parse(rows[0].setting_value);
+    const saved = JSON.parse(sourceRows[0].setting_value);
     return { draft: normalizeMenStorefront(saved.draft), published: normalizeMenStorefront(saved.published) };
   } catch { return { draft: DEFAULT_MEN_STOREFRONT, published: DEFAULT_MEN_STOREFRONT }; }
 }
