@@ -12,6 +12,7 @@ const labelClass = "block space-y-1.5 text-xs font-medium text-[#563568]";
 
 export const HomepageContentManager: React.FC = () => {
   const [draft, setDraft] = useState<HomepageContent>(DEFAULT_HOMEPAGE_CONTENT);
+  const [collection, setCollection] = useState<"" | "artificial" | "demi-fine">("");
   const [published, setPublished] = useState<HomepageContent>(DEFAULT_HOMEPAGE_CONTENT);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -24,7 +25,7 @@ export const HomepageContentManager: React.FC = () => {
   const load = async () => {
     setLoading(true); setError(""); setMessage("");
     try {
-      const result = await hostingerStorefrontService.getHomepageContent();
+      const result = await hostingerStorefrontService.getHomepageContent(collection || undefined);
       setDraft(result.draft);
       setPublished(result.published);
     } catch (e) {
@@ -32,7 +33,7 @@ export const HomepageContentManager: React.FC = () => {
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); }, [collection]);
 
   const update = (patch: Partial<HomepageContent>) => {
     setDraft(current => ({ ...current, ...patch }));
@@ -41,7 +42,7 @@ export const HomepageContentManager: React.FC = () => {
   const saveDraft = async () => {
     setBusy(true); setError(""); setMessage("");
     try {
-      const result = await hostingerStorefrontService.saveHomepageContent(draft);
+      const result = await hostingerStorefrontService.saveHomepageContent(draft, collection || undefined);
       setDraft(result.draft);
       setMessage("Homepage content draft saved. The live homepage is unchanged until you publish.");
     } catch (e) { setError(e instanceof Error ? e.message : "Homepage content draft could not be saved."); }
@@ -51,7 +52,7 @@ export const HomepageContentManager: React.FC = () => {
     setBusy(true); setError(""); setMessage("");
     try {
       await hostingerStorefrontService.saveHomepageContent(draft);
-      const result = await hostingerStorefrontService.publishHomepageContent();
+      const result = await hostingerStorefrontService.publishHomepageContent(collection || undefined);
       setDraft(result.published);
       setPublished(result.published);
       setMessage("Homepage content published successfully.");
@@ -80,6 +81,7 @@ export const HomepageContentManager: React.FC = () => {
       <div>
         <h2 className="font-semibold text-[#2C1838]">Homepage Content Editor</h2>
         <p className="mt-1 max-w-3xl text-xs leading-relaxed text-[#6F6475]">Edit the actual copy, buttons, destinations, story image and care cards used by the homepage. Changes are saved as a draft first; publishing updates the customer-facing content.</p>
+        <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={collection} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global content)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
       </div>
       <span className={isPublished ? "rounded-full bg-green-50 px-3 py-1 text-xs text-green-700" : "rounded-full bg-amber-50 px-3 py-1 text-xs text-amber-800"}>{isPublished ? "Published version" : "Unpublished changes"}</span>
     </div>
