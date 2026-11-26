@@ -3,6 +3,7 @@ import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { mapPublicProduct } from "./publicProductMapper.js";
 import { ensureProductCollectionSchema } from "./productCollectionSchema.js";
+import { createEditorialSchedule, normalizeEditorialSchedule, getEditorialScheduleStatus, getEffectiveEditorial } from "./editorialSchedulePolicy.js";
 import {
   EMPTY_EXPLORE_NOW,
   MAX_EXPLORE_PRODUCTS,
@@ -29,6 +30,12 @@ async function ensureSchema() {
   await schemaReady;
 }
 
+async function readSetting(key) {
+ await ensureSchema(); const [rows]=await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1",[key]);
+ if(!rows.length)return {found:false,value:null}; try{return {found:true,value:JSON.parse(rows[0].setting_value)};}catch{return {found:true,value:null};}
+}
+async function readSchedule(key){const row=await readSetting(key);return normalizeEditorialSchedule(row.value);}
+async function writeSchedule(key,schedule){await ensureSchema();if(!schedule){await pool.execute("DELETE FROM storefront_settings WHERE setting_key=?",[key]);return;}await pool.execute("INSERT INTO storefront_settings (setting_key,setting_value) VALUES (?,?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)",[key,JSON.stringify(schedule)]);}
 async function readExploreNow(key) {
   await ensureSchema();
   const [rows] = await pool.execute(
@@ -72,20 +79,16 @@ export async function validateCollectionProductIds(productIds, collection) {
   return rows.length === productIds.length ? null : "Every selected product must belong to the chosen homepage range.";
 }
 
-adminOnly.get("/", async (req, res, next) => {
-  try {
-    const [draft, published] = await Promise.all([
-      readExploreNow(collectionKey("explore_now_draft", collectionFrom(req.query.productCollection))),
-      readExploreNow(collectionKey("explore_now_published", collectionFrom(req.query.productCollection)))
-    ]);
-    res.set("Cache-Control", "no-store").json({
-      draft,
-      published,
-      maxProducts: MAX_EXPLORE_PRODUCTS
-    });
-  } catch (error) { next(error); }
+adminOnly.get("/", async (req,res,next)=>{
+ try{
+ const collection=collectionFrom(req.query.productCollection),dk=collectionKey("explore_now_draft",collection),pk=collectionKey("explore_now_published",collection);
+ const [dr,pr]=await Promise.all([readSetting(dk),readSetting(pk)]);const inheritedFrom=collection&&!dr.found&&!pr.found?"shared":null;
+ const [draft,published]=inheritedFrom?await Promise.all([readExploreNow("explore_now_draft"),readExploreNow("explore_now_published")]):await Promise.all([readExploreNow(dk),readExploreNow(pk)]);
+ let schedule=await readSchedule(collectionKey("explore_now_schedule",collection)),scheduleCollection=schedule?(collection||"shared"):null;
+ if(!schedule&&collection&&inheritedFrom){schedule=await readSchedule("explore_now_schedule");if(schedule)scheduleCollection="shared";}
+ res.set("Cache-Control","no-store").json({draft,published,maxProducts:MAX_EXPLORE_PRODUCTS,schedule,scheduleStatus:getEditorialScheduleStatus(schedule),scheduleCollection,inheritedFrom});
+ }catch(error){next(error);}
 });
-
 adminOnly.put("/draft", async (req, res, next) => {
   try {
     const draft = validateExploreNow(req.body);
@@ -102,43 +105,43 @@ adminOnly.put("/draft", async (req, res, next) => {
   }
 });
 
+adminOnly.post("/schedule",async(req,res)=>{
+ try{const collection=collectionFrom(req.body?.productCollection),dr=await readSetting(collectionKey("explore_now_draft",collection)),pr=await readSetting(collectionKey("explore_now_published",collection));
+ if(collection&&!dr.found&&!pr.found)return res.status(409).json({error:"Manage the inherited Shared schedule from Shared, or save this collection first."});
+ const draft=await readExploreNow(collectionKey("explore_now_draft",collection)),published=await readExploreNow(collectionKey("explore_now_published",collection));
+ const collectionError=await validateCollectionProductIds(draft.productIds,collection);if(collectionError)return res.status(400).json({error:collectionError});
+ const schedule=createEditorialSchedule(req.body,draft,published);await writeSchedule(collectionKey("explore_now_schedule",collection),schedule);
+ res.set("Cache-Control","no-store").json({schedule,scheduleStatus:getEditorialScheduleStatus(schedule),scheduleCollection:collection||"shared"});
+ }catch(error){res.status(error.status||400).json({error:error.message||"Invalid schedule."});}
+});
+adminOnly.post("/schedule/cancel",async(req,res,next)=>{
+ try{const collection=collectionFrom(req.body?.productCollection),key=collectionKey("explore_now_schedule",collection);const own=await readSchedule(key);
+ if(own)await writeSchedule(key,null);else if(collection&&await readSchedule("explore_now_schedule"))await writeSchedule("explore_now_schedule",null);
+ res.set("Cache-Control","no-store").json({schedule:null,scheduleStatus:"none",scheduleCollection:null});
+ }catch(error){next(error);}
+});
 adminOnly.post("/publish", async (req, res, next) => {
   try {
     const collection = collectionFrom(req.body?.productCollection);
     const draft = await readExploreNow(collectionKey("explore_now_draft", collection));
     await writeExploreNow(collectionKey("explore_now_published", collection), draft);
+    await writeSchedule(collectionKey("explore_now_schedule", collection), null);
     res.set("Cache-Control", "no-store").json({ success: true, published: draft });
   } catch (error) { next(error); }
 });
 
-publicRouter.get("/", async (req, res, next) => {
-  try {
-    await ensureProductCollectionSchema();
-    const productCollection = collectionFrom(req.query.productCollection);
-    const config = await readExploreNow(collectionKey("explore_now_published", productCollection));
-    if (!config.configured || !config.productIds.length) {
-      return res.set("Cache-Control", "no-store").json({
-        products: [],
-        displayCount: config.displayCount,
-        configured: false
-      });
-    }
-    const ids = config.productIds.slice(0, MAX_EXPLORE_PRODUCTS);
-    const placeholders = ids.map(() => "?").join(",");
-    const collectionCondition = productCollection ? " AND product_collection = ?" : "";
-    const [rows] = await pool.execute(
-      `SELECT * FROM products WHERE id IN (${placeholders}) AND status='active' AND stock > 0${collectionCondition}`,
-      productCollection ? [...ids, productCollection] : ids
-    );
-    const products = shuffleInPlace(rows.map(mapPublicProduct));
-    res.set("Cache-Control", "no-store").json({
-      products,
-      displayCount: Math.min(config.displayCount, products.length),
-      configured: products.length > 0
-    });
-  } catch (error) { next(error); }
+publicRouter.get("/",async(req,res,next)=>{
+ try{await ensureProductCollectionSchema();const collection=collectionFrom(req.query.productCollection);
+ const own=await readSetting(collectionKey("explore_now_published",collection)),inherited=Boolean(collection&&!own.found);
+ let config=inherited?await readExploreNow("explore_now_published"):await readExploreNow(collectionKey("explore_now_published",collection));
+ let schedule=await readSchedule(collectionKey("explore_now_schedule",collection));if(!schedule&&inherited)schedule=await readSchedule("explore_now_schedule");
+ if(schedule)config=getEffectiveEditorial({schedule,published:config});
+ if(!config.configured||!config.productIds.length)return res.set("Cache-Control","no-store").json({products:[],displayCount:config.displayCount,configured:false});
+ const ids=config.productIds.slice(0,MAX_EXPLORE_PRODUCTS),placeholders=ids.map(()=>"?").join(","),condition=collection?" AND product_collection = ?":"";
+ const [rows]=await pool.execute(`SELECT * FROM products WHERE id IN (${placeholders}) AND status='active' AND stock > 0${condition}`,collection?[...ids,collection]:ids);
+ const products=shuffleInPlace(rows.map(mapPublicProduct));res.set("Cache-Control","no-store").json({products,displayCount:Math.min(config.displayCount,products.length),configured:products.length>0});
+ }catch(error){next(error);}
 });
-
 admin.use("/", adminOnly);
 export { publicRouter as publicExploreNowRouter };
 export default admin;
