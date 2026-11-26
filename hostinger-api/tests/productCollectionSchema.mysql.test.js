@@ -47,6 +47,19 @@ test("MariaDB range migration keeps legacy products unassigned and isolates both
     assert.deepEqual(artificial.map(row => row.id), ["artificial-1"]);
     assert.deepEqual(demiFine.map(row => row.id), ["demi-fine-1"]);
     assert.deepEqual(home.map(row => row.id), ["artificial-1", "demi-fine-1", "legacy-unassigned"]);
+
+    const [{ validateCollectionProductIds: validateCuratedRange }, { validateCollectionProductIds: validateExploreRange }] = await Promise.all([
+      import("../curatedFavourites.js"),
+      import("../exploreNow.js")
+    ]);
+    for (const validateSelection of [validateCuratedRange, validateExploreRange]) {
+      assert.equal(await validateSelection(["artificial-1"], "artificial"), null);
+      assert.equal(await validateSelection(["demi-fine-1"], "demi-fine"), null);
+      assert.match(await validateSelection(["demi-fine-1"], "artificial"), /chosen homepage range/);
+      assert.match(await validateSelection(["artificial-1", "demi-fine-1"], "artificial"), /chosen homepage range/);
+      assert.equal(await validateSelection(["legacy-unassigned"], null), null, "Home keeps the original mixed catalogue");
+      assert.equal(await validateSelection([], "artificial"), null, "empty range curation remains valid");
+    }
   } finally {
     await pool.query("DROP TABLE IF EXISTS products").catch(() => {});
     await pool.end();
