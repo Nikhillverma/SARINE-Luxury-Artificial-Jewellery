@@ -47,7 +47,8 @@ export class HostingerProductService implements IProductService {
     if (filters.categorySlug) params.set('categorySlug', filters.categorySlug);
     if (filters.categoryId) params.set('categoryId', filters.categoryId);
     if (filters.collectionSlug) params.set('collectionSlug', filters.collectionSlug);
-    if (filters.productCollection) params.set('productCollection', filters.productCollection);
+    const productCollection = filters.productCollection || getSelectedProductCollection();
+    if (productCollection) params.set('productCollection', productCollection);
     if (filters.jewelleryType) params.set('jewelleryType', filters.jewelleryType);
     if (filters.inStockOnly) params.set('inStockOnly', 'true');
     if (filters.minPrice !== undefined) params.set('minPrice', String(filters.minPrice));
@@ -103,6 +104,8 @@ export class HostingerProductService implements IProductService {
       page: '1',
       pageSize: '100'
     });
+    const productCollection = getSelectedProductCollection();
+    if (productCollection) params.set('productCollection', productCollection);
 
     const result = await request<ProductResponse>(`/products?${params.toString()}`);
     return result.products;
