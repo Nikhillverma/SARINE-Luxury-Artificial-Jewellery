@@ -61,7 +61,7 @@ function shuffleInPlace(items) {
 
 function collectionFrom(value) { const v = String(value || "").trim().toLowerCase(); if (!v) return null; if (v !== "artificial" && v !== "demi-fine") throw new Error("Product collection must be artificial or demi-fine."); return v; }
 function collectionKey(base, collection) { return collection ? base + "_" + collection : base; }
-async function validateCollectionProductIds(productIds, collection) {
+export async function validateCollectionProductIds(productIds, collection) {
   if (!collection || !productIds.length) return null;
   await ensureProductCollectionSchema();
   const placeholders = productIds.map(() => "?").join(",");
