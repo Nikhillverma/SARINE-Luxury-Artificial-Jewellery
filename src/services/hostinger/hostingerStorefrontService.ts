@@ -136,6 +136,8 @@ export interface StorefrontBanner {
   imageUrl: string;
   active: boolean;
   sortOrder: number;
+  startsAtUtc?: string | null;
+  endsAtUtc?: string | null;
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
