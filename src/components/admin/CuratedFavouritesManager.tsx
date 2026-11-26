@@ -27,22 +27,23 @@ export const CuratedFavouritesManager: React.FC = () => {
   );
   const isPublished = JSON.stringify(draft) === JSON.stringify(published);
 
-  const load = async () => {
+  const load = async (isCancelled: () => boolean = () => false) => {
     setLoading(true); setError("");
     try {
       const [catalogue, config] = await Promise.all([
         adminProductService.getProducts(),
         hostingerStorefrontService.getCuratedFavourites(collection || undefined)
       ]);
+      if (isCancelled()) return;
       setProducts(collection ? catalogue.filter(product => product.productCollection === collection) : catalogue);
       setDraft(config.draft);
       setPublished(config.published);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load Curated Favourites.");
-    } finally { setLoading(false); }
+      if (!isCancelled()) setError(e instanceof Error ? e.message : "Could not load Curated Favourites.");
+    } finally { if (!isCancelled()) setLoading(false); }
   };
 
-  useEffect(() => { void load(); }, [collection]);
+  useEffect(() => { let cancelled = false; setProducts([]); setDraft(emptyConfig); setPublished(emptyConfig); void load(() => cancelled); return () => { cancelled = true; }; }, [collection]);
 
   const updateIds = (productIds: string[]) => {
     setDraft({ version: 1, productIds, configured: true });
