@@ -27,6 +27,14 @@ export interface HostingerMediaAsset {
   duplicateCount?: number;
 }
 
+function resolveMediaUrl(url: string): string {
+  // The API returns paths already prefixed with /api/media, while API_BASE
+  // itself ends in /api. Strip that duplicate prefix before joining.
+  if (/^https?:\/\//i.test(url)) return url;
+  const path = url.replace(/^\/?api\//i, "/").replace(/^\/?/, "/");
+  return `${API_BASE}${path}`;
+}
+
 export class HostingerMediaService {
   async listImages(search = "", limit = 40, offset = 0, filters: { mimeType?: string; from?: string; to?: string; sort?: "newest" | "oldest" | "filename" } = {}): Promise<{ media: HostingerMediaAsset[]; total: number; limit: number; offset: number }> {
     const params = new URLSearchParams({ limit: String(limit), offset: String(offset), sort: filters.sort || "newest" });
@@ -42,7 +50,7 @@ export class HostingerMediaService {
     if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : `Media library could not be loaded (${response.status}).`);
     const result = data as { media?: HostingerMediaAsset[]; total?: number; limit?: number; offset?: number };
     return {
-      media: (result.media || []).map(asset => ({ ...asset, url: `${API_BASE}${asset.url.startsWith("/") ? asset.url : "/" + asset.url}` })),
+      media: (result.media || []).map(asset => ({ ...asset, url: resolveMediaUrl(asset.url) })),
       total: Number(result.total) || 0,
       limit: Number(result.limit) || limit,
       offset: Number(result.offset) || offset
