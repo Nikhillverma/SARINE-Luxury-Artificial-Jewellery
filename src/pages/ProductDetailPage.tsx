@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { productService, categoryService } from '../services';
 import { Product, isInStock, JEWELLERY_TYPE_LABELS } from '../types/product';
 import { Category } from '../types/category';
@@ -54,6 +54,7 @@ const PINCODE_STORAGE_KEY = 'sarine_last_pincode';
 const RECENTLY_VIEWED_KEY = 'sarine_recently_viewed_v1';
 
 export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll }) => {
+  const location = useLocation();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { addItem, openDrawer, storewideDiscountPercent } = useCart();
@@ -206,7 +207,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
     return () => {
       isCancelled = true;
     };
-  }, [slug, includeAll]);
+  }, [slug, includeAll, location.search]);
 
   // Handle Pincode check
   const handleCheckPincode = (e: React.FormEvent) => {
