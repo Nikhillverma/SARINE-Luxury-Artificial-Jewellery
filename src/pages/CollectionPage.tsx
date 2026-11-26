@@ -185,7 +185,9 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     setSelectedPlating('');
     setSelectedStone('');
     setInStockOnly(false);
-    setSearchParams({});
+    const next = new URLSearchParams();
+    if (rangeParam === "artificial" || rangeParam === "demi-fine") next.set("range", rangeParam);
+    setSearchParams(next);
   };
 
   // Filter & Sort Pipeline
