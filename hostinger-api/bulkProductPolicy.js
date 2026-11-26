@@ -1,4 +1,4 @@
-const ALLOWED_FIELDS = new Set(["price", "compareAtPrice", "categoryId", "status"]);
+const ALLOWED_FIELDS = new Set(["price", "compareAtPrice", "categoryId", "status", "productCollection"]);
 
 export function validateBulkProductRequest(productIds, updates) {
   if (!Array.isArray(productIds) || productIds.length < 1 || productIds.length > 100) {
@@ -28,6 +28,9 @@ export function validateBulkProductRequest(productIds, updates) {
   if (Object.hasOwn(updates, "categoryId") &&
       (typeof updates.categoryId !== "string" || !updates.categoryId.trim() || updates.categoryId.length > 64)) {
     return "Choose a valid category.";
+  }
+  if (Object.hasOwn(updates, "productCollection") && !["artificial", "demi-fine"].includes(updates.productCollection)) {
+    return "Choose Artificial or Demi-Fine for the product range.";
   }
   if (Object.hasOwn(updates, "status") && !["active", "draft"].includes(updates.status)) {
     return "Bulk publication status must be active or draft. Archived products cannot be unarchived in bulk.";
