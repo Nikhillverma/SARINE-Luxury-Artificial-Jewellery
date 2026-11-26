@@ -2,6 +2,7 @@ import { Router } from "express";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { mapPublicProduct } from "./publicProductMapper.js";
+import { ensureProductCollectionSchema } from "./productCollectionSchema.js";
 import {
   EMPTY_EXPLORE_NOW,
   MAX_EXPLORE_PRODUCTS,
@@ -93,8 +94,11 @@ adminOnly.post("/publish", async (_req, res, next) => {
   } catch (error) { next(error); }
 });
 
-publicRouter.get("/", async (_req, res, next) => {
+publicRouter.get("/", async (req, res, next) => {
   try {
+    await ensureProductCollectionSchema();
+    const productCollection = req.query.productCollection === undefined ? "" : String(req.query.productCollection);
+    if (productCollection && !["artificial", "demi-fine"].includes(productCollection)) return res.status(400).json({ error: "Product collection must be artificial or demi-fine." });
     const config = await readExploreNow("explore_now_published");
     if (!config.configured || !config.productIds.length) {
       return res.set("Cache-Control", "no-store").json({
@@ -106,8 +110,9 @@ publicRouter.get("/", async (_req, res, next) => {
     const ids = config.productIds.slice(0, MAX_EXPLORE_PRODUCTS);
     const placeholders = ids.map(() => "?").join(",");
     const [rows] = await pool.execute(
-      `SELECT * FROM products WHERE id IN (${placeholders}) AND status='active' AND stock > 0`,
-      ids
+      `SELECT * FROM products WHERE id IN (${placeholders}) AND status='active' AND stock > 0
+         AND (? = '' OR product_collection = ?)`,
+      [...ids, productCollection, productCollection]
     );
     const products = shuffleInPlace(rows.map(mapPublicProduct));
     res.set("Cache-Control", "no-store").json({
