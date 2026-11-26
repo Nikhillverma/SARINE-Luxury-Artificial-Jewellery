@@ -11,6 +11,7 @@ export const ShopByGenderManager: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
 
   const load = async (isCancelled: () => boolean = () => false) => {
     setLoading(true); setError(""); setMessage("");
@@ -77,6 +78,20 @@ export const ShopByGenderManager: React.FC = () => {
         <p className="text-[11px] text-gray-500">Responsive crop: 1.6:1 compact phones, 1.8:1 larger phones, 2:1 large phones, 2.5:1 small tablets, 2.75:1 tablets, 3:1 desktop. JPEG, PNG or WebP.</p>
       </article>)}
     </div>}
+    <section className="space-y-3 rounded-xl border border-[#E7DCEB] bg-[#FBF8FC] p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div><h3 className="text-sm font-semibold text-[#563568]">Responsive storefront preview</h3><p className="text-xs text-[#705E7B]">Preview the current edits before saving. This is a local draft preview; it does not publish changes.</p></div>
+        <div className="flex gap-1">{(["desktop", "tablet", "mobile"] as const).map(mode => <button key={mode} type="button" onClick={() => setPreviewMode(mode)} aria-pressed={previewMode === mode} className={`min-h-9 rounded-md border px-3 text-xs capitalize ${previewMode === mode ? "bg-[#563568] text-white" : "bg-white text-[#563568]"}`}>{mode}</button>)}</div>
+      </div>
+      <div className="mx-auto overflow-hidden rounded-xl border border-[#E7DCEB] bg-white p-3 transition-all" style={{ width: previewMode === "desktop" ? "100%" : previewMode === "tablet" ? "620px" : "375px", maxWidth: "100%" }}>
+        <div className={`grid gap-2 ${previewMode === "mobile" ? "grid-cols-1" : "grid-cols-2"}`}>
+          {tiles.map(tile => <div key={tile.key} className="overflow-hidden rounded-lg bg-[#F7F0FA]">
+            <div className={`overflow-hidden ${previewMode === "mobile" ? "aspect-[2/1]" : "aspect-[1.35/1]"}`}>{tile.value ? <img src={tile.value} alt={tile.title + " preview"} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-xs text-[#705E7B]">Upload an image</div>}</div>
+            <p className="p-2 text-center text-xs font-semibold tracking-widest text-[#563568]">{tile.title}</p>
+          </div>)}
+        </div>
+      </div>
+    </section>
     <div className="flex flex-wrap gap-2">
       <button type="button" disabled={busy || loading} onClick={() => void save()} className="min-h-11 rounded-lg bg-[#563568] px-5 py-2 text-sm font-medium text-white disabled:opacity-50">{busy ? "Saving…" : "Save Shop by Gender"}</button>
       <button type="button" disabled={busy || loading} onClick={() => void load()} className="min-h-11 rounded-lg border px-4 py-2 text-sm disabled:opacity-50">Reload</button>

@@ -12,6 +12,7 @@ export const HomepageCategoryImagesManager: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
 
   const load = async (isCancelled: () => boolean = () => false) => {
     setLoading(true); setError(""); setMessage("");
@@ -78,6 +79,20 @@ export const HomepageCategoryImagesManager: React.FC = () => {
         </div>
       </article>)}
     </div>}
+    <section className="space-y-3 rounded-xl border border-[#E7DCEB] bg-[#FBF8FC] p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div><h3 className="text-sm font-semibold text-[#563568]">Responsive category preview</h3><p className="text-xs text-[#705E7B]">Shows your current image edits with the existing category names. Save applies these images to the selected homepage version.</p></div>
+        <div className="flex gap-1">{(["desktop", "tablet", "mobile"] as const).map(mode => <button key={mode} type="button" onClick={() => setPreviewMode(mode)} aria-pressed={previewMode === mode} className={`min-h-9 rounded-md border px-3 text-xs capitalize ${previewMode === mode ? "bg-[#563568] text-white" : "bg-white text-[#563568]"}`}>{mode}</button>)}</div>
+      </div>
+      <div className="mx-auto overflow-hidden rounded-xl border border-[#E7DCEB] bg-white p-3 transition-all" style={{ width: previewMode === "desktop" ? "100%" : previewMode === "tablet" ? "620px" : "375px", maxWidth: "100%" }}>
+        <div className={`grid gap-3 ${previewMode === "mobile" ? "grid-cols-2" : previewMode === "tablet" ? "grid-cols-3" : "grid-cols-4"}`}>
+          {categories.map(category => <div key={category.id} className="min-w-0 overflow-hidden rounded-lg">
+            <div className="aspect-[4/3] overflow-hidden rounded-lg bg-[#F7F0FA]"><img src={images[category.slug] || category.image || "/images/product-placeholder.png"} alt={category.name} className="h-full w-full object-cover" /></div>
+            <p className="mt-2 truncate text-center text-xs font-medium text-[#563568]">{category.name}</p>
+          </div>)}
+        </div>
+      </div>
+    </section>
     <div className="flex flex-wrap gap-2">
       <button type="button" disabled={saving || loading || Boolean(busySlug)} onClick={() => void save()} className="min-h-11 rounded-lg bg-[#563568] px-5 py-2 text-sm font-medium text-white disabled:opacity-50">{saving ? "Saving…" : "Save category images"}</button>
       <button type="button" disabled={saving || loading || Boolean(busySlug)} onClick={() => void load()} className="min-h-11 rounded-lg border px-4 py-2 text-sm disabled:opacity-50">Reload</button>
