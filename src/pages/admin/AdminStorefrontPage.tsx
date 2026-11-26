@@ -16,7 +16,20 @@ import { hostingerMediaService } from "../../services";
 import { hostingerStorefrontService, type StorefrontBanner, type EditorialContent, type ProductReview } from "../../services/hostinger/hostingerStorefrontService";
 
 const defaultEditorial: EditorialContent = { eyebrow: "EDITORIAL COLLECTION", title: "The Art of Everyday Elegance", description: "A curated collection that blends classic beauty with modern sensibilities.", ctaText: "Explore the Collection", ctaLink: "/shop", imageUrl: "/images/optimized/editorial-banner.webp", active: true };
-const emptyForm = { tagline: "", title: "", subtitle: "", ctaText: "Shop now", ctaLink: "/shop", imageUrl: "", active: false };
+const emptyForm = { tagline: "", title: "", subtitle: "", ctaText: "Shop now", ctaLink: "/shop", imageUrl: "", active: false, startsAtUtc: "", endsAtUtc: "" };
+const toLocalDateTimeInput = (value?: string | null) => {
+  if (!value) return "";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+};
+const fromLocalDateTimeInput = (value: string) => value ? new Date(value).toISOString() : null;
+const bannerPublicationLabel = (banner: StorefrontBanner) => {
+  if (!banner.active) return "Draft";
+  const now = Date.now();
+  if (banner.startsAtUtc && new Date(banner.startsAtUtc).getTime() > now) return "Scheduled";
+  if (banner.endsAtUtc && new Date(banner.endsAtUtc).getTime() <= now) return "Expired";
+  return "Published";
+};
 
 export const AdminStorefrontPage: React.FC = () => {
   const location = useLocation();
@@ -126,7 +139,7 @@ export const AdminStorefrontPage: React.FC = () => {
   const beginAdd = () => { setEditingId(null); setForm(emptyForm); setFile(null); setMessage(""); setError(""); };
   const beginEdit = (banner: StorefrontBanner) => {
     setEditingId(banner.id);
-    setForm({ tagline: banner.tagline, title: banner.title, subtitle: banner.subtitle, ctaText: banner.ctaText, ctaLink: banner.ctaLink, imageUrl: banner.imageUrl, active: banner.active });
+    setForm({ tagline: banner.tagline, title: banner.title, subtitle: banner.subtitle, ctaText: banner.ctaText, ctaLink: banner.ctaLink, imageUrl: banner.imageUrl, active: banner.active, startsAtUtc: toLocalDateTimeInput(banner.startsAtUtc), endsAtUtc: toLocalDateTimeInput(banner.endsAtUtc) });
     setFile(null); setMessage(""); setError("");
   };
 
@@ -162,7 +175,7 @@ export const AdminStorefrontPage: React.FC = () => {
       let imageUrl = form.imageUrl;
       if (file) imageUrl = await hostingerMediaService.uploadImage(file);
       if (!imageUrl) throw new Error("Upload a banner image before saving.");
-      const payload = { ...form, imageUrl, productCollection: homepageCollection || null };
+      const payload = { ...form, imageUrl, startsAtUtc: fromLocalDateTimeInput(form.startsAtUtc), endsAtUtc: fromLocalDateTimeInput(form.endsAtUtc), productCollection: homepageCollection || null };
       if (editingId) await hostingerStorefrontService.updateBanner(editingId, payload);
       else await hostingerStorefrontService.createBanner(payload);
       setForm(emptyForm); setEditingId(null); setFile(null);
@@ -314,7 +327,7 @@ export const AdminStorefrontPage: React.FC = () => {
       {activeSection === "editorial" && (
         <div className="space-y-5">
         <section id="editorial" className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
-        <label className="block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={homepageCollection} disabled={loading || busy || artworkUploading || editorialUploading} onChange={event => setHomepageCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global content)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
+        <label className="block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={homepageCollection} disabled={loading || busy || artworkUploading || editorialUploading} onChange={event => setHomepageCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Shared (shown in both collections)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
         <div><h2 className="font-semibold text-[#2C1838]">Homepage Sections · Editorial Collection</h2><p className="text-xs text-gray-500">Independent of hero banners. Edit the image, copy and destination shown in the Editorial Collection block.</p></div>
         <div className="grid md:grid-cols-2 gap-3">
           <label className="text-xs space-y-1"><span>Eyebrow</span><input value={editorial.eyebrow} maxLength={120} onChange={e=>setEditorial({...editorial,eyebrow:e.target.value})} className="w-full border rounded-lg p-3 text-sm" /></label>
@@ -343,11 +356,11 @@ export const AdminStorefrontPage: React.FC = () => {
         <div className="space-y-5">
         <section id="banners" className="scroll-mt-24 bg-white border rounded-2xl p-5 space-y-4">
         <label className="block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={homepageCollection} disabled={loading || busy || artworkUploading || editorialUploading} onChange={event => setHomepageCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global content)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
-        <div className="flex justify-between items-center gap-3"><div><h2 className="font-semibold text-[#2C1838]">Homepage hero banners</h2><p className="text-xs text-gray-500">Changes are saved in MariaDB, not browser memory.</p></div><button disabled={busy || loading} onClick={beginAdd} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">Add banner</button></div>
+        <div className="flex justify-between items-center gap-3"><div><h2 className="font-semibold text-[#2C1838]">Homepage hero banners</h2><p className="text-xs text-gray-500">Shared banners appear in both Artificial and Demi-Fine storefronts. Changes are saved in MariaDB.</p></div><button disabled={busy || loading} onClick={beginAdd} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">Add banner</button></div>
         {loading ? <p className="text-sm text-gray-500">Loading banners…</p> : banners.length === 0 ? <p className="text-sm text-gray-500">No banners created yet. Add a banner and publish it when ready.</p> :
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">{banners.map((banner, index) => <article key={banner.id} className="border rounded-xl overflow-hidden">
             <img src={banner.imageUrl} alt={banner.title} className="w-full aspect-[16/7] object-cover bg-gray-100" />
-            <div className="p-4 space-y-2"><div className="flex justify-between gap-2"><span className="text-xs text-purple-700">{banner.tagline || "HERO BANNER"}</span><span className={banner.active ? "text-xs text-green-700" : "text-xs text-gray-500"}>{banner.active ? "Published" : "Draft"}</span></div>{/^(sddf|qwe|test|testing|new banner|untitled)$/i.test(banner.title.trim()) && <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">Draft quality check: this heading looks like placeholder text. Edit it before publishing.</p>}<h3 className="font-medium">{banner.title}</h3><p className="text-xs text-gray-500">{banner.subtitle}</p><p className="text-xs text-gray-500">CTA: {banner.ctaText} · {banner.ctaLink}</p>
+            <div className="p-4 space-y-2"><div className="flex justify-between gap-2"><span className="text-xs text-purple-700">{banner.tagline || "HERO BANNER"}</span><span className={bannerPublicationLabel(banner) === "Published" ? "text-xs text-green-700" : "text-xs text-gray-500"}>{bannerPublicationLabel(banner)}</span></div>{/^(sddf|qwe|test|testing|new banner|untitled)$/i.test(banner.title.trim()) && <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">Draft quality check: this heading looks like placeholder text. Edit it before publishing.</p>}<h3 className="font-medium">{banner.title}</h3><p className="text-xs text-gray-500">{banner.subtitle}</p><p className="text-xs text-gray-500">CTA: {banner.ctaText} · {banner.ctaLink}</p><p className="text-xs text-gray-500">Collection: {banner.productCollection === "artificial" ? "Artificial" : banner.productCollection === "demi-fine" ? "Demi-Fine" : "Shared"}</p>{(banner.startsAtUtc || banner.endsAtUtc) && <p className="text-xs text-gray-500">Schedule: {banner.startsAtUtc ? new Date(banner.startsAtUtc).toLocaleString() : "Immediately"} – {banner.endsAtUtc ? new Date(banner.endsAtUtc).toLocaleString() : "No end date"}</p>}
               <div className="flex flex-wrap gap-2 pt-2"><button disabled={busy || index===0} onClick={() => void move(index,-1)} className="border rounded px-2 py-1 text-xs disabled:opacity-40">Move up</button><button disabled={busy || index===banners.length-1} onClick={() => void move(index,1)} className="border rounded px-2 py-1 text-xs disabled:opacity-40">Move down</button><button disabled={busy} onClick={() => beginEdit(banner)} className="border rounded px-2 py-1 text-xs">Edit</button><button disabled={busy} onClick={() => void toggle(banner)} className="border rounded px-2 py-1 text-xs">{banner.active ? "Unpublish" : "Publish"}</button><button disabled={busy} onClick={() => void remove(banner)} className="border border-red-200 text-red-700 rounded px-2 py-1 text-xs">Delete</button></div>
             </div></article>)}</div>}
       </section>
@@ -364,6 +377,8 @@ export const AdminStorefrontPage: React.FC = () => {
           <textarea value={form.subtitle} onChange={e => setForm({...form,subtitle:e.target.value})} maxLength={500} placeholder="Subtitle" className="border rounded-lg p-3 text-sm md:col-span-2" />
           <input value={form.ctaText} onChange={e => setForm({...form,ctaText:e.target.value})} maxLength={80} placeholder="Button text" className="border rounded-lg p-3 text-sm" />
           <input value={form.ctaLink} onChange={e => setForm({...form,ctaLink:e.target.value})} maxLength={500} placeholder="Destination, e.g. /shop" className="border rounded-lg p-3 text-sm" />
+          <label className="text-xs space-y-1"><span>Start showing (optional, your local time)</span><input type="datetime-local" value={form.startsAtUtc} onChange={e => setForm({...form,startsAtUtc:e.target.value})} className="w-full border rounded-lg p-3 text-sm" /></label>
+          <label className="text-xs space-y-1"><span>Stop showing (optional, your local time)</span><input type="datetime-local" value={form.endsAtUtc} min={form.startsAtUtc || undefined} onChange={e => setForm({...form,endsAtUtc:e.target.value})} className="w-full border rounded-lg p-3 text-sm" /></label>
           <div className="md:col-span-2 space-y-3">
             <label className="block text-sm font-medium">Banner artwork</label>
             <input
@@ -379,7 +394,7 @@ export const AdminStorefrontPage: React.FC = () => {
             {form.imageUrl && <div className="space-y-2"><p className="text-xs font-medium text-green-700">Artwork uploaded and ready</p><img src={form.imageUrl} alt="Uploaded banner artwork preview" className="max-h-48 w-auto rounded-lg border object-contain" /></div>}
             <p className="text-xs text-gray-500">Choose an image, click Upload artwork, confirm the preview, then create or save the banner. Images are optimised and stored in Hostinger media storage.</p>
           </div>
-          <label className="flex items-center gap-2 text-sm md:col-span-2"><input type="checkbox" checked={form.active} onChange={e => setForm({...form,active:e.target.checked})} /> Publish immediately after saving</label>
+          <label className="flex items-center gap-2 text-sm md:col-span-2"><input type="checkbox" checked={form.active} onChange={e => setForm({...form,active:e.target.checked})} /> Publish (banner follows its schedule)</label>
           <div className="flex gap-2 md:col-span-2"><button disabled={busy || loading || artworkUploading} type="submit" className="px-5 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy ? "Saving…" : editingId ? "Save changes" : "Create banner"}</button><button type="button" disabled={busy || artworkUploading} onClick={beginAdd} className="px-4 py-2 rounded-lg border text-sm disabled:opacity-50">Clear form</button></div>
         </form>
       </section>
