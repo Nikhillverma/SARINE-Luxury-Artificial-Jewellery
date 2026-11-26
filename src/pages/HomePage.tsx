@@ -128,6 +128,11 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   };
 
   useEffect(() => {
+    if (rangeFromUrl === "home") {
+      window.sessionStorage.removeItem("sarine_product_range");
+      setSelectedProductCollection(undefined);
+      return;
+    }
     if (rangeFromUrl === "artificial" || rangeFromUrl === "demi-fine") {
       window.sessionStorage.setItem("sarine_product_range", rangeFromUrl);
       setSelectedProductCollection(rangeFromUrl);
