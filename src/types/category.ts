@@ -17,5 +17,5 @@ export interface Category {
   /** Ordering index for storefront display */
   sortOrder: number;
   /** Which top-level product range can use this category. Legacy categories default to shared. */
-  categoryCollection: CategoryCollection;
+  categoryCollection?: CategoryCollection;
 }
