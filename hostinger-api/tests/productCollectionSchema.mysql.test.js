@@ -1,13 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { pool } from "../db.js";
-import { ensureProductCollectionSchema } from "../productCollectionSchema.js";
 import { assertSafeTestDatabase } from "../testDatabaseSafety.js";
 
 test("MariaDB range migration keeps legacy products unassigned and isolates both ranges", {
   skip: process.env.SARINE_RUN_PRODUCT_COLLECTION_SCHEMA_TESTS !== "true"
 }, async () => {
   assertSafeTestDatabase();
+  const [{ pool }, { ensureProductCollectionSchema }] = await Promise.all([
+    import("../db.js"),
+    import("../productCollectionSchema.js")
+  ]);
   try {
     await pool.query("DROP TABLE IF EXISTS products");
     await pool.query(`CREATE TABLE products (
