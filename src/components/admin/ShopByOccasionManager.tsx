@@ -107,7 +107,7 @@ export const ShopByOccasionManager: React.FC = () => {
       <div>
         <h2 className="font-semibold text-[#2C1838]">Shop by Occasion</h2>
         <p className="text-xs text-gray-500 mt-1">Add, upload, replace or remove occasion images. Choose files directly from your computer — no image URLs needed.</p>
-        <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={collection} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global content)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
+        <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={collection} disabled={loading || busy} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global content)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
       </div>
       <span className="text-xs rounded-full px-3 py-1 bg-purple-50 text-purple-700">{draft.filter(item => item.active).length} visible · {draft.length}/12 cards</span>
     </div>
