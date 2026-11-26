@@ -127,6 +127,7 @@ export interface MenLaunchSubscriber { id: string; email: string; consent: boole
 
 export interface StorefrontBanner {
   id: string;
+  productCollection?: "artificial" | "demi-fine" | null;
   tagline: string;
   title: string;
   subtitle: string;
@@ -150,6 +151,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   });
   if (!response.ok) throw new Error(typeof body.error === "string" ? body.error : `Request failed (${response.status}).`);
   return body as T;
+}
+
+function collectionQuery(collection?: "artificial" | "demi-fine"): string {
+  return collection ? "?productCollection=" + encodeURIComponent(collection) : "";
 }
 
 function publicRangeQuery(): string {
@@ -182,12 +187,12 @@ export const hostingerStorefrontService = {
     request<{ success: boolean; draft: HomepageLayout }>("/admin/homepage-layout/draft", { method: "PUT", body: JSON.stringify(layout) }),
   publishHomepageLayout: () =>
     request<{ success: boolean; published: HomepageLayout }>("/admin/homepage-layout/publish", { method: "POST" }),
-  getHomepageContent: () => request<{ draft: HomepageContent; published: HomepageContent }>("/admin/homepage-layout/content"),
-  saveHomepageContent: (content: HomepageContent) =>
-    request<{ success: boolean; draft: HomepageContent }>("/admin/homepage-layout/content/draft", { method: "PUT", body: JSON.stringify(content) }),
-  publishHomepageContent: () =>
-    request<{ success: boolean; published: HomepageContent }>("/admin/homepage-layout/content/publish", { method: "POST" }),
-  getPublicHomepageContent: () => request<{ content: HomepageContent }>("/homepage-layout/content"),
+  getHomepageContent: (collection?: "artificial" | "demi-fine") => request<{ draft: HomepageContent; published: HomepageContent }>("/admin/homepage-layout/content" + collectionQuery(collection)),
+  saveHomepageContent: (content: HomepageContent, collection?: "artificial" | "demi-fine") =>
+    request<{ success: boolean; draft: HomepageContent }>("/admin/homepage-layout/content/draft", { method: "PUT", body: JSON.stringify({ ...content, productCollection: collection }) }),
+  publishHomepageContent: (collection?: "artificial" | "demi-fine") =>
+    request<{ success: boolean; published: HomepageContent }>("/admin/homepage-layout/content/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
+  getPublicHomepageContent: () => request<{ content: HomepageContent }>("/homepage-layout/content" + publicRangeQuery()),
 
   getMenStorefront: () => request<{ draft: MenStorefrontSettings; published: MenStorefrontSettings; products: MenStorefrontProduct[] }>("/admin/storefront/men-storefront"),
   saveMenStorefrontDraft: (settings: MenStorefrontSettings) => request<{ success: boolean; draft: MenStorefrontSettings }>("/admin/storefront/men-storefront/draft", { method: "PUT", body: JSON.stringify({ settings }) }),
@@ -197,14 +202,14 @@ export const hostingerStorefrontService = {
   subscribeMenLaunch: (email: string, consent: boolean) => request<{ success: boolean; message: string }>("/storefront/men-launch-signups", { method: "POST", body: JSON.stringify({ email, consent }) }),
   getMenLaunchSignups: () => request<{ subscribers: MenLaunchSubscriber[] }>("/admin/storefront/men-launch-signups"),
   deleteMenLaunchSignup: (id: string) => request<{ success: boolean }>(`/admin/storefront/men-launch-signups/${encodeURIComponent(id)}`, { method: "DELETE" }),
-  getShopByGender: () => request<{ settings: ShopByGenderSettings }>("/admin/storefront/shop-by-gender"),
-  saveShopByGender: (settings: ShopByGenderSettings) => request<{ success: boolean; settings: ShopByGenderSettings }>("/admin/storefront/shop-by-gender", { method: "PUT", body: JSON.stringify(settings) }),
-  getPublicShopByGender: () => request<{ settings: ShopByGenderSettings }>("/storefront/shop-by-gender"),
-  getOccasions: () => request<{ occasions: OccasionCard[] }>("/admin/storefront/occasions"),
-  getPublicOccasions: () => request<{ occasions: OccasionCard[] }>("/storefront/occasions"),
-  saveOccasions: (occasions: OccasionCard[]) => request<{ success: boolean; occasions: OccasionCard[] }>("/admin/storefront/occasions", { method: "PUT", body: JSON.stringify({ occasions }) }),
-  getBanners: () => request<{ banners: StorefrontBanner[] }>("/admin/storefront/banners"),
-  getPublicBanners: () => request<{ banners: StorefrontBanner[] }>("/storefront/banners"),
+  getShopByGender: (collection?: "artificial" | "demi-fine") => request<{ settings: ShopByGenderSettings }>("/admin/storefront/shop-by-gender" + collectionQuery(collection)),
+  saveShopByGender: (settings: ShopByGenderSettings, collection?: "artificial" | "demi-fine") => request<{ success: boolean; settings: ShopByGenderSettings }>("/admin/storefront/shop-by-gender", { method: "PUT", body: JSON.stringify({ ...settings, productCollection: collection }) }),
+  getPublicShopByGender: () => request<{ settings: ShopByGenderSettings }>("/storefront/shop-by-gender" + publicRangeQuery()),
+  getOccasions: (collection?: "artificial" | "demi-fine") => request<{ occasions: OccasionCard[] }>("/admin/storefront/occasions" + collectionQuery(collection)),
+  getPublicOccasions: () => request<{ occasions: OccasionCard[] }>("/storefront/occasions" + publicRangeQuery()),
+  saveOccasions: (occasions: OccasionCard[], collection?: "artificial" | "demi-fine") => request<{ success: boolean; occasions: OccasionCard[] }>("/admin/storefront/occasions", { method: "PUT", body: JSON.stringify({ occasions, productCollection: collection }) }),
+  getBanners: (collection?: "artificial" | "demi-fine") => request<{ banners: StorefrontBanner[] }>("/admin/storefront/banners" + collectionQuery(collection)),
+  getPublicBanners: () => request<{ banners: StorefrontBanner[] }>("/storefront/banners" + publicRangeQuery()),
   createBanner: (banner: Omit<StorefrontBanner, "id" | "sortOrder">) =>
     request<{ banner: StorefrontBanner }>("/admin/storefront/banners", { method: "POST", body: JSON.stringify(banner) }),
   updateBanner: (id: string, banner: Partial<StorefrontBanner>) =>
@@ -217,10 +222,10 @@ export const hostingerStorefrontService = {
   getPublicAnnouncement: () => request<{ announcement: { message: string; active: boolean; trustMessages?: string[] } }>("/storefront/announcement"),
   saveAnnouncement: (message: string, active: boolean, trustMessages: string[]) =>
     request<{ success: boolean }>("/admin/storefront/announcement", { method: "PUT", body: JSON.stringify({ message, active, trustMessages }) }),
-  getEditorial: () => request<{ editorial: EditorialContent }>("/admin/storefront/editorial"),
-  saveEditorial: (editorial: EditorialContent) =>
-    request<{ editorial: EditorialContent }>("/admin/storefront/editorial", { method: "PUT", body: JSON.stringify(editorial) }),
-  getPublicEditorial: () => request<{ editorial: EditorialContent | null }>("/storefront/editorial"),
+  getEditorial: (collection?: "artificial" | "demi-fine") => request<{ editorial: EditorialContent }>("/admin/storefront/editorial" + collectionQuery(collection)),
+  saveEditorial: (editorial: EditorialContent, collection?: "artificial" | "demi-fine") =>
+    request<{ editorial: EditorialContent }>("/admin/storefront/editorial", { method: "PUT", body: JSON.stringify({ ...editorial, productCollection: collection }) }),
+  getPublicEditorial: () => request<{ editorial: EditorialContent | null }>("/storefront/editorial" + publicRangeQuery()),
   getPublicProductReviewSummary: async (productId: string) => {
     const summaries = await loadPublicProductReviewSummaries();
     return summaries[productId] || null;
