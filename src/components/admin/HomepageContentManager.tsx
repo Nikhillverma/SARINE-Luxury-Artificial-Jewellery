@@ -125,7 +125,7 @@ export const HomepageContentManager: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px]">
             <div className="space-y-2">
               <label className={labelClass}>Story image (JPEG, PNG or WebP)
-                <input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || uploading} onChange={e => { void uploadStoryImage(e.target.files?.[0]); e.currentTarget.value = ""; }} className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#F7F0FA] file:px-3 file:py-2 file:text-xs file:font-medium file:text-[#563568]" />
+                <input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || uploading || loading} onChange={e => { void uploadStoryImage(e.target.files?.[0]); e.currentTarget.value = ""; }} className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#F7F0FA] file:px-3 file:py-2 file:text-xs file:font-medium file:text-[#563568]" />
               </label>
               <p className="text-[11px] text-[#6F6475]">The image is uploaded to Hostinger media storage. It becomes customer-facing only after publishing the content draft.</p>
             </div>
@@ -244,10 +244,10 @@ export const HomepageContentManager: React.FC = () => {
       </section>}
 
       <div className="flex flex-wrap items-center gap-2 border-t border-[#E7DCEB] pt-4">
-        <button type="button" disabled={busy || uploading} onClick={() => void saveDraft()} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm font-medium text-[#563568] disabled:opacity-50">{busy ? "Saving…" : "Save draft"}</button>
-        <button type="button" disabled={busy || uploading} onClick={() => void publish()} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50">{busy ? "Publishing…" : "Publish homepage content"}</button>
-        <button type="button" disabled={busy || uploading} onClick={() => setPreview(value => !value)} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm text-[#563568]">{preview ? "Hide preview" : "Preview draft"}</button>
-        <button type="button" disabled={busy || uploading} onClick={() => void load()} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm text-[#563568]">Reload saved content</button>
+        <button type="button" disabled={busy || uploading || loading} onClick={() => void saveDraft()} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm font-medium text-[#563568] disabled:opacity-50">{busy ? "Saving…" : "Save draft"}</button>
+        <button type="button" disabled={busy || uploading || loading} onClick={() => void publish()} className="rounded-lg bg-[#563568] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50">{busy ? "Publishing…" : "Publish homepage content"}</button>
+        <button type="button" disabled={busy || uploading || loading} onClick={() => setPreview(value => !value)} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm text-[#563568]">{preview ? "Hide preview" : "Preview draft"}</button>
+        <button type="button" disabled={busy || uploading || loading} onClick={() => void load()} className="rounded-lg border border-[#DCCDE5] px-4 py-2.5 text-sm text-[#563568]">Reload saved content</button>
         <span className="text-[11px] text-[#6F6475]">Draft and published content are stored separately in MariaDB.</span>
       </div>
     </>}
