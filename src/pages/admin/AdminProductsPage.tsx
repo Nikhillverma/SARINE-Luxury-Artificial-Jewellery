@@ -3,7 +3,7 @@ import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Link, useSearchParams } from 'react-router-dom';
 import { adminProductService, hostingerMediaService } from '../../services';
 import { hostingerAdminCategoryService } from '../../services/hostinger/hostingerAdminCategoryService';
-import type { Product, JewelleryType, ProductStatus } from '../../types/product';
+import type { Product, JewelleryType, ProductStatus, ProductCollection } from '../../types/product';
 import type { Category } from '../../types/category';
 import { JEWELLERY_TYPE_LABELS } from '../../types/product';
 import { BulkProductEditor } from '../../components/admin/BulkProductEditor';
@@ -13,7 +13,7 @@ import { formatInr } from '../../utils/currency';
 import { Plus, Search, Edit2, Copy, Archive, X, RefreshCw, Upload, Trash2, ChevronUp, ChevronDown, Eye, Download, Package, AlertTriangle, Image as ImageIcon, Filter } from 'lucide-react';
 
 const EMPTY_FORM = {
-  name: '', price: '', compareAtPrice: '', costPrice: '', stock: '0', categoryId: '',
+  name: '', productCollection: '' as '' | ProductCollection, price: '', compareAtPrice: '', costPrice: '', stock: '0', categoryId: '',
   jewelleryType: 'necklace' as JewelleryType, shortDescription: '', description: '',
   tags: '', collectionSlugs: '', baseMetal: '', platingFinish: '', stoneType: '', closureType: '', careInstructions: '', productVideoUrl: '',
   imageUrls: [] as string[], status: 'draft' as ProductStatus
@@ -172,6 +172,7 @@ export const AdminProductsPage: React.FC = () => {
     setEditing(product);
     setForm({
       name: product.name,
+      productCollection: product.productCollection || '',
       price: String(product.price),
       compareAtPrice: product.compareAtPrice == null ? '' : String(product.compareAtPrice),
       costPrice: product.costPrice == null ? '' : String(product.costPrice),
@@ -246,6 +247,7 @@ export const AdminProductsPage: React.FC = () => {
     try {
       const price = Number(form.price);
       const stock = Number(form.stock);
+      if (!form.productCollection) throw new Error('Choose whether this product belongs to Artificial or Demi-Fine.');
       if (!form.name.trim() || !Number.isFinite(price) || price < 0 ||
           !Number.isInteger(stock) || stock < 0 || !form.categoryId) {
         throw new Error('Enter a product name, valid price, non-negative whole stock count and category.');
@@ -258,6 +260,7 @@ export const AdminProductsPage: React.FC = () => {
       const payload = {
         slug: editing && editing.name === form.name ? editing.slug : baseSlug,
         name: form.name.trim(),
+        productCollection: form.productCollection,
         description: form.description.trim(),
         shortDescription: form.shortDescription.trim(),
         price,
