@@ -52,7 +52,7 @@ export const ExploreNowManager: React.FC = () => {
   const publish = async () => {
     setBusy(true); setError(""); setMessage("");
     try {
-      await hostingerStorefrontService.saveExploreNow(draft);
+      await hostingerStorefrontService.saveExploreNow(draft, collection || undefined);
       const result = await hostingerStorefrontService.publishExploreNow(collection || undefined);
       setDraft(result.published); setPublished(result.published);
       setMessage("Explore Now published. The homepage will randomly select from this eligible product pool on each visit.");
