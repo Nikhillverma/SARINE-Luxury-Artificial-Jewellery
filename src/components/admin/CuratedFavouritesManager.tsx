@@ -77,7 +77,7 @@ export const CuratedFavouritesManager: React.FC = () => {
   const publish = async () => {
     setBusy(true); setError(""); setMessage("");
     try {
-      await hostingerStorefrontService.saveCuratedFavourites(draft);
+      await hostingerStorefrontService.saveCuratedFavourites(draft, collection || undefined);
       const result = await hostingerStorefrontService.publishCuratedFavourites(collection || undefined);
       setDraft(result.published);
       setPublished(result.published);
