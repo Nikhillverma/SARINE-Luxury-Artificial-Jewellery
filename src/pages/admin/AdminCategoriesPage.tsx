@@ -5,7 +5,7 @@ import { hostingerMediaService } from '../../services';
 import type { Category } from '../../types/category';
 import { Plus, RefreshCw, Edit2, Trash2, Upload, X, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
-const EMPTY_FORM = { name: '', description: '', image: '', sortOrder: '0', isActive: true };
+const EMPTY_FORM = { name: '', description: '', image: '', sortOrder: '0', isActive: true, categoryCollection: 'both' as Category['categoryCollection'] };
 
 function slugify(value: string): string {
   return value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
@@ -51,7 +51,8 @@ export const AdminCategoriesPage: React.FC = () => {
       description: category.description || '',
       image: category.image || '',
       sortOrder: String(category.sortOrder),
-      isActive: category.isActive
+      isActive: category.isActive,
+      categoryCollection: category.categoryCollection || 'both'
     });
     setError('');
     setModalOpen(true);
@@ -93,7 +94,8 @@ export const AdminCategoriesPage: React.FC = () => {
         description: form.description.trim(),
         image: form.image,
         sortOrder,
-        isActive: form.isActive
+        isActive: form.isActive,
+        categoryCollection: form.categoryCollection
       };
       if (!payload.slug) throw new Error('Enter a valid category name.');
       if (editing) {
@@ -156,11 +158,11 @@ export const AdminCategoriesPage: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-[#FAF5FC] text-[#705E7B] uppercase"><tr>
-                <th className="p-3">Category</th><th className="p-3">Slug</th><th className="p-3">Order</th><th className="p-3">Visibility</th><th className="p-3 text-right">Actions</th>
+                <th className="p-3">Category</th><th className="p-3">Slug</th><th className="p-3">Collection</th><th className="p-3">Order</th><th className="p-3">Visibility</th><th className="p-3 text-right">Actions</th>
               </tr></thead>
               <tbody className="divide-y divide-[#F5EDF8]">
-                {loading ? <tr><td colSpan={5} className="p-10 text-center text-[#8E769E]">Loading categories…</td></tr> :
-                categories.length === 0 ? <tr><td colSpan={5} className="p-10 text-center text-[#8E769E]">No categories yet. Add your first category.</td></tr> :
+                {loading ? <tr><td colSpan={6} className="p-10 text-center text-[#8E769E]">Loading categories…</td></tr> :
+                categories.length === 0 ? <tr><td colSpan={6} className="p-10 text-center text-[#8E769E]">No categories yet. Add your first category.</td></tr> :
                 categories.map(category => (
                   <tr key={category.id} className="hover:bg-[#FAF5FC]">
                     <td className="p-3"><div className="flex items-center gap-3">
@@ -168,6 +170,7 @@ export const AdminCategoriesPage: React.FC = () => {
                       <div><div className="font-semibold text-[#2C1838]">{category.name}</div><div className="text-[10px] text-[#8E769E] line-clamp-2">{category.description || 'No description'}</div></div>
                     </div></td>
                     <td className="p-3 font-mono text-[#705E7B]">{category.slug}</td>
+                    <td className="p-3">{category.categoryCollection === "artificial" ? "Artificial" : category.categoryCollection === "demi-fine" ? "Demi-Fine" : "Shared"}</td>
                     <td className="p-3 tabular-nums">{category.sortOrder}</td>
                     <td className="p-3"><span className={category.isActive ? 'text-emerald-700' : 'text-[#8E769E]'}>{category.isActive ? 'Published' : 'Hidden'}</span></td>
                     <td className="p-3 text-right whitespace-nowrap">
@@ -189,6 +192,7 @@ export const AdminCategoriesPage: React.FC = () => {
             {error && <div role="alert" className="mb-3 p-3 bg-red-50 text-red-700 rounded-lg text-xs">{error}</div>}
             <form onSubmit={save} className="space-y-4 text-xs">
               <label className="block">Category name *<input required maxLength={120} value={form.name} onChange={e => setForm(current => ({ ...current, name: e.target.value }))} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
+              <label className="block">Collection *<select required value={form.categoryCollection} onChange={e => setForm(current => ({ ...current, categoryCollection: e.target.value as Category['categoryCollection'] }))} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"><option value="artificial">Artificial Jewellery</option><option value="demi-fine">Demi-Fine Jewellery</option><option value="both">Shared — Both Collections</option></select><span className="mt-1 block text-[10px] text-[#8E769E]">Shared categories can be used by products in either range.</span></label>
               <label className="block">Description<textarea maxLength={2000} rows={3} value={form.description} onChange={e => setForm(current => ({ ...current, description: e.target.value }))} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
               <div className="grid grid-cols-2 gap-3">
                 <label className="block">Display order<input required type="number" min="0" step="1" value={form.sortOrder} onChange={e => setForm(current => ({ ...current, sortOrder: e.target.value }))} className="mt-1 w-full p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xl"/></label>
