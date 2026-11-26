@@ -105,6 +105,9 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
       setLoading(true);
       try {
         const fetched = await productService.getProducts({
+          // Let MariaDB return only the selected category instead of downloading
+          // the full catalogue and discarding unrelated products in the browser.
+          categorySlug: selectedCategorySlug || undefined,
           sortBy: 'newest',
           inStockOnly: false,
           includeAll
@@ -122,7 +125,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     return () => {
       isCancelled = true;
     };
-  }, [includeAll]);
+  }, [includeAll, selectedCategorySlug]);
 
   // Load recently viewed
   useEffect(() => {
