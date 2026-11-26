@@ -709,38 +709,84 @@ const editorialDefaults = {
   imageUrl: "/images/editorial-banner.jpg",
   active: true
 };
-async function readEditorial(collection = null) {
+function normalizeEditorial(value) {
+  return { ...editorialDefaults, ...(value && typeof value === "object" ? value : {}) };
+}
+function parseEditorialRecord(raw) {
+  try {
+    const saved = JSON.parse(raw);
+    if (saved && typeof saved === "object" && saved.draft && saved.published) {
+      return { draft: normalizeEditorial(saved.draft), published: normalizeEditorial(saved.published) };
+    }
+    // Existing records were a single live object. Treat them as both draft and published.
+    const legacy = normalizeEditorial(saved);
+    return { draft: legacy, published: legacy };
+  } catch {
+    return { draft: editorialDefaults, published: editorialDefaults };
+  }
+}
+async function readEditorialRecord(collection = null) {
   await ensureSchema();
-  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [settingKey("editorial_collection", collection)]);
-  if (!rows.length) return editorialDefaults;
-  try { return { ...editorialDefaults, ...JSON.parse(rows[0].setting_value) }; }
-  catch { return editorialDefaults; }
+  const key = settingKey("editorial_collection", collection);
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [key]);
+  if (rows.length) return parseEditorialRecord(rows[0].setting_value);
+  // New collection versions inherit the existing Shared editorial until first saved independently.
+  if (collection) {
+    const [sharedRows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [settingKey("editorial_collection", null)]);
+    if (sharedRows.length) return parseEditorialRecord(sharedRows[0].setting_value);
+  }
+  return { draft: editorialDefaults, published: editorialDefaults };
+}
+async function writeEditorialRecord(collection, record) {
+  await pool.execute(
+    "INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)",
+    [settingKey("editorial_collection", collection), JSON.stringify(record)]
+  );
+}
+function validateEditorial(input) {
+  const editorial = {
+    eyebrow: String(input.eyebrow ?? "").trim(),
+    title: String(input.title ?? "").trim(),
+    description: String(input.description ?? "").trim(),
+    ctaText: String(input.ctaText ?? "").trim(),
+    ctaLink: String(input.ctaLink ?? "").trim(),
+    imageUrl: String(input.imageUrl ?? "").trim(),
+    active: input.active === true
+  };
+  if (!editorial.title || editorial.title.length > 180) throw Object.assign(new Error("Heading is required (maximum 180 characters)."), { status: 400 });
+  if (editorial.eyebrow.length > 120 || editorial.description.length > 500 || editorial.ctaText.length > 80) throw Object.assign(new Error("Editorial text exceeds the allowed length."), { status: 400 });
+  if (!editorial.imageUrl || editorial.imageUrl.length > 2048 || (!editorial.imageUrl.startsWith("/") && !/^https:\/\//i.test(editorial.imageUrl))) throw Object.assign(new Error("Choose a valid uploaded image."), { status: 400 });
+  if (!(editorial.ctaLink.startsWith("/") && !editorial.ctaLink.startsWith("//")) && !/^https:\/\//i.test(editorial.ctaLink)) throw Object.assign(new Error("Button destination must be a site path or HTTPS URL."), { status: 400 });
+  if (editorial.ctaLink.length > 500) throw Object.assign(new Error("Button destination is too long."), { status: 400 });
+  return editorial;
 }
 adminOnly.get("/editorial", async (req, res, next) => {
-  try { res.set("Cache-Control", "no-store").json({ editorial: await readEditorial(collectionFrom(req.query.productCollection)) }); }
-  catch (error) { next(error); }
+  try {
+    const record = await readEditorialRecord(collectionFrom(req.query.productCollection));
+    res.set("Cache-Control", "no-store").json(record);
+  } catch (error) { next(error); }
 });
 adminOnly.put("/editorial", async (req, res, next) => {
   try {
-    const input = req.body || {};
-    const editorial = {
-      eyebrow: String(input.eyebrow ?? "").trim(),
-      title: String(input.title ?? "").trim(),
-      description: String(input.description ?? "").trim(),
-      ctaText: String(input.ctaText ?? "").trim(),
-      ctaLink: String(input.ctaLink ?? "").trim(),
-      imageUrl: String(input.imageUrl ?? "").trim(),
-      active: input.active === true
-    };
-    if (!editorial.title || editorial.title.length > 180) return res.status(400).json({ error: "Heading is required (maximum 180 characters)." });
-    if (editorial.eyebrow.length > 120 || editorial.description.length > 500 || editorial.ctaText.length > 80) return res.status(400).json({ error: "Editorial text exceeds the allowed length." });
-    if (!editorial.imageUrl || editorial.imageUrl.length > 2048 || (!editorial.imageUrl.startsWith("/") && !/^https:\/\//i.test(editorial.imageUrl))) return res.status(400).json({ error: "Choose a valid uploaded image." });
-    if (!(editorial.ctaLink.startsWith("/") && !editorial.ctaLink.startsWith("//")) && !/^https:\/\//i.test(editorial.ctaLink)) return res.status(400).json({ error: "Button destination must be a site path or HTTPS URL." });
-    if (editorial.ctaLink.length > 500) return res.status(400).json({ error: "Button destination is too long." });
-    await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [settingKey("editorial_collection", collectionFrom(req.body?.productCollection)), JSON.stringify(editorial)]);
-    res.json({ editorial });
+    const collection = collectionFrom(req.body?.productCollection);
+    const record = await readEditorialRecord(collection);
+    const draft = validateEditorial(req.body || {});
+    await writeEditorialRecord(collection, { draft, published: record.published });
+    res.json({ draft, published: record.published });
   } catch (error) { next(error); }
 });
+adminOnly.post("/editorial/publish", async (req, res, next) => {
+  try {
+    const collection = collectionFrom(req.body?.productCollection);
+    const record = await readEditorialRecord(collection);
+    await writeEditorialRecord(collection, { draft: record.draft, published: record.draft });
+    res.json({ editorial: record.draft, draft: record.draft, published: record.draft });
+  } catch (error) { next(error); }
+});
+async function readEditorial(collection = null) {
+  const record = await readEditorialRecord(collection);
+  return record.published;
+}
 publicRouter.get("/editorial", async (req, res, next) => {
   try {
     const editorial = await readEditorial(collectionFrom(req.query.productCollection));
