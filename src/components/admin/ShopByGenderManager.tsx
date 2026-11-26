@@ -23,7 +23,7 @@ export const ShopByGenderManager: React.FC = () => {
       if (isCancelled()) return;
       setSettings(result.draft || emptySettings);
       setPublished(result.published || emptySettings);
-      setSavedPreview(null);
+      setSavedPreview(result.published || emptySettings);
       setShowPublishReview(false);
     } catch (e) {
       if (!isCancelled()) setError(e instanceof Error ? e.message : "Could not load Shop by Gender settings.");
