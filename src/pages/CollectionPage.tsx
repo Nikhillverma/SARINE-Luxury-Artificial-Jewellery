@@ -28,6 +28,7 @@ const RECENTLY_VIEWED_KEY = 'sarine_recently_viewed_v1';
 
 export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const rangeParam = searchParams.get("range");
 
   // State
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -125,7 +126,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     return () => {
       isCancelled = true;
     };
-  }, [includeAll, selectedCategorySlug]);
+  }, [includeAll, selectedCategorySlug, rangeParam]);
 
   // Load recently viewed
   useEffect(() => {
