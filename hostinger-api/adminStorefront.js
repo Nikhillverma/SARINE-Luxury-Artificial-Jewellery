@@ -7,6 +7,7 @@ import { validateImageUpload } from "./mediaValidation.js";
 import { getCheckoutConfig, saveCheckoutConfig } from "./checkoutPolicy.js";
 import { buildAnnouncementSettings, normalizeAnnouncementSettings } from "./announcementPolicy.js";
 import { ensureProductCollectionSchema } from "./productCollectionSchema.js";
+import { createEditorialSchedule, normalizeEditorialSchedule, getEditorialScheduleStatus, getEffectiveEditorial } from "./editorialSchedulePolicy.js";
 
 const admin = Router();
 const publicRouter = Router();
@@ -716,13 +717,17 @@ function parseEditorialRecord(raw) {
   try {
     const saved = JSON.parse(raw);
     if (saved && typeof saved === "object" && saved.draft && saved.published) {
-      return { draft: normalizeEditorial(saved.draft), published: normalizeEditorial(saved.published) };
+      return {
+        draft: normalizeEditorial(saved.draft),
+        published: normalizeEditorial(saved.published),
+        schedule: normalizeEditorialSchedule(saved.schedule)
+      };
     }
     // Existing records were a single live object. Treat them as both draft and published.
     const legacy = normalizeEditorial(saved);
-    return { draft: legacy, published: legacy };
+    return { draft: legacy, published: legacy, schedule: null };
   } catch {
-    return { draft: editorialDefaults, published: editorialDefaults };
+    return { draft: editorialDefaults, published: editorialDefaults, schedule: null };
   }
 }
 async function readEditorialRecord(collection = null) {
@@ -760,10 +765,18 @@ function validateEditorial(input) {
   if (editorial.ctaLink.length > 500) throw Object.assign(new Error("Button destination is too long."), { status: 400 });
   return editorial;
 }
+function mapEditorialAdminRecord(record) {
+  return {
+    draft: record.draft,
+    published: record.published,
+    schedule: record.schedule ? { startsAtUtc: record.schedule.startsAtUtc, endsAtUtc: record.schedule.endsAtUtc } : null,
+    scheduleStatus: getEditorialScheduleStatus(record.schedule)
+  };
+}
 adminOnly.get("/editorial", async (req, res, next) => {
   try {
     const record = await readEditorialRecord(collectionFrom(req.query.productCollection));
-    res.set("Cache-Control", "no-store").json(record);
+    res.set("Cache-Control", "no-store").json(mapEditorialAdminRecord(record));
   } catch (error) { next(error); }
 });
 adminOnly.put("/editorial", async (req, res, next) => {
@@ -771,21 +784,42 @@ adminOnly.put("/editorial", async (req, res, next) => {
     const collection = collectionFrom(req.body?.productCollection);
     const record = await readEditorialRecord(collection);
     const draft = validateEditorial(req.body || {});
-    await writeEditorialRecord(collection, { draft, published: record.published });
-    res.json({ draft, published: record.published });
+    const nextRecord = { draft, published: record.published, schedule: record.schedule };
+    await writeEditorialRecord(collection, nextRecord);
+    res.json(mapEditorialAdminRecord(nextRecord));
+  } catch (error) { next(error); }
+});
+adminOnly.post("/editorial/schedule", async (req, res, next) => {
+  try {
+    const collection = collectionFrom(req.body?.productCollection);
+    const record = await readEditorialRecord(collection);
+    const schedule = createEditorialSchedule(req.body || {}, record.draft, record.published);
+    const nextRecord = { ...record, schedule };
+    await writeEditorialRecord(collection, nextRecord);
+    res.status(200).json(mapEditorialAdminRecord(nextRecord));
+  } catch (error) { next(error); }
+});
+adminOnly.post("/editorial/schedule/cancel", async (req, res, next) => {
+  try {
+    const collection = collectionFrom(req.body?.productCollection);
+    const record = await readEditorialRecord(collection);
+    const nextRecord = { ...record, schedule: null };
+    await writeEditorialRecord(collection, nextRecord);
+    res.json(mapEditorialAdminRecord(nextRecord));
   } catch (error) { next(error); }
 });
 adminOnly.post("/editorial/publish", async (req, res, next) => {
   try {
     const collection = collectionFrom(req.body?.productCollection);
     const record = await readEditorialRecord(collection);
-    await writeEditorialRecord(collection, { draft: record.draft, published: record.draft });
-    res.json({ editorial: record.draft, draft: record.draft, published: record.draft });
+    const nextRecord = { draft: record.draft, published: record.draft, schedule: null };
+    await writeEditorialRecord(collection, nextRecord);
+    res.json({ editorial: record.draft, ...mapEditorialAdminRecord(nextRecord) });
   } catch (error) { next(error); }
 });
 async function readEditorial(collection = null) {
   const record = await readEditorialRecord(collection);
-  return record.published;
+  return getEffectiveEditorial(record);
 }
 publicRouter.get("/editorial", async (req, res, next) => {
   try {
