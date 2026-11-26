@@ -9,6 +9,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { productService } from '../services';
 import { Product } from '../types/product';
 import { formatInr } from '../utils/currency';
+import { getProductDetailHref } from '../utils/productLinks';
 import { Search, X, Clock, ArrowRight, Sparkles, Tag } from 'lucide-react';
 
 interface SearchOverlayProps {
@@ -214,7 +215,7 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
                   {results.map((product) => (
                     <Link
                       key={product.id}
-                      to={`/product/${product.slug}`}
+                      to={getProductDetailHref(product.slug, product.productCollection)}
                       onClick={() => {
                         saveRecentSearch(product.name);
                         onClose();
