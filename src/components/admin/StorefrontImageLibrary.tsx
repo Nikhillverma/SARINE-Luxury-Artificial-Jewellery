@@ -14,6 +14,8 @@ export const StorefrontImageLibrary: React.FC = () => {
   const [usageAssets, setUsageAssets] = useState<HostingerMediaUsageAsset[]>([]);
   const [usageTotal, setUsageTotal] = useState(0);
   const [usageCoverage, setUsageCoverage] = useState<string[]>([]);
+  const [usageCoverageWarnings, setUsageCoverageWarnings] = useState<string[]>([]);
+  const [usageCoverageComplete, setUsageCoverageComplete] = useState(false);
   const [usageNote, setUsageNote] = useState("");
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
@@ -48,7 +50,7 @@ export const StorefrontImageLibrary: React.FC = () => {
     setLoading(true); setError("");
     try {
       const result = await hostingerMediaService.listImageUsage(PAGE_SIZE, nextOffset);
-      setUsageAssets(result.media); setUsageTotal(result.total); setUsageCoverage(result.coverage); setUsageNote(result.note); setOffset(result.offset);
+      setUsageAssets(result.media); setUsageTotal(result.total); setUsageCoverage(result.coverage); setUsageCoverageWarnings(result.coverageWarnings || []); setUsageCoverageComplete(Boolean(result.coverageComplete)); setUsageNote(result.note); setOffset(result.offset);
     } catch (e) { setError(e instanceof Error ? e.message : "Image usage could not be loaded."); }
     finally { setLoading(false); }
   };
@@ -152,15 +154,18 @@ export const StorefrontImageLibrary: React.FC = () => {
     {loading ? <p role="status" className="py-8 text-center text-sm text-[#6F6475]">Loading image library…</p> : viewMode === "usage" ? <div className="space-y-4">
       <div className="rounded-xl border border-[#E7DCEB] bg-[#FBF8FC] p-3">
         <h3 className="text-sm font-semibold text-[#302438]">Where image references were found</h3>
-        <p className="mt-1 text-xs leading-relaxed text-[#6F6475]">Checks product images, category images, hero banners, Storefront Studio settings, website page drafts and published pages, and reusable page sections.</p>
+        <p className="mt-1 text-xs leading-relaxed text-[#6F6475]">Matches exact SHA-256 image copies and checks product images, categories, hero banners, homepage and Storefront Studio settings, Shop by Gender and Occasion, SARINE Men, editorial and campaign content, curated favourites, Explore Now, and website page drafts and published pages.</p>
         <div className="mt-3 flex flex-wrap gap-2">{usageCoverage.map(item => <span key={item} className="rounded-full border border-[#E7DCEB] bg-white px-2.5 py-1 text-[10px] text-[#563568]">{item}</span>)}</div>
+        {usageCoverageWarnings.length > 0 && <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3"><p className="text-xs font-semibold text-amber-900">Some sources need verification</p><ul className="mt-1 list-disc space-y-1 pl-4 text-[11px] text-amber-900">{usageCoverageWarnings.map(item => <li key={item}>{item}</li>)}</ul></div>}
+        <p className="mt-2 text-[10px] text-[#6F6475]">{usageCoverageComplete ? "All tracked database sources were scanned successfully." : "Coverage is incomplete. Unreferenced files are marked Needs verification."}</p>
       </div>
       {usageAssets.map(asset => <article key={asset.id} className="grid gap-3 rounded-xl border border-[#E7DCEB] p-3 sm:grid-cols-[112px_minmax(0,1fr)]">
         <button type="button" onClick={() => setSelected(asset)} className="block w-full cursor-zoom-in" aria-label={"Preview " + asset.fileName}><img src={asset.url} alt={asset.fileName} loading="lazy" className="aspect-square w-full rounded-lg bg-[#F7F0FA] object-contain" /></button>
         <div className="min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-2"><div className="min-w-0"><h3 className="truncate text-sm font-semibold text-[#302438]" title={asset.fileName}>{asset.fileName}</h3><p className="mt-1 text-[10px] text-[#6F6475]">{(asset.size / 1024).toFixed(1)} KB · {asset.mimeType.replace("image/", "").toUpperCase()} · Uploaded {new Date(asset.createdAt).toLocaleDateString("en-IN")}</p></div>
-            <span className={asset.usageCount ? "rounded-full bg-[#EAF5EE] px-2.5 py-1 text-[10px] font-medium text-[#24613D]" : "rounded-full bg-[#FFF4DF] px-2.5 py-1 text-[10px] font-medium text-[#805500]"}>{asset.usageCount ? "Referenced in " + asset.usageCount + " place(s)" : "No recorded reference"}</span></div>
-          {asset.references.length > 0 ? <ul className="mt-3 space-y-1.5">{asset.references.map((ref, index) => <li key={asset.id + "-" + index} className="flex flex-wrap gap-x-2 text-xs"><span className="font-medium text-[#563568]">{ref.source}</span><span className="break-all text-[#6F6475]">{ref.location}</span></li>)}</ul> : <p className="mt-3 text-xs text-[#805500]">No match found in tracked sources. This does not prove the image is unused or safe to delete.</p>}
+            <span className={asset.usageStatus === "referenced" || asset.usageStatus === "duplicate-in-use" ? "rounded-full bg-[#EAF5EE] px-2.5 py-1 text-[10px] font-medium text-[#24613D]" : "rounded-full bg-[#FFF4DF] px-2.5 py-1 text-[10px] font-medium text-[#805500]"}>{asset.usageStatus === "referenced" ? "In use · " + asset.usageCount + " reference(s)" : asset.usageStatus === "duplicate-in-use" ? "Duplicate of an image in use" : asset.usageStatus === "needs-verification" ? "Needs verification" : "No recorded reference"}</span></div>
+          {asset.duplicateCopies > 1 && <p className="mt-2 text-[11px] font-medium text-[#805500]">Identical content found in {asset.duplicateCopies} stored files. Usage is matched across all copies.</p>}
+          {asset.references.length > 0 ? <ul className="mt-3 space-y-1.5">{asset.references.map((ref, index) => <li key={asset.id + "-" + index} className="flex flex-wrap gap-x-2 text-xs"><span className="font-medium text-[#563568]">{ref.source}</span><span className="break-all text-[#6F6475]">{ref.location}</span></li>)}</ul> : <p className="mt-3 text-xs text-[#805500]">{asset.usageStatus === "needs-verification" ? "One or more content sources could not be checked. Review this image manually." : "No match found in tracked sources. This does not prove the image is unused or safe to delete."}</p>}
           <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => setSelected(asset)} className="min-h-9 rounded-lg border border-[#DCCDE5] px-3 text-xs font-medium text-[#563568]">Inspect image</button><button type="button" onClick={() => void copyUrl(asset.url)} className="min-h-9 rounded-lg border border-[#DCCDE5] px-3 text-xs font-medium text-[#563568]">Copy URL</button></div>
         </div>
       </article>)}

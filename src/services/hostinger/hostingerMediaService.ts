@@ -36,9 +36,12 @@ function resolveMediaUrl(url: string): string {
 }
 
 export interface HostingerMediaUsageReference { source: string; location: string; }
+export type HostingerMediaUsageStatus = "referenced" | "duplicate-in-use" | "no-recorded-reference" | "needs-verification";
 export interface HostingerMediaUsageAsset extends HostingerMediaAsset {
+  contentHash: string | null;
+  duplicateCopies: number;
   usageCount: number;
-  usageStatus: "referenced" | "no-recorded-reference";
+  usageStatus: HostingerMediaUsageStatus;
   references: HostingerMediaUsageReference[];
 }
 export interface HostingerMediaUsageReport {
@@ -47,6 +50,8 @@ export interface HostingerMediaUsageReport {
   limit: number;
   offset: number;
   coverage: string[];
+  coverageWarnings: string[];
+  coverageComplete: boolean;
   note: string;
 }
 
