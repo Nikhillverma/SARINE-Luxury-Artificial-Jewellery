@@ -63,6 +63,44 @@ function validate(input) {
   return null;
 }
 
+async function readHomepageCategoryImages(collection = null) {
+  await ensureSchema();
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [settingKey("homepage_category_images", collection)]);
+  if (!rows.length) return {};
+  try {
+    const value = JSON.parse(rows[0].setting_value);
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    return Object.fromEntries(Object.entries(value).filter(([slug, url]) =>
+      /^[a-z0-9][a-z0-9-]{0,79}$/.test(slug) && typeof url === "string" &&
+      url.length <= 2048 && (url === "" || url.startsWith("/") && !url.startsWith("//") || /^https:\/\//i.test(url))
+    ));
+  } catch { return {}; }
+}
+adminOnly.get("/category-images", async (req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ images: await readHomepageCategoryImages(collectionFrom(req.query.productCollection)) }); }
+  catch (error) { next(error); }
+});
+adminOnly.put("/category-images", async (req, res, next) => {
+  try {
+    const collection = collectionFrom(req.body?.productCollection);
+    const input = req.body?.images;
+    if (!input || typeof input !== "object" || Array.isArray(input) || Object.keys(input).length > 50) return res.status(400).json({ error: "Provide a valid category image map." });
+    const images = {};
+    for (const [slug, rawUrl] of Object.entries(input)) {
+      const url = typeof rawUrl === "string" ? rawUrl.trim() : "";
+      if (!/^[a-z0-9][a-z0-9-]{0,79}$/.test(slug) || url.length > 2048 || (url && !(url.startsWith("/") && !url.startsWith("//")) && !/^https:\/\//i.test(url))) return res.status(400).json({ error: "Each category image must use a valid category slug and site or HTTPS image URL." });
+      if (url) images[slug] = url;
+    }
+    await ensureSchema();
+    await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [settingKey("homepage_category_images", collection), JSON.stringify(images)]);
+    res.set("Cache-Control", "no-store").json({ success: true, images });
+  } catch (error) { next(error); }
+});
+publicRouter.get("/category-images", async (req, res, next) => {
+  try { res.set("Cache-Control", "no-store").json({ images: await readHomepageCategoryImages(collectionFrom(req.query.productCollection)) }); }
+  catch (error) { next(error); }
+});
+
 adminOnly.get("/banners", async (req, res, next) => {
   try {
     await ensureSchema();
