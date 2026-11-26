@@ -185,7 +185,7 @@ router.post("/", async (req, res, next) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))`,
       [id, data.slug, data.name, data.product_collection, data.description, data.short_description, data.price,
        data.compare_at_price, data.cost_price, data.images, data.category_id,
-       data.collection_slugs, data.product_collection, data.jewellery_type, data.stock, data.status, data.tags,
+       data.collection_slugs, data.jewellery_type, data.stock, data.status, data.tags,
        data.base_metal, data.plating_finish, data.stone_type, data.closure_type, data.care_instructions, data.product_video_url]
     );
 
@@ -444,7 +444,7 @@ router.put("/:id", async (req, res, next) => {
        WHERE id=?`,
       [data.slug, data.name, data.description, data.short_description, data.price,
        data.compare_at_price, data.cost_price, data.images, data.category_id,
-       data.collection_slugs, data.jewellery_type, data.stock, data.status, data.tags,
+       data.collection_slugs, data.product_collection, data.jewellery_type, data.stock, data.status, data.tags,
        data.base_metal, data.plating_finish, data.stone_type, data.closure_type,
        data.care_instructions, data.product_video_url, req.params.id]
     );
