@@ -12,6 +12,7 @@ export type JewelleryType =
   | 'set';
 
 export type ProductStatus = 'active' | 'draft' | 'archived';
+export type ProductCollection = 'artificial' | 'demi-fine';
 
 export const JEWELLERY_TYPE_LABELS: Record<JewelleryType, string> = {
   earrings: 'Earrings',
@@ -45,6 +46,8 @@ export interface Product {
   gender?: "men" | "women";
   slug: string;
   name: string;
+  /** SARINE's top-level product range; separate from merchandising collectionSlugs. */
+  productCollection?: ProductCollection;
   description: string;
   /** Price in INR as an integer, e.g. 1499 */
   price: number;
