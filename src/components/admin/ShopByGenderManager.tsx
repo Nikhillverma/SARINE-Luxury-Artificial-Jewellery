@@ -12,17 +12,18 @@ export const ShopByGenderManager: React.FC = () => {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const load = async () => {
+  const load = async (isCancelled: () => boolean = () => false) => {
     setLoading(true); setError(""); setMessage("");
     try {
       const result = await hostingerStorefrontService.getShopByGender(collection || undefined);
+      if (isCancelled()) return;
       setSettings(result.settings || emptySettings);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load Shop by Gender settings.");
-    } finally { setLoading(false); }
+      if (!isCancelled()) setError(e instanceof Error ? e.message : "Could not load Shop by Gender settings.");
+    } finally { if (!isCancelled()) setLoading(false); }
   };
 
-  useEffect(() => { void load(); }, [collection]);
+  useEffect(() => { let cancelled = false; setSettings(emptySettings); void load(() => cancelled); return () => { cancelled = true; }; }, [collection]);
 
   const upload = async (key: "forHerImageUrl" | "forHimImageUrl", file?: File) => {
     if (!file) return;
