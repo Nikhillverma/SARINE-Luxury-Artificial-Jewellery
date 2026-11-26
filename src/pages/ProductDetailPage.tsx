@@ -134,6 +134,12 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ includeAll
         return;
       }
       setLoading(true);
+      setProduct(null);
+      setCategory(null);
+      setRelatedProducts([]);
+      setReviews([]);
+      setReviewCount(0);
+      setReviewAverage(0);
       setActiveImageIndex(0);
       setQuantity(1);
       setSelectedVariantId('');
