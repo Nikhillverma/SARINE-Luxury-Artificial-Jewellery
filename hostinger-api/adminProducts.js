@@ -507,6 +507,7 @@ router.post("/bulk", async (req, res, next) => {
       if (updates.compareAtPrice !== undefined) { columns.push("compare_at_price = ?"); values.push(updates.compareAtPrice); }
       if (updates.categoryId !== undefined) { columns.push("category_id = ?"); values.push(updates.categoryId); }
       if (updates.status !== undefined) { columns.push("status = ?"); values.push(updates.status); }
+      if (updates.productCollection !== undefined) { columns.push("product_collection = ?"); values.push(updates.productCollection); }
       columns.push("updated_at = CURRENT_TIMESTAMP(3)");
       values.push(id);
       await connection.execute(
