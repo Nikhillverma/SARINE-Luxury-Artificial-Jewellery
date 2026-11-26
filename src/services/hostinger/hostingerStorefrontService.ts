@@ -179,11 +179,15 @@ export const hostingerStorefrontService = {
   getHomepageLayout: (collection?: "artificial" | "demi-fine") => request<{ draft: HomepageLayout; published: HomepageLayout; schedule: EditorialSchedule | null; scheduleStatus: EditorialScheduleStatus; scheduleCollection: "shared" | "artificial" | "demi-fine" | null }>("/admin/homepage-layout" + collectionQuery(collection)),
 
   getPublicHomepageLayout: () => request<{ layout: HomepageLayout }>("/homepage-layout" + publicRangeQuery()),
-  getCuratedFavourites: (collection?: "artificial" | "demi-fine") => request<{ draft: CuratedFavouritesConfig; published: CuratedFavouritesConfig; maxProducts: number }>("/admin/curated-favourites" + collectionQuery(collection)),
+  getCuratedFavourites: (collection?: "artificial" | "demi-fine") => request<{ draft: CuratedFavouritesConfig; published: CuratedFavouritesConfig; maxProducts: number; schedule: EditorialSchedule | null; scheduleStatus: EditorialScheduleStatus; scheduleCollection: "shared" | "artificial" | "demi-fine" | null; inheritedFrom: "shared" | null }>("/admin/curated-favourites" + collectionQuery(collection)),
   saveCuratedFavourites: (config: CuratedFavouritesConfig, collection?: "artificial" | "demi-fine") =>
     request<{ success: boolean; draft: CuratedFavouritesConfig }>("/admin/curated-favourites/draft", { method: "PUT", body: JSON.stringify({ ...config, productCollection: collection }) }),
   publishCuratedFavourites: (collection?: "artificial" | "demi-fine") =>
-    request<{ success: boolean; published: CuratedFavouritesConfig }>("/admin/curated-favourites/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
+    request<{ success: boolean; published: CuratedFavouritesConfig; schedule: null; scheduleStatus: EditorialScheduleStatus }>("/admin/curated-favourites/publish", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
+  scheduleCuratedFavourites: (startsAtUtc: string, endsAtUtc: string | null, collection?: "artificial" | "demi-fine") =>
+    request<{ draft: CuratedFavouritesConfig; published: CuratedFavouritesConfig; schedule: EditorialSchedule; scheduleStatus: EditorialScheduleStatus; scheduleCollection: "shared" | "artificial" | "demi-fine" | null }>("/admin/curated-favourites/schedule", { method: "POST", body: JSON.stringify({ startsAtUtc, endsAtUtc, productCollection: collection }) }),
+  cancelCuratedFavouritesSchedule: (collection?: "artificial" | "demi-fine") =>
+    request<{ draft: CuratedFavouritesConfig; published: CuratedFavouritesConfig; schedule: null; scheduleStatus: EditorialScheduleStatus; scheduleCollection: null }>("/admin/curated-favourites/schedule/cancel", { method: "POST", body: JSON.stringify({ productCollection: collection }) }),
   getPublicCuratedFavourites: () =>
     request<{ products: import("../../types/product").Product[]; configured: boolean }>("/curated-favourites" + publicRangeQuery()),
   getExploreNow: (collection?: "artificial" | "demi-fine") => request<{ draft: ExploreNowConfig; published: ExploreNowConfig; maxProducts: number }>("/admin/explore-now" + collectionQuery(collection)),
