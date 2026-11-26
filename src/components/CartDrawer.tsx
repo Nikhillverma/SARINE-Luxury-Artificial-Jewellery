@@ -235,7 +235,7 @@ export const CartDrawer: React.FC = () => {
                 <div key={`${item.productId}-${item.variantId || 'default'}`} className="py-4 first:pt-0 last:pb-0 flex gap-4">
                   {/* Image */}
                   <Link
-                    to={getProductDetailHref(item.product.slug, item.product.productCollection)}
+                    to={getProductDetailHref(item.product.slug, item.product.productCollection, true)}
                     onClick={closeDrawer}
                     className="w-20 h-24 bg-[var(--tint)] border border-[var(--border)] shrink-0 overflow-hidden rounded-xs"
                   >
@@ -251,7 +251,7 @@ export const CartDrawer: React.FC = () => {
                     <div>
                       <div className="flex items-start justify-between gap-2">
                         <Link
-                          to={getProductDetailHref(item.product.slug, item.product.productCollection)}
+                          to={getProductDetailHref(item.product.slug, item.product.productCollection, true)}
                           onClick={closeDrawer}
                           className="font-serif text-base text-[var(--heading)] hover:text-[var(--plum)] font-normal line-clamp-1 transition-colors"
                         >
