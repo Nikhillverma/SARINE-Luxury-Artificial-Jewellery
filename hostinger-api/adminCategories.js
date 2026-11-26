@@ -130,9 +130,15 @@ router.put("/:id", async (req, res, next) => {
     const parentCategoryId = body.parentCategoryId === undefined ? existing.parentCategoryId : (body.parentCategoryId || null);
     const parentError = await validateParentCategory(parentCategoryId, req.params.id, categoryCollection);
     if (parentError) return res.status(400).json({ error: parentError });
-    if (parentCategoryId) {
-      const [[children]] = await pool.execute("SELECT COUNT(*) AS childCount FROM categories WHERE parent_category_id = ?", [req.params.id]);
-      if (Number(children.childCount) > 0) return res.status(409).json({ error: "A category with subcategories cannot itself become a subcategory. Move its subcategories first." });
+    const [[childRows]] = await pool.execute(
+      "SELECT COUNT(*) AS childCount, SUM(CASE WHEN category_collection NOT IN (?, 'both') THEN 1 ELSE 0 END) AS incompatibleCount FROM categories WHERE parent_category_id = ?",
+      [categoryCollection, req.params.id]
+    );
+    if (parentCategoryId && Number(childRows.childCount) > 0) {
+      return res.status(409).json({ error: "A category with subcategories cannot itself become a subcategory. Move its subcategories first." });
+    }
+    if (Number(childRows.incompatibleCount || 0) > 0) {
+      return res.status(409).json({ error: "This collection change would conflict with one or more subcategories. Update or move those subcategories first." });
     }
     const name = body.name === undefined ? existing.name : body.name.trim();
     const slug = slugify(body.slug === undefined ? (body.name === undefined ? existing.slug : name) : body.slug);
