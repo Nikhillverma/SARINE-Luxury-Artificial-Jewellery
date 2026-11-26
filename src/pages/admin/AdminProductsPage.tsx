@@ -264,7 +264,7 @@ export const AdminProductsPage: React.FC = () => {
       const payload = {
         slug: editing && editing.name === form.name ? editing.slug : baseSlug,
         name: form.name.trim(),
-        ...(editing && !form.productCollection ? {} : { productCollection: form.productCollection }),
+        ...(form.productCollection ? { productCollection: form.productCollection } : {}),
         description: form.description.trim(),
         shortDescription: form.shortDescription.trim(),
         price,
