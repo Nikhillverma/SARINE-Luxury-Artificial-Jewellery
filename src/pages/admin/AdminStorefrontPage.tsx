@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AdminLayout } from "../../components/admin/AdminLayout";
 const CuratedFavouritesManager = React.lazy(() => import("../../components/admin/CuratedFavouritesManager").then(module => ({ default: module.CuratedFavouritesManager })));
@@ -22,6 +22,7 @@ export const AdminStorefrontPage: React.FC = () => {
   const activeSection = location.pathname.split("/").filter(Boolean)[2] || "overview";
   const [banners, setBanners] = useState<StorefrontBanner[]>([]);
   const [homepageCollection, setHomepageCollection] = useState<"" | "artificial" | "demi-fine">("");
+  const contentLoadRequest = useRef(0);
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [reviewStatus, setReviewStatus] = useState("pending");
   const [reviewReplies, setReviewReplies] = useState<Record<string,string>>({});
@@ -45,15 +46,18 @@ export const AdminStorefrontPage: React.FC = () => {
   const [error, setError] = useState("");
 
   const loadBanners = async () => {
+    const requestId = ++contentLoadRequest.current;
     setLoading(true);
     setError("");
+    setBanners([]);
     try {
       const result = await hostingerStorefrontService.getBanners(homepageCollection || undefined);
+      if (requestId !== contentLoadRequest.current) return;
       setBanners(result.banners);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unable to load hero banners.");
+      if (requestId === contentLoadRequest.current) setError(e instanceof Error ? e.message : "Unable to load hero banners.");
     } finally {
-      setLoading(false);
+      if (requestId === contentLoadRequest.current) setLoading(false);
     }
   };
 
@@ -75,15 +79,18 @@ export const AdminStorefrontPage: React.FC = () => {
   };
 
   const loadEditorial = async () => {
+    const requestId = ++contentLoadRequest.current;
     setLoading(true);
     setError("");
+    setEditorial({ ...defaultEditorial, active: false });
     try {
       const result = await hostingerStorefrontService.getEditorial(homepageCollection || undefined);
+      if (requestId !== contentLoadRequest.current) return;
       setEditorial({ ...defaultEditorial, ...result.editorial });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unable to load editorial settings.");
+      if (requestId === contentLoadRequest.current) setError(e instanceof Error ? e.message : "Unable to load editorial settings.");
     } finally {
-      setLoading(false);
+      if (requestId === contentLoadRequest.current) setLoading(false);
     }
   };
 
