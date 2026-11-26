@@ -2,9 +2,14 @@ import { Router } from "express";
 import crypto from "node:crypto";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
+import { ensureCategoryCollectionSchema } from "./categoryCollectionSchema.js";
 
 const router = Router();
 router.use(requireAdminAuth);
+router.use(async (_req, _res, next) => {
+  try { await ensureCategoryCollectionSchema(); next(); }
+  catch (error) { next(error); }
+});
 
 const slugify = value => String(value || "")
   .normalize("NFKD").replace(/[\\u0300-\\u036f]/g, "")
@@ -19,7 +24,8 @@ function mapCategory(row) {
     description: row.description || "",
     image: row.image || "",
     isActive: Boolean(row.is_active),
-    sortOrder: Number(row.sort_order)
+    sortOrder: Number(row.sort_order),
+    categoryCollection: ["artificial", "demi-fine", "both"].includes(row.category_collection) ? row.category_collection : "both"
   };
 }
 
@@ -71,7 +77,7 @@ router.post("/", async (req, res, next) => {
       `INSERT INTO categories (id, slug, name, description, image, is_active, sort_order)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [id, slug, name, body.description?.trim() || "", body.image || "",
-       body.isActive === false ? 0 : 1, Number(body.sortOrder ?? 0)]
+       body.isActive === false ? 0 : 1, Number(body.sortOrder ?? 0), body.categoryCollection || "both"]
     );
     const [rows] = await pool.execute("SELECT * FROM categories WHERE id = ? LIMIT 1", [id]);
     res.status(201).json({ success: true, category: mapCategory(rows[0]) });
