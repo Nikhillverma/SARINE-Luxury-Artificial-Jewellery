@@ -182,6 +182,98 @@ adminMediaRouter.get("/duplicates", async (req, res, next) => {
   }
 });
 
+// Read-only image usage map. Only explicit references to this media library are counted.
+adminMediaRouter.get("/usage", async (req, res, next) => {
+  try {
+    await ensureMediaTable();
+    const parsedLimit = Number.parseInt(String(req.query.limit || "40"), 10);
+    const parsedOffset = Number.parseInt(String(req.query.offset || "0"), 10);
+    const limit = Math.min(100, Math.max(1, Number.isFinite(parsedLimit) ? parsedLimit : 40));
+    const offset = Math.min(100000, Math.max(0, Number.isFinite(parsedOffset) ? parsedOffset : 0));
+    const [mediaRows] = await pool.execute(
+      "SELECT id, file_name, mime_type, file_size, uploaded_by, created_at FROM media_assets ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?",
+      [limit, offset]
+    );
+    const [countRows] = await pool.query("SELECT COUNT(*) AS total FROM media_assets");
+    const usageById = new Map(mediaRows.map(row => [String(row.id), []]));
+    const mediaIdPattern = /(?:^|\/)media\/([a-f0-9-]{36})(?=$|[?#])/ig;
+    const scanValue = (value, source, path = "") => {
+      if (typeof value === "string") {
+        mediaIdPattern.lastIndex = 0;
+        let match;
+        while ((match = mediaIdPattern.exec(value)) !== null) {
+          const id = match[1].toLowerCase();
+          const refs = usageById.get(id);
+          if (refs && refs.length < 100) refs.push({ source, location: path || source });
+        }
+        return;
+      }
+      if (Array.isArray(value)) { value.forEach((item, index) => scanValue(item, source, path ? path + "[" + index + "]" : "[" + index + "]")); return; }
+      if (value && typeof value === "object") {
+        for (const [key, item] of Object.entries(value)) scanValue(item, source, path ? path + "." + key : key);
+      }
+    };
+    const parseJson = value => { if (typeof value !== "string") return value; try { return JSON.parse(value); } catch { return value; } };
+    const hasTable = async table => {
+      const [rows] = await pool.execute("SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? LIMIT 1", [table]);
+      return rows.length > 0;
+    };
+    const coverage = [];
+
+    if (await hasTable("products")) {
+      const [rows] = await pool.query("SELECT id, name, status, images FROM products");
+      for (const row of rows) scanValue(parseJson(row.images), "Product", row.name + " (" + row.status + ")");
+      coverage.push("Product images");
+    }
+    if (await hasTable("categories")) {
+      const [rows] = await pool.query("SELECT name, image FROM categories WHERE image IS NOT NULL AND image <> ''");
+      for (const row of rows) scanValue(row.image, "Category", row.name);
+      coverage.push("Category images");
+    }
+    if (await hasTable("storefront_banners")) {
+      const [rows] = await pool.query("SELECT title, image_url, is_active, product_collection FROM storefront_banners");
+      for (const row of rows) scanValue(row.image_url, "Hero banner", row.title + " · " + (row.product_collection || "Shared") + " · " + (row.is_active ? "Published" : "Draft"));
+      coverage.push("Hero banners");
+    }
+    if (await hasTable("storefront_settings")) {
+      const [rows] = await pool.query("SELECT setting_key, setting_value FROM storefront_settings");
+      const labelForSetting = key => {
+        if (key.startsWith("homepage_content_")) return "Homepage content";
+        if (key.startsWith("homepage_category_images")) return "Homepage category image";
+        if (key.startsWith("shop_by_gender")) return "Shop by Gender";
+        if (key.startsWith("shop_by_occasion")) return "Shop by Occasion";
+        if (key.startsWith("homepage_layout_")) return "Homepage layout";
+        if (key.startsWith("men_storefront")) return "SARINE Men storefront";
+        return "Storefront setting";
+      };
+      for (const row of rows) scanValue(parseJson(row.setting_value), labelForSetting(row.setting_key), row.setting_key);
+      coverage.push("Storefront Studio settings");
+    }
+    if (await hasTable("cms_pages")) {
+      const [rows] = await pool.query("SELECT slug, draft_json, published_json, is_published FROM cms_pages");
+      for (const row of rows) {
+        scanValue(parseJson(row.draft_json), "Website page", "/" + row.slug + " · Draft");
+        if (row.published_json) scanValue(parseJson(row.published_json), "Website page", "/" + row.slug + (row.is_published ? " · Published" : " · Previously published"));
+      }
+      coverage.push("Website pages (draft and published content)");
+    }
+    if (await hasTable("cms_reusable_sections")) {
+      const [rows] = await pool.query("SELECT title, blocks_json FROM cms_reusable_sections");
+      for (const row of rows) scanValue(parseJson(row.blocks_json), "Reusable page section", row.title);
+      coverage.push("Reusable page sections");
+    }
+
+    const media = mediaRows.map(row => {
+      const references = usageById.get(String(row.id)) || [];
+      return {
+        id: row.id, fileName: row.file_name, mimeType: row.mime_type, size: Number(row.file_size),
+        uploadedBy: row.uploaded_by, createdAt: row.created_at, url: "/api/media/" + row.id,
+        usageCount: references.length, usageStatus: references.length ? "referenced" : "no-recorded-reference", references
+      };
+    });
+    res.set("Cache-Control", "no-store").json({ media, total: Number(countRows[0]?.total || 0), limit, offset, coverage, note: "No recorded reference means no match was found in the listed database-backed content sources; it is not proof that the file is safe to delete." });
+  } catch (error) { next(error); }
+});
 // Return metadata only; image bytes remain served by the existing public media route.
 adminMediaRouter.get("/", async (req, res, next) => {
   try {
