@@ -9,7 +9,6 @@ const MenStorefrontManager = React.lazy(() => import("../../components/admin/Men
 const HomepageSectionManager = React.lazy(() => import("../../components/admin/HomepageSectionManager").then(module => ({ default: module.HomepageSectionManager })));
 const HomepageContentManager = React.lazy(() => import("../../components/admin/HomepageContentManager").then(module => ({ default: module.HomepageContentManager })));
 const CmsPagesManager = React.lazy(() => import("../../components/admin/CmsPagesManager").then(module => ({ default: module.CmsPagesManager })));
-const GlobalDesignStudio = React.lazy(() => import("../../components/admin/GlobalDesignStudio").then(module => ({ default: module.GlobalDesignStudio })));
 const SiteChromeManager = React.lazy(() => import("../../components/admin/SiteChromeManager").then(module => ({ default: module.SiteChromeManager })));
 import { hostingerMediaService } from "../../services";
 import { hostingerStorefrontService, type StorefrontBanner, type EditorialContent, type ProductReview } from "../../services/hostinger/hostingerStorefrontService";
@@ -226,7 +225,6 @@ export const AdminStorefrontPage: React.FC = () => {
       </header>
       <section aria-label="Storefront Studio menu" className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
         {[
-          ["design", "Brand design", "Colours, fonts and layout"],
           ["header-footer", "Header & footer", "Shared brand messaging"],
           ["occasions", "Occasions", "Homepage occasion cards"],
           ["shop-by-gender", "Shop by Gender", "For Her and For Him images"],
@@ -254,7 +252,6 @@ export const AdminStorefrontPage: React.FC = () => {
       </div>}
 
       <React.Suspense fallback={<div className="rounded-xl border border-[#E7DCEB] bg-white p-5 text-sm text-[#705E7B]" role="status" aria-live="polite">Loading this workspace…</div>}>
-        {activeSection === "design" && <div id="design" className="scroll-mt-24"><GlobalDesignStudio /></div>}
         {activeSection === "header-footer" && <div id="header-footer" className="scroll-mt-24"><SiteChromeManager /></div>}
         {activeSection === "occasions" && <div id="occasions" className="scroll-mt-24"><ShopByOccasionManager /></div>}
         {activeSection === "shop-by-gender" && <div id="shop-by-gender" className="scroll-mt-24"><ShopByGenderManager /></div>}
