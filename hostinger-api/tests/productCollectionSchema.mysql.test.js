@@ -7,12 +7,23 @@ test("MariaDB range migration keeps legacy products unassigned and isolates both
   skip: process.env.SARINE_RUN_PRODUCT_COLLECTION_SCHEMA_TESTS !== "true"
 }, async () => {
   assertSafeTestDatabase();
-  const [{ pool }, { ensureProductCollectionSchema }] = await Promise.all([
-    import("../db.js"),
-    import("../productCollectionSchema.js")
-  ]);
+  const mysql = (await import("mysql2/promise")).default;
+  const isolatedDatabase = "sarine_product_collection_range_test";
+  const adminConnection = await mysql.createConnection({
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT || 3306),
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD
+  });
+  await adminConnection.query(`CREATE DATABASE IF NOT EXISTS `${isolatedDatabase}` CHARACTER SET utf8mb4`);
+  process.env.DB_NAME = isolatedDatabase;
+  assertSafeTestDatabase();
+  let pool;
   let server;
   try {
+    const modules = await Promise.all([import("../db.js"), import("../productCollectionSchema.js")]);
+    pool = modules[0].pool;
+    const { ensureProductCollectionSchema } = modules[1];
     await pool.query("DROP TABLE IF EXISTS storefront_settings");
     await pool.query("DROP TABLE IF EXISTS products");
     await pool.query(`CREATE TABLE products (
@@ -132,8 +143,12 @@ test("MariaDB range migration keeps legacy products unassigned and isolates both
     }
   } finally {
     if (server) await new Promise(resolve => server.close(resolve));
-    await pool.query("DROP TABLE IF EXISTS storefront_settings").catch(() => {});
-    await pool.query("DROP TABLE IF EXISTS products").catch(() => {});
-    await pool.end();
+    if (pool) {
+      await pool.query("DROP TABLE IF EXISTS storefront_settings").catch(() => {});
+      await pool.query("DROP TABLE IF EXISTS products").catch(() => {});
+      await pool.end();
+    }
+    await adminConnection.query(`DROP DATABASE IF EXISTS `${isolatedDatabase}``).catch(() => {});
+    await adminConnection.end();
   }
 });
