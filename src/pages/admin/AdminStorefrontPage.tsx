@@ -8,6 +8,7 @@ const ShopByGenderManager = React.lazy(() => import("../../components/admin/Shop
 const MenStorefrontManager = React.lazy(() => import("../../components/admin/MenStorefrontManager").then(module => ({ default: module.MenStorefrontManager })));
 const HomepageSectionManager = React.lazy(() => import("../../components/admin/HomepageSectionManager").then(module => ({ default: module.HomepageSectionManager })));
 const HomepageContentManager = React.lazy(() => import("../../components/admin/HomepageContentManager").then(module => ({ default: module.HomepageContentManager })));
+const HomepageCategoryImagesManager = React.lazy(() => import("../../components/admin/HomepageCategoryImagesManager").then(module => ({ default: module.HomepageCategoryImagesManager })));
 const CmsPagesManager = React.lazy(() => import("../../components/admin/CmsPagesManager").then(module => ({ default: module.CmsPagesManager })));
 const SiteChromeManager = React.lazy(() => import("../../components/admin/SiteChromeManager").then(module => ({ default: module.SiteChromeManager })));
 import { hostingerMediaService } from "../../services";
@@ -232,6 +233,7 @@ export const AdminStorefrontPage: React.FC = () => {
           ["men-storefront", "SARINE Men", "Men's landing page, catalogue and launch signups"],
           ["homepage-layout", "Homepage layout", "Section order and visibility"],
           ["homepage-content", "Homepage content", "Story, price links and care guide"],
+          ["category-images", "Category images", "Range-specific category artwork"],
           ["website-pages", "Website pages", "Campaigns, stories and FAQs"],
           ["curated-favourites", "Curated favourites", "Choose featured products"],
           ["explore-now", "Explore Now", "Randomized product grid and display count"],
@@ -259,6 +261,7 @@ export const AdminStorefrontPage: React.FC = () => {
         {activeSection === "men-storefront" && <div id="men-storefront" className="scroll-mt-24"><MenStorefrontManager /></div>}
         {activeSection === "homepage-layout" && <div id="homepage-sections" className="scroll-mt-24"><HomepageSectionManager /></div>}
         {activeSection === "homepage-content" && <div id="homepage-content" className="scroll-mt-24"><HomepageContentManager /></div>}
+        {activeSection === "category-images" && <div id="category-images" className="scroll-mt-24"><HomepageCategoryImagesManager /></div>}
         {activeSection === "website-pages" && <div id="pages" className="scroll-mt-24"><CmsPagesManager /></div>}
         {activeSection === "curated-favourites" && <div id="favourites" className="scroll-mt-24"><CuratedFavouritesManager /></div>}
         {activeSection === "explore-now" && <div id="explore-now" className="scroll-mt-24"><ExploreNowManager /></div>}
