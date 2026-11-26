@@ -42,7 +42,7 @@ export const HomepageCategoryImagesManager: React.FC = () => {
     try {
       const url = await hostingerMediaService.uploadImage(file);
       setImages(current => ({ ...current, [slug]: url }));
-      setMessage("Image uploaded to Hostinger. Save changes to apply it to this homepage version.");
+      setMessage("Image uploaded to Hostinger. Save a draft, then review and publish it when ready.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Category image upload failed.");
     } finally { setBusySlug(""); }
