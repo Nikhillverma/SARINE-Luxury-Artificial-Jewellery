@@ -61,6 +61,16 @@ function shuffleInPlace(items) {
 
 function collectionFrom(value) { const v = String(value || "").trim().toLowerCase(); if (!v) return null; if (v !== "artificial" && v !== "demi-fine") throw new Error("Product collection must be artificial or demi-fine."); return v; }
 function collectionKey(base, collection) { return collection ? base + "_" + collection : base; }
+async function validateCollectionProductIds(productIds, collection) {
+  if (!collection || !productIds.length) return null;
+  await ensureProductCollectionSchema();
+  const placeholders = productIds.map(() => "?").join(",");
+  const [rows] = await pool.execute(
+    `SELECT id FROM products WHERE id IN (${placeholders}) AND product_collection = ?`,
+    [...productIds, collection]
+  );
+  return rows.length === productIds.length ? null : "Every selected product must belong to the chosen homepage range.";
+}
 
 adminOnly.get("/", async (req, res, next) => {
   try {
@@ -79,7 +89,10 @@ adminOnly.get("/", async (req, res, next) => {
 adminOnly.put("/draft", async (req, res, next) => {
   try {
     const draft = validateExploreNow(req.body);
-    await writeExploreNow(collectionKey("explore_now_draft", collectionFrom(req.body?.productCollection)), draft);
+    const collection = collectionFrom(req.body?.productCollection);
+    const collectionError = await validateCollectionProductIds(draft.productIds, collection);
+    if (collectionError) return res.status(400).json({ error: collectionError });
+    await writeExploreNow(collectionKey("explore_now_draft", collection), draft);
     res.set("Cache-Control", "no-store").json({ success: true, draft });
   } catch (error) {
     if (error instanceof Error && /explore now|product|choose|valid|added|count/i.test(error.message)) {
