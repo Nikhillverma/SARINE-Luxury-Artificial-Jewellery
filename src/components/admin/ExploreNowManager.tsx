@@ -1,123 +1,45 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { adminProductService } from "../../services";
 import type { Product } from "../../types/product";
-import { hostingerStorefrontService, type ExploreNowConfig } from "../../services/hostinger/hostingerStorefrontService";
-
+import { hostingerStorefrontService, type ExploreNowConfig, type EditorialSchedule, type EditorialScheduleStatus } from "../../services/hostinger/hostingerStorefrontService";
+type Collection = "" | "artificial" | "demi-fine";
+type Mode = "desktop" | "tablet" | "mobile";
 const EMPTY: ExploreNowConfig = { version: 1, productIds: [], displayCount: 8, configured: false };
-const DISPLAY_COUNTS = [4, 6, 8, 10, 12, 16, 20, 24];
-const MAX_PRODUCTS = 100;
-
-export const ExploreNowManager: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [collection, setCollection] = useState<"" | "artificial" | "demi-fine">("");
-  const [draft, setDraft] = useState<ExploreNowConfig>(EMPTY);
-  const [published, setPublished] = useState<ExploreNowConfig>(EMPTY);
-  const [search, setSearch] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-
-  const byId = useMemo(() => new Map(products.map(product => [product.id, product])), [products]);
-  const selected = draft.productIds.map(id => byId.get(id)).filter((product): product is Product => Boolean(product));
-  const missing = draft.productIds.filter(id => !byId.has(id));
-  const available = products.filter(product => product.status === "active" && product.stock > 0 &&
-    !draft.productIds.includes(product.id) &&
-    (!search.trim() || product.name.toLowerCase().includes(search.trim().toLowerCase()) || product.slug.toLowerCase().includes(search.trim().toLowerCase())));
-  const unchanged = JSON.stringify(draft) === JSON.stringify(published);
-
-  const load = async (isCancelled: () => boolean = () => false) => {
-    setLoading(true); setError("");
-    try {
-      const [catalogue, config] = await Promise.all([adminProductService.getProducts(), hostingerStorefrontService.getExploreNow(collection || undefined)]);
-      if (isCancelled()) return;
-      setProducts(collection ? catalogue.filter(product => product.productCollection === collection) : catalogue); setDraft(config.draft); setPublished(config.published);
-    } catch (e) { if (!isCancelled()) setError(e instanceof Error ? e.message : "Could not load Explore Now settings."); }
-    finally { if (!isCancelled()) setLoading(false); }
-  };
-  useEffect(() => { let cancelled = false; setProducts([]); setDraft(EMPTY); setPublished(EMPTY); void load(() => cancelled); return () => { cancelled = true; }; }, [collection]);
-
-  const update = (productIds: string[], displayCount = draft.displayCount) => {
-    setDraft({ version: 1, productIds, displayCount, configured: productIds.length > 0 });
-    setMessage("");
-  };
-  const toggle = (id: string) => update(draft.productIds.includes(id) ? draft.productIds.filter(item => item !== id) : [...draft.productIds, id]);
-  const save = async () => {
-    setBusy(true); setError(""); setMessage("");
-    try {
-      const result = await hostingerStorefrontService.saveExploreNow(draft, collection || undefined);
-      setDraft(result.draft); setMessage("Explore Now draft saved. The live homepage is unchanged until you publish.");
-    } catch (e) { setError(e instanceof Error ? e.message : "Draft could not be saved."); }
-    finally { setBusy(false); }
-  };
-  const publish = async () => {
-    setBusy(true); setError(""); setMessage("");
-    try {
-      await hostingerStorefrontService.saveExploreNow(draft, collection || undefined);
-      const result = await hostingerStorefrontService.publishExploreNow(collection || undefined);
-      setDraft(result.published); setPublished(result.published);
-      setMessage("Explore Now published. The homepage will randomly select from this eligible product pool on each visit.");
-    } catch (e) { setError(e instanceof Error ? e.message : "Explore Now could not be published."); }
-    finally { setBusy(false); }
-  };
-
-  return <section className="bg-white border rounded-2xl p-5 space-y-4">
-    <div className="flex flex-wrap items-start justify-between gap-3">
-      <div><h2 className="font-semibold text-[#2C1838]">Explore Now</h2>
-        <p className="mt-1 text-xs text-gray-500">Choose the eligible products, then set how many appear in a clean, non-carousel grid. The storefront shuffles this pool on each visit.</p>
-        <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={collection} disabled={loading || busy} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global selection)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
-      </div>
-      <span className={unchanged ? "text-xs rounded-full px-3 py-1 bg-green-50 text-green-700" : "text-xs rounded-full px-3 py-1 bg-amber-50 text-amber-700"}>{unchanged ? "Published version" : "Unpublished changes"}</span>
-    </div>
-    {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-    {message && <p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-800">{message}</p>}
-    {loading ? <p className="text-sm text-gray-500">Loading product catalogue…</p> : <>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-medium text-[#302438]">Products to display
-          <select value={draft.displayCount} onChange={e => update(draft.productIds, Number(e.target.value))} className="mt-1 block min-h-11 w-full rounded-lg border p-3 text-sm">
-            {DISPLAY_COUNTS.map(count => <option key={count} value={count}>{count} products</option>)}
-          </select>
-          <span className="mt-1 block text-xs font-normal text-gray-500">The actual number is capped by the number of eligible products selected and currently in stock.</span>
-        </label>
-        <div className="rounded-lg border border-[#E7DCEB] bg-[#FBF8FC] p-3">
-          <p className="text-sm font-medium text-[#302438]">Eligible pool</p>
-          <p className="mt-1 text-lg font-semibold text-[#563568]">{draft.productIds.length} <span className="text-xs font-normal text-gray-500">/ {MAX_PRODUCTS} selected</span></p>
-          <p className="text-xs text-gray-500">At least {draft.displayCount} eligible items are recommended to keep the selection varied.</p>
-        </div>
-      </div>
-      <div className="grid gap-5 lg:grid-cols-2">
-        <div className="space-y-3">
-          <div><h3 className="text-sm font-medium">Add eligible products</h3><p className="text-xs text-gray-500">Only active, in-stock products can be selected.</p></div>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by product name…" aria-label="Search products" className="min-h-11 w-full rounded-lg border p-3 text-sm" />
-          <div className="max-h-[420px] space-y-2 overflow-y-auto">
-            {available.map(product => <label key={product.id} className="flex min-h-[72px] cursor-pointer items-center gap-3 rounded-xl border p-2 hover:bg-[#FBF8FC]">
-              <img src={product.images?.[0] || "/images/product-placeholder.png"} alt="" className="h-14 w-12 rounded-lg bg-[#F7F0FA] object-cover" />
-              <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{product.name}</span><span className="block text-xs text-gray-500">₹{product.price.toLocaleString("en-IN")} · Stock {product.stock}</span></span>
-              <input type="checkbox" checked={false} disabled={busy || draft.productIds.length >= MAX_PRODUCTS} onChange={() => toggle(product.id)} aria-label={"Add " + product.name} className="h-5 w-5 accent-[#563568]" />
-            </label>)}
-            {!available.length && <p className="rounded-xl border p-4 text-xs text-gray-500">{search ? "No matching available products." : "No additional active, in-stock products available."}</p>}
-          </div>
-        </div>
-        <div className="space-y-3">
-          <div><h3 className="text-sm font-medium">Selected eligible pool</h3><p className="text-xs text-gray-500">Every visit shows a random sample from this pool, up to your display count.</p></div>
-          <div className="max-h-[420px] space-y-2 overflow-y-auto">
-            {draft.productIds.map(id => { const product = byId.get(id); const active = product?.status === "active" && (product.stock ?? 0) > 0; return <article key={id} className="flex items-center gap-3 rounded-xl border p-2">
-              {product && <img src={product.images?.[0] || "/images/product-placeholder.png"} alt="" className="h-14 w-12 rounded-lg bg-[#F7F0FA] object-cover" />}
-              <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{product?.name || "Product no longer found"}</p><p className={active ? "text-xs text-green-700" : "text-xs text-amber-700"}>{active && product ? "₹" + product.price.toLocaleString("en-IN") + " · In stock" : "Currently unavailable; excluded from the live grid"}</p></div>
-              <button type="button" disabled={busy} onClick={() => toggle(id)} className="min-h-11 rounded-lg border border-red-200 px-3 text-xs text-red-700">Remove</button>
-            </article>; })}
-            {!draft.productIds.length && <p className="rounded-xl border p-4 text-xs text-gray-500">Select products from the catalogue to build the rotation pool.</p>}
-            {missing.length > 0 && <p className="text-xs text-amber-700">{missing.length} selected product(s) are missing from the catalogue. Remove them before publishing.</p>}
-          </div>
-        </div>
-      </div>
-      <div className="rounded-xl border border-[#E7DCEB] bg-[#FBF8FC] p-3 text-xs text-gray-600">Preview: a maximum of <strong>{draft.displayCount}</strong> products will appear per visit. The order and selection are randomized from the published pool; product details, stock and pricing remain sourced from the catalogue.</div>
-    </>}
-    <div className="flex flex-wrap gap-2">
-      <button type="button" disabled={busy || loading || missing.length > 0} onClick={() => void save()} className="min-h-11 rounded-lg border px-4 py-2 text-sm disabled:opacity-50">{busy ? "Saving…" : "Save draft"}</button>
-      <button type="button" disabled={busy || loading || missing.length > 0 || draft.productIds.length === 0} onClick={() => void publish()} className="min-h-11 rounded-lg bg-[#563568] px-4 py-2 text-sm text-white disabled:opacity-50">{busy ? "Publishing…" : "Publish Explore Now"}</button>
-      <button type="button" disabled={busy || loading} onClick={() => void load()} className="min-h-11 rounded-lg border px-4 py-2 text-sm disabled:opacity-50">Reload</button>
-      <a href="/" target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-lg border px-4 py-2 text-sm">Preview storefront</a>
-    </div>
-  </section>;
+const COUNTS = [4,6,8,10,12,16,20,24];
+const label = (c:Collection) => c===""?"Shared (shown in both collections)":c==="artificial"?"Artificial":"Demi-Fine";
+const local = (v?:string|null) => {if(!v)return "";const d=new Date(v);return Number.isFinite(d.getTime())?new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16):""};
+const utc = (v:string) => v?new Date(v).toISOString():null;
+export const ExploreNowManager:React.FC=()=>{
+ const [products,setProducts]=useState<Product[]>([]),[collection,setCollection]=useState<Collection>(""),[draft,setDraft]=useState<ExploreNowConfig>(EMPTY),[published,setPublished]=useState<ExploreNowConfig>(EMPTY),[saved,setSaved]=useState<ExploreNowConfig|null>(null),[inherited,setInherited]=useState(false),[schedule,setSchedule]=useState<EditorialSchedule|null>(null),[status,setStatus]=useState<EditorialScheduleStatus>("none"),[scheduleScope,setScheduleScope]=useState<string|null>(null),[start,setStart]=useState(""),[end,setEnd]=useState(""),[mode,setMode]=useState<Mode>("desktop"),[search,setSearch]=useState(""),[busy,setBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(""),[message,setMessage]=useState(""),[review,setReview]=useState(false),[scheduleReview,setScheduleReview]=useState(false);
+ const byId=useMemo(()=>new Map(products.map(p=>[p.id,p])),[products]);
+ const missing=draft.productIds.filter(id=>!byId.has(id));
+ const available=products.filter(p=>p.status==="active"&&p.stock>0&&!draft.productIds.includes(p.id)&&(!search.trim()||p.name.toLowerCase().includes(search.trim().toLowerCase())||p.slug.toLowerCase().includes(search.trim().toLowerCase())));
+ const unchanged=JSON.stringify(draft)===JSON.stringify(published),savedCurrent=Boolean(saved&&JSON.stringify(saved)===JSON.stringify(draft));
+ const added=draft.productIds.filter(id=>!published.productIds.includes(id)),removed=published.productIds.filter(id=>!draft.productIds.includes(id)),countChanged=draft.displayCount!==published.displayCount;
+ const inheritedSchedule=Boolean(schedule&&scheduleScope==="shared"&&collection!=="");
+ const preview=(saved?.productIds||[]).map(id=>byId.get(id)).filter((p):p is Product=>Boolean(p&&p.status==="active"&&p.stock>0)).slice(0,saved?.displayCount||0);
+ const load=async(cancelled=()=>false)=>{setLoading(true);setError("");setMessage("");try{const [catalogue,cfg]=await Promise.all([adminProductService.getProducts(),hostingerStorefrontService.getExploreNow(collection||undefined)]);if(cancelled())return;setProducts(collection?catalogue.filter(p=>p.productCollection===collection):catalogue);setDraft(cfg.draft);setPublished(cfg.published);setSaved(null);setInherited(Boolean(cfg.inheritedFrom));setSchedule(cfg.schedule||null);setStatus(cfg.scheduleStatus||"none");setScheduleScope(cfg.scheduleCollection||null);setStart(local(cfg.schedule?.startsAtUtc));setEnd(local(cfg.schedule?.endsAtUtc));setReview(false);setScheduleReview(false);}catch(e){if(!cancelled())setError(e instanceof Error?e.message:"Could not load Explore Now.");}finally{if(!cancelled())setLoading(false);}};
+ useEffect(()=>{let cancelled=false;setProducts([]);setDraft(EMPTY);setPublished(EMPTY);setSaved(null);void load(()=>cancelled);return()=>{cancelled=true;};},[collection]);
+ const update=(next:ExploreNowConfig)=>{setDraft({...next,configured:next.productIds.length>0});setMessage("");setReview(false);setScheduleReview(false);};
+ const save=async()=>{setBusy(true);setError("");setMessage("");try{const r=await hostingerStorefrontService.saveExploreNow(draft,collection||undefined);setDraft(r.draft);setSaved(r.draft);setMessage("Draft saved. Preview refreshed from this saved selection; customers still see the published version.");}catch(e){setError(e instanceof Error?e.message:"Draft save failed.");}finally{setBusy(false);}};
+ const publish=async()=>{if(!savedCurrent||missing.length)return;setBusy(true);setError("");setMessage("");setReview(false);try{const r=await hostingerStorefrontService.publishExploreNow(collection||undefined);setDraft(r.published);setPublished(r.published);setSaved(r.published);setSchedule(null);setStatus("none");setMessage("Explore Now published for "+label(collection)+".");}catch(e){setError(e instanceof Error?e.message:"Publish failed.");}finally{setBusy(false);}};
+ const reviewSchedule=()=>{const a=utc(start),b=end?utc(end):null;if(!savedCurrent||missing.length){setError("Save the current draft and refresh preview first.");return;}if(!a||new Date(a).getTime()<=Date.now()){setError("Choose a valid future start time.");return;}if(end&&(!b||new Date(b).getTime()<=new Date(a).getTime())){setError("Expiry must be later than start.");return;}setError("");setScheduleReview(true);};
+ const confirmSchedule=async()=>{const a=utc(start),b=end?utc(end):null;if(!a)return;setBusy(true);setError("");setScheduleReview(false);try{const r=await hostingerStorefrontService.scheduleExploreNow(a,b,collection||undefined);setSchedule(r.schedule);setStatus(r.scheduleStatus);setScheduleScope(r.scheduleCollection||null);setMessage("Saved Explore Now version scheduled. Later edits will not change this snapshot.");}catch(e){setError(e instanceof Error?e.message:"Schedule failed.");}finally{setBusy(false);}};
+ const cancelSchedule=async()=>{if(!window.confirm(inheritedSchedule?"Cancel the Shared schedule for both collections?":"Cancel this Explore Now schedule?"))return;setBusy(true);try{const r=await hostingerStorefrontService.cancelExploreNowSchedule(collection||undefined);setSchedule(r.schedule);setStatus(r.scheduleStatus);setScheduleScope(r.scheduleCollection||null);setStart("");setEnd("");setMessage("Schedule cancelled.");}catch(e){setError(e instanceof Error?e.message:"Could not cancel schedule.");}finally{setBusy(false);}};
+ const tab=(m:Mode)=><button key={m} type="button" onClick={()=>setMode(m)} className={"rounded-lg px-3 py-2 text-xs "+(mode===m?"bg-[#563568] text-white":"border bg-white text-[#563568]")}>{m[0].toUpperCase()+m.slice(1)}</button>;
+ return <section className="bg-white border rounded-2xl p-5 space-y-5">
+ <div className="flex flex-wrap justify-between gap-3"><div><h2 className="font-semibold text-[#2C1838]">Explore Now</h2><p className="mt-1 text-xs text-gray-500">Choose an eligible product pool and the number shown in a randomized grid.</p><label className="mt-3 block max-w-xs text-xs font-medium text-[#563568]">Homepage version<select value={collection} disabled={loading||busy} onChange={e=>setCollection(e.target.value as Collection)} className="mt-1 w-full rounded-lg border p-2.5 text-sm"><option value="">Shared (shown in both collections)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>{inherited&&collection&&<p className="mt-2 text-xs text-[#705E7B]">This collection currently inherits Shared. Saving creates an independent collection version.</p>}</div><span className="text-xs rounded-full bg-[#F7F0FA] px-3 py-1">{unchanged?"Published version":"Unpublished changes"}</span></div>
+ {error&&<p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}{message&&<p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-800">{message}</p>}
+ {loading?<p className="text-sm text-gray-500">Loading product catalogue…</p>:<>
+ <div className="grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium">Products to display<select value={draft.displayCount} disabled={busy} onChange={e=>update({...draft,displayCount:Number(e.target.value)})} className="mt-1 min-h-11 w-full rounded-lg border p-3">{COUNTS.map(n=><option key={n} value={n}>{n} products</option>)}</select><span className="text-xs font-normal text-gray-500">Maximum per visit, capped by available stock.</span></label><div className="rounded-lg border bg-[#FBF8FC] p-3"><p className="text-sm font-medium">Eligible pool</p><p className="text-lg font-semibold text-[#563568]">{draft.productIds.length} / 100 selected</p></div></div>
+ <div className="grid gap-5 lg:grid-cols-2"><div className="space-y-3"><h3 className="text-sm font-medium">Add eligible products</h3><p className="text-xs text-gray-500">Only active, in-stock products can be selected.</p><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search product name…" className="min-h-11 w-full rounded-lg border p-3 text-sm"/><div className="max-h-[420px] space-y-2 overflow-y-auto">{available.map(p=><label key={p.id} className="flex items-center gap-3 rounded-xl border p-2"><img src={p.images?.[0]||"/images/product-placeholder.png"} alt="" className="h-14 w-12 rounded-lg object-cover"/><span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{p.name}</span><span className="text-xs text-gray-500">₹{p.price.toLocaleString("en-IN")} · Stock {p.stock}</span></span><input type="checkbox" disabled={busy||draft.productIds.length>=100} checked={false} onChange={()=>update({...draft,productIds:[...draft.productIds,p.id]})}/></label>)}</div></div>
+ <div className="space-y-3"><h3 className="text-sm font-medium">Selected eligible pool</h3><p className="text-xs text-gray-500">The live storefront randomizes from this pool on each visit.</p><div className="max-h-[420px] space-y-2 overflow-y-auto">{draft.productIds.map(id=>{const p=byId.get(id);return <article key={id} className="flex items-center gap-3 rounded-xl border p-2">{p&&<img src={p.images?.[0]||"/images/product-placeholder.png"} alt="" className="h-14 w-12 rounded-lg object-cover"/>}<div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{p?.name||"Product no longer found"}</p><p className="text-xs text-gray-500">{p&&p.status==="active"&&p.stock>0?"In stock":"Unavailable; excluded from live grid"}</p></div><button type="button" disabled={busy} onClick={()=>update({...draft,productIds:draft.productIds.filter(x=>x!==id)})} className="min-h-11 rounded-lg border px-3 text-xs">Remove</button></article>})}{missing.length>0&&<p className="text-xs text-amber-700">{missing.length} missing product(s) must be removed before publishing.</p>}</div></div></div>
+ <div className="rounded-xl border bg-[#FBF8FC] p-4 space-y-3"><div className="flex flex-wrap justify-between gap-2"><div><h3 className="text-sm font-medium">Responsive saved preview</h3><p className="text-xs text-gray-500">Illustrative sample from saved pool; live order remains randomized.</p></div><div className="flex gap-1">{(["desktop","tablet","mobile"] as Mode[]).map(tab)}</div></div>{!savedCurrent&&<p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800">Save draft & refresh preview after changes. Customers still see published content.</p>}<div className={"mx-auto w-full "+(mode==="mobile"?"max-w-[390px]":mode==="tablet"?"max-w-[768px]":"max-w-none")}><div className={"grid gap-3 rounded-lg border bg-white p-3 "+(mode==="mobile"?"grid-cols-2":mode==="tablet"?"grid-cols-3":"grid-cols-4")}>{preview.map(p=><article key={p.id}><img src={p.images?.[0]||"/images/product-placeholder.png"} alt={p.name} className="aspect-[3/4] w-full rounded-lg object-cover"/><p className="mt-2 line-clamp-2 text-xs font-medium">{p.name}</p><p className="text-xs text-gray-500">₹{p.price.toLocaleString("en-IN")}</p></article>)}{!saved&&<p className="text-xs text-gray-500">Save draft to preview the saved selection.</p>}</div></div><button type="button" disabled={busy||missing.length>0} onClick={()=>void save()} className="min-h-11 rounded-lg bg-[#563568] px-4 py-2 text-xs text-white">Save draft & refresh preview</button></div>
+ <div className="rounded-xl border p-4 space-y-2"><h3 className="text-sm font-semibold">Draft vs published comparison</h3><p className="text-xs text-gray-600">{added.length} product(s) added · {removed.length} removed · display count {countChanged?"changed":"unchanged"}</p>{countChanged&&<p className="text-xs">Display count: {published.displayCount} → {draft.displayCount}</p>}{unchanged&&<p className="text-xs text-green-700">Draft matches published.</p>}</div>
+ <div className="rounded-xl border p-4 space-y-3"><h3 className="text-sm font-semibold">Scheduled Explore Now</h3><p className="text-xs text-gray-500">Uses local time. Saved snapshot starts at the selected time; previous published version returns at expiry. Later edits do not change the schedule.</p><p className="text-xs font-medium text-[#563568]">{status==="scheduled"?"Scheduled — waiting":status==="published"?"Scheduled version is live":status==="expired"?"Expired — previous version restored":"Not scheduled"}</p>{schedule&&<p className="text-xs">Start: {new Date(schedule.startsAtUtc).toLocaleString()} · {schedule.endsAtUtc?"Expiry: "+new Date(schedule.endsAtUtc).toLocaleString():"No expiry"}</p>}{inheritedSchedule&&<p className="text-xs text-[#563568]">Inherited Shared schedule applies to both collections.</p>}<div className="grid gap-3 sm:grid-cols-2"><label className="text-xs">Start (local)<input type="datetime-local" value={start} disabled={busy||inheritedSchedule} onChange={e=>setStart(e.target.value)} className="mt-1 w-full rounded-lg border p-2"/></label><label className="text-xs">Expiry (optional)<input type="datetime-local" value={end} disabled={busy||inheritedSchedule} onChange={e=>setEnd(e.target.value)} className="mt-1 w-full rounded-lg border p-2"/></label></div><div className="flex gap-2"><button type="button" disabled={!savedCurrent||missing.length>0||inheritedSchedule||busy} onClick={reviewSchedule} className="min-h-11 rounded-lg bg-[#563568] px-4 text-xs text-white">Review schedule</button>{schedule&&<button type="button" disabled={busy} onClick={()=>void cancelSchedule()} className="min-h-11 rounded-lg border px-4 text-xs">{inheritedSchedule?"Cancel Shared schedule (both collections)":"Cancel schedule"}</button>}</div></div>
+ {scheduleReview&&<div role="alertdialog" className="rounded-xl border-2 border-[#B69ACF] bg-[#F7F0FA] p-4 space-y-3"><h3 className="text-sm font-semibold">Confirm scheduled Explore Now</h3><p className="text-xs">Schedule saved {label(collection)} pool ({draft.productIds.length} products, show up to {draft.displayCount}) from {new Date(start).toLocaleString()}{end?" until "+new Date(end).toLocaleString():" with no expiry"}.</p><button type="button" disabled={busy} onClick={()=>void confirmSchedule()} className="rounded-lg bg-[#563568] px-4 py-2 text-xs text-white">Confirm schedule</button><button type="button" onClick={()=>setScheduleReview(false)} className="ml-2 rounded-lg border px-4 py-2 text-xs">Cancel</button></div>}
+ <div className="flex flex-wrap gap-2"><button type="button" disabled={!savedCurrent||missing.length>0||draft.productIds.length===0||busy} onClick={()=>setReview(true)} className="min-h-11 rounded-lg bg-[#563568] px-4 text-sm text-white">Review & publish collection</button><button type="button" disabled={busy} onClick={()=>void load()} className="min-h-11 rounded-lg border px-4 text-sm">Reload</button><a href="/" target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-lg border px-4 text-sm">Preview storefront</a></div>
+ {review&&<div role="alertdialog" className="rounded-xl border-2 border-[#B69ACF] bg-[#F7F0FA] p-4 space-y-3"><h3 className="text-sm font-semibold">Review publication</h3><p className="text-xs">Publish the saved {label(collection)} configuration with {draft.productIds.length} eligible products and up to {draft.displayCount} shown per visit. Product records and Curated Favourites remain unchanged.</p><button type="button" disabled={busy} onClick={()=>void publish()} className="rounded-lg bg-[#563568] px-4 py-2 text-xs text-white">Confirm and publish</button><button type="button" onClick={()=>setReview(false)} className="ml-2 rounded-lg border px-4 py-2 text-xs">Cancel</button></div>}
+ </>}
+ </section>;
 };
