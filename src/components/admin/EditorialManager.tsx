@@ -62,7 +62,7 @@ export const EditorialManager: React.FC = () => {
 
   useEffect(() => {
     let current = true;
-    setLoading(true); setError(""); setMessage(""); setReviewOpen(false); setSavedSnapshot(null);
+    setLoading(true); setError(""); setMessage(""); setReviewOpen(false); setScheduleReviewOpen(false); setCancelScheduleOpen(false); setSavedSnapshot(null);
     void hostingerStorefrontService.getEditorial(collection || undefined).then(result => {
       if (!current) return;
       const nextDraft = { ...defaults, ...result.draft };
@@ -91,8 +91,10 @@ export const EditorialManager: React.FC = () => {
       setDraft(saved); setPublished({ ...defaults, ...result.published });
       setSchedule(result.schedule);
       setScheduleStatus(result.scheduleStatus);
-      setSavedSnapshot(JSON.stringify(saved)); setFile(null); setReviewOpen(false);
-      setMessage("Editorial draft saved. It is not live until you confirm publication.");
+      setSavedSnapshot(JSON.stringify(saved)); setFile(null); setReviewOpen(false); setScheduleReviewOpen(false);
+      setMessage(result.schedule
+        ? "Draft saved. The existing scheduled snapshot is unchanged; review and reschedule to include these edits."
+        : "Editorial draft saved. It is not live until you confirm publication.");
     } catch (e) { setError(e instanceof Error ? e.message : "Editorial draft could not be saved."); }
     finally { setBusy(false); }
   };
@@ -213,7 +215,7 @@ export const EditorialManager: React.FC = () => {
         <div className="grid gap-3 sm:grid-cols-2"><div className="rounded-lg bg-[#FCFAFD] p-3"><p className="text-xs font-semibold text-[#563568]">Draft vs published</p>{changedFields.length ? <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-[#705E7B]">{changedFields.map(field => <li key={field}>{field} changed</li>)}</ul> : <p className="mt-2 text-xs text-[#705E7B]">The draft matches the published version.</p>}</div>
           <div className="rounded-lg bg-[#FCFAFD] p-3"><p className="text-xs font-semibold text-[#563568]">Selected version</p><p className="mt-2 text-sm font-semibold text-[#302438]">{collection === "artificial" ? "Artificial" : collection === "demi-fine" ? "Demi-Fine" : "Shared (shown in both collections)"}</p><p className="mt-1 text-xs text-[#705E7B]">{previewCurrent ? "Preview represents the exact saved draft." : "Save draft & refresh preview before publication."}</p></div></div>
         <div className="space-y-3 rounded-xl border border-[#E7DCEB] bg-[#FCFAFD] p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-sm font-semibold text-[#563568]">Scheduled publishing</h3><p className="mt-1 text-xs text-[#705E7B]">Times use your local time zone. The scheduled snapshot goes live automatically at the start time and the previous published version returns at expiry.</p></div><span className="rounded-full bg-[#F0EAF5] px-3 py-1 text-xs font-semibold text-[#563568]">{scheduleStatusLabel(scheduleStatus)}</span></div>
+          <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-sm font-semibold text-[#563568]">Scheduled publishing</h3><p className="mt-1 text-xs text-[#705E7B]">Times use your local time zone. The saved snapshot goes live at the start time; the previous published version returns at expiry. Later draft edits do not change an existing schedule until you reschedule.</p></div><span className="rounded-full bg-[#F0EAF5] px-3 py-1 text-xs font-semibold text-[#563568]">{scheduleStatusLabel(scheduleStatus)}</span></div>
           {schedule && <div className="rounded-lg bg-white p-3 text-xs text-[#705E7B]">
             <p><strong>Starts:</strong> {new Date(schedule.startsAtUtc).toLocaleString()}</p>
             <p className="mt-1"><strong>Expires:</strong> {schedule.endsAtUtc ? new Date(schedule.endsAtUtc).toLocaleString() : "No expiry — remains live until cancelled or replaced"}</p>
