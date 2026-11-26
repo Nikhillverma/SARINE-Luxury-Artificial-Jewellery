@@ -153,6 +153,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   useEffect(() => {
     let cancelled = false;
+    setManualCuratedFavourites([]);
+    setHasPublishedCuratedFavourites(false);
     hostingerStorefrontService.getPublicCuratedFavourites()
       .then(result => {
         if (!cancelled) {
@@ -166,6 +168,8 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   useEffect(() => {
     let cancelled = false;
+    setExploreProducts([]);
+    setHasPublishedExploreNow(false);
     hostingerStorefrontService.getPublicExploreNow()
       .then(result => {
         if (!cancelled) {
@@ -196,6 +200,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   useEffect(() => {
     let cancelled = false;
+    setCategoryImageOverrides({});
     hostingerStorefrontService.getPublicHomepageCategoryImages()
       .then(result => { if (!cancelled) setCategoryImageOverrides(result.images || {}); })
       .catch(error => console.warn("[HomePage] Category image overrides unavailable; using category defaults.", error));
@@ -211,6 +216,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   useEffect(() => {
     let cancelled = false;
+    setShopByGender({ version: 1, forHerImageUrl: "", forHimImageUrl: "" });
     hostingerStorefrontService.getPublicShopByGender()
       .then(result => { if (!cancelled && result.settings) setShopByGender(result.settings); })
       .catch(error => console.warn("[HomePage] Shop by Gender settings unavailable; using empty image placeholders.", error));
@@ -219,6 +225,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   useEffect(() => {
     let cancelled = false;
+    setOccasions([]);
     hostingerStorefrontService.getPublicOccasions()
       .then(result => { if (!cancelled && Array.isArray(result.occasions)) setOccasions(result.occasions); })
       .catch(error => console.warn("[HomePage] Published occasion cards unavailable; using defaults.", error));
@@ -346,6 +353,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   useEffect(() => {
     let cancelled = false;
+    setEditorial(current => ({ ...current, active: false }));
     hostingerStorefrontService.getPublicEditorial()
       .then(result => { if (!cancelled && result.editorial) setEditorial(result.editorial); else if (!cancelled && result.editorial === null) setEditorial(current => ({ ...current, active: false })); })
       .catch(error => console.warn('[HomePage] Editorial content unavailable; using default content.', error));
@@ -354,6 +362,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   useEffect(() => {
     let cancelled = false;
+    setHomepageContent(DEFAULT_HOMEPAGE_CONTENT);
     hostingerStorefrontService.getPublicHomepageContent()
       .then(result => { if (!cancelled && result.content) setHomepageContent(result.content); })
       .catch(error => console.warn('[HomePage] Editable homepage content unavailable; using the built-in defaults.', error));
@@ -362,6 +371,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   useEffect(() => {
     let cancelled = false;
+    setManagedHeroSlides([]);
     hostingerStorefrontService.getPublicBanners()
       .then(result => { if (!cancelled && result.banners.length) { setManagedHeroSlides(result.banners); setActiveSlide(0); } else if (!cancelled) setManagedHeroSlides([]); })
       .catch(error => console.warn('[HomePage] Published hero banners unavailable; using defaults.', error));
@@ -375,6 +385,10 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
     async function loadData() {
       setLoading(true);
       setLoadError(false);
+      setCategories([]);
+      setBestsellers([]);
+      setCuratedFavourites([]);
+      setNewArrivals([]);
       try {
         // Keep each homepage collection independent: one unavailable endpoint must
         // not prevent the other sections from rendering their successfully loaded data.
