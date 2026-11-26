@@ -14,7 +14,7 @@ const StorefrontImageLibrary = React.lazy(() => import("../../components/admin/S
 const SiteChromeManager = React.lazy(() => import("../../components/admin/SiteChromeManager").then(module => ({ default: module.SiteChromeManager })));
 const EditorialManager = React.lazy(() => import("../../components/admin/EditorialManager").then(module => ({ default: module.EditorialManager })));
 import { hostingerMediaService } from "../../services";
-import { hostingerStorefrontService, type StorefrontBanner, type ProductReview } from "../../services/hostinger/hostingerStorefrontService";
+import { hostingerStorefrontService, type StorefrontBanner, type ProductReview, type AnnouncementSettings } from "../../services/hostinger/hostingerStorefrontService";
 
 const emptyForm = { tagline: "", title: "", subtitle: "", ctaText: "Shop now", ctaLink: "/shop", imageUrl: "", active: false, startsAtUtc: "", endsAtUtc: "" };
 const toLocalDateTimeInput = (value?: string | null) => {
@@ -42,6 +42,9 @@ export const AdminStorefrontPage: React.FC = () => {
   const [reviewStatus, setReviewStatus] = useState("pending");
   const [reviewReplies, setReviewReplies] = useState<Record<string,string>>({});
   const [announcement, setAnnouncement] = useState("");
+  const [publishedAnnouncement, setPublishedAnnouncement] = useState<AnnouncementSettings>({ message: "", active: false, trustMessages: [] });
+  const [savedAnnouncementPreview, setSavedAnnouncementPreview] = useState<AnnouncementSettings | null>(null);
+  const [reviewAnnouncementPublish, setReviewAnnouncementPublish] = useState(false);
   const [announcementActive, setAnnouncementActive] = useState(false);
   const [trustMessages, setTrustMessages] = useState([
     "Free Shipping Above ₹1,999",
@@ -78,11 +81,14 @@ export const AdminStorefrontPage: React.FC = () => {
     setError("");
     try {
       const result = await hostingerStorefrontService.getAnnouncement();
-      setAnnouncement(result.announcement.message || "");
-      setAnnouncementActive(Boolean(result.announcement.active));
-      setTrustMessages(Array.isArray(result.announcement.trustMessages)
-        ? result.announcement.trustMessages
+      setAnnouncement(result.draft.message || "");
+      setAnnouncementActive(Boolean(result.draft.active));
+      setTrustMessages(Array.isArray(result.draft.trustMessages)
+        ? result.draft.trustMessages
         : ["Free Shipping Above ₹1,999", "7-Day Easy Returns", "Trusted by 1L+ Happy Customers"]);
+      setPublishedAnnouncement(result.published);
+      setSavedAnnouncementPreview(result.published);
+      setReviewAnnouncementPublish(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to load announcement settings.");
     } finally {
@@ -200,11 +206,28 @@ export const AdminStorefrontPage: React.FC = () => {
     finally { setBusy(false); }
   };
 
+  const currentAnnouncement: AnnouncementSettings = { message: announcement, active: announcementActive, trustMessages };
+  const announcementPreviewIsCurrent = Boolean(savedAnnouncementPreview && JSON.stringify(savedAnnouncementPreview) === JSON.stringify(currentAnnouncement));
+  const announcementChanged = JSON.stringify(currentAnnouncement) !== JSON.stringify(publishedAnnouncement);
   const saveAnnouncement = async () => {
+    setBusy(true); setError(""); setMessage(""); setReviewAnnouncementPublish(false);
+    try {
+      const result = await hostingerStorefrontService.saveAnnouncementDraft(currentAnnouncement);
+      setAnnouncement(result.draft.message); setAnnouncementActive(result.draft.active); setTrustMessages(result.draft.trustMessages);
+      setSavedAnnouncementPreview(result.draft);
+      setMessage("Announcement draft saved to MariaDB. The live announcement remains unchanged.");
+    } catch (e) { setError(e instanceof Error ? e.message : "Announcement draft could not be saved."); }
+    finally { setBusy(false); }
+  };
+  const publishAnnouncement = async () => {
+    if (!announcementPreviewIsCurrent) { setError("Save draft & refresh preview before publishing."); return; }
     if (announcementActive && /christmas|diwali|new year|black friday|sale|today|limited time|ends? (today|soon|on)/i.test(announcement) && !window.confirm("This announcement contains time-sensitive promotional wording. Have you checked that the offer and dates are currently valid?")) return;
-    setBusy(true); setError(""); setMessage("");
-    try { await hostingerStorefrontService.saveAnnouncement(announcement, announcementActive, trustMessages); setMessage("Announcement and trust ticker messages saved to MariaDB."); }
-    catch (e) { setError(e instanceof Error ? e.message : "Announcement could not be saved."); }
+    setBusy(true); setError(""); setMessage(""); setReviewAnnouncementPublish(false);
+    try {
+      const result = await hostingerStorefrontService.publishAnnouncement();
+      setPublishedAnnouncement(result.published); setSavedAnnouncementPreview(result.published);
+      setMessage("Announcement and trust ticker changes are now published.");
+    } catch (e) { setError(e instanceof Error ? e.message : "Announcement publication failed."); }
     finally { setBusy(false); }
   };
 
@@ -283,9 +306,19 @@ export const AdminStorefrontPage: React.FC = () => {
           <label className="block text-xs font-medium">Promotional announcement</label>
           <input value={announcement} maxLength={300} onChange={e => setAnnouncement(e.target.value)} placeholder="e.g. Diwali Sale — Extra 10% Off Today" className="w-full border rounded-lg p-3 text-sm" />
           {announcementActive && /christmas|diwali|new year|black friday|sale|today|limited time|ends? (today|soon|on)/i.test(announcement) && <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">Time-sensitive promotion detected. Verify the offer, dates and eligibility before saving it live.</p>}
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={announcementActive} onChange={e => setAnnouncementActive(e.target.checked)} /> Publish promotional announcement</label>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={announcementActive} onChange={e => setAnnouncementActive(e.target.checked)} /> Show announcement when this draft is published</label>
         </div>
-        <button disabled={busy || loading} onClick={() => void saveAnnouncement()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">Save ticker messages</button>
+        <section className="rounded-xl border border-[#E7DCEB] bg-[#FBF8FC] p-4 space-y-3">
+          <div><h3 className="text-sm font-semibold text-[#563568]">Saved draft preview</h3><p className="text-xs text-[#705E7B]">This preview reflects the last saved draft. Visitors continue seeing the published version until confirmation.</p></div>
+          <div className="rounded-lg border bg-white p-3 space-y-2"><p className="text-[10px] font-semibold tracking-widest text-[#563568]">{savedAnnouncementPreview?.active ? "LIVE AFTER PUBLISH" : "PROMOTIONAL ANNOUNCEMENT HIDDEN"}</p><p className="text-sm font-medium text-[#34233D]">{savedAnnouncementPreview?.message || "Your promotional announcement will appear here."}</p><div className="flex flex-wrap gap-2">{(savedAnnouncementPreview?.trustMessages || []).map((item,index)=><span key={index} className="rounded-full bg-[#F7F0FA] px-3 py-1 text-xs text-[#563568]">{item}</span>)}</div></div>
+          {!announcementPreviewIsCurrent && <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800">Preview needs refreshing after edits. Customers still see the published announcement.</p>}
+          <p className="text-xs text-gray-600">{announcementChanged ? "Draft differs from the published announcement or trust messages." : "Draft matches published."}</p>
+        </section>
+        <div className="flex flex-wrap gap-2">
+          <button disabled={busy || loading} onClick={() => void saveAnnouncement()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">Save draft & refresh preview</button>
+          <button disabled={busy || loading || !announcementPreviewIsCurrent || !announcementChanged} onClick={() => setReviewAnnouncementPublish(true)} className="px-4 py-2 rounded-lg border text-sm disabled:opacity-50">Review & publish</button>
+        </div>
+        {reviewAnnouncementPublish && <div role="alertdialog" aria-modal="true" className="rounded-xl border-2 border-[#B69ACF] bg-[#F7F0FA] p-4 space-y-3"><h3 className="text-sm font-semibold text-[#563568]">Confirm announcement publication</h3><p className="text-xs text-gray-700">Publish the saved promotional announcement and trust ticker messages to the live storefront?</p><div className="flex gap-2"><button type="button" disabled={busy} onClick={() => void publishAnnouncement()} className="rounded-lg bg-[#563568] px-4 py-2 text-xs text-white">Confirm and publish</button><button type="button" onClick={() => setReviewAnnouncementPublish(false)} className="rounded-lg border px-4 py-2 text-xs">Cancel</button></div></div>}
       </section>
         </div>
       )}

@@ -13,6 +13,9 @@ const makeId = (title: string) => title.toLowerCase().trim().replace(/[^a-z0-9]+
 
 export const ShopByOccasionManager: React.FC = () => {
   const [draft, setDraft] = useState<OccasionCard[]>(defaults);
+  const [published, setPublished] = useState<OccasionCard[]>(defaults);
+  const [savedPreview, setSavedPreview] = useState<OccasionCard[] | null>(null);
+  const [showPublishReview, setShowPublishReview] = useState(false);
   const [collection, setCollection] = useState<"" | "artificial" | "demi-fine">("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -25,7 +28,10 @@ export const ShopByOccasionManager: React.FC = () => {
     try {
       const result = await hostingerStorefrontService.getOccasions(collection || undefined);
       if (isCancelled()) return;
-      setDraft(result.occasions);
+      setDraft(result.draft);
+      setPublished(result.published);
+      setSavedPreview(result.published);
+      setShowPublishReview(false);
     } catch (e) {
       if (!isCancelled()) setError(e instanceof Error ? e.message : "Could not load occasion cards.");
     } finally { if (!isCancelled()) setLoading(false); }
@@ -71,7 +77,7 @@ export const ShopByOccasionManager: React.FC = () => {
     try {
       const image = await hostingerMediaService.uploadImage(file);
       update(index, { image });
-      setMessage("Image uploaded to Hostinger. Save changes to publish it.");
+      setMessage("Image uploaded to Hostinger. Save a draft, then review and publish it when ready.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Occasion image upload failed.");
     } finally { setBusy(false); }
@@ -95,12 +101,35 @@ export const ShopByOccasionManager: React.FC = () => {
     setBusy(true); setError(""); setMessage("");
     try {
       const normalized = draft.map((item, sortOrder) => ({ ...item, id: makeId(item.id), sortOrder }));
-      const result = await hostingerStorefrontService.saveOccasions(normalized, collection || undefined);
-      setDraft(result.occasions);
-      setMessage("Shop by Occasion saved to MariaDB. The homepage now shows your saved cards.");
+      const result = await hostingerStorefrontService.saveOccasionsDraft(normalized, collection || undefined);
+      setDraft(result.draft);
+      setSavedPreview(result.draft);
+      setShowPublishReview(false);
+      setMessage("Draft saved to MariaDB. The preview now shows this saved version; customers still see the published cards.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Occasion cards could not be saved.");
     } finally { setBusy(false); }
+  };
+
+
+  const previewIsCurrent = Boolean(savedPreview && JSON.stringify(savedPreview) === JSON.stringify(draft));
+  const addedCount = draft.filter(item => !published.some(current => current.id === item.id)).length;
+  const removedCount = published.filter(item => !draft.some(current => current.id === item.id)).length;
+  const changedCount = draft.filter(item => {
+    const current = published.find(entry => entry.id === item.id);
+    return current && JSON.stringify(current) !== JSON.stringify(item);
+  }).length;
+  const publish = async () => {
+    if (!previewIsCurrent) { setError("Save draft & refresh preview before publishing."); return; }
+    setBusy(true); setError(""); setMessage(""); setShowPublishReview(false);
+    try {
+      const result = await hostingerStorefrontService.publishOccasions(collection || undefined);
+      setPublished(result.published);
+      setDraft(result.published);
+      setSavedPreview(result.published);
+      setMessage("Shop by Occasion published for " + (collection || "Shared") + ".");
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not publish occasion cards."); }
+    finally { setBusy(false); }
   };
 
   return <section className="bg-white border rounded-2xl p-5 space-y-4">
@@ -108,7 +137,7 @@ export const ShopByOccasionManager: React.FC = () => {
       <div>
         <h2 className="font-semibold text-[#2C1838]">Shop by Occasion</h2>
         <p className="text-xs text-gray-500 mt-1">Add, upload, replace or remove occasion images. Choose files directly from your computer — no image URLs needed.</p>
-        <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={collection} disabled={loading || busy} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global content)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
+        <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={collection} disabled={loading || busy} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Shared (shown in both collections)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
       </div>
       <span className="text-xs rounded-full px-3 py-1 bg-purple-50 text-purple-700">{draft.filter(item => item.active).length} visible · {draft.length}/12 cards</span>
     </div>
@@ -142,24 +171,28 @@ export const ShopByOccasionManager: React.FC = () => {
     </>}
     <section className="space-y-3 rounded-xl border border-[#E7DCEB] bg-[#FBF8FC] p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div><h3 className="text-sm font-semibold text-[#563568]">Responsive Shop by Occasion preview</h3><p className="text-xs text-[#705E7B]">Previews visible cards from your current edits. Saving these cards updates the selected homepage version.</p></div>
+        <div><h3 className="text-sm font-semibold text-[#563568]">Responsive Shop by Occasion preview</h3><p className="text-xs text-[#705E7B]">Preview shows the last saved draft. Customers continue seeing the published version until you confirm publication.</p></div>
         <div className="flex gap-1">{(["desktop", "tablet", "mobile"] as const).map(mode => <button key={mode} type="button" onClick={() => setPreviewMode(mode)} aria-pressed={previewMode === mode} className={`min-h-9 rounded-md border px-3 text-xs capitalize ${previewMode === mode ? "bg-[#563568] text-white" : "bg-white text-[#563568]"}`}>{mode}</button>)}</div>
       </div>
       <div className="mx-auto overflow-hidden rounded-xl border border-[#E7DCEB] bg-white p-3 transition-all" style={{ width: previewMode === "desktop" ? "100%" : previewMode === "tablet" ? "620px" : "375px", maxWidth: "100%" }}>
         <div className={`grid gap-3 ${previewMode === "mobile" ? "grid-cols-1" : previewMode === "tablet" ? "grid-cols-2" : "grid-cols-3"}`}>
-          {draft.filter(item => item.active).map(item => <article key={item.id} className="overflow-hidden rounded-lg bg-[#F7F0FA]">
+          {(savedPreview || []).filter(item => item.active).map(item => <article key={item.id} className="overflow-hidden rounded-lg bg-[#F7F0FA]">
             <div className={`overflow-hidden ${previewMode === "mobile" ? "aspect-[16/9]" : "aspect-[4/5]"}`}><img src={item.image || "/images/product-placeholder.png"} alt={item.title} className="h-full w-full object-cover" /></div>
             <div className="p-3"><h4 className="font-serif text-sm text-[#563568]">{item.title || "Occasion title"}</h4><p className="mt-1 line-clamp-2 text-xs text-[#705E7B]">{item.subtitle}</p></div>
           </article>)}
         </div>
-        {draft.filter(item => item.active).length === 0 && <p className="py-8 text-center text-xs text-[#705E7B]">No visible occasion cards in this draft.</p>}
+        {(savedPreview || []).filter(item => item.active).length === 0 && <p className="py-8 text-center text-xs text-[#705E7B]">Save a draft to preview its visible occasion cards.</p>}
+        {!previewIsCurrent && <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-800">Preview needs refreshing after draft edits. Customers still see the published version.</p>}
       </div>
     </section>
+    <section className="rounded-xl border p-4 space-y-2"><h3 className="text-sm font-semibold text-[#563568]">Draft vs published</h3><p className="text-xs text-gray-600">{addedCount} added · {removedCount} removed · {changedCount} edited</p>{addedCount + removedCount + changedCount === 0 && <p className="text-xs text-green-700">Draft matches published.</p>}</section>
     <div className="flex flex-wrap gap-2">
       <button type="button" disabled={busy || loading || draft.length >= 12} onClick={add} className="px-4 py-2 rounded-lg border text-sm disabled:opacity-50">Add occasion</button>
-      <button type="button" disabled={busy || loading || incompleteVisibleCards.length > 0} onClick={() => void save()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy ? "Saving…" : "Save occasion cards"}</button>
+      <button type="button" disabled={busy || loading || incompleteVisibleCards.length > 0} onClick={() => void save()} className="px-4 py-2 rounded-lg bg-[#563568] text-white text-sm disabled:opacity-50">{busy ? "Saving…" : "Save draft & refresh preview"}</button>
+      <button type="button" disabled={busy || loading || !previewIsCurrent || addedCount + removedCount + changedCount === 0} onClick={() => setShowPublishReview(true)} className="px-4 py-2 rounded-lg border text-sm disabled:opacity-50">Review & publish</button>
       <button type="button" disabled={busy || loading} onClick={() => void load()} className="px-4 py-2 rounded-lg border text-sm disabled:opacity-50">Reload</button>
       <a href="/" target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg border text-sm">Preview homepage</a>
     </div>
+    {showPublishReview && <div role="alertdialog" aria-modal="true" className="rounded-xl border-2 border-[#B69ACF] bg-[#F7F0FA] p-4 space-y-3"><h3 className="text-sm font-semibold text-[#563568]">Confirm Shop by Occasion publication</h3><p className="text-xs text-gray-700">Publish the saved {collection || "Shared"} version? {addedCount} cards added, {removedCount} removed and {changedCount} edited. Other collection versions remain unchanged.</p><div className="flex gap-2"><button type="button" disabled={busy} onClick={() => void publish()} className="rounded-lg bg-[#563568] px-4 py-2 text-xs text-white">Confirm and publish</button><button type="button" onClick={() => setShowPublishReview(false)} className="rounded-lg border px-4 py-2 text-xs">Cancel</button></div></div>}
   </section>;
 };
