@@ -180,6 +180,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
 
   // Storefront Data
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryImageOverrides, setCategoryImageOverrides] = useState<Record<string, string>>({});
   const [bestsellers, setBestsellers] = useState<Product[]>([]);
   const [curatedFavourites, setCuratedFavourites] = useState<Product[]>([]);
   const [manualCuratedFavourites, setManualCuratedFavourites] = useState<Product[]>([]);
@@ -192,6 +193,14 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
   const [loadError, setLoadError] = useState<boolean>(false);
 
   const [shopByGender, setShopByGender] = useState<ShopByGenderSettings>({ version: 1, forHerImageUrl: "", forHimImageUrl: "" });
+
+  useEffect(() => {
+    let cancelled = false;
+    hostingerStorefrontService.getPublicHomepageCategoryImages()
+      .then(result => { if (!cancelled) setCategoryImageOverrides(result.images || {}); })
+      .catch(error => console.warn("[HomePage] Category image overrides unavailable; using category defaults.", error));
+    return () => { cancelled = true; };
+  }, [selectedProductCollection]);
 
   const [occasions, setOccasions] = useState([
     { id: "daily-wear", title: "Daily Wear", subtitle: "Effortless everyday minimalism", image: "/images/optimized/ananya-temple-coin-bracelet.webp", link: "/shop?search=everyday", active: true, sortOrder: 0 },
@@ -596,7 +605,7 @@ export const HomePage: React.FC<HomePageProps> = ({ includeAll }) => {
                 >
                   <div className="sarine-category-card__media relative aspect-square overflow-hidden rounded-sm border border-[var(--border)] bg-[var(--pill)] transition-colors group-hover:border-[var(--gold)]">
                     <img
-                      src={cat.image}
+                      src={categoryImageOverrides[cat.slug] || cat.image}
                       alt={cat.name}
                       loading="lazy"
                       decoding="async"
