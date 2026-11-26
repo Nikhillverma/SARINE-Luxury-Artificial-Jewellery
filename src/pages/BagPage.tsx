@@ -218,7 +218,7 @@ export const BagPage: React.FC = () => {
                           {/* Product Preview & Title (6 cols) */}
                           <div className="sm:col-span-6 flex gap-4">
                             <Link
-                              to={getProductDetailHref(item.product.slug, item.product.productCollection)}
+                              to={getProductDetailHref(item.product.slug, item.product.productCollection, true)}
                               className="w-20 h-24 bg-[var(--tint)] border border-[var(--border)] shrink-0 overflow-hidden rounded-xs"
                             >
                               <img
@@ -230,7 +230,7 @@ export const BagPage: React.FC = () => {
                             <div className="flex flex-col justify-between">
                               <div>
                                 <Link
-                                  to={getProductDetailHref(item.product.slug, item.product.productCollection)}
+                                  to={getProductDetailHref(item.product.slug, item.product.productCollection, true)}
                                   className="font-serif text-base sm:text-lg text-[var(--heading)] hover:text-[var(--plum)] font-medium transition-colors"
                                 >
                                   {item.product.name}
