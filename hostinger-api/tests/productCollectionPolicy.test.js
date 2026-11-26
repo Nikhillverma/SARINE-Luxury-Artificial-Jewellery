@@ -18,8 +18,8 @@ test("requires a collection for new products", () => {
   assert.equal(validateProductCollection("demi-fine", { required: true }), null);
 });
 
-test("rejects unknown collections without altering legacy records", () => {
+test("rejects unknown and explicitly cleared collections while preserving omitted legacy values", () => {
   assert.match(validateProductCollection("fine-jewellery"), /must be artificial or demi-fine/);
-  assert.equal(validateProductCollection(null), null);
+  assert.match(validateProductCollection(null), /must be artificial or demi-fine/);
   assert.equal(validateProductCollection(undefined), null);
 });
