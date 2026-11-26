@@ -106,12 +106,12 @@ export const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
   },
   care: {
     eyebrow: "ATELIER CARE PHILOSOPHY", title: "The Art of Jewellery Preservation",
-    description: "Every SARINE piece is crafted with protective seals and demi-fine gold plating. Follow these four timeless steps to preserve its radiant shine for generations.",
+    description: "A little everyday care can help your jewellery retain its finish. Keep pieces dry, store them separately, and handle them gently. Care needs may vary by material and finish, so follow any product-specific guidance.",
     steps: [
-      { title: "The Last Touch", description: "Put your jewellery on last after perfumes, lotions, and hair styling sprays have dried completely." },
-      { title: "Air-Tight Storage", description: "Store each piece in its individual velvet pouch or zip bag to prevent moisture and accidental scratches." },
-      { title: "Gentle Cleaning", description: "Wipe gently with a dry soft microfiber cloth after wear to remove skin oils before returning to storage." },
-      { title: "Moisture Barrier", description: "Keep pieces away from steam, pool chlorine, and water basins to maintain pristine prong tension." }
+      { title: "The Last Touch", description: "Put your jewellery on after perfumes, lotions, and hair products have dried completely." },
+      { title: "Separate Storage", description: "Keep each piece in a clean, dry pouch or box, away from other jewellery to reduce scratches and tangling." },
+      { title: "Gentle Cleaning", description: "After wearing, wipe gently with a soft, dry, lint-free cloth. Avoid harsh cleaners and polishing chemicals." },
+      { title: "Keep It Dry", description: "Remove jewellery before bathing, swimming, or exercising, and keep it away from moisture and household chemicals." }
     ]
   },
   contact: {

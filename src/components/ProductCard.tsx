@@ -57,12 +57,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, homepageWishl
     <article className="sarine-product-card group flex flex-col w-full bg-[var(--white)] p-2 sm:p-2.5 border border-[var(--border)] rounded-md transition-all duration-300 hover:border-[var(--border)] hover:shadow-xs relative" style={{ "--tw-shadow-color": "var(--border)" } as React.CSSProperties}>
       {/* 3:4 Portrait Image Container */}
       <div className="relative @container block w-full overflow-hidden bg-[var(--white)] aspect-[4/5] border border-[var(--border)] rounded-xs group-hover:border-[var(--gold)] transition-colors">
-        <Link to={`/product/${product.slug}`} className="block w-full h-full">
+        <Link to={`/product/${product.slug}`} className="block w-full h-full" aria-label={`View ${product.name}`}>
           {primaryImage && !primaryImageFailed ? (
             <img
               src={primaryImage}
               onError={() => setPrimaryImageFailed(true)}
-              alt={product.name}
+              alt=""
               loading="lazy"
               decoding="async"
               fetchPriority="low"
@@ -83,7 +83,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, homepageWishl
             <img
               src={secondaryImage}
               onError={(event) => { event.currentTarget.style.display = "none"; }}
-              alt={`${product.name} detail`}
+              alt=""
               loading="lazy"
               decoding="async"
               fetchPriority="low"
