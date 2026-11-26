@@ -159,12 +159,14 @@ function attachWorkspaceRoutes({ path, workspace, legacyKey, fallback, validate,
   adminOnly.put(path + "/draft", async (req, res, next) => {
     try {
       const collection = collectionFrom(req.body?.productCollection);
-      const value = validate(req.body?.[inputField]);
+      let value;
+      try { value = validate(req.body?.[inputField]); }
+      catch (error) { return res.status(400).json({ error: error.message || "Invalid storefront draft." }); }
       await saveDraft(workspace, collection, value);
       const record = await readRecord(workspace, collection, legacyKey, fallback);
       res.set("Cache-Control", "no-store").json({ success: true, draft: value, published: record.published });
     } catch (error) {
-      if (/product collection/i.test(error.message) || error instanceof Error) return res.status(400).json({ error: error.message });
+      if (/product collection/i.test(error.message)) return res.status(400).json({ error: error.message });
       next(error);
     }
   });
