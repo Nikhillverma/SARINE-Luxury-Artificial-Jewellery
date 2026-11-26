@@ -3,6 +3,7 @@ import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { mapPublicProduct } from "./publicProductMapper.js";
 import { ensureProductCollectionSchema } from "./productCollectionSchema.js";
+import { createEditorialSchedule, normalizeEditorialSchedule, getEditorialScheduleStatus, getEffectiveEditorial } from "./editorialSchedulePolicy.js";
 import {
   EMPTY_EXPLORE_NOW,
   MAX_EXPLORE_PRODUCTS,
