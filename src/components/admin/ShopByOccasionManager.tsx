@@ -19,17 +19,18 @@ export const ShopByOccasionManager: React.FC = () => {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const load = async () => {
+  const load = async (isCancelled: () => boolean = () => false) => {
     setLoading(true); setError("");
     try {
       const result = await hostingerStorefrontService.getOccasions(collection || undefined);
+      if (isCancelled()) return;
       setDraft(result.occasions);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load occasion cards.");
-    } finally { setLoading(false); }
+      if (!isCancelled()) setError(e instanceof Error ? e.message : "Could not load occasion cards.");
+    } finally { if (!isCancelled()) setLoading(false); }
   };
 
-  useEffect(() => { void load(); }, [collection]);
+  useEffect(() => { let cancelled = false; setDraft(defaults); void load(() => cancelled); return () => { cancelled = true; }; }, [collection]);
 
   const update = (index: number, patch: Partial<OccasionCard>) => {
     setDraft(current => current.map((item, i) => i === index ? { ...item, ...patch } : item));
