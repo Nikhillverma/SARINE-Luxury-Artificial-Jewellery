@@ -92,7 +92,7 @@ export const CuratedFavouritesManager: React.FC = () => {
       <div>
         <h2 className="font-semibold text-[#2C1838]">Curated Favourites</h2>
         <p className="text-xs text-gray-500 mt-1">Choose up to {MAX_PRODUCTS} active, in-stock products and arrange the exact order customers see.</p>
-        <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={collection} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global curation)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
+        <label className="mt-3 block max-w-xs space-y-1 text-xs font-medium text-[#563568]">Homepage version<select value={collection} disabled={loading || busy} onChange={event => setCollection(event.target.value as "" | "artificial" | "demi-fine")} className="w-full rounded-lg border border-[#E7DCEB] bg-white p-2.5 text-sm"><option value="">Home (existing global curation)</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></label>
       </div>
       <span className={isPublished ? "text-xs rounded-full px-3 py-1 bg-green-50 text-green-700" : "text-xs rounded-full px-3 py-1 bg-amber-50 text-amber-700"}>
         {isPublished ? "Published version" : "Unpublished changes"}
