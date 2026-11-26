@@ -79,12 +79,29 @@ async function writeLayoutSchedule(collection, schedule) {
   await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [layoutScheduleKey(collection), JSON.stringify(schedule)]);
 }
 async function readLayoutRecord(collection) {
-  const [draft, published, schedule] = await Promise.all([
+  const [draft, published, ownSchedule] = await Promise.all([
     readLayout("draft", collection),
     readLayout("published", collection),
     readLayoutSchedule(collection)
   ]);
-  return { draft, published, schedule };
+  let schedule = ownSchedule;
+  let scheduleCollection = collection;
+  if (collection) {
+    const [overrideRows] = await pool.execute(
+      "SELECT setting_key FROM storefront_settings WHERE setting_key=? LIMIT 1",
+      [layoutSettingKey("published", collection)]
+    );
+    if (!overrideRows.length) {
+      const sharedSchedule = await readLayoutSchedule(null);
+      const ownStatus = getEditorialScheduleStatus(ownSchedule);
+      const sharedStatus = getEditorialScheduleStatus(sharedSchedule);
+      if ((!ownSchedule || ownStatus === "expired") && sharedSchedule && sharedStatus !== "expired") {
+        schedule = sharedSchedule;
+        scheduleCollection = null;
+      }
+    }
+  }
+  return { draft, published, schedule, scheduleCollection };
 }
 function mapLayoutRecord(record, collection) {
   return {
@@ -92,6 +109,7 @@ function mapLayoutRecord(record, collection) {
     published: record.published,
     schedule: record.schedule ? { startsAtUtc: record.schedule.startsAtUtc, endsAtUtc: record.schedule.endsAtUtc } : null,
     scheduleStatus: getEditorialScheduleStatus(record.schedule),
+    scheduleCollection: record.schedule ? (record.scheduleCollection || "shared") : null,
     collection: collection || "shared"
   };
 }
@@ -132,6 +150,9 @@ adminOnly.post("/schedule", async (req, res, next) => {
   try {
     const collection = collectionFrom(req.body?.productCollection);
     const record = await readLayoutRecord(collection);
+    if (collection && record.schedule && record.scheduleCollection === null) {
+      return res.status(409).json({ error: "A Shared homepage layout schedule is active for both collections. Manage or clear it from the Shared homepage version first." });
+    }
     const schedule = createEditorialSchedule(req.body || {}, record.draft, record.published);
     await writeLayoutSchedule(collection, schedule);
     res.set("Cache-Control", "no-store").json({ ...mapLayoutRecord({ ...record, schedule }, collection), success: true });
@@ -144,7 +165,9 @@ adminOnly.post("/schedule", async (req, res, next) => {
 adminOnly.post("/schedule/cancel", async (req, res, next) => {
   try {
     const collection = collectionFrom(req.body?.productCollection);
-    await writeLayoutSchedule(collection, null);
+    const current = await readLayoutRecord(collection);
+    const scheduleCollection = current.scheduleCollection === "shared" || current.scheduleCollection === null ? null : current.scheduleCollection;
+    await writeLayoutSchedule(scheduleCollection, null);
     const record = await readLayoutRecord(collection);
     res.set("Cache-Control", "no-store").json({ ...mapLayoutRecord(record, collection), success: true });
   } catch (error) { next(error); }
