@@ -48,10 +48,14 @@ test("MariaDB range migration keeps legacy products unassigned and isolates both
     assert.deepEqual(demiFine.map(row => row.id), ["demi-fine-1"]);
     assert.deepEqual(home.map(row => row.id), ["artificial-1", "demi-fine-1", "legacy-unassigned"]);
 
-    const [{ validateCollectionProductIds: validateCuratedRange }, { validateCollectionProductIds: validateExploreRange }] = await Promise.all([
+    const [{ validateCollectionProductIds: validateCuratedRange, mapPublicProduct: mapCuratedProduct }, { validateCollectionProductIds: validateExploreRange }, { mapPublicProduct: mapExploreProduct }] = await Promise.all([
       import("../curatedFavourites.js"),
-      import("../exploreNow.js")
+      import("../exploreNow.js"),
+      import("../publicProductMapper.js")
     ]);
+    const mappedRow = { id: "artificial-1", slug: "artificial-1", name: "Artificial test item", product_collection: "artificial", images: "[]", tags: "[]", collection_slugs: "[]", price: 100, stock: 1, status: "active" };
+    assert.equal(mapCuratedProduct(mappedRow).productCollection, "artificial", "Curated Favourites must preserve product range in its response");
+    assert.equal(mapExploreProduct(mappedRow).productCollection, "artificial", "Explore Now must preserve product range in its response");
     for (const validateSelection of [validateCuratedRange, validateExploreRange]) {
       assert.equal(await validateSelection(["artificial-1"], "artificial"), null);
       assert.equal(await validateSelection(["demi-fine-1"], "demi-fine"), null);
