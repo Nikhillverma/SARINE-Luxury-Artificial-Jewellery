@@ -186,7 +186,7 @@ export const CollectionPage: React.FC<CollectionPageProps> = ({ includeAll }) =>
     setSelectedStone('');
     setInStockOnly(false);
     const next = new URLSearchParams();
-    if (rangeParam === "artificial" || rangeParam === "demi-fine") next.set("range", rangeParam);
+    if (rangeParam === "home" || rangeParam === "artificial" || rangeParam === "demi-fine") next.set("range", rangeParam);
     setSearchParams(next);
   };
 
