@@ -214,11 +214,13 @@ async function writeHomepageContent(key, content) {
   );
 }
 
-adminOnly.get("/content", async (_req, res, next) => {
+function collectionFrom(value) { const v = String(value || "").trim().toLowerCase(); if (!v) return null; if (v !== "artificial" && v !== "demi-fine") throw new Error("Product collection must be artificial or demi-fine."); return v; }
+function collectionKey(base, collection) { return collection ? base + "_" + collection : base; }
+adminOnly.get("/content", async (req, res, next) => {
   try {
     const [draft, published] = await Promise.all([
-      readHomepageContent("homepage_content_draft"),
-      readHomepageContent("homepage_content_published")
+      readHomepageContent(collectionKey("homepage_content_draft", collectionFrom(req.query.productCollection))),
+      readHomepageContent(collectionKey("homepage_content_published", collectionFrom(req.query.productCollection)))
     ]);
     res.set("Cache-Control", "no-store").json({ draft, published });
   } catch (error) { next(error); }
@@ -226,23 +228,24 @@ adminOnly.get("/content", async (_req, res, next) => {
 adminOnly.put("/content/draft", async (req, res, next) => {
   try {
     const content = validateHomepageContent(req.body);
-    await writeHomepageContent("homepage_content_draft", content);
+    await writeHomepageContent(collectionKey("homepage_content_draft", collectionFrom(req.body?.productCollection)), content);
     res.set("Cache-Control", "no-store").json({ success: true, draft: content });
   } catch (error) {
     if (error instanceof Error && /must|is required|maximum|exactly|destination|image|version|characters|path/i.test(error.message)) return res.status(400).json({ error: error.message });
     next(error);
   }
 });
-adminOnly.post("/content/publish", async (_req, res, next) => {
+adminOnly.post("/content/publish", async (req, res, next) => {
   try {
-    const draft = await readHomepageContent("homepage_content_draft");
-    await writeHomepageContent("homepage_content_published", draft);
+    const collection = collectionFrom(req.body?.productCollection);
+    const draft = await readHomepageContent(collectionKey("homepage_content_draft", collection));
+    await writeHomepageContent(collectionKey("homepage_content_published", collection), draft);
     res.set("Cache-Control", "no-store").json({ success: true, published: draft });
   } catch (error) { next(error); }
 });
-publicRouter.get("/content", async (_req, res, next) => {
+publicRouter.get("/content", async (req, res, next) => {
   try {
-    const content = await readHomepageContent("homepage_content_published");
+    const content = await readHomepageContent(collectionKey("homepage_content_published", collectionFrom(req.query.productCollection)));
     res.set("Cache-Control", "no-store").json({ content });
   } catch (error) { next(error); }
 });
