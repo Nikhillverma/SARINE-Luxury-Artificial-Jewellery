@@ -441,7 +441,7 @@ export const AdminProductsPage: React.FC = () => {
         {notice && <div className="p-3 rounded-xl bg-[#F2FBF5] text-[#166534] text-xs flex justify-between">{notice}<button onClick={() => setNotice('')}><X size={14}/></button></div>}
         {error && !modalOpen && <div className="p-3 rounded-xl bg-red-50 text-red-700 text-xs">{error}</div>}
 
-        <div className="grid grid-cols-2 xl:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 xl:grid-cols-6 gap-3">
           {[
             { label: 'Total products', value: catalogueStats.total, icon: Package, tone: 'text-[#563568] bg-[#F7F0FA]' },
             { label: 'Published', value: catalogueStats.active, icon: Eye, tone: 'text-emerald-700 bg-emerald-50' },
