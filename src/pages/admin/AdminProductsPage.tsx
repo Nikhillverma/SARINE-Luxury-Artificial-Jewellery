@@ -42,6 +42,7 @@ export const AdminProductsPage: React.FC = () => {
   const [search, setSearch] = useState(() => searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [productCollectionFilter, setProductCollectionFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [page, setPage] = useState(1);
@@ -84,12 +85,15 @@ export const AdminProductsPage: React.FC = () => {
         product.slug.toLowerCase().includes(term) || product.id.toLowerCase().includes(term);
       const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
       const matchesCategory = categoryFilter === 'all' || product.categoryId === categoryFilter;
+      const matchesProductCollection = productCollectionFilter === 'all'
+        || (productCollectionFilter === 'unassigned' && !product.productCollection)
+        || product.productCollection === productCollectionFilter;
       const matchesStock = stockFilter === 'all' ||
         (stockFilter === 'out' && product.stock <= 0) ||
         (stockFilter === 'low' && product.stock > 0 && product.stock <= 5) ||
         (stockFilter === 'available' && product.stock > 5) ||
         (stockFilter === 'missing-image' && !(product.images || []).some(Boolean));
-      return matchesText && matchesStatus && matchesCategory && matchesStock;
+      return matchesText && matchesStatus && matchesCategory && matchesProductCollection && matchesStock;
     });
     return filtered.sort((a, b) => {
       if (sortBy === 'price-low') return a.price - b.price;
@@ -99,9 +103,9 @@ export const AdminProductsPage: React.FC = () => {
       if (sortBy === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
     });
-  }, [products, search, statusFilter, categoryFilter, stockFilter, sortBy]);
+  }, [products, search, statusFilter, categoryFilter, productCollectionFilter, stockFilter, sortBy]);
 
-  useEffect(() => { setPage(1); }, [search, statusFilter, categoryFilter, stockFilter, sortBy]);
+  useEffect(() => { setPage(1); }, [search, statusFilter, categoryFilter, productCollectionFilter, stockFilter, sortBy]);
   const pageCount = Math.max(1, Math.ceil(visibleProducts.length / pageSize));
   const pageProducts = visibleProducts.slice((page - 1) * pageSize, page * pageSize);
 
@@ -397,7 +401,7 @@ export const AdminProductsPage: React.FC = () => {
             </div>
             <button type="button" onClick={exportCsv} disabled={loading || visibleProducts.length === 0} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#E7DCEB] px-3 text-xs font-semibold text-[#563568] hover:bg-[#FAF5FC] disabled:opacity-50"><Download size={14}/> Export CSV ({visibleProducts.length})</button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-2">
             <label className="text-[10px] text-[#806B8D]">Status
               <select aria-label="Filter products by status" value={statusFilter} onChange={event => setStatusFilter(event.target.value)} className="mt-1 w-full min-h-10 px-3 border border-[#E7DCEB] rounded-lg text-xs text-[#302438]">
                 <option value="all">All statuses</option><option value="active">Active</option><option value="draft">Draft</option><option value="archived">Archived</option>
@@ -406,6 +410,11 @@ export const AdminProductsPage: React.FC = () => {
             <label className="text-[10px] text-[#806B8D]">Category
               <select aria-label="Filter products by category" value={categoryFilter} onChange={event => setCategoryFilter(event.target.value)} className="mt-1 w-full min-h-10 px-3 border border-[#E7DCEB] rounded-lg text-xs text-[#302438]">
                 <option value="all">All categories</option>{categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
+              </select>
+            </label>
+            <label className="text-[10px] text-[#806B8D]">Product range
+              <select aria-label="Filter products by product range" value={productCollectionFilter} onChange={event => setProductCollectionFilter(event.target.value)} className="mt-1 w-full min-h-10 px-3 border border-[#E7DCEB] rounded-lg text-xs text-[#302438]">
+                <option value="all">All ranges</option><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option><option value="unassigned">Unassigned</option>
               </select>
             </label>
             <label className="text-[10px] text-[#806B8D]">Stock status
@@ -421,7 +430,7 @@ export const AdminProductsPage: React.FC = () => {
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-[#806B8D]">
             <span><Filter size={12} className="inline mr-1"/>Showing <strong className="text-[#563568]">{visibleProducts.length}</strong> of {products.length} products</span>
-            {(search || statusFilter !== 'all' || categoryFilter !== 'all' || stockFilter !== 'all' || sortBy !== 'name') && <button type="button" onClick={() => { setSearch(''); setStatusFilter('all'); setCategoryFilter('all'); setStockFilter('all'); setSortBy('name'); }} className="min-h-9 px-2 font-semibold text-[#704A83] hover:underline">Clear filters</button>}
+            {(search || statusFilter !== 'all' || categoryFilter !== 'all' || productCollectionFilter !== 'all' || stockFilter !== 'all' || sortBy !== 'name') && <button type="button" onClick={() => { setSearch(''); setStatusFilter('all'); setCategoryFilter('all'); setProductCollectionFilter('all'); setStockFilter('all'); setSortBy('name'); }} className="min-h-9 px-2 font-semibold text-[#704A83] hover:underline">Clear filters</button>}
           </div>
         </div>
 
@@ -439,10 +448,10 @@ export const AdminProductsPage: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-[#FAF5FC] text-[#705E7B] uppercase"><tr>
-                <th className="p-3"><input type="checkbox" aria-label="Select all products on this page" checked={allVisibleSelected} onChange={toggleVisibleSelection} className="accent-[#563568]"/></th><th className="p-3">Product</th><th className="p-3">Category</th><th className="p-3">Price</th><th className="p-3">Stock</th><th className="p-3">Status</th><th className="p-3 text-right">Actions</th>
+                <th className="p-3"><input type="checkbox" aria-label="Select all products on this page" checked={allVisibleSelected} onChange={toggleVisibleSelection} className="accent-[#563568]"/></th><th className="p-3">Product</th><th className="p-3">Category</th><th className="p-3">Range</th><th className="p-3">Price</th><th className="p-3">Stock</th><th className="p-3">Status</th><th className="p-3 text-right">Actions</th>
               </tr></thead>
               <tbody className="divide-y divide-[#F5EDF8]">
-                {loading ? <tr><td colSpan={7} className="p-10 text-center text-[#8E769E]">Loading catalogue…</td></tr> :
+                {loading ? <tr><td colSpan={8} className="p-10 text-center text-[#8E769E]">Loading catalogue…</td></tr> :
                 visibleProducts.length === 0 ? <tr><td colSpan={7} className="p-10 text-center text-[#8E769E]">No products found.</td></tr> :
                 pageProducts.map(product => (
                   <tr key={product.id} className="hover:bg-[#FAF5FC]">
@@ -452,6 +461,7 @@ export const AdminProductsPage: React.FC = () => {
                       <div><div className="font-semibold text-[#2C1838]">{product.name}</div><div className="text-[10px] text-[#8E769E] font-mono">{product.id}</div></div>
                     </div></td>
                     <td className="p-3 text-[#5D5068]">{categories.find(category => category.id === product.categoryId)?.name || product.categoryId}</td>
+                    <td className="p-3 text-[#5D5068]">{product.productCollection === 'demi-fine' ? 'Demi-Fine' : product.productCollection === 'artificial' ? 'Artificial' : 'Unassigned'}</td>
                     <td className="p-3 font-semibold">{formatInr(product.price)}</td>
                     <td className="p-3">{product.stock}</td>
                     <td className="p-3"><span className="capitalize">{product.status}</span></td>
