@@ -152,6 +152,18 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return body as T;
 }
 
+function publicRangeQuery(): string {
+  const params = new URLSearchParams();
+  const fromUrl = new URLSearchParams(window.location.search).get("range");
+  const stored = window.sessionStorage.getItem("sarine_product_range");
+  const collection = fromUrl === "artificial" || fromUrl === "demi-fine"
+    ? fromUrl
+    : stored === "artificial" || stored === "demi-fine" ? stored : "";
+  if (collection) params.set("productCollection", collection);
+  const query = params.toString();
+  return query ? "?" + query : "";
+}
+
 export const hostingerStorefrontService = {
   getHomepageLayout: () => request<{ draft: HomepageLayout; published: HomepageLayout }>("/admin/homepage-layout"),
   getPublicHomepageLayout: () => request<{ layout: HomepageLayout }>("/homepage-layout"),
@@ -161,11 +173,11 @@ export const hostingerStorefrontService = {
   publishCuratedFavourites: () =>
     request<{ success: boolean; published: CuratedFavouritesConfig }>("/admin/curated-favourites/publish", { method: "POST" }),
   getPublicCuratedFavourites: () =>
-    request<{ products: import("../../types/product").Product[]; configured: boolean }>("/curated-favourites"),
+    request<{ products: import("../../types/product").Product[]; configured: boolean }>("/curated-favourites" + publicRangeQuery()),
   getExploreNow: () => request<{ draft: ExploreNowConfig; published: ExploreNowConfig; maxProducts: number }>("/admin/explore-now"),
   saveExploreNow: (config: ExploreNowConfig) => request<{ success: boolean; draft: ExploreNowConfig }>("/admin/explore-now/draft", { method: "PUT", body: JSON.stringify(config) }),
   publishExploreNow: () => request<{ success: boolean; published: ExploreNowConfig }>("/admin/explore-now/publish", { method: "POST" }),
-  getPublicExploreNow: () => request<{ products: import("../../types/product").Product[]; displayCount: number; configured: boolean }>("/explore-now"),
+  getPublicExploreNow: () => request<{ products: import("../../types/product").Product[]; displayCount: number; configured: boolean }>("/explore-now" + publicRangeQuery()),
   saveHomepageLayout: (layout: HomepageLayout) =>
     request<{ success: boolean; draft: HomepageLayout }>("/admin/homepage-layout/draft", { method: "PUT", body: JSON.stringify(layout) }),
   publishHomepageLayout: () =>
