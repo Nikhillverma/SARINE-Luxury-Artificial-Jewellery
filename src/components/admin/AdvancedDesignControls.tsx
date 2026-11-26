@@ -1,8 +1,0 @@
-import React from "react";
-import type { GlobalDesignSettings } from "../../services/hostinger/hostingerStorefrontService";
-type C=GlobalDesignSettings["customization"];
-export const AdvancedDesignControls:React.FC<{value:C;onChange:(v:C)=>void}>=({value,onChange})=>{
- const set=(key:keyof C["spacing"],n:number)=>onChange({...value,spacing:{...value.spacing,[key]:n}});
- const fields:[keyof C["spacing"],string,number,number][]=[["sectionVertical","Section vertical spacing",0,160],["sectionHorizontal","Section side padding",0,96],["cardPadding","Card padding",0,64],["cardGap","Card gap",0,64],["gridGap","Product grid gap",0,64],["buttonPaddingX","Button horizontal padding",0,64],["buttonPaddingY","Button vertical padding",0,40],["headerHeight","Header height",40,180],["footerPadding","Footer vertical padding",0,160]];
- return <details className="rounded-xl border border-[#E7DCEB] bg-white"><summary className="cursor-pointer p-4 text-sm font-semibold">Spacing and layout controls</summary><div className="grid gap-3 border-t p-4 sm:grid-cols-2">{fields.map(([k,label,min,max])=><label key={k} className="text-xs">{label}<div className="mt-2 flex gap-2"><input className="min-w-0 flex-1 accent-[#563568]" type="range" min={min} max={max} value={value.spacing[k]} onChange={e=>set(k,Number(e.target.value))}/><input className="w-16 rounded border p-2" type="number" min={min} max={max} value={value.spacing[k]} onChange={e=>set(k,Math.min(max,Math.max(min,Number(e.target.value)||0)))}/></div></label>)}</div><p className="px-4 pb-4 text-xs text-[#806F89]">Visual styling only; copy remains in content editors.</p></details>;
-};
