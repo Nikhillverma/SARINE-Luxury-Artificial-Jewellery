@@ -32,6 +32,20 @@ function slugify(value: string): string {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
+function getProductCompleteness(product: Product, categories: Category[]): string[] {
+  const missing: string[] = [];
+  if (!product.productCollection) missing.push("Product range");
+  if (!product.categoryId || !categories.some(category => category.id === product.categoryId)) missing.push("Valid category");
+  if (!(product.images || []).some(image => typeof image === "string" && image.trim())) missing.push("Product images");
+  if (!product.shortDescription?.trim()) missing.push("Short description");
+  if (!product.description?.trim()) missing.push("Full description");
+  if (!product.jewelleryType) missing.push("Jewellery type");
+  if (!product.baseMetal?.trim()) missing.push("Base metal");
+  if (!product.platingFinish?.trim()) missing.push("Plating finish");
+  if (!product.careInstructions?.some(item => item.trim())) missing.push("Care instructions");
+  return missing;
+}
+
 export const AdminProductsPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
@@ -44,6 +58,8 @@ export const AdminProductsPage: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [productCollectionFilter, setProductCollectionFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
+  const [completenessFilter, setCompletenessFilter] = useState('all');
+  const [orderingSaving, setOrderingSaving] = useState(false);
   const [sortBy, setSortBy] = useState('name');
   const [page, setPage] = useState(1);
   const pageSize = 25;
@@ -93,14 +109,17 @@ export const AdminProductsPage: React.FC = () => {
       const matchesProductCollection = productCollectionFilter === 'all'
         || (productCollectionFilter === 'unassigned' && !product.productCollection)
         || product.productCollection === productCollectionFilter;
+      const missingFields = getProductCompleteness(product, categories);
+      const matchesCompleteness = completenessFilter === 'all' || (completenessFilter === 'incomplete' && missingFields.length > 0) || (completenessFilter === 'complete' && missingFields.length === 0);
       const matchesStock = stockFilter === 'all' ||
         (stockFilter === 'out' && product.stock <= 0) ||
         (stockFilter === 'low' && product.stock > 0 && product.stock <= 5) ||
         (stockFilter === 'available' && product.stock > 5) ||
         (stockFilter === 'missing-image' && !(product.images || []).some(Boolean));
-      return matchesText && matchesStatus && matchesCategory && matchesProductCollection && matchesStock;
+      return matchesText && matchesStatus && matchesCategory && matchesProductCollection && matchesStock && matchesCompleteness;
     });
     return filtered.sort((a, b) => {
+      if (sortBy === 'manual') return (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       if (sortBy === 'price-low') return a.price - b.price;
       if (sortBy === 'price-high') return b.price - a.price;
       if (sortBy === 'stock-low') return a.stock - b.stock;
@@ -108,9 +127,9 @@ export const AdminProductsPage: React.FC = () => {
       if (sortBy === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
     });
-  }, [products, search, statusFilter, categoryFilter, productCollectionFilter, stockFilter, sortBy]);
+  }, [products, categories, search, statusFilter, categoryFilter, productCollectionFilter, stockFilter, completenessFilter, sortBy]);
 
-  useEffect(() => { setPage(1); }, [search, statusFilter, categoryFilter, productCollectionFilter, stockFilter, sortBy]);
+  useEffect(() => { setPage(1); }, [search, statusFilter, categoryFilter, productCollectionFilter, stockFilter, completenessFilter, sortBy]);
   const pageCount = Math.max(1, Math.ceil(visibleProducts.length / pageSize));
   const pageProducts = visibleProducts.slice((page - 1) * pageSize, page * pageSize);
 
@@ -119,8 +138,41 @@ export const AdminProductsPage: React.FC = () => {
     active: products.filter(product => product.status === 'active').length,
     drafts: products.filter(product => product.status === 'draft').length,
     outOfStock: products.filter(product => product.stock <= 0 && product.status !== 'archived').length,
-    missingImages: products.filter(product => !(product.images || []).some(Boolean) && product.status !== 'archived').length
-  }), [products]);
+    missingImages: products.filter(product => !(product.images || []).some(Boolean) && product.status !== 'archived').length,
+    incomplete: products.filter(product => product.status !== 'archived' && getProductCompleteness(product, categories).length > 0).length
+  }), [products, categories]);
+
+  const manualOrderingAvailable = sortBy === 'manual' && !search.trim() && statusFilter === 'all' && categoryFilter === 'all' && productCollectionFilter === 'all' && stockFilter === 'all' && completenessFilter === 'all';
+  const changeSortMode = (value: string) => {
+    if (value === 'manual') {
+      setSearch('');
+      setStatusFilter('all');
+      setCategoryFilter('all');
+      setProductCollectionFilter('all');
+      setStockFilter('all');
+      setCompletenessFilter('all');
+    }
+    setSortBy(value);
+  };
+  const moveProduct = async (productId: string, direction: -1 | 1) => {
+    if (!manualOrderingAvailable || orderingSaving) return;
+    const ordered = [...products].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const currentIndex = ordered.findIndex(item => item.id === productId);
+    const targetIndex = currentIndex + direction;
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= ordered.length) return;
+    [ordered[currentIndex], ordered[targetIndex]] = [ordered[targetIndex], ordered[currentIndex]];
+    setOrderingSaving(true);
+    setError('');
+    try {
+      await adminProductService.reorderProducts(ordered.map(item => item.id));
+      setProducts(ordered.map((item, index) => ({ ...item, sortOrder: index + 1 })));
+      setNotice('Manual product order saved to Hostinger database.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save product order.');
+    } finally {
+      setOrderingSaving(false);
+    }
+  };
 
   const exportCsv = () => {
     const headers = ['Product ID', 'Name', 'Product Range', 'SKU / Slug', 'Category', 'Type', 'Price INR', 'Compare At INR', 'Cost INR', 'Stock', 'Status', 'Image URLs', 'Tags'];
