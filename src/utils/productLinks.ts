@@ -11,9 +11,15 @@ export function getCurrentProductCollection(): ProductCollection | undefined {
   return stored === "artificial" || stored === "demi-fine" ? stored : undefined;
 }
 
-/** Keep a product detail URL tied to the product range, even after a range switch. */
-/** Preserve the selected browsing range when opening a product. */
-export function getProductDetailHref(slug: string, _productCollection?: ProductCollection | null): string {
-  const range = getCurrentProductCollection() || "home";
+/** Preserve the selected browsing range; cart links can opt into the item's own range. */
+export function getProductDetailHref(
+  slug: string,
+  productCollection?: ProductCollection | null,
+  preferProductRange = false
+): string {
+  const selected = getCurrentProductCollection();
+  const productRange = productCollection === "artificial" || productCollection === "demi-fine"
+    ? productCollection : undefined;
+  const range = (preferProductRange ? productRange : undefined) || selected || "home";
   return "/product/" + encodeURIComponent(slug) + "?range=" + range;
 }
