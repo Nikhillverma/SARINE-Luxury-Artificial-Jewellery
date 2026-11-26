@@ -14,6 +14,14 @@ import { Gem, Heart, Star } from 'lucide-react';
 import { hostingerStorefrontService } from '../services/hostinger/hostingerStorefrontService';
 import { useCart } from '../context/CartContext';
 
+function productDetailHref(slug: string): string {
+  const fromUrl = new URLSearchParams(window.location.search).get("range");
+  const stored = window.sessionStorage.getItem("sarine_product_range");
+  const range = fromUrl === "artificial" || fromUrl === "demi-fine" ? fromUrl
+    : stored === "artificial" || stored === "demi-fine" ? stored : "";
+  return "/product/" + encodeURIComponent(slug) + (range ? "?range=" + range : "");
+}
+
 interface ProductCardProps {
   product: Product;
   homepageWishlist?: boolean;
@@ -57,7 +65,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, homepageWishl
     <article className="sarine-product-card group flex flex-col w-full bg-[var(--white)] p-2 sm:p-2.5 border border-[var(--border)] rounded-md transition-all duration-300 hover:border-[var(--border)] hover:shadow-xs relative" style={{ "--tw-shadow-color": "var(--border)" } as React.CSSProperties}>
       {/* 3:4 Portrait Image Container */}
       <div className="relative @container block w-full overflow-hidden bg-[var(--white)] aspect-[4/5] border border-[var(--border)] rounded-xs group-hover:border-[var(--gold)] transition-colors">
-        <Link to={`/product/${product.slug}`} className="block w-full h-full">
+        <Link to={productDetailHref(product.slug)} className="block w-full h-full">
           {primaryImage && !primaryImageFailed ? (
             <img
               src={primaryImage}
@@ -129,7 +137,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, homepageWishl
 
         {/* Quick View / Detail Link Indicator */}
         <Link
-          to={`/product/${product.slug}`}
+          to={productDetailHref(product.slug)}
           className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center"
         >
           <span className="text-[10px] uppercase tracking-[0.2em] !text-white bg-[var(--plum)] group-hover:bg-[var(--gold)] border border-[var(--border)] shadow-xs px-3 py-1 font-sans font-medium rounded-xs">
@@ -154,7 +162,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, homepageWishl
 
         {/* Product Title */}
         <h3 className="sarine-product-card__title min-h-[2.6em] font-serif text-[15px] sm:text-base !text-[color:var(--heading)] font-normal leading-snug line-clamp-2 group-hover:!text-[color:var(--plum)] transition-colors">
-          <Link to={`/product/${product.slug}`}>
+          <Link to={productDetailHref(product.slug)}>
             {product.name}
           </Link>
         </h3>
