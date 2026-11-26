@@ -3,6 +3,7 @@ import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 
 import { DEFAULT_HOMEPAGE_LAYOUT, validateHomepageLayout } from "./homepageLayoutPolicy.js";
+import { createEditorialSchedule, normalizeEditorialSchedule, getEditorialScheduleStatus, getEffectiveEditorial } from "./editorialSchedulePolicy.js";
 
 const admin = Router();
 const publicRouter = Router();
@@ -229,13 +230,38 @@ async function writeHomepageContent(key, content) {
 
 function collectionFrom(value) { const v = String(value || "").trim().toLowerCase(); if (!v) return null; if (v !== "artificial" && v !== "demi-fine") throw new Error("Product collection must be artificial or demi-fine."); return v; }
 function collectionKey(base, collection) { return collection ? base + "_" + collection : base; }
+function contentScheduleKey(collection) { return collection ? "homepage_content_schedule_" + collection : "homepage_content_schedule"; }
+async function readContentSchedule(collection) {
+  await ensureSchema();
+  const [rows] = await pool.execute("SELECT setting_value FROM storefront_settings WHERE setting_key=? LIMIT 1", [contentScheduleKey(collection)]);
+  if (!rows.length) return null;
+  try { return normalizeEditorialSchedule(JSON.parse(rows[0].setting_value)); } catch { return null; }
+}
+async function writeContentSchedule(collection, schedule) {
+  await ensureSchema();
+  if (!schedule) {
+    await pool.execute("DELETE FROM storefront_settings WHERE setting_key=?", [contentScheduleKey(collection)]);
+    return;
+  }
+  await pool.execute("INSERT INTO storefront_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)", [contentScheduleKey(collection), JSON.stringify(schedule)]);
+}
+async function readContentRecord(collection) {
+  const [draft, published, schedule] = await Promise.all([
+    readHomepageContent(collectionKey("homepage_content_draft", collection)),
+    readHomepageContent(collectionKey("homepage_content_published", collection)),
+    readContentSchedule(collection)
+  ]);
+  return { draft, published, schedule };
+}
+function mapContentRecord(record) {
+  return { draft: record.draft, published: record.published,
+    schedule: record.schedule ? { startsAtUtc: record.schedule.startsAtUtc, endsAtUtc: record.schedule.endsAtUtc } : null,
+    scheduleStatus: getEditorialScheduleStatus(record.schedule) };
+}
 adminOnly.get("/content", async (req, res, next) => {
   try {
-    const [draft, published] = await Promise.all([
-      readHomepageContent(collectionKey("homepage_content_draft", collectionFrom(req.query.productCollection))),
-      readHomepageContent(collectionKey("homepage_content_published", collectionFrom(req.query.productCollection)))
-    ]);
-    res.set("Cache-Control", "no-store").json({ draft, published });
+    const record = await readContentRecord(collectionFrom(req.query.productCollection));
+    res.set("Cache-Control", "no-store").json(mapContentRecord(record));
   } catch (error) { next(error); }
 });
 adminOnly.put("/content/draft", async (req, res, next) => {
@@ -253,12 +279,32 @@ adminOnly.post("/content/publish", async (req, res, next) => {
     const collection = collectionFrom(req.body?.productCollection);
     const draft = await readHomepageContent(collectionKey("homepage_content_draft", collection));
     await writeHomepageContent(collectionKey("homepage_content_published", collection), draft);
-    res.set("Cache-Control", "no-store").json({ success: true, published: draft });
+    await writeContentSchedule(collection, null);
+    res.set("Cache-Control", "no-store").json({ success: true, published: draft, schedule: null, scheduleStatus: "none" });
+  } catch (error) { next(error); }
+});
+adminOnly.post("/content/schedule", async (req, res, next) => {
+  try {
+    const collection = collectionFrom(req.body?.productCollection);
+    const record = await readContentRecord(collection);
+    const schedule = createEditorialSchedule(req.body || {}, record.draft, record.published);
+    await writeContentSchedule(collection, schedule);
+    res.set("Cache-Control", "no-store").json({ ...mapContentRecord({ ...record, schedule }), success: true });
+  } catch (error) { next(error); }
+});
+adminOnly.post("/content/schedule/cancel", async (req, res, next) => {
+  try {
+    const collection = collectionFrom(req.body?.productCollection);
+    await writeContentSchedule(collection, null);
+    const record = await readContentRecord(collection);
+    res.set("Cache-Control", "no-store").json({ ...mapContentRecord(record), success: true });
   } catch (error) { next(error); }
 });
 publicRouter.get("/content", async (req, res, next) => {
   try {
-    const content = await readHomepageContent(collectionKey("homepage_content_published", collectionFrom(req.query.productCollection)));
+    const collection = collectionFrom(req.query.productCollection);
+    const record = await readContentRecord(collection);
+    const content = getEffectiveEditorial(record);
     res.set("Cache-Control", "no-store").json({ content });
   } catch (error) { next(error); }
 });
