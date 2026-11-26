@@ -8,6 +8,7 @@ export const SiteChromeManager: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const dirty = JSON.stringify(settings) !== JSON.stringify(saved);
   const socialUrlsValid = ([settings.footer.social.facebook, settings.footer.social.pinterest, settings.footer.social.youtube] as string[]).every(value => {
     if (!value.trim()) return true;
@@ -80,6 +81,15 @@ export const SiteChromeManager: React.FC = () => {
         </div>
         <p className="text-xs text-gray-500">Use full HTTPS URLs. Leave a network's default destination until your official profile is ready.</p>
       </div>
+      <section className="space-y-3 rounded-xl border border-[#E7DCEB] bg-[#FCFAFD] p-4" aria-label="Responsive header and footer draft preview">
+        <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-semibold text-[#302438]">Responsive storefront preview</h3><p className="text-xs text-[#705E7B]">Live local preview of your current edits. It does not save or publish.</p></div>
+          <div className="flex gap-1" role="group" aria-label="Preview size">{(["desktop", "tablet", "mobile"] as const).map(mode => <button key={mode} type="button" onClick={() => setPreviewMode(mode)} aria-pressed={previewMode === mode} className={`min-h-9 rounded-lg px-3 text-xs font-semibold capitalize ${previewMode === mode ? "bg-[#563568] text-white" : "border border-[#DCCCE4] text-[#563568]"}`}>{mode}</button>)}</div>
+        </div>
+        <div className="mx-auto overflow-hidden rounded-xl border border-[#DCCCE4] bg-white shadow-sm transition-all" style={{ width: "100%", maxWidth: previewMode === "mobile" ? "390px" : previewMode === "tablet" ? "768px" : "100%" }}>
+          <div className="border-b border-[#EEE6F1] px-4 py-3 text-center"><p className="font-serif text-xl tracking-[0.18em] text-[#563568]">SARINE</p><p className="mt-1 text-[10px] tracking-wide text-[#705E7B]">{settings.header.tagline}</p><div className="mt-3 flex justify-center gap-3 border-t border-[#F0EAF2] pt-2 text-[9px] uppercase tracking-wider text-[#563568]"><span>Shop</span><span>New Arrivals</span><span>About</span></div></div>
+          <div className="grid gap-4 bg-[#F7F0FA] p-4 sm:grid-cols-2"><div><p className="font-serif text-base text-[#563568]">Discover SARINE</p><p className="mt-1 text-xs text-[#705E7B]">Your jewellery destination</p></div><div className="text-xs text-[#705E7B]"><p className="font-semibold text-[#563568]">{settings.footer.tagline}</p><div className="mt-3 grid grid-cols-2 gap-3">{Object.entries(settings.footer.headings).map(([key, value]) => <div key={key}><p className="font-semibold text-[#563568]">{value}</p><p className="mt-1 text-[10px]">Store links and information</p></div>)}</div><p className="mt-3 text-[10px]">{settings.footer.social.facebook ? "Facebook" : ""} {settings.footer.social.pinterest ? " · Pinterest" : ""} {settings.footer.social.youtube ? " · YouTube" : ""}</p><p className="mt-3 border-t border-[#E7DCEB] pt-2 text-[10px]">{settings.footer.copyright}</p></div></div>
+        </div><p className="text-[11px] text-[#705E7B]">Preview width: {previewMode === "mobile" ? "390px" : previewMode === "tablet" ? "768px" : "fluid desktop"}. Content/layout preview, not a pixel-perfect copy of every storefront component.</p>
+      </section>
       <div className="flex flex-wrap gap-2">
         <button type="button" disabled={busy || !formValid || !dirty} onClick={() => void save()} className="min-h-11 rounded-lg border border-[#563568] px-5 py-2 text-sm font-medium text-[#563568] disabled:opacity-50">Save draft</button>
         <button type="button" disabled={busy || !formValid} onClick={() => void publish()} className="min-h-11 rounded-lg bg-[#563568] px-5 py-2 text-sm font-medium text-white disabled:opacity-50">Save & publish</button>
