@@ -251,7 +251,6 @@ export const AdminProductsPage: React.FC = () => {
     try {
       const price = Number(form.price);
       const stock = Number(form.stock);
-      if (!form.productCollection) throw new Error('Choose whether this product belongs to Artificial or Demi-Fine.');
       if (!form.name.trim() || !Number.isFinite(price) || price < 0 ||
           !Number.isInteger(stock) || stock < 0 || !form.categoryId) {
         throw new Error('Enter a product name, valid price, non-negative whole stock count and category.');
