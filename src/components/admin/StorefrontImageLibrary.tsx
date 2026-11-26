@@ -94,6 +94,27 @@ export const StorefrontImageLibrary: React.FC = () => {
     catch { setError("Clipboard access was unavailable. Open the image and copy its address from the browser."); }
   };
 
+  const downloadBackup = async (asset: HostingerMediaUsageAsset) => {
+    setError(""); setMessage("");
+    try {
+      const response = await fetch(asset.url, { credentials: "include" });
+      if (!response.ok) throw new Error("The backup image could not be downloaded (" + response.status + ").");
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = asset.fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(objectUrl);
+      setBackupConfirmed(current => current.includes(asset.id) ? current : [...current, asset.id]);
+      setMessage("Backup download started for " + asset.fileName + ". Keep the downloaded copy somewhere safe.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "The backup image could not be downloaded.");
+    }
+  };
+
   const applySearch = (event: React.FormEvent) => {
     event.preventDefault();
     const next = search.trim();
@@ -180,10 +201,10 @@ export const StorefrontImageLibrary: React.FC = () => {
           <p className="mt-1 text-[10px] text-[#6F6475]">{(asset.size / 1024).toFixed(1)} KB · {asset.mimeType.replace("image/", "").toUpperCase()} · {new Date(asset.createdAt).toLocaleDateString("en-IN")}</p>
           <p className="mt-2 text-xs text-[#805500]">No reference found in the tracked sources. This is a review candidate, not proof that deletion is safe.</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <a href={asset.url} download={asset.fileName} className="inline-flex min-h-10 items-center rounded-lg bg-[#563568] px-3 text-xs font-medium text-white">Download backup copy</a>
+            <button type="button" onClick={() => void downloadBackup(asset)} className="min-h-10 rounded-lg bg-[#563568] px-3 text-xs font-medium text-white">Download backup copy</button>
             <button type="button" onClick={() => setSelected(asset)} className="min-h-10 rounded-lg border border-[#DCCDE5] px-3 text-xs font-medium text-[#563568]">Inspect image</button>
           </div>
-          <label className="mt-3 flex items-start gap-2 text-xs text-[#563568]"><input type="checkbox" checked={backupConfirmed.includes(asset.id)} onChange={event => setBackupConfirmed(current => event.target.checked ? [...current, asset.id] : current.filter(id => id !== asset.id))} className="mt-0.5" /> I have downloaded and checked a backup copy of this image.</label>
+          <p className="mt-3 text-xs text-[#563568]">{backupConfirmed.includes(asset.id) ? "Backup download started. Confirm you have saved and checked the file before proceeding further." : "Download a backup before marking this candidate as reviewed."}</p>
           {backupConfirmed.includes(asset.id) && <p className="mt-1 text-[11px] font-medium text-[#24613D]">Backup acknowledged for this review session.</p>}
         </div>
       </article>) : <p className="rounded-xl border border-dashed border-[#DCCDE5] p-8 text-center text-sm text-[#6F6475]">{usageCoverageComplete ? "No conservative cleanup candidates found. Duplicate files and uncertain references are intentionally excluded." : "Cleanup review is unavailable until every tracked source can be scanned."}</p>}
