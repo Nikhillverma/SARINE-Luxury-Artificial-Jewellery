@@ -27,6 +27,16 @@ export const BulkProductEditor: React.FC<Props> = ({ products, categories, onApp
   const [error, setError] = useState("");
   const [result, setResult] = useState<BulkProductUpdateResult | null>(null);
 
+  const selectedCollection = rangeEnabled
+    ? productCollection
+    : products.length > 0 && products.every(item => item.productCollection === products[0].productCollection)
+      ? products[0].productCollection || null
+      : null;
+  const compatibleCategories = useMemo(() => categories.filter(category =>
+    category.categoryCollection === "both" ||
+    (selectedCollection !== null && category.categoryCollection === selectedCollection)
+  ), [categories, selectedCollection]);
+
   const updates = useMemo<BulkProductUpdates>(() => {
     const value: BulkProductUpdates = {};
     if (priceEnabled) value.price = Number(price);
@@ -41,7 +51,7 @@ export const BulkProductEditor: React.FC<Props> = ({ products, categories, onApp
     if (!Object.keys(updates).length) return "Choose at least one field to update.";
     if (priceEnabled && (!price.trim() || !Number.isFinite(Number(price)) || Number(price) < 0 || Number(price) > 99999999)) return "Enter a valid selling price.";
     if (compareEnabled && comparePrice.trim() !== "" && (!Number.isFinite(Number(comparePrice)) || Number(comparePrice) < 0 || Number(comparePrice) > 99999999)) return "Enter a valid comparison price, or leave it empty to clear it.";
-    if (categoryEnabled && !categoryId) return "Choose a category.";
+    if (categoryEnabled && !compatibleCategories.some(category => category.id === categoryId)) return "Choose a category compatible with every selected product range. For mixed ranges, choose a Shared category or set one range for all products.";
     return "";
   };
 
@@ -54,7 +64,7 @@ export const BulkProductEditor: React.FC<Props> = ({ products, categories, onApp
     finally { setSaving(false); }
   };
 
-  const selectedCategory = categories.find(item => item.id === categoryId)?.name || categoryId;
+  const selectedCategory = compatibleCategories.find(item => item.id === categoryId)?.name || categoryId;
   return <section className="rounded-2xl border border-[#D9C8E2] bg-white p-4 sm:p-5 space-y-4">
     <div className="flex items-start justify-between gap-3">
       <div><h2 className="font-serif text-xl text-[#2C1838]">{result ? "Bulk update results" : review ? "Review bulk changes" : "Bulk product editor"}</h2>
@@ -79,7 +89,7 @@ export const BulkProductEditor: React.FC<Props> = ({ products, categories, onApp
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="flex items-start gap-3 rounded-xl border border-[#EADFF0] p-3"><input type="checkbox" checked={priceEnabled} onChange={e=>setPriceEnabled(e.target.checked)} className="mt-1 accent-[#563568]"/><span className="flex-1"><strong className="block text-xs">Selling price (₹)</strong><input type="number" min="0" max="99999999" step="0.01" disabled={!priceEnabled} value={price} onChange={e=>setPrice(e.target.value)} placeholder="e.g. 1299" className="mt-2 min-h-10 w-full rounded-lg border border-[#E7DCEB] px-3 disabled:bg-gray-100"/></span></label>
         <label className="flex items-start gap-3 rounded-xl border border-[#EADFF0] p-3"><input type="checkbox" checked={compareEnabled} onChange={e=>setCompareEnabled(e.target.checked)} className="mt-1 accent-[#563568]"/><span className="flex-1"><strong className="block text-xs">Comparison price (₹)</strong><input type="number" min="0" max="99999999" step="0.01" disabled={!compareEnabled} value={comparePrice} onChange={e=>setComparePrice(e.target.value)} placeholder="Empty clears comparison price" className="mt-2 min-h-10 w-full rounded-lg border border-[#E7DCEB] px-3 disabled:bg-gray-100"/><small className="text-[10px] text-[#806B8D]">Must exceed each product's selling price.</small></span></label>
-        <label className="flex items-start gap-3 rounded-xl border border-[#EADFF0] p-3"><input type="checkbox" checked={categoryEnabled} onChange={e=>setCategoryEnabled(e.target.checked)} className="mt-1 accent-[#563568]"/><span className="flex-1"><strong className="block text-xs">Category</strong><select disabled={!categoryEnabled} value={categoryId} onChange={e=>setCategoryId(e.target.value)} className="mt-2 min-h-10 w-full rounded-lg border border-[#E7DCEB] px-3 disabled:bg-gray-100">{categories.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></span></label>
+        <label className="flex items-start gap-3 rounded-xl border border-[#EADFF0] p-3"><input type="checkbox" checked={categoryEnabled} onChange={e=>setCategoryEnabled(e.target.checked)} className="mt-1 accent-[#563568]"/><span className="flex-1"><strong className="block text-xs">Category</strong><select disabled={!categoryEnabled} value={compatibleCategories.some(item => item.id === categoryId) ? categoryId : ""} onChange={e=>setCategoryId(e.target.value)} className="mt-2 min-h-10 w-full rounded-lg border border-[#E7DCEB] px-3 disabled:bg-gray-100"><option value="">Choose category</option>{compatibleCategories.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select>{compatibleCategories.length === 0 && <small className="mt-1 block text-[10px] text-amber-700">No compatible category. Select one product range or create a Shared category.</small>}</span></label>
         <label className="flex items-start gap-3 rounded-xl border border-[#EADFF0] p-3"><input type="checkbox" checked={statusEnabled} onChange={e=>setStatusEnabled(e.target.checked)} className="mt-1 accent-[#563568]"/><span className="flex-1"><strong className="block text-xs">Publication status</strong><select disabled={!statusEnabled} value={status} onChange={e=>setStatus(e.target.value as "active"|"draft")} className="mt-2 min-h-10 w-full rounded-lg border border-[#E7DCEB] px-3 disabled:bg-gray-100"><option value="draft">Draft / unpublished</option><option value="active">Active / published</option></select></span></label>
         <label className="flex items-start gap-3 rounded-xl border border-[#EADFF0] p-3"><input type="checkbox" checked={rangeEnabled} onChange={e=>setRangeEnabled(e.target.checked)} className="mt-1 accent-[#563568]"/><span className="flex-1"><strong className="block text-xs">Product range</strong><select disabled={!rangeEnabled} value={productCollection} onChange={e=>setProductCollection(e.target.value as "artificial"|"demi-fine")} className="mt-2 min-h-10 w-full rounded-lg border border-[#E7DCEB] px-3 disabled:bg-gray-100"><option value="artificial">Artificial</option><option value="demi-fine">Demi-Fine</option></select></span></label>
       </div>
