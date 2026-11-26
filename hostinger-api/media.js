@@ -100,7 +100,7 @@ async function inspectMediaReferences(targetId) {
   const references = [];
   const warnings = [];
   const id = String(targetId).toLowerCase();
-  const mediaPattern = /(?:^|\\/)media\\/([a-f0-9-]{36})(?=$|[?#])/ig;
+  const mediaPattern = /(?:^|\/)media\/([a-f0-9-]{36})(?=$|[?#])/ig;
   const scan = (value, source, location) => {
     if (typeof value === "string") {
       if (value.trim().toLowerCase() === id) references.push({ source, location });
@@ -543,15 +543,15 @@ adminMediaRouter.post("/:id/archive", async (req, res, next) => {
       [asset.content_hash]
     );
     if (Number(copies[0]?.copies || 0) !== 1) { await connection.rollback(); return res.status(409).json({ error: "This image has identical copies. Review the duplicate group first." }); }
-    await connection.commit();
     const scan = await inspectMediaReferences(id);
-    if (scan.warnings.length) return res.status(409).json({ error: "Archive blocked because not all tracked sources could be scanned.", coverageWarnings: scan.warnings });
-    if (scan.references.length) return res.status(409).json({ error: "Archive blocked because the image is still referenced.", references: scan.references });
-    const [updated] = await pool.execute(
+    if (scan.warnings.length) { await connection.rollback(); return res.status(409).json({ error: "Archive blocked because not all tracked sources could be scanned.", coverageWarnings: scan.warnings }); }
+    if (scan.references.length) { await connection.rollback(); return res.status(409).json({ error: "Archive blocked because the image is still referenced.", references: scan.references }); }
+    const [updated] = await connection.execute(
       "UPDATE media_assets SET archived_at = CURRENT_TIMESTAMP(3), archived_by = ? WHERE id = ? AND archived_at IS NULL",
       [String(req.admin?.id || "admin"), id]
     );
-    if (!updated.affectedRows) return res.status(409).json({ error: "The image changed during review. Refresh and try again." });
+    if (!updated.affectedRows) { await connection.rollback(); return res.status(409).json({ error: "The image changed during review. Refresh and try again." }); }
+    await connection.commit();
     return res.json({ success: true, archived: true, recoverable: true, id, fileName: asset.file_name });
   } catch (error) {
     try { await connection.rollback(); } catch {}
