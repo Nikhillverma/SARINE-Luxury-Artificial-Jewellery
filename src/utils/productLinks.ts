@@ -1,8 +1,8 @@
 import type { ProductCollection } from "../types/product";
 
-export function getCurrentProductCollection(): ProductCollection | "home" | undefined {
+export function getCurrentProductCollection(): ProductCollection | undefined {
   const fromUrl = new URLSearchParams(window.location.search).get("range");
-  if (fromUrl === "home") return "home";
+  if (fromUrl === "home") { window.sessionStorage.removeItem("sarine_product_range"); return undefined; }
   if (fromUrl === "artificial" || fromUrl === "demi-fine") {
     window.sessionStorage.setItem("sarine_product_range", fromUrl);
     return fromUrl;
