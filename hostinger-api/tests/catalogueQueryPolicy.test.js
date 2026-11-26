@@ -5,7 +5,7 @@ import { MAX_CATALOGUE_PAGE, MAX_CATALOGUE_PAGE_SIZE, MAX_CATALOGUE_SEARCH_LENGT
 test("applies safe defaults and preserves supported filters", () => {
   const result = parseCatalogueQuery({ categorySlug: "earrings", jewelleryType: "studs", inStockOnly: "true", sortBy: "price-asc" });
   assert.equal(result.error, null);
-  assert.deepEqual(result.filters, { categorySlug: "earrings", categoryId: undefined, jewelleryType: "studs", collectionSlug: undefined, search: undefined, page: 1, pageSize: 24, minPrice: undefined, maxPrice: undefined, inStockOnly: true, sortBy: "price-asc" });
+  assert.deepEqual(result.filters, { categorySlug: "earrings", categoryId: undefined, jewelleryType: "studs", collectionSlug: undefined, productCollection: undefined, search: undefined, page: 1, pageSize: 24, minPrice: undefined, maxPrice: undefined, inStockOnly: true, sortBy: "price-asc" });
 });
 
 test("accepts the maximum bounded pagination values", () => {
@@ -35,4 +35,11 @@ test("validates non-negative whole-number price filters and their relationship",
 test("uses a safe sort fallback for unknown or repeated sort values", () => {
   assert.equal(parseCatalogueQuery({ sortBy: "arbitrary-sql" }).filters.sortBy, "newest");
   assert.equal(parseCatalogueQuery({ sortBy: ["newest", "price-asc"] }).filters.sortBy, "newest");
+});
+
+test("accepts only the supported product collection filter", () => {
+  assert.equal(parseCatalogueQuery({ productCollection: "artificial" }).filters.productCollection, "artificial");
+  assert.equal(parseCatalogueQuery({ productCollection: "demi-fine" }).filters.productCollection, "demi-fine");
+  assert.match(parseCatalogueQuery({ productCollection: "other" }).error, /Product collection/);
+  assert.match(parseCatalogueQuery({ productCollection: ["artificial", "demi-fine"] }).error, /productCollection/);
 });
