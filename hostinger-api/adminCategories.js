@@ -3,11 +3,12 @@ import crypto from "node:crypto";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { ensureCategoryCollectionSchema } from "./categoryCollectionSchema.js";
+import { ensureCategoryHierarchySchema } from "./categoryHierarchySchema.js";
 
 const router = Router();
 router.use(requireAdminAuth);
 router.use(async (_req, _res, next) => {
-  try { await ensureCategoryCollectionSchema(); next(); }
+  try { await ensureCategoryCollectionSchema(); await ensureCategoryHierarchySchema(); next(); }
   catch (error) { next(error); }
 });
 
@@ -25,7 +26,8 @@ function mapCategory(row) {
     image: row.image || "",
     isActive: Boolean(row.is_active),
     sortOrder: Number(row.sort_order),
-    categoryCollection: ["artificial", "demi-fine", "both"].includes(row.category_collection) ? row.category_collection : "both"
+    categoryCollection: ["artificial", "demi-fine", "both"].includes(row.category_collection) ? row.category_collection : "both",
+    parentCategoryId: row.parent_category_id || null
   };
 }
 
@@ -57,6 +59,25 @@ function validate(body, partial = false) {
   return errors;
 }
 
+async function validateParentCategory(parentId, categoryId, collection) {
+  if (!parentId) return null;
+  if (String(parentId) === String(categoryId || "")) {
+    return "A category cannot be its own parent.";
+  }
+  const [rows] = await pool.execute(
+    "SELECT id, parent_category_id, is_active, category_collection FROM categories WHERE id = ? LIMIT 1",
+    [parentId]
+  );
+  if (!rows.length) return "The selected parent category does not exist.";
+  const parent = rows[0];
+  if (parent.parent_category_id) return "Subcategories can only be one level deep. Choose a top-level parent.";
+  if (!parent.is_active) return "The selected parent category is hidden. Publish it before adding subcategories.";
+  if (parent.category_collection !== "both" && collection !== "both" && parent.category_collection !== collection) {
+    return "The subcategory and its parent must belong to the same collection, or the parent must be Shared.";
+  }
+  return null;
+}
+
 router.get("/", async (_req, res, next) => {
   try {
     res.set("Cache-Control", "no-store");
@@ -75,12 +96,15 @@ router.post("/", async (req, res, next) => {
     const name = body.name.trim();
     const slug = slugify(body.slug || name);
     if (!slug) return res.status(400).json({ error: "A valid category slug is required." });
+    const categoryCollection = body.categoryCollection || "both";
+    const parentError = await validateParentCategory(body.parentCategoryId || null, null, categoryCollection);
+    if (parentError) return res.status(400).json({ error: parentError });
     const id = crypto.randomUUID();
     await pool.execute(
-      `INSERT INTO categories (id, slug, name, description, image, is_active, sort_order, category_collection)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO categories (id, slug, name, description, image, is_active, sort_order, category_collection, parent_category_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, slug, name, body.description?.trim() || "", body.image || "",
-       body.isActive === false ? 0 : 1, Number(body.sortOrder ?? 0), body.categoryCollection || "both"]
+       body.isActive === false ? 0 : 1, Number(body.sortOrder ?? 0), categoryCollection, body.parentCategoryId || null]
     );
     const [rows] = await pool.execute("SELECT * FROM categories WHERE id = ? LIMIT 1", [id]);
     res.status(201).json({ success: true, category: mapCategory(rows[0]) });
@@ -98,6 +122,14 @@ router.put("/:id", async (req, res, next) => {
     const [existingRows] = await pool.execute("SELECT * FROM categories WHERE id = ? LIMIT 1", [req.params.id]);
     if (!existingRows.length) return res.status(404).json({ error: "Category not found." });
     const existing = mapCategory(existingRows[0]);
+    const categoryCollection = body.categoryCollection === undefined ? existing.categoryCollection : body.categoryCollection;
+    const parentCategoryId = body.parentCategoryId === undefined ? existing.parentCategoryId : (body.parentCategoryId || null);
+    const parentError = await validateParentCategory(parentCategoryId, req.params.id, categoryCollection);
+    if (parentError) return res.status(400).json({ error: parentError });
+    if (parentCategoryId) {
+      const [[children]] = await pool.execute("SELECT COUNT(*) AS childCount FROM categories WHERE parent_category_id = ?", [req.params.id]);
+      if (Number(children.childCount) > 0) return res.status(409).json({ error: "A category with subcategories cannot itself become a subcategory. Move its subcategories first." });
+    }
     const name = body.name === undefined ? existing.name : body.name.trim();
     const slug = slugify(body.slug === undefined ? (body.name === undefined ? existing.slug : name) : body.slug);
     if (!slug) return res.status(400).json({ error: "A valid category slug is required." });
@@ -131,6 +163,16 @@ router.delete("/:id", async (req, res, next) => {
     if (!categoryRows.length) {
       await connection.rollback();
       return res.status(404).json({ error: "Category not found." });
+    }
+    const [[children]] = await connection.execute(
+      "SELECT COUNT(*) AS childCount FROM categories WHERE parent_category_id = ?", [req.params.id]
+    );
+    if (Number(children.childCount) > 0) {
+      await connection.rollback();
+      return res.status(409).json({
+        error: "This category has subcategories. Reassign or remove its subcategories before deleting the parent.",
+        childCount: Number(children.childCount)
+      });
     }
     const [[usage]] = await connection.execute(
       "SELECT COUNT(*) AS productCount FROM products WHERE category_id = ?", [req.params.id]
