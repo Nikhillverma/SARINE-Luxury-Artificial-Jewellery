@@ -99,6 +99,124 @@ router.get("/movements", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+// GET /api/admin/inventory/reports — aggregate actual stock movements, excluding migration snapshots.
+router.get("/reports", async (req, res, next) => {
+  try {
+    await ensureInventoryTable();
+    await ensureProductVariantSchema();
+    await ensureOpeningStockSnapshots();
+    const from = String(req.query.from || "");
+    const to = String(req.query.to || "");
+    const toSqlUtc = (date, nextDay = false) => {
+      if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) return null;
+      const parsed = new Date(date + "T00:00:00+05:30");
+      if (!Number.isFinite(parsed.getTime())) return null;
+      if (nextDay) parsed.setUTCDate(parsed.getUTCDate() + 1);
+      return parsed.toISOString().slice(0, 19).replace("T", " ");
+    };
+    const conditions = [];
+    const values = [];
+    if (from) {
+      const boundary = toSqlUtc(from);
+      if (!boundary) return res.status(400).json({ error: "Invalid report start date." });
+      conditions.push("createdAt >= ?");
+      values.push(boundary);
+    }
+    if (to) {
+      const boundary = toSqlUtc(to, true);
+      if (!boundary) return res.status(400).json({ error: "Invalid report end date." });
+      conditions.push("createdAt < ?");
+      values.push(boundary);
+    }
+    const union = `SELECT product_id AS productId, product_name AS productName, sku,
+              quantity_delta AS quantityDelta, reason, created_at AS createdAt,
+              'product' AS movementType, NULL AS variantLabel
+       FROM inventory_movements
+       UNION ALL
+       SELECT product_id AS productId, product_name AS productName, variant_sku AS sku,
+              quantity_delta AS quantityDelta, reason, created_at AS createdAt,
+              'variant' AS movementType, variant_label AS variantLabel
+       FROM variant_inventory_movements`;
+    const where = conditions.length ? " WHERE " + conditions.join(" AND ") : "";
+    const [summaryRows] = await pool.execute(
+      `SELECT COUNT(*) AS movementCount,
+              COALESCE(SUM(CASE WHEN quantityDelta > 0 THEN quantityDelta ELSE 0 END), 0) AS stockInUnits,
+              COALESCE(SUM(CASE WHEN quantityDelta < 0 THEN ABS(quantityDelta) ELSE 0 END), 0) AS stockOutUnits,
+              COALESCE(SUM(quantityDelta), 0) AS netChange
+       FROM (${union}) AS actual_movements${where}`,
+      values
+    );
+    const categoryExpression = `CASE
+      WHEN LOWER(reason) LIKE '%return%' THEN 'returns'
+      WHEN LOWER(reason) REGEXP 'payment|checkout|order|sale' THEN 'sales'
+      WHEN LOWER(reason) REGEXP 'restock|initial.*stock' THEN 'restocks'
+      WHEN LOWER(reason) REGEXP 'damaged|inspection|reconciliation|adjust' THEN 'adjustments'
+      ELSE 'other'
+    END`;
+    const [categoryRows] = await pool.execute(
+      `SELECT ${categoryExpression} AS category, COUNT(*) AS movementCount,
+              COALESCE(SUM(CASE WHEN quantityDelta > 0 THEN quantityDelta ELSE 0 END), 0) AS stockInUnits,
+              COALESCE(SUM(CASE WHEN quantityDelta < 0 THEN ABS(quantityDelta) ELSE 0 END), 0) AS stockOutUnits
+       FROM (${union}) AS actual_movements${where}
+       GROUP BY category ORDER BY movementCount DESC, category ASC`,
+      values
+    );
+    const [dailyRows] = await pool.execute(
+      `SELECT DATE(DATE_ADD(createdAt, INTERVAL 330 MINUTE)) AS movementDate,
+              COUNT(*) AS movementCount,
+              COALESCE(SUM(CASE WHEN quantityDelta > 0 THEN quantityDelta ELSE 0 END), 0) AS stockInUnits,
+              COALESCE(SUM(CASE WHEN quantityDelta < 0 THEN ABS(quantityDelta) ELSE 0 END), 0) AS stockOutUnits,
+              COALESCE(SUM(quantityDelta), 0) AS netChange
+       FROM (${union}) AS actual_movements${where}
+       GROUP BY movementDate ORDER BY movementDate DESC`,
+      values
+    );
+    const [productRows] = await pool.execute(
+      `SELECT productId, productName, sku, movementType, variantLabel,
+              COUNT(*) AS movementCount,
+              COALESCE(SUM(CASE WHEN quantityDelta > 0 THEN quantityDelta ELSE 0 END), 0) AS stockInUnits,
+              COALESCE(SUM(CASE WHEN quantityDelta < 0 THEN ABS(quantityDelta) ELSE 0 END), 0) AS stockOutUnits,
+              COALESCE(SUM(quantityDelta), 0) AS netChange
+       FROM (${union}) AS actual_movements${where}
+       GROUP BY productId, productName, sku, movementType, variantLabel
+       ORDER BY (stockInUnits + stockOutUnits) DESC, productName ASC`,
+      values
+    );
+    const [reasonRows] = await pool.execute(
+      `SELECT reason, COUNT(*) AS movementCount,
+              COALESCE(SUM(CASE WHEN quantityDelta > 0 THEN quantityDelta ELSE 0 END), 0) AS stockInUnits,
+              COALESCE(SUM(CASE WHEN quantityDelta < 0 THEN ABS(quantityDelta) ELSE 0 END), 0) AS stockOutUnits
+       FROM (${union}) AS actual_movements${where}
+       GROUP BY reason ORDER BY movementCount DESC, reason ASC`,
+      values
+    );
+    const snapshotConditions = [];
+    const snapshotValues = [];
+    if (from) { snapshotConditions.push("snapshot_at >= ?"); snapshotValues.push(toSqlUtc(from)); }
+    if (to) { snapshotConditions.push("snapshot_at < ?"); snapshotValues.push(toSqlUtc(to, true)); }
+    const [snapshotRows] = await pool.execute(
+      `SELECT COUNT(*) AS excludedSnapshots FROM inventory_opening_balance_snapshots${snapshotConditions.length ? " WHERE " + snapshotConditions.join(" AND ") : ""}`,
+      snapshotValues
+    );
+    res.set("Cache-Control", "no-store");
+    return res.json({
+      summary: {
+        movementCount: Number(summaryRows[0]?.movementCount || 0),
+        stockInUnits: Number(summaryRows[0]?.stockInUnits || 0),
+        stockOutUnits: Number(summaryRows[0]?.stockOutUnits || 0),
+        netChange: Number(summaryRows[0]?.netChange || 0),
+        excludedOpeningSnapshots: Number(snapshotRows[0]?.excludedSnapshots || 0)
+      },
+      categories: categoryRows.map(row => ({ ...row, movementCount: Number(row.movementCount), stockInUnits: Number(row.stockInUnits), stockOutUnits: Number(row.stockOutUnits) })),
+      daily: dailyRows.map(row => ({ ...row, movementDate: row.movementDate, movementCount: Number(row.movementCount), stockInUnits: Number(row.stockInUnits), stockOutUnits: Number(row.stockOutUnits), netChange: Number(row.netChange) })),
+      products: productRows.map(row => ({ ...row, movementCount: Number(row.movementCount), stockInUnits: Number(row.stockInUnits), stockOutUnits: Number(row.stockOutUnits), netChange: Number(row.netChange) })),
+      reasons: reasonRows.map(row => ({ ...row, movementCount: Number(row.movementCount), stockInUnits: Number(row.stockInUnits), stockOutUnits: Number(row.stockOutUnits) })),
+      filters: { from: from || null, to: to || null }
+    });
+  } catch (error) { next(error); }
+});
+
+
 
 router.get("/variants/movements", async (_req, res, next) => {
   try {
