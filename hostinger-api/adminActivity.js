@@ -2,6 +2,7 @@ import { Router } from "express";
 import { pool } from "./db.js";
 import { requireAdminAuth } from "./adminAuth.js";
 import { recordAdminActivity } from "./adminActivityWriter.js";
+import { dateBoundary } from "./adminActivityDate.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -65,8 +66,10 @@ function cleanText(value, maxLength = 180) {
 
 export function describeActivity(req) {
   const method = String(req.method || "POST").toUpperCase();
-  const route = String(req.originalUrl || req.path || "").split("?")[0]
-    .replace(/^\/api\/admin/, "").slice(0, 255);
+  const rawPath = String(req.originalUrl || req.path || "").split("?")[0];
+  const route = (rawPath.startsWith("/api/admin-update-order") ? "/orders/update"
+    : rawPath.startsWith("/api/admin-list-orders") ? "/orders"
+    : rawPath.replace(/^\/api\/admin/, "")).slice(0, 255);
   const segments = route.split("/").filter(Boolean);
   const root = segments[0] || "admin";
   const entityType = ENTITY_LABELS[root] || "admin setting";
@@ -115,14 +118,6 @@ export function captureAdminActivity(req, res, next) {
   });
 
   next();
-}
-
-function dateBoundary(value, nextDay = false) {
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return null;
-  const date = new Date(value + "T00:00:00+05:30");
-  if (!Number.isFinite(date.getTime())) return null;
-  if (nextDay) date.setUTCDate(date.getUTCDate() + 1);
-  return date.toISOString().slice(0, 19).replace("T", " ");
 }
 
 router.get("/", async (req, res, next) => {
