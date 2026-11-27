@@ -397,39 +397,38 @@ export const AdminInventoryPage: React.FC = () => {
               <p className="mt-1 text-[11px] text-[#6F6475]">Draft and archived designs are excluded from Inventory Watch.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-[#FAF5FC] text-[#705E7B] uppercase text-[10px] tracking-wider">
-                  <tr><th className="p-3">Priority</th><th className="p-3">Piece / Variant</th><th className="p-3">SKU</th><th className="p-3 text-center">On hand</th><th className="p-3 text-center">Alert at</th><th className="p-3">Stock status</th><th className="p-3 text-right">Action</th></tr>
-                </thead>
-                <tbody className="divide-y divide-[#E7DCEB]">
-                  {visibleWatchItems.map(item => (
-                    <tr key={item.key} className="hover:bg-[#FAF5FC]">
-                      <td className="p-3">
-                        <span className={`inline-flex px-2 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap ${item.severity === 'out' ? 'bg-red-50 text-red-700' : item.severity === 'risk' ? 'bg-orange-50 text-orange-800' : 'bg-amber-50 text-amber-800'}`}>
-                          {item.severity === 'out' ? 'Urgent' : item.severity === 'risk' ? 'At risk' : 'Low'}
-                        </span>
-                      </td>
-                      <td className="p-3 min-w-[190px]">
-                        <span className="block font-medium text-[#302438]">{item.product.name}</span>
-                        {item.variantLabel && <span className="block mt-0.5 text-[10px] text-[#6F6475]">{item.variantLabel}</span>}
-                      </td>
-                      <td className="p-3 font-mono text-[10px] text-[#6F6475]">{item.sku}</td>
-                      <td className={`p-3 text-center font-mono font-semibold ${item.stock <= 0 ? 'text-red-700' : item.severity === 'risk' ? 'text-orange-800' : 'text-amber-800'}`}>{item.stock}</td>
-                      <td className="p-3 text-center font-mono text-[#302438]">{item.threshold}</td>
-                      <td className="p-3 text-[10px] text-[#6F6475]">{item.stock <= 0 ? 'No units available' : item.severity === 'risk' ? 'At or below half the alert level' : 'At or below alert level'}<span className="block mt-0.5 text-[9px] text-[#8E769E]">{item.variantId ? 'Inherits design threshold' : productThresholds[item.product.id] === undefined ? 'Global threshold' : 'Custom design threshold'}</span></td>
-                      <td className="p-3 text-right whitespace-nowrap">
-                        {item.variantId ? (
-                          <Link to={`/admin/products?search=${encodeURIComponent(item.product.name)}&manageVariants=${encodeURIComponent(item.product.id)}`} className="inline-flex min-h-9 items-center px-3 border border-[#563568] text-[#563568] rounded-xs text-[10px] font-semibold hover:bg-[#F7F0FA]">Manage variant stock</Link>
-                        ) : (
-                          <button type="button" onClick={() => { setAdjustingProduct(item.product); setStockDelta(0); setAdjustError(null); }} className="inline-flex min-h-9 items-center px-3 border border-[#563568] text-[#563568] rounded-xs text-[10px] font-semibold hover:bg-[#F7F0FA]">Adjust stock</button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="divide-y divide-[#E7DCEB]" aria-label="Inventory Watch alert rows">
+              <div className="px-4 py-2 text-[10px] text-[#806B8D] bg-[#FAF5FC]">
+                Showing {visibleWatchItems.length} of {watchCounts.all} active stock alerts
+              </div>
+              {visibleWatchItems.map(item => (
+                <article key={item.key} className="p-4 flex flex-col lg:flex-row lg:items-center gap-3 hover:bg-[#FAF5FC]">
+                  <div className="flex items-center gap-3 min-w-0 lg:w-[28%]">
+                    <span className={`inline-flex shrink-0 px-2 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap ${item.severity === 'out' ? 'bg-red-50 text-red-700' : item.severity === 'risk' ? 'bg-orange-50 text-orange-800' : 'bg-amber-50 text-amber-800'}`}>
+                      {item.severity === 'out' ? 'Urgent' : item.severity === 'risk' ? 'At risk' : 'Low'}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm text-[#302438] break-words">{item.product.name}</p>
+                      {item.variantLabel && <p className="mt-0.5 text-[10px] text-[#6F6475]">{item.variantLabel}</p>}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1 text-xs">
+                    <div><p className="text-[9px] uppercase tracking-wider text-[#806B8D]">SKU</p><p className="mt-1 font-mono break-all text-[#6F6475]">{item.sku}</p></div>
+                    <div><p className="text-[9px] uppercase tracking-wider text-[#806B8D]">On hand</p><p className={`mt-1 font-mono font-semibold ${item.stock <= 0 ? 'text-red-700' : item.severity === 'risk' ? 'text-orange-800' : 'text-amber-800'}`}>{item.stock} units</p></div>
+                    <div><p className="text-[9px] uppercase tracking-wider text-[#806B8D]">Alert at</p><p className="mt-1 font-mono font-semibold text-[#302438]">{item.threshold} units</p></div>
+                    <div><p className="text-[9px] uppercase tracking-wider text-[#806B8D]">Stock status</p><p className="mt-1 text-[#6F6475]">{item.stock <= 0 ? 'No units available' : item.severity === 'risk' ? 'At or below half the alert level' : 'At or below alert level'}</p><p className="mt-0.5 text-[9px] text-[#8E769E]">{item.variantId ? 'Inherits design threshold' : productThresholds[item.product.id] === undefined ? 'Global threshold' : 'Custom design threshold'}</p></div>
+                  </div>
+                  <div className="lg:w-[170px] lg:text-right shrink-0">
+                    {item.variantId ? (
+                      <Link to={`/admin/products?search=${encodeURIComponent(item.product.name)}&manageVariants=${encodeURIComponent(item.product.id)}`} className="inline-flex min-h-9 items-center justify-center px-3 border border-[#563568] text-[#563568] rounded-xs text-[10px] font-semibold hover:bg-[#F7F0FA]">Manage variant stock</Link>
+                    ) : (
+                      <button type="button" onClick={() => { setAdjustingProduct(item.product); setStockDelta(0); setAdjustError(null); }} className="inline-flex min-h-9 items-center justify-center px-3 border border-[#563568] text-[#563568] rounded-xs text-[10px] font-semibold hover:bg-[#F7F0FA]">Adjust stock</button>
+                    )}
+                  </div>
+                </article>
+              ))}
             </div>
+
           )}
           <div className="px-4 py-3 border-t border-[#E7DCEB] text-[10px] text-[#806B8D]">Thresholds use each design's saved override or the global default. Variants inherit their parent design's threshold. At risk means positive stock at or below half the threshold; no demand or supplier lead-time forecast is assumed.</div>
         </section>
