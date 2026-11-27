@@ -451,7 +451,10 @@ export const AdminOrdersPage: React.FC = () => {
       setActionError('Your browser blocked the invoice window. Allow pop-ups for this admin site and try again.');
       return;
     }
-    const escapeHtml = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character] || character));
+    const escapeHtml = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, character => {
+      const entities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+      return entities[character] || character;
+    });
     const money = (value: number) => escapeHtml(formatInr(Number.isFinite(Number(value)) ? Number(value) : 0));
     const placedDate = order.createdAt && Number.isFinite(new Date(order.createdAt).getTime())
       ? new Date(order.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
