@@ -10,8 +10,30 @@ export interface AdminCustomer {
   city: string;
   state: string;
   totalOrders: number;
+  paidOrders: number;
   lifetimeSpend: number;
+  averagePaidOrderValue: number;
+  firstOrderAt: string | null;
   lastOrderAt: string | null;
+  preferredCollection: 'artificial' | 'demi-fine' | 'unassigned' | null;
+}
+
+export interface AdminCustomerInsights {
+  summary: {
+    customers: number;
+    payingCustomers: number;
+    repeatCustomers: number;
+    highValueCustomers: number;
+    paidOrders: number;
+    netPaidRevenue: number;
+    averagePaidOrderValue: number;
+  };
+  collectionPreferences: Array<{
+    collection: 'artificial' | 'demi-fine' | 'unassigned';
+    units: number;
+    itemSales: number;
+    customers: number;
+  }>;
 }
 
 export interface AdminCustomerOrder {
@@ -41,6 +63,10 @@ async function request<T>(path: string): Promise<T> {
 }
 
 export class HostingerAdminCustomerService {
+  async getInsights() {
+    return request<AdminCustomerInsights>('/insights');
+  }
+
   async getCustomers(search = '', offset = 0) {
     const params = new URLSearchParams({ limit: '50', offset: String(offset) });
     if (search.trim()) params.set('search', search.trim());
