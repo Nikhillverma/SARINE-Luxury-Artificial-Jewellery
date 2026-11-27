@@ -17,7 +17,20 @@ const loginLimiter = rateLimit({
   limit: 5,
   standardHeaders: "draft-8",
   legacyHeaders: false,
-  message: { error: "Too many login attempts. Try again later." }
+  handler: async (_req, res) => {
+    await recordAdminActivity(
+      { id: "unknown", name: "Unrecognized login attempt", email: "unavailable" },
+      {
+        action: "login_rate_limited",
+        entityType: "admin session",
+        summary: "Admin sign-in rate limit triggered",
+        method: "POST",
+        route: "/auth/login",
+        statusCode: 429
+      }
+    );
+    return res.status(429).json({ error: "Too many login attempts. Try again later." });
+  }
 });
 
 function readCookie(req, name) {
@@ -165,6 +178,17 @@ router.post("/login", loginLimiter, async (req, res) => {
   const password = String(req.body?.password || "");
 
   if (!email || email.length > 254 || !password || password.length > 256) {
+    await recordAdminActivity(
+      { id: "unknown", name: "Unrecognized login attempt", email: "unavailable" },
+      {
+        action: "login_failed",
+        entityType: "admin session",
+        summary: "Admin sign-in rejected because required credentials were missing or invalid",
+        method: "POST",
+        route: "/auth/login",
+        statusCode: 400
+      }
+    );
     return res.status(400).json({ error: "Enter a valid email and password." });
   }
 
@@ -179,12 +203,33 @@ router.post("/login", loginLimiter, async (req, res) => {
   const admin = rows[0];
 
   if (!admin || admin.status !== "active") {
+    await recordAdminActivity(
+      admin ? safeAdmin(admin) : { id: "unknown", name: "Unrecognized login attempt", email: "unavailable" },
+      {
+        action: "login_failed",
+        entityType: "admin session",
+        entityId: admin?.id || null,
+        summary: admin ? "Admin sign-in rejected for an inactive account" : "Admin sign-in rejected for an unrecognized account",
+        method: "POST",
+        route: "/auth/login",
+        statusCode: 401
+      }
+    );
     return res.status(401).json({ error: "Invalid email or password." });
   }
 
   const passwordMatches = await bcrypt.compare(password, admin.password_hash);
 
   if (!passwordMatches) {
+    await recordAdminActivity(safeAdmin(admin), {
+      action: "login_failed",
+      entityType: "admin session",
+      entityId: admin.id,
+      summary: "Admin sign-in rejected because the password did not match",
+      method: "POST",
+      route: "/auth/login",
+      statusCode: 401
+    });
     return res.status(401).json({ error: "Invalid email or password." });
   }
 
