@@ -121,6 +121,7 @@ export const adminProductService: IAdminProductService =
       };
     },
     getInventoryMovements: async (options = {}) => ({ movements: [], total: 0, page: options.page ?? 1, limit: options.limit ?? 25, totalPages: 0 }),
+    getInventoryMovementReport: async (options = {}) => ({ summary: { movementCount: 0, stockInUnits: 0, stockOutUnits: 0, netChange: 0, excludedOpeningSnapshots: 0 }, categories: [], daily: [], products: [], reasons: [], filters: { from: options.from || null, to: options.to || null } }),
 
     deleteProduct: async id => {
       const item = mockProductService._getAllInternal().find(p => p.id === id);
