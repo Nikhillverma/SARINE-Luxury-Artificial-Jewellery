@@ -115,6 +115,7 @@ export const AdminOrdersPage: React.FC = () => {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest');
+  const [shippingQueueFilter, setShippingQueueFilter] = useState<'all' | 'to_pack' | 'to_dispatch' | 'in_transit' | 'out_for_delivery'>('all');
 
   // Selected Order for Detail Drawer
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
@@ -270,7 +271,12 @@ export const AdminOrdersPage: React.FC = () => {
       const localDateKey = validDate ? [orderDate!.getFullYear(), String(orderDate!.getMonth() + 1).padStart(2, '0'), String(orderDate!.getDate()).padStart(2, '0')].join('-') : '';
       const matchesFrom = !dateFrom || (validDate && localDateKey >= dateFrom);
       const matchesTo = !dateTo || (validDate && localDateKey <= dateTo);
-      return matchesSearch && matchesFrom && matchesTo;
+      const matchesQueue = shippingQueueFilter === 'all'
+        || (shippingQueueFilter === 'to_pack' && !o.isTest && canMarkOrderAsShipped(o))
+        || (shippingQueueFilter === 'to_dispatch' && o.orderStatus === 'packed')
+        || (shippingQueueFilter === 'in_transit' && o.orderStatus === 'shipped')
+        || (shippingQueueFilter === 'out_for_delivery' && o.orderStatus === 'out_for_delivery');
+      return matchesSearch && matchesFrom && matchesTo && matchesQueue;
     }).sort((a, b) => {
       if (sortOrder === 'highest') return (Number(b.total) || 0) - (Number(a.total) || 0);
       if (sortOrder === 'lowest') return (Number(a.total) || 0) - (Number(b.total) || 0);
@@ -278,7 +284,7 @@ export const AdminOrdersPage: React.FC = () => {
       const bDate = new Date(b.createdAt || 0).getTime() || 0;
       return sortOrder === 'oldest' ? aDate - bDate : bDate - aDate;
     });
-  }, [orders, searchTerm, dateFrom, dateTo, sortOrder]);
+  }, [orders, searchTerm, dateFrom, dateTo, sortOrder, shippingQueueFilter]);
 
   const orderMetrics = useMemo(() => {
     const genuine = orders.filter(order => !order.isTest);
@@ -610,6 +616,41 @@ export const AdminOrdersPage: React.FC = () => {
         </section>
         <p className="text-[11px] text-[#6F6475]">Overview counts reflect orders currently loaded in this ledger view, not the entire database. Use “Load more” to extend the snapshot.</p>
 
+        {/* Fulfilment queue — a focused operational view over the existing order ledger. */}
+        <section aria-label="Shipping and fulfilment queue" className="bg-white border border-[#E7DCEB] rounded-xs p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+            <div>
+              <h2 className="font-serif text-lg text-[#302438]">Shipping &amp; Fulfilment Queue</h2>
+              <p className="text-[11px] text-[#6F6475]">Quickly focus the order ledger on the next fulfilment action. Counts reflect loaded genuine orders.</p>
+            </div>
+            <span className="text-[10px] text-[#8A7C90]">No carrier integration assumed</span>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
+            {([
+              { key: 'all', label: 'All orders', count: orders.filter(order => !order.isTest).length },
+              { key: 'to_pack', label: 'Ready to pack', count: orders.filter(order => !order.isTest && canMarkOrderAsShipped(order)).length },
+              { key: 'to_dispatch', label: 'Ready to dispatch', count: orders.filter(order => !order.isTest && order.orderStatus === 'packed').length },
+              { key: 'in_transit', label: 'In transit', count: orders.filter(order => !order.isTest && order.orderStatus === 'shipped').length },
+              { key: 'out_for_delivery', label: 'Out for delivery', count: orders.filter(order => !order.isTest && order.orderStatus === 'out_for_delivery').length }
+            ] as const).map(item => (
+              <button
+                key={item.key}
+                type="button"
+                aria-pressed={shippingQueueFilter === item.key}
+                onClick={() => {
+                  setShippingQueueFilter(item.key);
+                  setStatusFilter('all');
+                  setPaymentFilter('all');
+                }}
+                className={`min-h-[76px] rounded-xs border px-3 py-3 text-left transition-colors ${shippingQueueFilter === item.key ? 'border-[#563568] bg-[#FAF5FC]' : 'border-[#E7DCEB] bg-white hover:bg-[#FAF5FC]'}`}
+              >
+                <span className="block text-[10px] uppercase tracking-wider text-[#6F6475]">{item.label}</span>
+                <span className="mt-1 block font-serif text-2xl tabular-nums text-[#302438]">{loading && orders.length === 0 ? '—' : item.count}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
         {/* Filter Bar */}
         <div className="bg-white p-4 border border-[#E7DCEB] rounded-xs shadow-2xs space-y-3">
           {/* Client-side Search */}
@@ -643,7 +684,7 @@ export const AdminOrdersPage: React.FC = () => {
               <select
                 aria-label="Filter orders by status"
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => { setStatusFilter(e.target.value); setShippingQueueFilter('all'); }}
                 className="bg-[#F7F0FA] border border-[#E7DCEB] text-xs text-[#302438] px-2.5 py-1.5 rounded-xs focus:outline-none focus:border-[#B69ACF]"
               >
                 <option value="all">All Statuses</option>
@@ -665,7 +706,7 @@ export const AdminOrdersPage: React.FC = () => {
               <select
                 aria-label="Filter orders by payment status"
                 value={paymentFilter}
-                onChange={(e) => setPaymentFilter(e.target.value)}
+                onChange={(e) => { setPaymentFilter(e.target.value); setShippingQueueFilter('all'); }}
                 className="bg-[#F7F0FA] border border-[#E7DCEB] text-xs text-[#302438] px-2.5 py-1.5 rounded-xs focus:outline-none focus:border-[#B69ACF]"
               >
                 <option value="all">All Payments</option>
