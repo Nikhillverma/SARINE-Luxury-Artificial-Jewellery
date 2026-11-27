@@ -5,7 +5,7 @@ import { ShieldCheck, UserPlus, RefreshCw, UserX, CheckCircle2, AlertCircle } fr
 const API_BASE = (
   import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
   (import.meta.env.DEV ? "/api" : "https://lavender-goldfish-844589.hostingersite.com/api")
-).replace(/\\/+$/, "");
+).replace(/\/+$/, "");
 
 type AdminRow = {
   id: string; email: string; name: string; role: string; status: string;
