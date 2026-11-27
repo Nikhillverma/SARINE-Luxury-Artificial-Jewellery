@@ -151,7 +151,7 @@ export const AdminAnalyticsPage: React.FC = () => {
   const peak = report?.daily.reduce((best,day) => day.revenue > best.revenue ? day : best, report.daily[0] || {date:"",orders:0,revenue:0});
   const categoryRows = (report?.categories || []).slice().sort((a,b)=>b.itemSales-a.itemSales).slice(0,8).map(row=>({label:row.category,value:row.itemSales}));
   const collectionRows = ["artificial", "demi-fine", "unassigned"].map(collection => {
-    const row = report?.collectionBreakdown.find(item => item.collection === collection);
+    const row = (report?.collectionBreakdown || []).find(item => item.collection === collection);
     return { collection, unitsSold: row?.unitsSold ?? 0, itemSales: row?.itemSales ?? 0 };
   });
   const statusRows = (report?.orderStatuses || []).slice().sort((a,b)=>b.count-a.count).map(row=>({label:row.label,value:row.count}));
