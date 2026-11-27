@@ -173,9 +173,9 @@ export const AdminInventoryPage: React.FC = () => {
     };
     const rows = movements.map(movement => [
       new Date(movement.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
-      movement.movementType === 'variant' ? 'Variant' : 'Product',
+      movement.movementType === 'opening_balance' ? 'Opening balance snapshot' : movement.movementType === 'variant' ? 'Variant' : 'Product',
       movement.productName, movement.sku, movement.variantLabel || '',
-      movement.previousStock, movement.quantityDelta, movement.newStock,
+      movement.previousStock ?? '', movement.quantityDelta ?? 'Snapshot', movement.newStock,
       movement.reason, movement.adminName, movement.adminEmail,
       movement.costPriceSnapshot ?? '', movement.previousStockCostValue ?? '', movement.newStockCostValue ?? ''
     ]);
@@ -499,11 +499,11 @@ export const AdminInventoryPage: React.FC = () => {
         <section className="bg-white border border-[#E7DCEB] rounded-xs shadow-2xs overflow-hidden">
           <div className="p-4 border-b border-[#E7DCEB] space-y-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div><h2 className="font-serif text-xl text-[#302438]">Inventory Movement & Valuation History</h2><p className="text-[11px] text-[#6F6475] mt-1">Complete searchable product and variant stock ledger, including checkout deductions and admin adjustments.</p></div>
+              <div><h2 className="font-serif text-xl text-[#302438]">Inventory Movement & Valuation History</h2><p className="text-[11px] text-[#6F6475] mt-1">Searchable stock history with checkout deductions, admin adjustments and clearly labelled migration-time opening balance snapshots.</p></div>
               <button type="button" onClick={exportMovementCsv} disabled={movements.length === 0 || movementLoading} className="min-h-10 px-3 border border-[#563568] text-[#563568] rounded-xs text-xs font-medium disabled:opacity-40">Export current page CSV</button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2"><input value={movementSearch} onChange={event => setMovementSearch(event.target.value)} placeholder="Search product, SKU, variant, reason or admin" aria-label="Search inventory movements" className="min-h-10 px-3 border border-[#E7DCEB] bg-[#F7F0FA] rounded-xs text-xs"/><label className="text-[10px] text-[#6F6475]">From (IST)<input type="date" value={movementFrom} max={movementTo || undefined} onChange={event => setMovementFrom(event.target.value)} className="mt-1 block w-full min-h-10 px-3 border border-[#E7DCEB] bg-[#F7F0FA] rounded-xs text-xs"/></label><label className="text-[10px] text-[#6F6475]">To (IST)<input type="date" value={movementTo} min={movementFrom || undefined} onChange={event => setMovementTo(event.target.value)} className="mt-1 block w-full min-h-10 px-3 border border-[#E7DCEB] bg-[#F7F0FA] rounded-xs text-xs"/></label></div>
-            <p className="text-[10px] text-[#6F6475]">{movementTotal.toLocaleString('en-IN')} matching recorded movements · Page {movementPage} of {movementTotalPages} · 25 per page</p>
+            <p className="text-[10px] text-[#6F6475]">{movementTotal.toLocaleString('en-IN')} matching inventory records · Page {movementPage} of {movementTotalPages} · 25 per page</p>
             {movementError && <p role="alert" className="text-xs text-red-700">{movementError}</p>}
             <p className="text-[10px] text-[#6F6475]">Cost snapshots are recorded from this upgrade onward using the unit cost stored at each movement. Older movements without a recorded cost remain marked unavailable; no historical cost is invented.</p>
           </div>
@@ -526,9 +526,9 @@ export const AdminInventoryPage: React.FC = () => {
                 ) : movements.map((movement) => (
                   <tr key={movement.id + (movement.movementType || 'product')}>
                     <td className="p-3 whitespace-nowrap text-[#6F6475]">{new Date(movement.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}</td>
-                    <td className="p-3"><span className="font-medium text-[#302438]">{movement.productName}</span><span className="block text-[10px] text-[#6F6475] font-mono">{movement.sku} · {movement.movementType === 'variant' ? movement.variantLabel || 'Variant' : 'Product'}</span></td>
-                    <td className="p-3 font-mono">{movement.previousStock}</td>
-                    <td className={`p-3 font-mono font-semibold ${movement.quantityDelta > 0 ? 'text-emerald-700' : 'text-red-700'}`}>{movement.quantityDelta > 0 ? '+' : ''}{movement.quantityDelta}</td>
+                    <td className="p-3"><span className="font-medium text-[#302438]">{movement.productName}</span><span className="block text-[10px] text-[#6F6475] font-mono">{movement.sku} · {movement.movementType === 'opening_balance' ? (movement.variantLabel || 'Product') : movement.movementType === 'variant' ? movement.variantLabel || 'Variant' : 'Product'}</span></td>
+                    <td className="p-3 font-mono">{movement.movementType === 'opening_balance' ? '—' : movement.previousStock}</td>
+                    <td className={`p-3 font-mono font-semibold ${movement.movementType === 'opening_balance' ? 'text-[#6F6475]' : (movement.quantityDelta ?? 0) > 0 ? 'text-emerald-700' : 'text-red-700'}`}>{movement.movementType === 'opening_balance' ? 'Snapshot' : `${(movement.quantityDelta ?? 0) > 0 ? '+' : ''}${movement.quantityDelta ?? 0}`}</td>
                     <td className="p-3 font-mono font-semibold">{movement.newStock}</td>
                     <td className="p-3 whitespace-nowrap">{movement.costPriceSnapshot == null ? <span className="text-amber-700">Not recorded</span> : formatInr(Number(movement.costPriceSnapshot))}</td>
                     <td className="p-3 whitespace-nowrap">{movement.previousStockCostValue == null ? '—' : formatInr(Number(movement.previousStockCostValue))}</td>
