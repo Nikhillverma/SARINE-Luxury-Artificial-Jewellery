@@ -13,7 +13,7 @@ const router = Router();
 // Enforce admin session authentication across all admin order routes
 router.use(requireAdminAuth);
 
-const ALLOWED_ACTIONS = ["mark_packed", "mark_shipped", "mark_out_for_delivery", "mark_delivered", "cancel", "add_note"];
+const ALLOWED_ACTIONS = ["mark_packed", "mark_shipped", "update_tracking", "mark_out_for_delivery", "mark_delivered", "cancel", "add_note"];
 
 let hasAdminNoteColumnCache = null;
 async function checkAdminNoteColumn(conn) {
@@ -545,6 +545,82 @@ router.post("/update", async (req, res, next) => {
         action: "mark_shipped",
         orderStatus: "shipped",
         shippedAt: nowIso,
+        updatedAt: nowIso
+      });
+    }
+
+    // 4. Action: update_tracking — correct courier/AWB details after dispatch without changing fulfilment status.
+    if (action === "update_tracking") {
+      if (!["shipped", "out_for_delivery"].includes(order.order_status)) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        return res.status(400).json({ error: "Tracking details can only be updated after an order has shipped." });
+      }
+
+      const hasCourier = Object.prototype.hasOwnProperty.call(req.body || {}, "courierName");
+      const hasTrackingNumber = Object.prototype.hasOwnProperty.call(req.body || {}, "trackingNumber");
+      const hasTrackingUrl = Object.prototype.hasOwnProperty.call(req.body || {}, "trackingUrl");
+      if (!hasCourier && !hasTrackingNumber && !hasTrackingUrl) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        return res.status(400).json({ error: "Provide at least one shipment tracking field to update." });
+      }
+
+      const cleanCourier = typeof courierName === "string" ? courierName.trim() : "";
+      const cleanTrackingNumber = typeof trackingNumber === "string" ? trackingNumber.trim() : "";
+      const cleanTrackingUrl = typeof trackingUrl === "string" ? trackingUrl.trim() : "";
+      if (hasCourier && cleanCourier.length > 100) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        return res.status(400).json({ error: "Courier name must be 100 characters or fewer." });
+      }
+      if (hasTrackingNumber && cleanTrackingNumber.length > 120) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+        return res.status(400).json({ error: "Tracking number must be 120 characters or fewer." });
+      }
+      if (hasTrackingUrl && cleanTrackingUrl) {
+        try {
+          const parsedUrl = new URL(cleanTrackingUrl);
+          if (parsedUrl.protocol !== "https:" || !parsedUrl.hostname || parsedUrl.username || parsedUrl.password || cleanTrackingUrl.length > 2048) {
+            throw new Error("invalid");
+          }
+        } catch {
+          await connection.rollback();
+          connection.release();
+          connection = null;
+          return res.status(400).json({ error: "Tracking URL must be a valid HTTPS link." });
+        }
+      }
+
+      const updateFields = ["updated_at = UTC_TIMESTAMP(3)"];
+      const updateValues = [];
+      if (hasCourier) { updateFields.push("courier_name = ?"); updateValues.push(cleanCourier || null); }
+      if (hasTrackingNumber) { updateFields.push("tracking_number = ?"); updateValues.push(cleanTrackingNumber || null); }
+      if (hasTrackingUrl) { updateFields.push("tracking_url = ?"); updateValues.push(cleanTrackingUrl || null); }
+      updateValues.push(order.id);
+      await connection.execute(`UPDATE orders SET ${updateFields.join(", ")} WHERE id = ?`, updateValues);
+      await connection.execute(
+        `INSERT INTO order_status_history (order_id, old_status, new_status, note, changed_by, created_at)
+         VALUES (?, ?, ?, 'Shipment tracking details updated', ?, UTC_TIMESTAMP(3))`,
+        [order.id, order.order_status, order.order_status, adminEmail]
+      );
+
+      await connection.commit();
+      connection.release();
+      connection = null;
+      return res.json({
+        success: true,
+        orderNumber: cleanOrderNumber,
+        action: "update_tracking",
+        orderStatus: order.order_status,
+        courierName: hasCourier ? (cleanCourier || null) : (order.courier_name || null),
+        trackingNumber: hasTrackingNumber ? (cleanTrackingNumber || null) : (order.tracking_number || null),
+        trackingUrl: hasTrackingUrl ? (cleanTrackingUrl || null) : (order.tracking_url || null),
         updatedAt: nowIso
       });
     }
