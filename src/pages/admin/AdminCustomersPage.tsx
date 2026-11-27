@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin/AdminLayout';
-import { hostingerAdminCustomerService, type AdminCustomer, type AdminCustomerOrder } from '../../services/hostinger/hostingerAdminCustomerService';
+import { hostingerAdminCustomerService, type AdminCustomer, type AdminCustomerOrder, type AdminCustomerInsights } from '../../services/hostinger/hostingerAdminCustomerService';
 import { formatInr } from '../../utils/currency';
 import { Search, RefreshCw, Users, ShoppingBag, X, MapPin, Mail, Phone, Clock, ChevronLeft, ChevronRight, Download, Crown, UserRound, SlidersHorizontal } from 'lucide-react';
 
@@ -19,8 +19,8 @@ function formatDate(value: string | null) {
 }
 
 function customerSegment(customer: AdminCustomer): SegmentFilter {
-  if (customer.totalOrders >= 5 || customer.lifetimeSpend >= 10000) return 'high-value';
-  if (customer.totalOrders >= 2) return 'repeat';
+  if (customer.paidOrders >= 5 || customer.lifetimeSpend >= 10000) return 'high-value';
+  if (customer.paidOrders >= 2) return 'repeat';
   return 'new';
 }
 
@@ -37,12 +37,13 @@ function csvCell(value: unknown) {
 }
 
 function downloadCustomers(customers: AdminCustomer[]) {
-  const headers = ['Customer name', 'Email', 'Phone', 'City', 'State', 'Total orders', 'Paid lifetime value (INR)', 'Average order value (INR)', 'Segment', 'Last order'];
+  const headers = ['Customer name', 'Email', 'Phone', 'City', 'State', 'Total orders', 'Paid orders', 'Paid lifetime value (INR)', 'Average paid order value (INR)', 'Preferred collection', 'Segment', 'First order', 'Last order'];
   const rows = customers.map(customer => [
     customer.name, customer.email, customer.phone, customer.city, customer.state,
-    customer.totalOrders, customer.lifetimeSpend,
-    customer.totalOrders > 0 ? Math.round(customer.lifetimeSpend / customer.totalOrders) : 0,
-    segmentLabel(customerSegment(customer)), customer.lastOrderAt || ''
+    customer.totalOrders, customer.paidOrders, customer.lifetimeSpend,
+    Math.round(customer.averagePaidOrderValue),
+    customer.preferredCollection || 'No paid product history',
+    segmentLabel(customerSegment(customer)), customer.firstOrderAt || '', customer.lastOrderAt || ''
   ]);
   const csv = [headers, ...rows].map(row => row.map(csvCell).join(',')).join('\\r\\n');
   const blob = new Blob(['\\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
@@ -59,6 +60,7 @@ function downloadCustomers(customers: AdminCustomer[]) {
 export const AdminCustomersPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [customers, setCustomers] = useState<AdminCustomer[]>([]);
+  const [insights, setInsights] = useState<AdminCustomerInsights | null>(null);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
   const [search, setSearch] = useState(() => searchParams.get('search') || '');
@@ -77,8 +79,12 @@ export const AdminCustomersPage: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      const result = await hostingerAdminCustomerService.getCustomers(search, nextOffset);
+      const [result, insightResult] = await Promise.all([
+        hostingerAdminCustomerService.getCustomers(search, nextOffset),
+        hostingerAdminCustomerService.getInsights()
+      ]);
       setCustomers(result.customers);
+      setInsights(insightResult);
       setTotal(result.total);
       setOffset(result.offset);
     } catch (err) {
@@ -114,12 +120,6 @@ export const AdminCustomersPage: React.FC = () => {
     });
   }, [customers, segment, sort, fromDate, toDate]);
 
-  const repeatCount = customers.filter(customer => customer.totalOrders > 1).length;
-  const highValueCount = customers.filter(customer => customerSegment(customer) === 'high-value').length;
-  const pageSpend = customers.reduce((sum, customer) => sum + customer.lifetimeSpend, 0);
-  const pageOrders = customers.reduce((sum, customer) => sum + customer.totalOrders, 0);
-  const averageOrderValue = pageOrders > 0 ? pageSpend / pageOrders : 0;
-
   const openHistory = async (customer: AdminCustomer) => {
     setSelected(customer);
     setHistory([]);
@@ -152,32 +152,55 @@ export const AdminCustomersPage: React.FC = () => {
 
         {error && <div role="alert" className="p-3 rounded-xl bg-red-50 text-red-700 text-xs">{error}</div>}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
           <div className="bg-white border border-[#EADFF0] rounded-2xl p-4">
             <div className="flex items-center gap-2 text-xs text-[#705E7B]"><Users size={15}/> Customers with orders</div>
-            <div className="font-serif text-2xl mt-2 tabular-nums">{total.toLocaleString('en-IN')}</div>
-            <p className="text-[10px] text-[#8E769E] mt-1">Across the matching search results</p>
+            <div className="font-serif text-2xl mt-2 tabular-nums">{(insights?.summary.customers ?? total).toLocaleString('en-IN')}</div>
+            <p className="text-[10px] text-[#8E769E] mt-1">All non-test customer emails</p>
           </div>
           <div className="bg-white border border-[#EADFF0] rounded-2xl p-4">
-            <div className="flex items-center gap-2 text-xs text-[#705E7B]"><ShoppingBag size={15}/> Repeat buyers</div>
-            <div className="font-serif text-2xl mt-2 tabular-nums">{repeatCount}</div>
-            <p className="text-[10px] text-[#8E769E] mt-1">On this loaded page</p>
+            <div className="flex items-center gap-2 text-xs text-[#705E7B]"><ShoppingBag size={15}/> Paying customers</div>
+            <div className="font-serif text-2xl mt-2 tabular-nums">{(insights?.summary.payingCustomers ?? 0).toLocaleString('en-IN')}</div>
+            <p className="text-[10px] text-[#8E769E] mt-1">At least one qualifying paid order</p>
+          </div>
+          <div className="bg-white border border-[#EADFF0] rounded-2xl p-4">
+            <div className="flex items-center gap-2 text-xs text-[#705E7B]"><Crown size={15}/> Repeat customers</div>
+            <div className="font-serif text-2xl mt-2 tabular-nums">{(insights?.summary.repeatCustomers ?? 0).toLocaleString('en-IN')}</div>
+            <p className="text-[10px] text-[#8E769E] mt-1">Two or more qualifying paid orders</p>
           </div>
           <div className="bg-white border border-[#EADFF0] rounded-2xl p-4">
             <div className="flex items-center gap-2 text-xs text-[#705E7B]"><Crown size={15}/> VIP / High value</div>
-            <div className="font-serif text-2xl mt-2 tabular-nums">{highValueCount}</div>
-            <p className="text-[10px] text-[#8E769E] mt-1">On this loaded page</p>
+            <div className="font-serif text-2xl mt-2 tabular-nums">{(insights?.summary.highValueCustomers ?? 0).toLocaleString('en-IN')}</div>
+            <p className="text-[10px] text-[#8E769E] mt-1">Five paid orders or ₹10,000+ net spend</p>
           </div>
           <div className="bg-white border border-[#EADFF0] rounded-2xl p-4">
-            <div className="flex items-center gap-2 text-xs text-[#705E7B]"><ShoppingBag size={15}/> Average order value</div>
-            <div className="font-serif text-2xl mt-2 tabular-nums">{formatInr(averageOrderValue)}</div>
-            <p className="text-[10px] text-[#8E769E] mt-1">Paid lifetime total ÷ order count, loaded page</p>
+            <div className="flex items-center gap-2 text-xs text-[#705E7B]"><ShoppingBag size={15}/> Average paid order value</div>
+            <div className="font-serif text-2xl mt-2 tabular-nums">{formatInr(insights?.summary.averagePaidOrderValue ?? 0)}</div>
+            <p className="text-[10px] text-[#8E769E] mt-1">Net paid revenue ÷ qualifying paid orders</p>
           </div>
         </div>
 
         <div className="bg-[#FAF5FC] border border-[#EADFF0] rounded-xl p-3 text-[11px] text-[#705E7B]">
-          Insights and segment counts are based on the currently loaded 50-customer page; use pagination to review more records. Lifetime totals reflect orders marked paid (and delivered COD). Refund-required amounts are requests, not completed refunds. No account creation date or marketing consent is exposed by this customer endpoint, so neither is inferred here.
+          All-time summary metrics use non-test Hostinger orders only. Paid spend excludes cancelled, returned and failed orders; COD counts only when delivered. Repeat and high-value segments use qualifying paid orders. Refund requests are not treated as completed refunds. Account creation date and marketing consent are not inferred.
         </div>
+
+        <section className="bg-white border border-[#EADFF0] rounded-2xl p-4 space-y-3">
+          <div>
+            <h2 className="font-serif text-lg text-[#302438]">Collection preferences</h2>
+            <p className="text-[10px] text-[#8E769E] mt-1">Based on units in qualifying paid orders; products without a collection assignment remain unassigned.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {(['artificial', 'demi-fine', 'unassigned'] as const).map(collection => {
+              const row = insights?.collectionPreferences.find(item => item.collection === collection);
+              const label = collection === 'demi-fine' ? 'Demi-Fine' : collection === 'artificial' ? 'Artificial' : 'Unassigned';
+              return <div key={collection} className="rounded-xl border border-[#EADFF0] bg-[#FAF5FC] p-3">
+                <div className="text-xs font-semibold text-[#563568]">{label}</div>
+                <div className="font-serif text-xl mt-2 tabular-nums">{(row?.customers ?? 0).toLocaleString('en-IN')} customers</div>
+                <div className="text-[10px] text-[#705E7B] mt-1">{(row?.units ?? 0).toLocaleString('en-IN')} units · {formatInr(row?.itemSales ?? 0)} item sales</div>
+              </div>;
+            })}
+          </div>
+        </section>
 
         <div className="bg-white border border-[#EADFF0] rounded-2xl p-3 space-y-3">
           <div className="relative">
@@ -214,18 +237,19 @@ export const AdminCustomersPage: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs min-w-[900px]">
               <thead className="bg-[#FAF5FC] text-[#705E7B] uppercase text-[10px]">
-                <tr><th className="p-3">Customer</th><th className="p-3">Contact</th><th className="p-3">Orders</th><th className="p-3">Lifetime value</th><th className="p-3">Avg. order</th><th className="p-3">Segment</th><th className="p-3">Last order (IST)</th><th className="p-3 text-right">Profile</th></tr>
+                <tr><th className="p-3">Customer</th><th className="p-3">Contact</th><th className="p-3">Orders</th><th className="p-3">Paid lifetime value</th><th className="p-3">Avg. paid order</th><th className="p-3">Preferred collection</th><th className="p-3">Segment</th><th className="p-3">Last order (IST)</th><th className="p-3 text-right">Profile</th></tr>
               </thead>
               <tbody className="divide-y divide-[#F5EDF8]">
-                {loading ? <tr><td colSpan={8} className="p-10 text-center text-[#8E769E]">Loading live customer records…</td></tr> :
-                visibleCustomers.length === 0 ? <tr><td colSpan={8} className="p-10 text-center text-[#8E769E]">No customers match these filters on this page.</td></tr> :
+                {loading ? <tr><td colSpan={9} className="p-10 text-center text-[#8E769E]">Loading live customer records…</td></tr> :
+                visibleCustomers.length === 0 ? <tr><td colSpan={9} className="p-10 text-center text-[#8E769E]">No customers match these filters on this page.</td></tr> :
                 visibleCustomers.map(customer => (
                   <tr key={customer.email} className="hover:bg-[#FAF5FC]">
                     <td className="p-3"><div className="font-semibold text-[#302438]">{customer.name}</div><div className="text-[10px] text-[#8E769E]">{customer.city}{customer.city && customer.state ? ', ' : ''}{customer.state}</div></td>
                     <td className="p-3"><div>{customer.email}</div><div className="text-[10px] text-[#8E769E]">{customer.phone || 'Phone not provided'}</div></td>
-                    <td className="p-3 tabular-nums">{customer.totalOrders}</td>
+                    <td className="p-3 tabular-nums">{customer.totalOrders}<div className="text-[10px] text-[#8E769E]">{customer.paidOrders} paid</div></td>
                     <td className="p-3 font-semibold tabular-nums">{formatInr(customer.lifetimeSpend)}</td>
-                    <td className="p-3 tabular-nums">{formatInr(customer.totalOrders > 0 ? customer.lifetimeSpend / customer.totalOrders : 0)}</td>
+                    <td className="p-3 tabular-nums">{formatInr(customer.averagePaidOrderValue)}</td>
+                    <td className="p-3 capitalize">{customer.preferredCollection ? customer.preferredCollection.replace('-', ' ') : 'No paid history'}</td>
                     <td className="p-3"><span className="inline-flex px-2 py-1 rounded-full bg-[#F4EDF8] text-[#563568] text-[10px]">{segmentLabel(customerSegment(customer))}</span></td>
                     <td className="p-3">{formatDate(customer.lastOrderAt)}</td>
                     <td className="p-3 text-right"><button onClick={() => void openHistory(customer)} className="min-h-10 px-3 rounded-lg bg-[#563568] text-white text-[10px]">View profile</button></td>
@@ -257,9 +281,12 @@ export const AdminCustomersPage: React.FC = () => {
                 <div className="flex items-center gap-2"><Mail size={14}/>{selected.email}</div>
                 <div className="flex items-center gap-2"><Phone size={14}/>{selected.phone || 'Phone not provided'}</div>
                 <div className="flex items-center gap-2"><MapPin size={14}/>{[selected.city, selected.state].filter(Boolean).join(', ') || 'Location not available'}</div>
-                <div className="flex items-center gap-2"><ShoppingBag size={14}/>{selected.totalOrders} orders · Paid lifetime total {formatInr(selected.lifetimeSpend)}</div>
+                <div className="flex items-center gap-2"><ShoppingBag size={14}/>{selected.totalOrders} orders · {selected.paidOrders} qualifying paid</div>
                 <div className="flex items-center gap-2"><Crown size={14}/>{segmentLabel(customerSegment(selected))}</div>
+                <div className="flex items-center gap-2"><Clock size={14}/>First order: {formatDate(selected.firstOrderAt)}</div>
                 <div className="flex items-center gap-2"><Clock size={14}/>Last order: {formatDate(selected.lastOrderAt)}</div>
+                <div className="flex items-center gap-2"><ShoppingBag size={14}/>Average paid order: {formatInr(selected.averagePaidOrderValue)}</div>
+                <div className="flex items-center gap-2"><Crown size={14}/>Preferred collection: {selected.preferredCollection ? selected.preferredCollection.replace('-', ' ') : 'No paid product history'}</div>
               </div>
               <h3 className="font-serif text-lg text-[#302438]">Order history</h3>
               {historyLoading ? <p className="py-10 text-center text-xs text-[#8E769E]">Loading order history…</p> :
