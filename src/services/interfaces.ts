@@ -58,6 +58,16 @@ export interface InventoryMovement {
   newStockCostValue?: number | string | null;
 }
 
+export interface InventoryMovementReportSummary { movementCount:number; stockInUnits:number; stockOutUnits:number; netChange:number; excludedOpeningSnapshots:number; }
+export interface InventoryMovementReportRow { movementCount:number; stockInUnits:number; stockOutUnits:number; [key:string]:string|number|null; }
+export interface InventoryMovementReport {
+ summary:InventoryMovementReportSummary;
+ categories:(InventoryMovementReportRow & {category:string})[];
+ daily:(InventoryMovementReportRow & {movementDate:string;netChange:number})[];
+ products:(InventoryMovementReportRow & {productId:string;productName:string;sku:string;movementType:string;variantLabel?:string|null;netChange:number})[];
+ reasons:(InventoryMovementReportRow & {reason:string})[];
+ filters:{from:string|null;to:string|null};
+}
 export interface InventoryMovementQuery {
   page?: number;
   limit?: number;
@@ -123,6 +133,7 @@ export interface IAdminProductService {
   bulkUpdateProducts(productIds: string[], updates: BulkProductUpdates): Promise<BulkProductUpdateResult>;
   adjustStock(id: string, quantityDelta: number, reason: string): Promise<InventoryMovement>;
   getInventoryMovements(options?: InventoryMovementQuery): Promise<InventoryMovementPage>;
+  getInventoryMovementReport(options?: Pick<InventoryMovementQuery, 'from' | 'to'>): Promise<InventoryMovementReport>;
   deleteProduct(id: string): Promise<boolean>;
   archiveProduct(id: string): Promise<Product>;
 }
