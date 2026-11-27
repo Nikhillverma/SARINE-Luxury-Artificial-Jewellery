@@ -46,12 +46,12 @@ export interface InventoryMovement {
   sku: string;
   adminName: string;
   adminEmail: string;
-  previousStock: number;
-  quantityDelta: number;
+  previousStock: number | null;
+  quantityDelta: number | null;
   newStock: number;
   reason: string;
   createdAt: string;
-  movementType?: 'product' | 'variant';
+  movementType?: 'product' | 'variant' | 'opening_balance';
   variantLabel?: string | null;
   costPriceSnapshot?: number | string | null;
   previousStockCostValue?: number | string | null;
