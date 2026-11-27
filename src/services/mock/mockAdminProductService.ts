@@ -181,7 +181,7 @@ export class MockAdminProductService implements IAdminProductService {
       return (!options.from || date >= options.from) && (!options.to || date <= options.to);
     });
     const classify=(reason:string)=>/return/i.test(reason)?'returns':/payment|checkout|order|sale/i.test(reason)?'sales':/restock|initial.*stock/i.test(reason)?'restocks':/damaged|inspection|reconciliation|adjust/i.test(reason)?'adjustments':'other';
-    const sum=(items:typeof all)=>({movementCount:items.length,stockInUnits:items.reduce((n,x)=>n+Math.max(0,x.quantityDelta),0),stockOutUnits:items.reduce((n,x)=>n+Math.max(0,-x.quantityDelta),0),netChange:items.reduce((n,x)=>n+x.quantityDelta,0)});
+    const sum=(items:typeof all)=>({movementCount:items.length,stockInUnits:items.reduce((n,x)=>n+Math.max(0,Number(x.quantityDelta||0)),0),stockOutUnits:items.reduce((n,x)=>n+Math.max(0,-Number(x.quantityDelta||0)),0),netChange:items.reduce((n,x)=>n+Number(x.quantityDelta||0),0)});
     const categories=[...new Set(all.map(x=>classify(x.reason)))].map(category=>({category,...sum(all.filter(x=>classify(x.reason)===category))}));
     const daily=[...new Set(all.map(x=>x.createdAt.slice(0,10)))].sort().reverse().map(movementDate=>({movementDate,...sum(all.filter(x=>x.createdAt.slice(0,10)===movementDate))}));
     const products=[...new Set(all.map(x=>[x.productId,x.sku,x.movementType||'product'].join('|')))].map(key=>{const items=all.filter(x=>[x.productId,x.sku,x.movementType||'product'].join('|')===key);const first=items[0];return {productId:first.productId,productName:first.productName,sku:first.sku,movementType:first.movementType||'product',variantLabel:first.variantLabel,...sum(items)};}).sort((a,b)=>(b.stockInUnits+b.stockOutUnits)-(a.stockInUnits+a.stockOutUnits)).slice(0,25);
