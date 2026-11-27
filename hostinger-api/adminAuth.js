@@ -170,6 +170,53 @@ router.patch("/admins/:id", requireOwner, async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+// Permanently remove a staff account while preserving denormalized audit history.
+router.delete("/admins/:id", requireOwner, async (req, res, next) => {
+  const connection = await pool.getConnection();
+  try {
+    const id = String(req.params.id || "");
+    if (!id) return res.status(400).json({ error: "Administrator ID is required." });
+    if (id === req.admin.id) {
+      return res.status(400).json({ error: "You cannot remove your own administrator account." });
+    }
+
+    await connection.beginTransaction();
+    const [rows] = await connection.execute(
+      "SELECT id, email, name, role FROM admins WHERE id = ? LIMIT 1 FOR UPDATE",
+      [id]
+    );
+    if (!rows.length) {
+      await connection.rollback();
+      return res.status(404).json({ error: "Administrator not found." });
+    }
+    const target = rows[0];
+    if (target.role === "admin" || target.role === "owner") {
+      await connection.rollback();
+      return res.status(403).json({ error: "The primary Owner account cannot be removed." });
+    }
+
+    await connection.execute("DELETE FROM admin_sessions WHERE admin_id = ?", [id]);
+    const [deleted] = await connection.execute("DELETE FROM admins WHERE id = ?", [id]);
+    if (deleted.affectedRows !== 1) {
+      await connection.rollback();
+      return res.status(409).json({ error: "Administrator account could not be removed." });
+    }
+    await connection.commit();
+
+    const auditRecorded = await recordAdminActivity(req.admin, {
+      action: "delete", entityType: "admin", entityId: id,
+      summary: `Permanently removed administrator account for ${target.email}; historical audit records retained`,
+      method: "DELETE", route: "/auth/admins/:id", statusCode: 200
+    });
+    return res.json({ success: true, auditRecorded });
+  } catch (error) {
+    try { await connection.rollback(); } catch {}
+    next(error);
+  } finally {
+    connection.release();
+  }
+});
+
 // POST /api/admin/auth/login
 router.post("/login", loginLimiter, async (req, res) => {
   res.set("Cache-Control", "no-store");
