@@ -28,7 +28,7 @@ function formatInventoryReportDate(value: string | null | undefined): string {
   if (!value) return '';
   // The API returns SQL DATE values as ISO timestamps at UTC midnight.
   // Format the calendar date itself so browser timezone conversion cannot shift the day.
-  const match = /^(\\d{4})-(\\d{2})-(\\d{2})/.exec(value);
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
   if (!match) return value;
   const year = Number(match[1]);
   const month = Number(match[2]);
