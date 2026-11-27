@@ -83,7 +83,8 @@ router.get("/", async (req, res, next) => {
       [...values, limit]
     );
 
-    const refundConditions = ["(o.refund_needed = 1 OR o.order_status = 'needs_refund' OR EXISTS (SELECT 1 FROM razorpay_refund_records rr WHERE rr.order_id = o.id))"];
+    // Synthetic/test orders must never enter the live payment-refund workflow.
+    const refundConditions = ["COALESCE(o.is_test, 0) = 0", "(o.refund_needed = 1 OR o.order_status = 'needs_refund' OR EXISTS (SELECT 1 FROM razorpay_refund_records rr WHERE rr.order_id = o.id))"];
     const refundValues = [];
     if (search) {
       const term = "%" + search.toLowerCase() + "%";
