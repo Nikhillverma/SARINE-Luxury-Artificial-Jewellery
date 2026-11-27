@@ -26,6 +26,18 @@ import {
 
 const DEFAULT_LOW_STOCK_THRESHOLD = 5;
 
+type InventoryWatchItem = {
+  key: string;
+  product: Product;
+  variantId?: string;
+  variantLabel?: string;
+  sku: string;
+  stock: number;
+  threshold: number;
+  severity: 'out' | 'risk' | 'low';
+};
+
+
 function getInventoryCostValue(product: Product): number | null {
   if (product.costPrice == null || String(product.costPrice).trim() === '') return null;
   const unitCost = Number(product.costPrice);
@@ -55,6 +67,8 @@ export const AdminInventoryPage: React.FC = () => {
   const [movementLoading, setMovementLoading] = useState(false);
   const [movementError, setMovementError] = useState<string | null>(null);
   const [movementRefreshKey, setMovementRefreshKey] = useState(0);
+  const [watchFilter, setWatchFilter] = useState<'all' | 'out' | 'risk' | 'low'>('all');
+  const [watchSearch, setWatchSearch] = useState('');
   const MOVEMENT_PAGE_SIZE = 25;
   const PAGE_SIZE = 25;
 
@@ -209,6 +223,57 @@ export const AdminInventoryPage: React.FC = () => {
   const outOfStockCount = products.filter((p) => p.status === 'active' && p.stock <= 0).length;
   const totalStockUnits = products.reduce((sum, p) => sum + (p.stock || 0), 0);
 
+  // Inventory Watch expands variant-managed designs into individual sellable SKUs.
+  // Variant rows inherit the parent design's saved threshold; aggregate parent stock
+  // is intentionally not duplicated in the watch list.
+  const inventoryWatchItems = useMemo<InventoryWatchItem[]>(() => {
+    const items: InventoryWatchItem[] = [];
+    for (const product of products) {
+      if (product.status !== 'active') continue;
+      const threshold = productThresholds[product.id] ?? lowStockThreshold;
+      const variants = (product.variants || []).filter(variant => variant.status === 'active');
+      const stockUnits = variants.length
+        ? variants.map(variant => ({
+            key: `variant:${variant.id}`, product, variantId: variant.id,
+            variantLabel: variant.label, sku: variant.sku, stock: variant.stock, threshold
+          }))
+        : [{
+            key: `product:${product.id}`, product, sku: product.id,
+            stock: product.stock, threshold
+          }];
+      for (const item of stockUnits) {
+        if (item.stock > item.threshold) continue;
+        const severity: InventoryWatchItem['severity'] = item.stock <= 0
+          ? 'out'
+          : threshold >= 2 && item.stock <= Math.floor(threshold / 2)
+            ? 'risk'
+            : 'low';
+        items.push({ ...item, severity });
+      }
+    }
+    return items.sort((a, b) => {
+      const rank = { out: 0, risk: 1, low: 2 };
+      return rank[a.severity] - rank[b.severity] || a.stock - b.stock || a.product.name.localeCompare(b.product.name);
+    });
+  }, [products, productThresholds, lowStockThreshold]);
+
+  const watchCounts = useMemo(() => ({
+    all: inventoryWatchItems.length,
+    out: inventoryWatchItems.filter(item => item.severity === 'out').length,
+    risk: inventoryWatchItems.filter(item => item.severity === 'risk').length,
+    low: inventoryWatchItems.filter(item => item.severity === 'low').length
+  }), [inventoryWatchItems]);
+
+  const visibleWatchItems = useMemo(() => {
+    const query = watchSearch.trim().toLowerCase();
+    return inventoryWatchItems.filter(item => {
+      if (watchFilter !== 'all' && item.severity !== watchFilter) return false;
+      if (!query) return true;
+      return [item.product.name, item.sku, item.variantLabel || '', item.product.id]
+        .some(value => value.toLowerCase().includes(query));
+    });
+  }, [inventoryWatchItems, watchFilter, watchSearch]);
+
   const handleAdjustStock = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!adjustingProduct || savingAdjustment) return;
@@ -290,6 +355,84 @@ export const AdminInventoryPage: React.FC = () => {
           <div className="bg-white p-4 border border-[#E7DCEB] rounded-xs shadow-2xs space-y-1"><span className="text-[10px] uppercase tracking-wider text-[#6F6475]">Estimated cost value</span><div className="font-serif text-xl text-[#302438]">{formatInr(estimatedCostValue)}</div><p className="text-[10px] text-[#6F6475]">Cost recorded for {costCoverage}/{products.length} loaded designs</p></div>
         </div>
         <p className="text-[11px] text-[#6F6475]">Figures reflect currently loaded product records. Cost valuation excludes designs without a recorded cost price and is not a selling-price valuation.</p>
+
+        {/* Actionable low-stock watch: one row per sellable SKU, including variants. */}
+        <section className="bg-white border border-[#E7DCEB] rounded-xs shadow-2xs overflow-hidden" aria-labelledby="inventory-watch-title">
+          <div className="p-4 sm:p-5 border-b border-[#E7DCEB] flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div>
+              <h2 id="inventory-watch-title" className="font-serif text-xl text-[#302438]">Inventory Watch</h2>
+              <p className="text-[11px] text-[#6F6475] mt-1">Live active-design alerts, with size and colour variants tracked as separate stock items.</p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-[10px]">
+              <span className="px-2.5 py-1.5 rounded-full bg-[#F7F0FA] text-[#563568] font-semibold">{watchCounts.all} need attention</span>
+              <span className="px-2.5 py-1.5 rounded-full bg-red-50 text-red-700 font-semibold">{watchCounts.out} out of stock</span>
+              <span className="px-2.5 py-1.5 rounded-full bg-orange-50 text-orange-800 font-semibold">{watchCounts.risk} at risk</span>
+              <span className="px-2.5 py-1.5 rounded-full bg-amber-50 text-amber-800 font-semibold">{watchCounts.low} low</span>
+            </div>
+          </div>
+          <div className="p-4 border-b border-[#E7DCEB] flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#806B8D]" />
+              <input value={watchSearch} onChange={event => setWatchSearch(event.target.value)} aria-label="Search Inventory Watch" placeholder="Search design, variant or SKU…" className="w-full min-h-10 pl-9 pr-3 border border-[#E7DCEB] bg-[#FAF5FC] rounded-xs text-xs text-[#302438]" />
+            </div>
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Filter Inventory Watch">
+              {([
+                ['all', 'All alerts'],
+                ['out', 'Out of stock'],
+                ['risk', 'At risk'],
+                ['low', 'Low stock']
+              ] as const).map(([key, label]) => (
+                <button key={key} type="button" onClick={() => setWatchFilter(key)} aria-pressed={watchFilter === key} className={`min-h-10 px-3 rounded-xs border text-[11px] font-medium transition-colors ${watchFilter === key ? 'bg-[#563568] text-white border-[#563568]' : 'bg-white text-[#563568] border-[#DCCDE4] hover:bg-[#F7F0FA]'}`}>
+                  {label} <span className="opacity-75">({watchCounts[key]})</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          {loading ? (
+            <p className="p-6 text-center text-xs text-[#6F6475]">Loading inventory alerts…</p>
+          ) : visibleWatchItems.length === 0 ? (
+            <div className="p-7 text-center">
+              <CheckCircle2 size={22} className="mx-auto text-emerald-600" />
+              <p className="mt-2 text-sm font-medium text-[#302438]">{inventoryWatchItems.length === 0 ? 'All active stock items are above their alert thresholds.' : 'No alerts match this search or filter.'}</p>
+              <p className="mt-1 text-[11px] text-[#6F6475]">Draft and archived designs are excluded from Inventory Watch.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#FAF5FC] text-[#705E7B] uppercase text-[10px] tracking-wider">
+                  <tr><th className="p-3">Priority</th><th className="p-3">Piece / Variant</th><th className="p-3">SKU</th><th className="p-3 text-center">On hand</th><th className="p-3 text-center">Alert at</th><th className="p-3">Stock status</th><th className="p-3 text-right">Action</th></tr>
+                </thead>
+                <tbody className="divide-y divide-[#E7DCEB]">
+                  {visibleWatchItems.map(item => (
+                    <tr key={item.key} className="hover:bg-[#FAF5FC]">
+                      <td className="p-3">
+                        <span className={`inline-flex px-2 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap ${item.severity === 'out' ? 'bg-red-50 text-red-700' : item.severity === 'risk' ? 'bg-orange-50 text-orange-800' : 'bg-amber-50 text-amber-800'}`}>
+                          {item.severity === 'out' ? 'Urgent' : item.severity === 'risk' ? 'At risk' : 'Low'}
+                        </span>
+                      </td>
+                      <td className="p-3 min-w-[190px]">
+                        <span className="block font-medium text-[#302438]">{item.product.name}</span>
+                        {item.variantLabel && <span className="block mt-0.5 text-[10px] text-[#6F6475]">{item.variantLabel}</span>}
+                      </td>
+                      <td className="p-3 font-mono text-[10px] text-[#6F6475]">{item.sku}</td>
+                      <td className={`p-3 text-center font-mono font-semibold ${item.stock <= 0 ? 'text-red-700' : item.severity === 'risk' ? 'text-orange-800' : 'text-amber-800'}`}>{item.stock}</td>
+                      <td className="p-3 text-center font-mono text-[#302438]">{item.threshold}</td>
+                      <td className="p-3 text-[10px] text-[#6F6475]">{item.stock <= 0 ? 'No units available' : item.severity === 'risk' ? 'At or below half the alert level' : 'At or below alert level'}<span className="block mt-0.5 text-[9px] text-[#8E769E]">{item.variantId ? 'Inherits design threshold' : productThresholds[item.product.id] === undefined ? 'Global threshold' : 'Custom design threshold'}</span></td>
+                      <td className="p-3 text-right whitespace-nowrap">
+                        {item.variantId ? (
+                          <Link to={`/admin/products?search=${encodeURIComponent(item.product.name)}&manageVariants=${encodeURIComponent(item.product.id)}`} className="inline-flex min-h-9 items-center px-3 border border-[#563568] text-[#563568] rounded-xs text-[10px] font-semibold hover:bg-[#F7F0FA]">Manage variant stock</Link>
+                        ) : (
+                          <button type="button" onClick={() => { setAdjustingProduct(item.product); setStockDelta(0); setAdjustError(null); }} className="inline-flex min-h-9 items-center px-3 border border-[#563568] text-[#563568] rounded-xs text-[10px] font-semibold hover:bg-[#F7F0FA]">Adjust stock</button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="px-4 py-3 border-t border-[#E7DCEB] text-[10px] text-[#806B8D]">Thresholds use each design's saved override or the global default. Variants inherit their parent design's threshold. At risk means positive stock at or below half the threshold; no demand or supplier lead-time forecast is assumed.</div>
+        </section>
 
         {/* Controls Bar: Search & Filters */}
         <div className="bg-white p-4 border border-[#E7DCEB] rounded-xs shadow-2xs flex flex-wrap items-center justify-between gap-4">
@@ -387,7 +530,7 @@ export const AdminInventoryPage: React.FC = () => {
                     const isOut = p.stock <= 0;
 
                     return (
-                      <tr key={p.id} className="hover:bg-[#FAF5FC] transition-colors">
+                      <tr id={`inventory-product-${p.id}`} key={p.id} className="hover:bg-[#FAF5FC] transition-colors">
                         {/* Piece preview */}
                         <td className="p-3">
                           <div className="flex items-center gap-3">
