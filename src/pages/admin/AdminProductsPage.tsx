@@ -71,6 +71,7 @@ export const AdminProductsPage: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [variantProduct, setVariantProduct] = useState<Product | null>(null);
+  const [autoOpenedVariantProductId, setAutoOpenedVariantProductId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -93,6 +94,15 @@ export const AdminProductsPage: React.FC = () => {
   useEffect(() => { void load(); }, [load]);
 
   useEffect(() => { setSearch(searchParams.get('search') || ''); }, [searchParams]);
+
+  useEffect(() => {
+    const requestedProductId = searchParams.get('manageVariants');
+    if (!requestedProductId || loading || autoOpenedVariantProductId === requestedProductId) return;
+    const requestedProduct = products.find(product => product.id === requestedProductId);
+    if (!requestedProduct) return;
+    setVariantProduct(requestedProduct);
+    setAutoOpenedVariantProductId(requestedProductId);
+  }, [searchParams, products, loading, autoOpenedVariantProductId]);
 
   const formCategories = useMemo(() => {
     if (!form.productCollection) return categories;
