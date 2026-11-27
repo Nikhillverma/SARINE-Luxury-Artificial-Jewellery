@@ -59,7 +59,7 @@ export interface InventoryMovement {
 }
 
 export interface InventoryMovementReportSummary { movementCount:number; stockInUnits:number; stockOutUnits:number; netChange:number; excludedOpeningSnapshots:number; }
-export interface InventoryMovementReportRow { movementCount:number; stockInUnits:number; stockOutUnits:number; [key:string]:string|number|null; }
+export interface InventoryMovementReportRow { movementCount:number; stockInUnits:number; stockOutUnits:number; [key:string]:string|number|null|undefined; }
 export interface InventoryMovementReport {
  summary:InventoryMovementReportSummary;
  categories:(InventoryMovementReportRow & {category:string})[];
