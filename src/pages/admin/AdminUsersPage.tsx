@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
-import { ShieldCheck, UserPlus, RefreshCw, UserX, CheckCircle2, AlertCircle } from "lucide-react";
+import { ShieldCheck, UserPlus, RefreshCw, UserX, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
 
 let API_BASE = import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
   (import.meta.env.DEV ? "/api" : "https://lavender-goldfish-844589.hostingersite.com/api");
@@ -31,6 +31,7 @@ export const AdminUsersPage: React.FC = () => {
   const [admins, setAdmins] = useState<AdminRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [name, setName] = useState("");
@@ -77,7 +78,7 @@ export const AdminUsersPage: React.FC = () => {
         <header className="border-b border-[#E7DCEB] pb-5">
           <p className="text-[10px] uppercase tracking-[0.25em] text-[#6F6475]">ACCESS CONTROL</p>
           <h1 className="font-serif text-2xl sm:text-3xl text-[#302438] mt-1">Administrator & Role Management</h1>
-          <p className="text-xs text-[#6F6475] mt-2">Create staff accounts, assign least-privilege roles and disable access when no longer required.</p>
+          <p className="text-xs text-[#6F6475] mt-2">Create staff accounts, change roles, disable access temporarily or permanently remove staff accounts. Audit history is retained.</p>
         </header>
         {error && <div role="alert" className="p-3 bg-red-50 border border-red-200 text-xs text-red-800 flex gap-2"><AlertCircle size={16}/>{error}</div>}
         {success && <div role="status" className="p-3 bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex gap-2"><CheckCircle2 size={16}/>{success}</div>}
@@ -100,7 +101,7 @@ export const AdminUsersPage: React.FC = () => {
             <div className="divide-y divide-[#EEE6F1]">
               {admins.map(admin => {
                 const owner = admin.role === "admin" || admin.role === "owner";
-                return <div key={admin.id} className="py-4 grid grid-cols-1 md:grid-cols-[1fr_190px_130px] gap-3 items-center">
+                return <div key={admin.id} className="py-4 grid grid-cols-1 md:grid-cols-[1fr_190px_190px] gap-3 items-center">
                   <div><p className="text-sm font-medium text-[#302438]">{admin.name || admin.email}</p><p className="text-xs text-[#6F6475]">{admin.email}</p><p className="text-[10px] text-[#8A7B91] mt-1">{owner ? "Primary Owner — protected account" : "Staff account"}</p></div>
                   {owner ? <span className="text-xs text-[#563568] font-semibold">Owner · Full access</span> : <select aria-label={`Role for ${admin.email}`} value={admin.role} onChange={e=>void updateAdmin(admin,{role:e.target.value})} className="p-2 border border-[#E7DCEB] bg-[#FAF7FC] text-xs">{ROLES.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}</select>}
                   <div className="flex items-center gap-2">
@@ -113,7 +114,7 @@ export const AdminUsersPage: React.FC = () => {
             </div>
           )}
         </section>
-        <p className="text-[11px] text-[#786A80]">The primary Owner account cannot be edited or disabled from this screen. Disabling a staff account also revokes its active admin sessions.</p>
+        <p className="text-[11px] text-[#786A80]">The primary Owner account is protected from role changes, disabling and removal. Role changes take effect on the next authorized request. Disabling or removing a staff account immediately revokes all active sessions. Removing a staff account retains its historical audit records.</p>
       </div>
     </AdminLayout>
   );
