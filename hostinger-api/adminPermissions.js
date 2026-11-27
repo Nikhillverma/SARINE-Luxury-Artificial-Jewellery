@@ -54,9 +54,11 @@ function permissionForRequest(pathname, method) {
   const write = !["GET", "HEAD", "OPTIONS"].includes(method.toUpperCase());
   const action = write ? "write" : "read";
 
-  if (section === "auth" || section === "activity") return "owner:only";
+  // Authentication administration, audit trails and customer-auth security diagnostics
+  // contain privileged identity/session information and remain Owner-only.
+  if (["auth", "activity", "customer-auth", "database-audit"].includes(section)) return "owner:only";
   if (section === "dashboard") return "dashboard:read";
-  if (section === "analytics") return "analytics:read";
+  if (section === "analytics") return `analytics:${action}`;
   if (section === "orders") return `orders:${action}`;
   if (section === "returns") return `returns:${action}`;
   if (section === "refunds") return `refunds:${action}`;
@@ -64,12 +66,11 @@ function permissionForRequest(pathname, method) {
   if (section === "products") return `products:${action}`;
   if (section === "categories") return `categories:${action}`;
   if (section === "media") return `media:${action}`;
-  if (section === "customers" || section === "customer-auth") return `customers:${action}`;
+  if (section === "customers") return `customers:${action}`;
   if (section === "contact-inquiries") return `contact:${action}`;
   if (section === "marketing") return `marketing:${action}`;
   if (["storefront", "homepage-layout", "curated-favourites", "explore-now"].includes(section)) return `storefront:${action}`;
   if (section === "pages") return `pages:${action}`;
-  if (section === "database-audit") return "owner:only";
   return "owner:only";
 }
 
