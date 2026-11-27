@@ -126,6 +126,7 @@ export const AdminOrdersPage: React.FC = () => {
 
   // Shipped Form State
   const [showShipForm, setShowShipForm] = useState(false);
+  const [showTrackingEdit, setShowTrackingEdit] = useState(false);
   const [courierName, setCourierName] = useState('');
   const [trackingNumber, setTrackingNumber] = useState('');
   const [trackingUrl, setTrackingUrl] = useState('');
@@ -251,6 +252,7 @@ export const AdminOrdersPage: React.FC = () => {
       setActionError(null);
       setActionSuccess(null);
       setShowShipForm(false);
+      setShowTrackingEdit(false);
       setShowCancelConfirm(false);
       setCourierName(selectedOrder.courierName || '');
       setTrackingNumber(selectedOrder.trackingNumber || '');
@@ -368,8 +370,9 @@ export const AdminOrdersPage: React.FC = () => {
         return;
       }
 
-      setActionSuccess('Order updated successfully.');
+      setActionSuccess(action === 'update_tracking' ? 'Shipment tracking details updated successfully.' : 'Order updated successfully.');
       setShowShipForm(false);
+      setShowTrackingEdit(false);
       setShowCancelConfirm(false);
 
       // Update local state
@@ -382,6 +385,10 @@ export const AdminOrdersPage: React.FC = () => {
         if (extraPayload.courierName) updatedOrderData.courierName = extraPayload.courierName;
         if (extraPayload.trackingNumber) updatedOrderData.trackingNumber = extraPayload.trackingNumber;
         if (extraPayload.trackingUrl) updatedOrderData.trackingUrl = extraPayload.trackingUrl;
+      } else if (action === 'update_tracking') {
+        updatedOrderData.courierName = data.courierName || undefined;
+        updatedOrderData.trackingNumber = data.trackingNumber || undefined;
+        updatedOrderData.trackingUrl = data.trackingUrl || undefined;
       } else if (action === 'mark_out_for_delivery') {
         updatedOrderData.orderStatus = 'out_for_delivery';
       } else if (action === 'mark_delivered') {
@@ -1227,6 +1234,86 @@ export const AdminOrdersPage: React.FC = () => {
                         )}
                       </div>
                     )}
+
+                  {/* Post-dispatch tracking correction — does not alter order status. */}
+                  {['shipped', 'out_for_delivery'].includes(selectedOrder.orderStatus) && (
+                    <div className="space-y-2">
+                      {!showTrackingEdit ? (
+                        <button
+                          type="button"
+                          disabled={actionLoading}
+                          onClick={() => setShowTrackingEdit(true)}
+                          className="w-full py-2.5 border border-[#B69ACF] text-[#563568] bg-white text-xs font-medium uppercase tracking-wider hover:bg-[#FAF5FC] rounded-xs flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                          <Truck size={14} />
+                          Update Courier / Tracking Details
+                        </button>
+                      ) : (
+                        <div className="p-4 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs space-y-3">
+                          <h4 className="font-medium text-xs text-[#302438]">Correct Shipment Details</h4>
+                          <p className="text-[11px] leading-relaxed text-[#6F6475]">
+                            Update or clear courier, AWB and tracking link details. The order remains {selectedOrder.orderStatus === 'out_for_delivery' ? 'Out for delivery' : 'Shipped'}.
+                          </p>
+                          <label className="block text-[11px] text-[#6F6475]">
+                            Courier Partner
+                            <input
+                              type="text"
+                              maxLength={100}
+                              value={courierName}
+                              onChange={(event) => setCourierName(event.target.value)}
+                              placeholder="Courier partner name"
+                              className="mt-1 w-full px-3 py-2 bg-white border border-[#E7DCEB] text-xs text-[#302438] rounded-xs focus:outline-none focus:border-[#B69ACF]"
+                            />
+                          </label>
+                          <label className="block text-[11px] text-[#6F6475]">
+                            AWB / Tracking Number
+                            <input
+                              type="text"
+                              maxLength={120}
+                              value={trackingNumber}
+                              onChange={(event) => setTrackingNumber(event.target.value)}
+                              placeholder="Shipment tracking number"
+                              className="mt-1 w-full px-3 py-2 bg-white border border-[#E7DCEB] text-xs text-[#302438] rounded-xs focus:outline-none focus:border-[#B69ACF]"
+                            />
+                          </label>
+                          <label className="block text-[11px] text-[#6F6475]">
+                            Secure Tracking URL (HTTPS)
+                            <input
+                              type="url"
+                              maxLength={2048}
+                              value={trackingUrl}
+                              onChange={(event) => setTrackingUrl(event.target.value)}
+                              placeholder="https://courier.example/track/..."
+                              className="mt-1 w-full px-3 py-2 bg-white border border-[#E7DCEB] text-xs text-[#302438] rounded-xs focus:outline-none focus:border-[#B69ACF]"
+                            />
+                          </label>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              disabled={actionLoading}
+                              onClick={() => handleUpdateOrder('update_tracking', { courierName, trackingNumber, trackingUrl })}
+                              className="flex-1 py-2 bg-[#563568] text-white text-xs font-medium uppercase tracking-wider hover:bg-[#A184BD] rounded-xs disabled:opacity-50"
+                            >
+                              {actionLoading ? 'Saving…' : 'Save Tracking Details'}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={actionLoading}
+                              onClick={() => {
+                                setCourierName(selectedOrder.courierName || '');
+                                setTrackingNumber(selectedOrder.trackingNumber || '');
+                                setTrackingUrl(selectedOrder.trackingUrl || '');
+                                setShowTrackingEdit(false);
+                              }}
+                              className="px-4 py-2 border border-[#E7DCEB] text-xs text-[#6F6475] bg-white rounded-xs"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Mark as Out for Delivery */}
                   {selectedOrder.orderStatus === 'shipped' && (
