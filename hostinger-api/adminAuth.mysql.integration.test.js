@@ -194,8 +194,22 @@ test("admin account CRUD, login, persisted role authorization and session revoca
   assert.equal(removalAudit.length, 1);
   assert.equal(removalAudit[0].action, "delete");
   assert.match(removalAudit[0].summary, /historical audit records retained/);
+  const [staffHistory] = await pool.execute(
+    "SELECT admin_id, action FROM admin_activity_logs WHERE admin_id = ? AND action = 'login' LIMIT 1",
+    [created.id]
+  );
+  assert.equal(staffHistory.length, 1, "the removed staff member's earlier login audit record must remain");
 
-  const removeOwner = await fetch(`${base}/api/admin/auth/admins/${OWNER_ID}`, {
+  // A distinct Owner account verifies the role guard (the authenticated primary Owner
+  // is also protected by the earlier self-removal guard).
+  const protectedOwnerId = "integration-secondary-owner";
+  await pool.execute(
+    `INSERT INTO admins
+      (id,email,email_normalized,name,password_hash,role,status,created_at,updated_at)
+     VALUES (?,?,?,?,?,'owner','active',CURRENT_TIMESTAMP(3),CURRENT_TIMESTAMP(3))`,
+    [protectedOwnerId, "secondary-owner@example.test", "secondary-owner@example.test", "Secondary Owner", storedRows[0].password_hash]
+  );
+  const removeOwner = await fetch(`${base}/api/admin/auth/admins/${protectedOwnerId}`, {
     method: "DELETE", headers: ownerHeaders
   });
   assert.equal(removeOwner.status, 403);
@@ -203,5 +217,7 @@ test("admin account CRUD, login, persisted role authorization and session revoca
   const [ownerRows] = await pool.execute("SELECT role,status FROM admins WHERE id = ?", [OWNER_ID]);
   assert.equal(ownerRows[0].role, "admin");
   assert.equal(ownerRows[0].status, "active");
+  const [secondaryOwnerRows] = await pool.execute("SELECT role FROM admins WHERE id = ?", [protectedOwnerId]);
+  assert.equal(secondaryOwnerRows[0].role, "owner");
 });
 }
