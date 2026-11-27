@@ -72,6 +72,20 @@ export const AdminUsersPage: React.FC = () => {
     } catch (e) { setError(e instanceof Error ? e.message : "Could not update administrator."); }
   };
 
+  const removeAdmin = async (admin: AdminRow) => {
+    const confirmed = window.confirm(
+      `Permanently remove ${admin.name || admin.email} (${admin.email}) from SARINE administrator access? Active sessions will be revoked. Historical audit records will be retained. This cannot be undone.`
+    );
+    if (!confirmed) return;
+    setRemovingId(admin.id); setError(""); setSuccess("");
+    try {
+      await request(`admins/${encodeURIComponent(admin.id)}`, { method: "DELETE" });
+      setSuccess(`Removed ${admin.email} from administrator access. Historical audit records were retained.`);
+      await load();
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not remove administrator."); }
+    finally { setRemovingId(null); }
+  };
+
   return (
     <AdminLayout>
       <div className="max-w-5xl space-y-6">
@@ -104,9 +118,12 @@ export const AdminUsersPage: React.FC = () => {
                 return <div key={admin.id} className="py-4 grid grid-cols-1 md:grid-cols-[1fr_190px_190px] gap-3 items-center">
                   <div><p className="text-sm font-medium text-[#302438]">{admin.name || admin.email}</p><p className="text-xs text-[#6F6475]">{admin.email}</p><p className="text-[10px] text-[#8A7B91] mt-1">{owner ? "Primary Owner — protected account" : "Staff account"}</p></div>
                   {owner ? <span className="text-xs text-[#563568] font-semibold">Owner · Full access</span> : <select aria-label={`Role for ${admin.email}`} value={admin.role} onChange={e=>void updateAdmin(admin,{role:e.target.value})} className="p-2 border border-[#E7DCEB] bg-[#FAF7FC] text-xs">{ROLES.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}</select>}
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className={`text-[10px] px-2 py-1 rounded-full ${admin.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-600"}`}>{admin.status}</span>
-                    {!owner && <button onClick={()=>void updateAdmin(admin,{status:admin.status==="active"?"disabled":"active"})} className="p-2 border border-[#E7DCEB] text-[#563568]" title={admin.status==="active"?"Disable account":"Enable account"}><UserX size={14}/></button>}
+                    {!owner && <>
+                      <button onClick={()=>void updateAdmin(admin,{status:admin.status==="active"?"disabled":"active"})} className="px-3 py-2 border border-[#E7DCEB] text-[#563568] text-[11px]" title={admin.status==="active"?"Disable account":"Enable account"}><UserX size={14} className="inline mr-1"/>{admin.status==="active"?"Disable":"Enable"}</button>
+                      <button disabled={removingId===admin.id} onClick={()=>void removeAdmin(admin)} className="px-3 py-2 border border-red-200 text-red-700 text-[11px] disabled:opacity-50" title="Permanently remove staff account"><Trash2 size={14} className="inline mr-1"/>{removingId===admin.id?"Removing...":"Remove"}</button>
+                    </>}
                   </div>
                 </div>;
               })}
