@@ -5,6 +5,8 @@ import rateLimit from "express-rate-limit";
 import { pool, testDatabase } from "./db.js";
 import { markExistingOrdersAsPrelaunchTests, markNamedTestProductOrdersAsTests } from "./prelaunchOrderMigration.js";
 import adminAuthRouter from "./adminAuth.js";
+import { requireAdminAuth } from "./adminAuth.js";
+import { requireAdminPermission } from "./adminPermissions.js";
 import adminActivityRouter, { captureAdminActivity, ensureAdminActivitySchema } from "./adminActivity.js";
 import { publicContactInquiriesRouter, adminContactInquiriesRouter } from "./contactInquiries.js";
 import { ensureContactInquiriesSchema } from "./contactInquirySchema.js";
@@ -328,6 +330,16 @@ function requireTrustedBrowserOrigin(req, res, next) {
 // customer-account, or checkout/payment mutation route is reached.
 app.use("/api/admin", requireTrustedBrowserOrigin);
 app.use("/api/admin", captureAdminActivity);
+
+// Authenticate every protected admin API centrally before any admin router is reached.
+// Login/session/logout remain public to the authentication router; all other admin
+// routes receive a verified req.admin identity and a server-enforced role check.
+app.use("/api/admin", (req, res, next) => {
+  if (["/auth/login", "/auth/session", "/auth/logout"].includes(req.path)) {
+    return next();
+  }
+  requireAdminAuth(req, res, () => requireAdminPermission(req, res, next));
+});
 app.use("/api/customer/auth", requireTrustedBrowserOrigin);
 app.use("/api/orders", requireTrustedBrowserOrigin);
 app.use("/api/contact", requireTrustedBrowserOrigin);
