@@ -179,8 +179,45 @@ test("admin account CRUD, login, persisted role authorization and session revoca
   assert.equal(remainingSessions.length, 0);
   assert.equal((await fetch(`${base}/api/admin/orders`, { headers: supportHeaders })).status, 401);
 
+  const remove = await fetch(`${base}/api/admin/auth/admins/${created.id}`, {
+    method: "DELETE", headers: ownerHeaders
+  });
+  assert.equal(remove.status, 200);
+  const [removedAdmin] = await pool.execute("SELECT id FROM admins WHERE id = ?", [created.id]);
+  assert.equal(removedAdmin.length, 0);
+  const [removedSessions] = await pool.execute("SELECT id FROM admin_sessions WHERE admin_id = ?", [created.id]);
+  assert.equal(removedSessions.length, 0);
+  const [removalAudit] = await pool.execute(
+    "SELECT action, summary FROM admin_activity_logs WHERE entity_id = ? ORDER BY id DESC LIMIT 1",
+    [created.id]
+  );
+  assert.equal(removalAudit.length, 1);
+  assert.equal(removalAudit[0].action, "delete");
+  assert.match(removalAudit[0].summary, /historical audit records retained/);
+  const [staffHistory] = await pool.execute(
+    "SELECT admin_id, action FROM admin_activity_logs WHERE admin_id = ? AND action = 'login' LIMIT 1",
+    [created.id]
+  );
+  assert.equal(staffHistory.length, 1, "the removed staff member's earlier login audit record must remain");
+
+  // A distinct Owner account verifies the role guard (the authenticated primary Owner
+  // is also protected by the earlier self-removal guard).
+  const protectedOwnerId = "integration-secondary-owner";
+  await pool.execute(
+    `INSERT INTO admins
+      (id,email,email_normalized,name,password_hash,role,status,created_at,updated_at)
+     VALUES (?,?,?,?,?,'owner','active',CURRENT_TIMESTAMP(3),CURRENT_TIMESTAMP(3))`,
+    [protectedOwnerId, "secondary-owner@example.test", "secondary-owner@example.test", "Secondary Owner", storedRows[0].password_hash]
+  );
+  const removeOwner = await fetch(`${base}/api/admin/auth/admins/${protectedOwnerId}`, {
+    method: "DELETE", headers: ownerHeaders
+  });
+  assert.equal(removeOwner.status, 403);
+
   const [ownerRows] = await pool.execute("SELECT role,status FROM admins WHERE id = ?", [OWNER_ID]);
   assert.equal(ownerRows[0].role, "admin");
   assert.equal(ownerRows[0].status, "active");
+  const [secondaryOwnerRows] = await pool.execute("SELECT role FROM admins WHERE id = ?", [protectedOwnerId]);
+  assert.equal(secondaryOwnerRows[0].role, "owner");
 });
 }
