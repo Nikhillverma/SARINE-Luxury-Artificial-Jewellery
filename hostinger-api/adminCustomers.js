@@ -69,8 +69,10 @@ router.get("/", async (req, res, next) => {
       "customer_summary.total_orders, customer_summary.lifetime_spend, customer_summary.last_order_at " +
       "FROM (" +
         "SELECT LOWER(TRIM(o.customer_email)) AS email, COUNT(*) AS total_orders, " +
+        "SUM(CASE WHEN " + PAID_ORDER_CONDITION + " THEN 1 ELSE 0 END) AS paid_orders, " +
         "SUM(CASE WHEN " + PAID_ORDER_CONDITION +
           " THEN GREATEST(COALESCE(o.total, 0) - COALESCE(o.refund_amount, 0), 0) ELSE 0 END) AS lifetime_spend, " +
+        "MIN(COALESCE(o.created_at, " + INITIAL_ORDER_DATE + ")) AS first_order_at, " +
         "MAX(COALESCE(o.created_at, " + INITIAL_ORDER_DATE + ")) AS last_order_at " +
         "FROM orders o WHERE " + where +
         " GROUP BY LOWER(TRIM(o.customer_email))" +
@@ -79,6 +81,26 @@ router.get("/", async (req, res, next) => {
       " ORDER BY customer_summary.last_order_at DESC, customer_summary.email ASC LIMIT ? OFFSET ?";
 
     const [rows] = await pool.execute(sql, [...values, limit, offset]);
+    const customerEmails = rows.map((row) => row.email);
+    const collectionByEmail = new Map();
+    if (customerEmails.length) {
+      const placeholders = customerEmails.map(() => "?").join(",");
+      const [collectionRows] = await pool.execute(
+        "SELECT LOWER(TRIM(o.customer_email)) AS email, " +
+          "CASE WHEN p.product_collection IN ('artificial', 'demi-fine') THEN p.product_collection ELSE 'unassigned' END AS collection, " +
+          "SUM(oi.quantity) AS units " +
+        "FROM orders o INNER JOIN order_items oi ON oi.order_id = o.id " +
+        "LEFT JOIN products p ON p.id = oi.product_id " +
+        "WHERE o.is_test = 0 AND LOWER(TRIM(o.customer_email)) IN (" + placeholders + ") " +
+          "AND " + PAID_ORDER_CONDITION + " " +
+        "GROUP BY LOWER(TRIM(o.customer_email)), collection " +
+        "ORDER BY email ASC, units DESC, collection ASC",
+        customerEmails
+      );
+      for (const row of collectionRows) {
+        if (!collectionByEmail.has(row.email)) collectionByEmail.set(row.email, row.collection);
+      }
+    }
     return res.json({
       customers: rows.map((row) => ({
         email: row.email,
@@ -87,12 +109,73 @@ router.get("/", async (req, res, next) => {
         city: row.city || "",
         state: row.state || "",
         totalOrders: Number(row.total_orders) || 0,
+        paidOrders: Number(row.paid_orders) || 0,
         lifetimeSpend: Number(row.lifetime_spend) || 0,
-        lastOrderAt: toIsoString(row.last_order_at)
+        averagePaidOrderValue: Number(row.paid_orders) > 0
+          ? (Number(row.lifetime_spend) || 0) / Number(row.paid_orders) : 0,
+        firstOrderAt: toIsoString(row.first_order_at),
+        lastOrderAt: toIsoString(row.last_order_at),
+        preferredCollection: collectionByEmail.get(row.email) || null
       })),
       total: Number(countRows[0]?.total) || 0,
       limit,
       offset
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/insights", async (_req, res, next) => {
+  try {
+    res.set("Cache-Control", "no-store");
+    const [summaryRows, collectionRows] = await Promise.all([
+      pool.execute(
+        "SELECT COUNT(*) AS customers, " +
+          "SUM(CASE WHEN customer_summary.paid_orders > 0 THEN 1 ELSE 0 END) AS paying_customers, " +
+          "SUM(CASE WHEN customer_summary.paid_orders >= 2 THEN 1 ELSE 0 END) AS repeat_customers, " +
+          "SUM(CASE WHEN customer_summary.paid_orders >= 5 OR customer_summary.lifetime_spend >= 10000 THEN 1 ELSE 0 END) AS high_value_customers, " +
+          "SUM(customer_summary.paid_orders) AS paid_orders, " +
+          "SUM(customer_summary.lifetime_spend) AS net_paid_revenue " +
+        "FROM (" +
+          "SELECT LOWER(TRIM(o.customer_email)) AS email, " +
+            "SUM(CASE WHEN " + PAID_ORDER_CONDITION + " THEN 1 ELSE 0 END) AS paid_orders, " +
+            "SUM(CASE WHEN " + PAID_ORDER_CONDITION +
+              " THEN GREATEST(COALESCE(o.total, 0) - COALESCE(o.refund_amount, 0), 0) ELSE 0 END) AS lifetime_spend " +
+          "FROM orders o WHERE o.is_test = 0 AND o.customer_email IS NOT NULL AND TRIM(o.customer_email) <> '' " +
+          "GROUP BY LOWER(TRIM(o.customer_email))" +
+        ") AS customer_summary"
+      ),
+      pool.execute(
+        "SELECT CASE WHEN p.product_collection IN ('artificial', 'demi-fine') THEN p.product_collection ELSE 'unassigned' END AS collection, " +
+          "SUM(oi.quantity) AS units, SUM(oi.quantity * oi.unit_price) AS item_sales, " +
+          "COUNT(DISTINCT LOWER(TRIM(o.customer_email))) AS customers " +
+        "FROM orders o INNER JOIN order_items oi ON oi.order_id = o.id " +
+        "LEFT JOIN products p ON p.id = oi.product_id " +
+        "WHERE o.is_test = 0 AND o.customer_email IS NOT NULL AND TRIM(o.customer_email) <> '' " +
+          "AND " + PAID_ORDER_CONDITION + " " +
+        "GROUP BY collection ORDER BY item_sales DESC, units DESC"
+      )
+    ]);
+    const summary = summaryRows[0][0] || {};
+    const paidOrders = Number(summary.paid_orders) || 0;
+    const netPaidRevenue = Number(summary.net_paid_revenue) || 0;
+    return res.json({
+      summary: {
+        customers: Number(summary.customers) || 0,
+        payingCustomers: Number(summary.paying_customers) || 0,
+        repeatCustomers: Number(summary.repeat_customers) || 0,
+        highValueCustomers: Number(summary.high_value_customers) || 0,
+        paidOrders,
+        netPaidRevenue,
+        averagePaidOrderValue: paidOrders ? netPaidRevenue / paidOrders : 0
+      },
+      collectionPreferences: collectionRows[0].map((row) => ({
+        collection: row.collection,
+        units: Number(row.units) || 0,
+        itemSales: Number(row.item_sales) || 0,
+        customers: Number(row.customers) || 0
+      }))
     });
   } catch (error) {
     next(error);
