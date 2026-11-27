@@ -89,7 +89,8 @@ router.post("/admins", requireOwner, async (req, res, next) => {
     const name = String(req.body?.name || "").trim();
     const password = String(req.body?.password || "");
     const role = String(req.body?.role || "");
-    if (!email || email.length > 254 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+    const emailParts = email.split("@");
+    if (!email || email.length > 254 || emailParts.length !== 2 || !emailParts[0] || !emailParts[1].includes(".") || emailParts[1].startsWith(".") || emailParts[1].endsWith(".")) {
       return res.status(400).json({ error: "Enter a valid email address." });
     }
     if (!name || name.length > 120) return res.status(400).json({ error: "Enter an administrator name." });
