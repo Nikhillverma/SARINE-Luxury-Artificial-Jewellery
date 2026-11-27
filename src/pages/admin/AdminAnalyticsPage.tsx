@@ -16,6 +16,7 @@ interface Report {
   payments: { label: string; count: number; revenue: number }[];
   topProducts: { productId: string; productName: string; unitsSold: number; itemSales: number }[];
   categories: { category: string; unitsSold: number; itemSales: number }[];
+  collectionBreakdown: { collection: string; unitsSold: number; itemSales: number }[];
   inventory: { productId: string; productName: string; category: string; status: string; stock: number; price: number; costPrice: number | null }[];
 }
 
@@ -149,6 +150,10 @@ export const AdminAnalyticsPage: React.FC = () => {
   const dailyMax = Math.max(1, ...(report?.daily.map(day => day.revenue) || [1]));
   const peak = report?.daily.reduce((best,day) => day.revenue > best.revenue ? day : best, report.daily[0] || {date:"",orders:0,revenue:0});
   const categoryRows = (report?.categories || []).slice().sort((a,b)=>b.itemSales-a.itemSales).slice(0,8).map(row=>({label:row.category,value:row.itemSales}));
+  const collectionRows = ["artificial", "demi-fine", "unassigned"].map(collection => {
+    const row = report?.collectionBreakdown.find(item => item.collection === collection);
+    return { collection, unitsSold: row?.unitsSold ?? 0, itemSales: row?.itemSales ?? 0 };
+  });
   const statusRows = (report?.orderStatuses || []).slice().sort((a,b)=>b.count-a.count).map(row=>({label:row.label,value:row.count}));
   const paymentCount = report?.payments.reduce((sum,row)=>sum+row.count,0) || 0;
 
@@ -211,6 +216,16 @@ export const AdminAnalyticsPage: React.FC = () => {
           <Panel title="Category Performance" subtitle="Paid item sales, excluding shipping"><Bars rows={categoryRows} money empty="No category sales in this period."/></Panel>
           <Panel title="Order Status Mix" subtitle="Order counts in the selected period"><Bars rows={statusRows} empty="No order status data."/></Panel>
         </div>
+
+        <Panel title="Collection-wise Sales" subtitle="Paid item sales and units by current product collection · excludes shipping">
+          <div className="space-y-3">
+            {collectionRows.map(row => <div key={row.collection} className="flex flex-wrap items-center justify-between gap-3 border-b border-[#F0E8F3] pb-3 last:border-0 last:pb-0">
+              <div><p className="text-xs font-medium text-[#514657]">{row.collection === "demi-fine" ? "Demi-Fine" : row.collection === "artificial" ? "Artificial" : "Unassigned"}</p><p className="text-[10px] text-[#8B7598] mt-1">{row.unitsSold.toLocaleString("en-IN")} units sold</p></div>
+              <strong className="text-sm text-[#302438]">{formatInr(row.itemSales)}</strong>
+            </div>)}
+          </div>
+          <p className="text-[10px] text-[#8B7598] leading-relaxed mt-4">Historical sales are grouped using each product’s current collection assignment, not a saved assignment from the order date.</p>
+        </Panel>
 
         <Table title="Top-Selling Products" headers={["Product","Units sold","Item sales"]} rows={report.topProducts.slice(0,10).map(x=>[x.productName,x.unitsSold.toLocaleString("en-IN"),formatInr(x.itemSales)])} empty="No paid product sales in this period."/>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
