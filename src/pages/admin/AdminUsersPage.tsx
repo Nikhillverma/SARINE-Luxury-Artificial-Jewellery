@@ -2,10 +2,9 @@ import React, { useCallback, useEffect, useState } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
 import { ShieldCheck, UserPlus, RefreshCw, UserX, CheckCircle2, AlertCircle } from "lucide-react";
 
-const API_BASE = (
-  import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
-  (import.meta.env.DEV ? "/api" : "https://lavender-goldfish-844589.hostingersite.com/api")
-).replace(/\/+$/, "");
+let API_BASE = import.meta.env.VITE_HOSTINGER_API_BASE_URL ||
+  (import.meta.env.DEV ? "/api" : "https://lavender-goldfish-844589.hostingersite.com/api");
+while (API_BASE.endsWith("/")) API_BASE = API_BASE.slice(0, -1);
 
 type AdminRow = {
   id: string; email: string; name: string; role: string; status: string;
