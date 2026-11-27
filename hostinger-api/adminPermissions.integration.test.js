@@ -39,6 +39,7 @@ test("admin permission middleware enforces role boundaries through Express mount
     ["put", "/api/admin/curated-favourites"],
     ["put", "/api/admin/explore-now"],
     ["post", "/api/admin/pages"],
+    ["get", "/api/admin/contact-inquiries/123"],
     ["patch", "/api/admin/contact-inquiries/123"],
     ["get", "/api/admin/auth/admins"],
     ["get", "/api/admin/activity"],
