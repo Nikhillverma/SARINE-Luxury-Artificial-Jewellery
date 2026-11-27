@@ -15,13 +15,30 @@ test("admin permission middleware enforces role boundaries through Express mount
   app.use("/api/admin", requireAdminPermission);
 
   const routes = [
+    ["get", "/api/admin/dashboard"],
+    ["get", "/api/admin/analytics"],
     ["get", "/api/admin/orders"],
     ["patch", "/api/admin/orders"],
+    ["get", "/api/admin/returns"],
+    ["patch", "/api/admin/returns/123"],
+    ["get", "/api/admin/refunds"],
+    ["get", "/api/admin/inventory-settings"],
+    ["put", "/api/admin/inventory-settings"],
+    ["get", "/api/admin/categories"],
+    ["post", "/api/admin/categories"],
+    ["get", "/api/admin/media"],
+    ["post", "/api/admin/media"],
+    ["get", "/api/admin/customers"],
+    ["get", "/api/admin/products"],
     ["post", "/api/admin/products"],
     ["get", "/api/admin/customer-auth/security"],
     ["get", "/api/admin/database-audit"],
     ["post", "/api/admin/marketing/coupons"],
     ["put", "/api/admin/storefront/announcement"],
+    ["put", "/api/admin/homepage-layout"],
+    ["put", "/api/admin/curated-favourites"],
+    ["put", "/api/admin/explore-now"],
+    ["post", "/api/admin/pages"],
     ["patch", "/api/admin/contact-inquiries/123"],
     ["get", "/api/admin/auth/admins"],
     ["get", "/api/admin/activity"],
@@ -45,21 +62,35 @@ test("admin permission middleware enforces role boundaries through Express mount
   });
 
   // Support staff: read-only operational visibility.
+  assert.equal((await call("support_staff", "/api/admin/dashboard")).status, 200);
+  assert.equal((await call("support_staff", "/api/admin/customers")).status, 200);
+  assert.equal((await call("support_staff", "/api/admin/contact-inquiries/123")).status, 200);
   assert.equal((await call("support_staff", "/api/admin/orders")).status, 200);
   assert.equal((await call("support_staff", "/api/admin/orders", "PATCH")).status, 403);
   assert.equal((await call("support_staff", "/api/admin/customer-auth/security")).status, 403);
 
   // Operations: fulfilment and customer operations, but not marketing or auth diagnostics.
+  assert.equal((await call("operations_manager", "/api/admin/analytics")).status, 200);
+  assert.equal((await call("operations_manager", "/api/admin/returns")).status, 200);
+  assert.equal((await call("operations_manager", "/api/admin/refunds")).status, 200);
+  assert.equal((await call("operations_manager", "/api/admin/inventory-settings", "PUT")).status, 200);
   assert.equal((await call("operations_manager", "/api/admin/orders", "PATCH")).status, 200);
   assert.equal((await call("operations_manager", "/api/admin/contact-inquiries/123", "PATCH")).status, 200);
   assert.equal((await call("operations_manager", "/api/admin/marketing/coupons", "POST")).status, 403);
   assert.equal((await call("operations_manager", "/api/admin/customer-auth/security")).status, 403);
 
   // Catalogue: catalogue maintenance, not order access.
+  assert.equal((await call("catalogue_manager", "/api/admin/categories", "POST")).status, 200);
+  assert.equal((await call("catalogue_manager", "/api/admin/media", "POST")).status, 200);
   assert.equal((await call("catalogue_manager", "/api/admin/products", "POST")).status, 200);
+  assert.equal((await call("catalogue_manager", "/api/admin/inventory-settings", "PUT")).status, 403);
   assert.equal((await call("catalogue_manager", "/api/admin/orders")).status, 403);
 
   // Marketing: promotions and storefront content, not operational or privileged APIs.
+  assert.equal((await call("marketing_manager", "/api/admin/pages", "POST")).status, 200);
+  assert.equal((await call("marketing_manager", "/api/admin/homepage-layout", "PUT")).status, 200);
+  assert.equal((await call("marketing_manager", "/api/admin/curated-favourites", "PUT")).status, 200);
+  assert.equal((await call("marketing_manager", "/api/admin/explore-now", "PUT")).status, 200);
   assert.equal((await call("marketing_manager", "/api/admin/marketing/coupons", "POST")).status, 200);
   assert.equal((await call("marketing_manager", "/api/admin/storefront/announcement", "PUT")).status, 200);
   assert.equal((await call("marketing_manager", "/api/admin/customer-auth/security")).status, 403);
