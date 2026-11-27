@@ -232,7 +232,7 @@ export const AdminInventoryPage: React.FC = () => {
       if (product.status !== 'active') continue;
       const threshold = productThresholds[product.id] ?? lowStockThreshold;
       const variants = (product.variants || []).filter(variant => variant.status === 'active');
-      const stockUnits = variants.length
+      const stockUnits: Omit<InventoryWatchItem, 'severity'>[] = variants.length
         ? variants.map(variant => ({
             key: `variant:${variant.id}`, product, variantId: variant.id,
             variantLabel: variant.label, sku: variant.sku, stock: variant.stock, threshold
