@@ -4,6 +4,7 @@ import { requireAdminAuth } from "./adminAuth.js";
 import { ensureInventoryTable, recordInventoryMovement } from "./inventoryLedger.js";
 import { ensureProductVariantSchema, syncProductVariantStock, recordVariantInventoryMovement } from "./productVariantSchema.js";
 import { formatVariantLabel } from "./productVariantPolicy.js";
+import { ensureOpeningStockSnapshots } from "./inventoryOpeningBalances.js";
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -20,6 +21,7 @@ router.get("/movements", async (req, res, next) => {
   try {
     await ensureInventoryTable();
     await ensureProductVariantSchema();
+    await ensureOpeningStockSnapshots();
     const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
     const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 25));
     const search = String(req.query.search || "").trim().slice(0, 100);
@@ -69,7 +71,18 @@ router.get("/movements", async (req, res, next) => {
               cost_price_snapshot AS costPriceSnapshot,
               previous_stock_cost_value AS previousStockCostValue,
               new_stock_cost_value AS newStockCostValue
-       FROM variant_inventory_movements`;
+       FROM variant_inventory_movements
+       UNION ALL
+       SELECT id, product_id AS productId, product_name AS productName, sku,
+              'SARINE system' AS adminName, 'system@sarine.local' AS adminEmail,
+              NULL AS previousStock, NULL AS quantityDelta,
+              stock_on_hand AS newStock, 'Opening balance snapshot (migration)' AS reason,
+              snapshot_at AS createdAt,
+              'opening_balance' AS movementType, variant_label AS variantLabel,
+              NULL AS costPriceSnapshot,
+              NULL AS previousStockCostValue,
+              NULL AS newStockCostValue
+       FROM inventory_opening_balance_snapshots`;
     const where = conditions.length ? " WHERE " + conditions.join(" AND ") : "";
     const [countRows] = await pool.execute(
       `SELECT COUNT(*) AS total FROM (${union}) AS movement_history${where}`,
