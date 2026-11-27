@@ -3,9 +3,11 @@ import assert from "node:assert/strict";
 import express from "express";
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
-import adminAuthRouter, { hashToken, requireAdminAuth } from "./adminAuth.js";
-import { requireAdminPermission } from "./adminPermissions.js";
-import { pool } from "./db.js";
+let adminAuthRouter;
+let hashToken;
+let requireAdminAuth;
+let requireAdminPermission;
+let pool;
 
 const OWNER_ID = "integration-owner";
 const OWNER_EMAIL = "owner@example.test";
@@ -62,7 +64,13 @@ async function prepareDatabase() {
   );
 }
 
+if (!process.env.DB_HOST || !process.env.DB_NAME || !process.env.DB_USER || !process.env.DB_PASSWORD) {
+  test("admin MySQL integration (requires isolated DB environment)", { skip: "MySQL service is configured only in the dedicated integration workflow" }, () => {});
+} else {
 test("admin account CRUD, login, persisted role authorization and session revocation work against MySQL", async (t) => {
+  ({ default: adminAuthRouter, hashToken, requireAdminAuth } = await import("./adminAuth.js"));
+  ({ requireAdminPermission } = await import("./adminPermissions.js"));
+  ({ pool } = await import("./db.js"));
   await prepareDatabase();
 
   const app = express();
@@ -175,3 +183,4 @@ test("admin account CRUD, login, persisted role authorization and session revoca
   assert.equal(ownerRows[0].role, "admin");
   assert.equal(ownerRows[0].status, "active");
 });
+}
