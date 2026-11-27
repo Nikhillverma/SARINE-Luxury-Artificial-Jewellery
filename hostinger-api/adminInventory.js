@@ -179,7 +179,7 @@ router.get("/reports", async (req, res, next) => {
               COALESCE(SUM(quantityDelta), 0) AS netChange
        FROM (${union}) AS actual_movements${where}
        GROUP BY productId, productName, sku, movementType, variantLabel
-       ORDER BY (stockInUnits + stockOutUnits) DESC, productName ASC`,
+       ORDER BY (SUM(CASE WHEN quantityDelta > 0 THEN quantityDelta ELSE 0 END) + SUM(CASE WHEN quantityDelta < 0 THEN ABS(quantityDelta) ELSE 0 END)) DESC, productName ASC`,
       values
     );
     const [reasonRows] = await pool.execute(
