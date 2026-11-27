@@ -1,0 +1,54 @@
+name: SARINE admin MySQL integration CI
+
+on:
+  pull_request:
+    branches:
+      - fix/order-timestamps
+    paths:
+      - "hostinger-api/adminAuth.js"
+      - "hostinger-api/adminAuth.mysql.integration.test.js"
+      - "hostinger-api/adminActivityWriter.js"
+      - "hostinger-api/adminPermissions.js"
+      - "hostinger-api/db.js"
+      - ".github/workflows/admin-auth-mysql-integration.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  admin-mysql-integration:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: sarine-ci-root-password
+          MYSQL_DATABASE: sarine_admin_auth_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psarine-ci-root-password"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    defaults:
+      run:
+        working-directory: hostinger-api
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: sarine_admin_auth_test
+      DB_USER: root
+      DB_PASSWORD: sarine-ci-root-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: hostinger-api/package-lock.json
+      - name: Install backend dependencies
+        run: npm ci
+      - name: Run MySQL-backed admin account and session tests
+        run: node --test adminAuth.mysql.integration.test.js

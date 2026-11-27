@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import { pool } from "./db.js";
 import { shouldUseSecureSessionCookie } from "./sessionCookiePolicy.js";
 import { recordAdminActivity } from "./adminActivityWriter.js";
+import { ADMIN_ROLES, requireOwner } from "./adminPermissions.js";
 
 const router = Router();
 
@@ -70,6 +71,91 @@ function safeAdmin(row) {
     role: row.role
   };
 }
+
+// Owner-only administrator management. New accounts receive a password chosen by the Owner.
+router.get("/admins", requireOwner, async (_req, res, next) => {
+  try {
+    const [rows] = await pool.execute(
+      `SELECT id, email, name, role, status, last_login_at, created_at
+       FROM admins ORDER BY created_at ASC`
+    );
+    return res.json({ admins: rows });
+  } catch (error) { next(error); }
+});
+
+router.post("/admins", requireOwner, async (req, res, next) => {
+  try {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const name = String(req.body?.name || "").trim();
+    const password = String(req.body?.password || "");
+    const role = String(req.body?.role || "");
+    const emailParts = email.split("@");
+    if (!email || email.length > 254 || emailParts.length !== 2 || !emailParts[0] || !emailParts[1].includes(".") || emailParts[1].startsWith(".") || emailParts[1].endsWith(".")) {
+      return res.status(400).json({ error: "Enter a valid email address." });
+    }
+    if (!name || name.length > 120) return res.status(400).json({ error: "Enter an administrator name." });
+    if (password.length < 12 || password.length > 256) {
+      return res.status(400).json({ error: "Password must contain 12–256 characters." });
+    }
+    if (!ADMIN_ROLES.includes(role)) return res.status(400).json({ error: "Select a supported non-owner role." });
+    const id = crypto.randomUUID();
+    const passwordHash = await bcrypt.hash(password, 12);
+    await pool.execute(
+      `INSERT INTO admins
+        (id, email, email_normalized, name, password_hash, role, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'active', CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))`,
+      [id, email, email, name, passwordHash, role]
+    );
+    await recordAdminActivity(req.admin, {
+      action: "create", entityType: "admin", entityId: id,
+      summary: `Created administrator account for ${email}`,
+      method: "POST", route: "/auth/admins", statusCode: 201
+    });
+    return res.status(201).json({ success: true, id });
+  } catch (error) {
+    if (error?.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "An administrator with this email already exists." });
+    next(error);
+  }
+});
+
+router.patch("/admins/:id", requireOwner, async (req, res, next) => {
+  try {
+    const id = String(req.params.id || "");
+    const role = req.body?.role;
+    const status = req.body?.status;
+    if (!id) return res.status(400).json({ error: "Administrator ID is required." });
+    if (role !== undefined && !ADMIN_ROLES.includes(role)) {
+      return res.status(400).json({ error: "Select a supported non-owner role." });
+    }
+    if (status !== undefined && !["active", "disabled"].includes(status)) {
+      return res.status(400).json({ error: "Status must be active or disabled." });
+    }
+    const [rows] = await pool.execute("SELECT id, role, status FROM admins WHERE id = ? LIMIT 1", [id]);
+    if (!rows.length) return res.status(404).json({ error: "Administrator not found." });
+    const target = rows[0];
+    if (target.role === "admin" || target.role === "owner") {
+      return res.status(403).json({ error: "The primary Owner account cannot be modified here." });
+    }
+    if (id === req.admin.id && status === "disabled") {
+      return res.status(400).json({ error: "You cannot disable your own account." });
+    }
+    const nextRole = role ?? target.role;
+    const nextStatus = status ?? target.status;
+    await pool.execute(
+      "UPDATE admins SET role = ?, status = ?, updated_at = CURRENT_TIMESTAMP(3) WHERE id = ?",
+      [nextRole, nextStatus, id]
+    );
+    if (nextStatus === "disabled") {
+      await pool.execute("DELETE FROM admin_sessions WHERE admin_id = ?", [id]);
+    }
+    await recordAdminActivity(req.admin, {
+      action: "update", entityType: "admin", entityId: id,
+      summary: "Updated administrator role or account status",
+      method: "PATCH", route: "/auth/admins/:id", statusCode: 200
+    });
+    return res.json({ success: true });
+  } catch (error) { next(error); }
+});
 
 // POST /api/admin/auth/login
 router.post("/login", loginLimiter, async (req, res) => {

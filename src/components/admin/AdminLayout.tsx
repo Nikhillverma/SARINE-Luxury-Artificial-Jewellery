@@ -129,6 +129,7 @@ interface NavItem {
   icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
   badge?: string;
   badgeColor?: string;
+  ownerOnly?: boolean;
   match: (p: string) => boolean;
 }
 
@@ -192,6 +193,13 @@ interface NavItem {
       path: '/admin/settings',
       icon: Settings,
       match: (p: string) => p.startsWith('/admin/settings')
+    },
+    {
+      name: 'Administrator Access',
+      path: '/admin/team',
+      icon: UserCheck,
+      ownerOnly: true,
+      match: (p: string) => p.startsWith('/admin/team')
     }
   ];
 
@@ -267,7 +275,7 @@ interface NavItem {
 
         {/* Navigation Items (Scrollable) */}
         <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1 scrollbar-thin scrollbar-thumb-[#361A42]">
-          {navItems.map((item) => {
+          {navItems.filter((item) => !item.ownerOnly || user?.role === 'admin' || user?.role === 'owner').map((item) => {
             const isActive = item.match(location.pathname);
             const Icon = item.icon;
             return (
@@ -594,7 +602,7 @@ interface NavItem {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-1">
-              {navItems.map((item) => {
+              {navItems.filter((item) => !item.ownerOnly || user?.role === 'admin' || user?.role === 'owner').map((item) => {
                 const isActive = item.match(location.pathname);
                 const Icon = item.icon;
                 return (

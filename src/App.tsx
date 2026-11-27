@@ -38,6 +38,7 @@ import { AdminStorefrontPage } from './pages/admin/AdminStorefrontPage';
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
 import { AdminCopilotPage } from './pages/admin/AdminCopilotPage';
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage';
 import {
   SustainabilityPage,
   BlogPage,
@@ -103,6 +104,7 @@ function MainAppShell() {
           <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           <Route path="/admin/copilot" element={<AdminCopilotPage />} />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />
+          <Route path="/admin/team" element={<AdminUsersPage />} />
 
           {/* Help & Policies */}
           <Route path="/contact" element={<ContactPage />} />
