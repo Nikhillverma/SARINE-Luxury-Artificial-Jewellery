@@ -116,6 +116,9 @@ router.post("/", async (req, res, next) => {
     );
     if (!initialRows.length) return res.status(404).json({ error: "SARINE order not found." });
     const initialOrder = initialRows[0];
+    if (Boolean(initialOrder.is_test)) {
+      return res.status(400).json({ error: "TEST orders are excluded from live Razorpay refunds. No payment action was taken." });
+    }
     if (initialOrder.payment_method !== "online" || initialOrder.payment_status !== "paid" ||
         !(initialOrder.refund_needed || initialOrder.order_status === "needs_refund")) {
       return res.status(400).json({ error: "This order is not eligible for a Razorpay refund." });
@@ -141,6 +144,9 @@ router.post("/", async (req, res, next) => {
     );
     if (!orderRows.length) throw new Error("SARINE order no longer exists.");
     const order = orderRows[0];
+    if (Boolean(order.is_test)) {
+      throw new Error("TEST orders are excluded from live Razorpay refunds. No payment action was taken.");
+    }
     if (order.payment_status !== "paid" || order.payment_method !== "online" ||
         !(order.refund_needed || order.order_status === "needs_refund")) {
       throw new Error("Order refund eligibility changed. Refresh the queue and review it again.");
