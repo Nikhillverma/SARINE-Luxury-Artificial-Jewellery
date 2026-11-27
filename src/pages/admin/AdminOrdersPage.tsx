@@ -68,6 +68,8 @@ interface AdminOrder {
   lines: OrderLine[];
   subtotal: number;
   shippingFee: number;
+  discountAmount?: number;
+  couponCode?: string;
   total: number;
   paymentMethod: string;
   paymentStatus: string;
@@ -440,6 +442,49 @@ export const AdminOrdersPage: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  // Build a self-contained, printable order invoice from the immutable Hostinger order snapshot.
+  const generateInvoicePdf = (order: AdminOrder) => {
+    const popup = window.open('', '_blank');
+    if (!popup) {
+      setActionError('Your browser blocked the invoice window. Allow pop-ups for this admin site and try again.');
+      return;
+    }
+    const escapeHtml = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, character => {
+      const entities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+      return entities[character] || character;
+    });
+    const money = (value: number) => escapeHtml(formatInr(Number.isFinite(Number(value)) ? Number(value) : 0));
+    const placedDate = order.createdAt && Number.isFinite(new Date(order.createdAt).getTime())
+      ? new Date(order.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : 'Date unavailable';
+    const invoiceNumber = order.isTest
+      ? 'TEST-DRAFT-' + order.orderNumber
+      : 'SARINE-INV-' + order.orderNumber.replace(/^SAR-/i, '');
+    const address = [order.shippingAddress.line1, order.shippingAddress.line2, order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.pincode].filter(Boolean).join(', ');
+    const itemRows = (order.lines || []).map(line => {
+      const details = [line.variantLabel, line.sku ? 'SKU: ' + line.sku : ''].filter(Boolean).join(' · ');
+      return '<tr><td><strong>' + escapeHtml(line.name) + '</strong>' + (details ? '<small>' + escapeHtml(details) + '</small>' : '') + '</td><td class="num">' + escapeHtml(line.quantity) + '</td><td class="num">' + money(line.unitPrice) + '</td><td class="num">' + money(line.unitPrice * line.quantity) + '</td></tr>';
+    }).join('');
+    const discount = Math.max(0, Number(order.discountAmount) || 0);
+    const discountRow = discount > 0 ? '<div class="total-row"><span>Discount' + (order.couponCode ? ' (' + escapeHtml(order.couponCode) + ')' : '') + '</span><strong>−' + money(discount) + '</strong></div>' : '';
+    const paymentLabel = order.paymentMethod?.toLowerCase() === 'cod' ? 'Cash on Delivery' : 'Online payment';
+    const testBanner = order.isTest ? '<div class="test-banner">TEST ORDER — NOT A CUSTOMER INVOICE</div>' : '';
+    const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(invoiceNumber)} · SARINE</title><style>
+      *{box-sizing:border-box}body{margin:0;background:#f7f3f8;color:#302438;font:13px/1.55 Arial,sans-serif}.sheet{max-width:850px;margin:28px auto;background:#fff;padding:44px 48px;box-shadow:0 8px 35px #30243818}.top{display:flex;justify-content:space-between;gap:24px;border-bottom:2px solid #563568;padding-bottom:22px}.brand{font:36px Georgia,serif;letter-spacing:3px;color:#563568}.muted{color:#766b7b}.right{text-align:right}.eyebrow{text-transform:uppercase;letter-spacing:2px;font-size:10px;color:#80609a}.title{font:28px Georgia,serif;margin:4px 0}.meta{margin-top:8px}.test-banner{margin:18px 0;padding:12px;background:#fff4d6;border:2px solid #d69c27;color:#805400;font-weight:800;text-align:center;letter-spacing:1px}.parties{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin:28px 0}.label{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#80609a;margin-bottom:7px}.parties p{margin:2px 0}.items{width:100%;border-collapse:collapse;margin-top:24px}.items th{background:#f7f0fa;color:#563568;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:12px 10px}.items td{border-bottom:1px solid #e7dceb;padding:13px 10px;vertical-align:top}.items small{display:block;color:#766b7b;margin-top:3px}.num{text-align:right;white-space:nowrap}.summary{width:min(100%,360px);margin:24px 0 0 auto}.total-row{display:flex;justify-content:space-between;gap:18px;padding:7px 0;color:#766b7b}.grand{border-top:1px solid #563568;margin-top:8px;padding-top:13px;color:#302438;font-size:17px}.payment{margin-top:26px;padding:14px;background:#faf5fc;border:1px solid #e7dceb}.notice{margin-top:24px;padding-top:16px;border-top:1px solid #e7dceb;color:#766b7b;font-size:10px}.actions{max-width:850px;margin:0 auto 28px;display:flex;justify-content:center;gap:10px}.actions button{border:0;background:#563568;color:white;padding:12px 22px;font-weight:700;cursor:pointer}.actions .close{background:white;color:#563568;border:1px solid #e7dceb}@media(max-width:600px){.sheet{margin:0;padding:24px 18px}.top{flex-direction:column}.right{text-align:left}.parties{grid-template-columns:1fr;gap:16px}.items th,.items td{padding:9px 5px;font-size:11px}.actions{padding:14px}}@media print{body{background:#fff}.sheet{margin:0;max-width:none;padding:12mm;box-shadow:none}.actions{display:none}@page{size:A4;margin:0}}
+      </style></head><body>
+      <main class="sheet">${testBanner}<header class="top"><div><div class="brand">SARINE</div><div class="eyebrow">Jewellery · Order with elegance</div></div><div class="right"><div class="eyebrow">Order invoice / receipt</div><div class="title">${escapeHtml(invoiceNumber)}</div><div class="meta muted">Order: ${escapeHtml(order.orderNumber)}<br>Placed: ${escapeHtml(placedDate)}</div></div></header>
+      <section class="parties"><div><div class="label">Billed to</div><p><strong>${escapeHtml(order.customer.name || order.shippingAddress.fullName)}</strong></p><p>${escapeHtml(order.customer.email)}</p><p>${escapeHtml(order.customer.phone)}</p></div><div><div class="label">Ship to</div><p><strong>${escapeHtml(order.shippingAddress.fullName || order.customer.name)}</strong></p><p>${escapeHtml(address)}</p><p>${escapeHtml(order.shippingAddress.phone || order.customer.phone)}</p><p>India</p></div></section>
+      <table class="items"><thead><tr><th>Item description</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead><tbody>${itemRows || '<tr><td colspan="4">No item details were recorded for this order.</td></tr>'}</tbody></table>
+      <section class="summary"><div class="total-row"><span>Subtotal</span><strong>${money(order.subtotal)}</strong></div>${discountRow}<div class="total-row"><span>Shipping</span><strong>${Number(order.shippingFee) === 0 ? 'Complimentary' : money(order.shippingFee)}</strong></div><div class="total-row grand"><span>Total</span><strong>${money(order.total)}</strong></div></section>
+      <section class="payment"><strong>Payment method:</strong> ${escapeHtml(paymentLabel)}<br><strong>Payment status:</strong> ${escapeHtml(order.paymentStatus || 'Pending').replace(/_/g, ' ')}${order.razorpayPaymentId ? '<br><strong>Payment reference:</strong> ' + escapeHtml(order.razorpayPaymentId) : ''}</section>
+      <footer class="notice">Generated from SARINE's Hostinger order record. This is an order invoice/receipt, not a GST tax invoice. GSTIN, HSN classification and item-wise tax breakdown are not available in the saved order record. Please contact SARINE for a compliant tax invoice if required.</footer></main>
+      <div class="actions"><button onclick="window.print()">Print / Save as PDF</button><button class="close" onclick="window.close()">Close</button></div></body></html>`;
+    popup.document.open();
+    popup.document.write(html);
+    popup.document.close();
+    popup.focus();
   };
 
   // Payment Badge Helper
@@ -960,6 +1005,16 @@ export const AdminOrdersPage: React.FC = () => {
                     <span className="text-[#302438]">{formatDate(selectedOrder.createdAt)}</span>
                   </div>
                 </div>
+
+                <section className="rounded-xs border border-[#E7DCEB] bg-white p-4 space-y-2">
+                  <div>
+                    <h3 className="font-serif text-base text-[#302438]">Order Invoice</h3>
+                    <p className="mt-1 text-[11px] leading-relaxed text-[#6F6475]">Create a printable PDF from the saved order, item and payment details. Tax breakdowns are not available in the current order record.</p>
+                  </div>
+                  <button type="button" onClick={() => generateInvoicePdf(selectedOrder)} className="min-h-10 w-full rounded-xs bg-[#563568] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#80609A] inline-flex items-center justify-center gap-2">
+                    <FileText size={14} /> {selectedOrder.isTest ? 'Preview TEST invoice (watermarked)' : 'Generate / Save Invoice PDF'}
+                  </button>
+                </section>
 
                 {/* Razorpay Payment Reference if online */}
                 {selectedOrder.razorpayPaymentId && (
