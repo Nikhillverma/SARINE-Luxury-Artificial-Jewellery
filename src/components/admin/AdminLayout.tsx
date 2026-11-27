@@ -602,7 +602,7 @@ interface NavItem {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-1">
-              {navItems.map((item) => {
+              {navItems.filter((item) => !item.ownerOnly || user?.role === 'admin' || user?.role === 'owner').map((item) => {
                 const isActive = item.match(location.pathname);
                 const Icon = item.icon;
                 return (
