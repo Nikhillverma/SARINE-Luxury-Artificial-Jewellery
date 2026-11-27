@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AdminLayout component for SARINE.
  * Luxury deep-plum administrative workspace layout matching the official SARINE
  * admin dashboard reference image.
@@ -45,7 +45,8 @@ import {
   UserCheck,
   RotateCcw,
   Star,
-  MessageSquare
+  MessageSquare,
+  Users
 } from 'lucide-react';
 
 
@@ -213,6 +214,7 @@ interface NavItem {
   badgeColor?: string;
   group: string;
   match: (p: string) => boolean;
+  ownerOnly?: boolean;
 }
 
   const navItems: NavItem[] = [
@@ -327,8 +329,18 @@ interface NavItem {
       path: '/admin/settings',
       icon: Settings,
       match: (p: string) => p.startsWith('/admin/settings')
+    },
+    {
+      name: 'Administrator Access',
+      group: 'Insights & Administration',
+      path: '/admin/team',
+      icon: Users,
+      ownerOnly: true,
+      match: (p: string) => p.startsWith('/admin/team')
     }
   ];
+
+  const visibleNavItems = navItems.filter((item) => !item.ownerOnly || user?.role === 'admin' || user?.role === 'owner');
 
   if (loading) {
     return (
@@ -424,12 +436,12 @@ interface NavItem {
 
         {/* Navigation Items (Scrollable) */}
         <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1 scrollbar-thin scrollbar-thumb-[#361A42]">
-          {navItems.map((item, index) => {
+          {visibleNavItems.map((item, index) => {
             const isActive = item.match(location.pathname);
             const Icon = item.icon;
             return (
               <React.Fragment key={item.path}>
-                {(index === 0 || navItems[index - 1].group !== item.group) && (
+                {(index === 0 || visibleNavItems[index - 1].group !== item.group) && (
                   <p className="px-3.5 pt-4 pb-1 text-[9px] uppercase font-semibold tracking-[0.16em] text-[#A694B3]">{item.group}</p>
                 )}
               <Link
@@ -853,12 +865,12 @@ interface NavItem {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-1">
-              {navItems.map((item, index) => {
+              {visibleNavItems.map((item, index) => {
                 const isActive = item.match(location.pathname);
                 const Icon = item.icon;
                 return (
                   <React.Fragment key={item.path}>
-                    {(index === 0 || navItems[index - 1].group !== item.group) && (
+                    {(index === 0 || visibleNavItems[index - 1].group !== item.group) && (
                       <p className="px-3 pt-4 pb-1 text-[9px] uppercase font-semibold tracking-[0.16em] text-[#A694B3]">{item.group}</p>
                     )}
                   <Link
