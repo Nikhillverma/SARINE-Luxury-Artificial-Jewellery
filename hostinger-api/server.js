@@ -463,7 +463,7 @@ app.get("/api/admin-list-orders", requireTrustedBrowserOrigin, (req, res, next) 
   req.url = "/";
   adminOrdersRouter(req, res, next);
 });
-app.post("/api/admin-update-order", requireTrustedBrowserOrigin, (req, res, next) => {
+app.post("/api/admin-update-order", requireTrustedBrowserOrigin, captureAdminActivity, (req, res, next) => {
   req.url = "/update";
   adminOrdersRouter(req, res, next);
 });
