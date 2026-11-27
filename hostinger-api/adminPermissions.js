@@ -48,8 +48,8 @@ export function adminRoleLabel(role) {
 }
 
 function permissionForRequest(pathname, method) {
-  const path = pathname.replace(/^\\/api\\/admin/, "").replace(/^\\/+|\\/+$/g, "");
-  const segments = path.split("/");
+  const path = pathname.startsWith("/api/admin") ? pathname.slice("/api/admin".length) : pathname;
+  const segments = path.split("/").filter(Boolean);
   const section = segments[0] || "";
   const write = !["GET", "HEAD", "OPTIONS"].includes(method.toUpperCase());
   const action = write ? "write" : "read";
