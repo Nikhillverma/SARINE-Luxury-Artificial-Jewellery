@@ -54,7 +54,7 @@ const PAID_ORDER = `payment_status = 'paid'
 
 async function buildReport(range) {
   const params = [range.startUtc, range.endUtc];
-  const [summaryRows, dailyRows, statusRows, paymentRows, productRows, categoryRows, inventoryRows] = await Promise.all([
+  const [summaryRows, dailyRows, statusRows, paymentRows, productRows, categoryRows, collectionRows, inventoryRows] = await Promise.all([
     pool.execute(
       `SELECT COUNT(*) AS total_orders,
         SUM(CASE WHEN ${PAID_ORDER} THEN 1 ELSE 0 END) AS paid_orders,
@@ -114,6 +114,27 @@ async function buildReport(range) {
       params
     ),
     pool.execute(
+      `SELECT CASE
+          WHEN p.product_collection = 'artificial' THEN 'artificial'
+          WHEN p.product_collection = 'demi-fine' THEN 'demi-fine'
+          ELSE 'unassigned'
+        END AS collection,
+        SUM(oi.quantity) AS units_sold,
+        SUM(oi.quantity * oi.unit_price) AS item_sales
+       FROM order_items oi
+       INNER JOIN orders o ON o.id = oi.order_id
+       LEFT JOIN products p ON p.id = oi.product_id
+       WHERE o.is_test = 0 AND o.created_at >= ? AND o.created_at < ?
+         AND ${PAID_ORDER.replaceAll("payment_status", "o.payment_status").replaceAll("order_status", "o.order_status").replaceAll("payment_method", "o.payment_method").replaceAll("total", "o.total").replaceAll("refund_amount", "o.refund_amount")}
+       GROUP BY CASE
+          WHEN p.product_collection = 'artificial' THEN 'artificial'
+          WHEN p.product_collection = 'demi-fine' THEN 'demi-fine'
+          ELSE 'unassigned'
+        END
+       ORDER BY collection`,
+      params
+    ),
+    pool.execute(
       `SELECT p.id, p.name, p.status, p.stock, p.price, p.cost_price,
         COALESCE(c.name, 'Uncategorised') AS category
        FROM products p LEFT JOIN categories c ON c.id = p.category_id
@@ -139,6 +160,7 @@ async function buildReport(range) {
     payments: paymentRows[0].map(row => ({ label: row.label, count: Number(row.count) || 0, revenue: Number(row.revenue) || 0 })),
     topProducts: productRows[0].map(row => ({ productId: row.productId, productName: row.productName, unitsSold: Number(row.units_sold) || 0, itemSales: Number(row.item_sales) || 0 })),
     categories: categoryRows[0].map(row => ({ category: row.category, unitsSold: Number(row.units_sold) || 0, itemSales: Number(row.item_sales) || 0 })),
+    collectionBreakdown: collectionRows[0].map(row => ({ collection: row.collection, unitsSold: Number(row.units_sold) || 0, itemSales: Number(row.item_sales) || 0 })),
     inventory: inventoryRows[0].map(row => ({
       productId: row.id, productName: row.name, category: row.category,
       status: row.status, stock: Number(row.stock) || 0,
@@ -181,6 +203,7 @@ function workbookXml(report) {
     worksheet("Payments", ["Payment method", "Orders", "Net revenue INR"], report.payments.map(x => [x.label, x.count, x.revenue])),
     worksheet("Top Products", ["Product ID", "Product", "Units sold", "Item sales INR"], report.topProducts.map(x => [x.productId, x.productName, x.unitsSold, x.itemSales])),
     worksheet("Categories", ["Category", "Units sold", "Item sales INR"], report.categories.map(x => [x.category, x.unitsSold, x.itemSales])),
+    worksheet("Collections", ["Collection", "Units sold", "Item sales INR"], report.collectionBreakdown.map(x => [x.collection, x.unitsSold, x.itemSales])),
     worksheet("Inventory", ["Product ID", "Product", "Category", "Status", "Stock", "Selling price INR", "Cost price INR"], report.inventory.map(x => [x.productId, x.productName, x.category, x.status, x.stock, x.price, x.costPrice ?? "Not set"]))
   ];
   return `<?xml version="1.0" encoding="UTF-8"?>
