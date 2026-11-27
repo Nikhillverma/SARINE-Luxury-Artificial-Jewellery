@@ -85,9 +85,22 @@ app.use(cors({
   credentials: true
 }));
 
+// Session checks are frequent during admin navigation and must not consume
+// the shared API allowance. Keep a dedicated, bounded limit for this endpoint.
+const isAdminSessionCheck = (req) =>
+  req.method === "GET" && req.path === "/admin/auth/session";
+
 app.use("/api", rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 300,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  skip: isAdminSessionCheck
+}));
+
+app.use("/api/admin/auth/session", rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 180,
   standardHeaders: "draft-8",
   legacyHeaders: false
 }));
