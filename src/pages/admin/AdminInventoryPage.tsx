@@ -8,7 +8,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { categoryService, adminProductService } from '../../services';
 import { Product, JEWELLERY_TYPE_LABELS } from '../../types/product';
-import type { InventoryMovement } from '../../services/interfaces';
+import type { InventoryMovement, InventoryMovementReport } from '../../services/interfaces';
 import { Category } from '../../types/category';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { InventoryAlertSettings } from '../../components/admin/InventoryAlertSettings';
@@ -67,6 +67,11 @@ export const AdminInventoryPage: React.FC = () => {
   const [movementLoading, setMovementLoading] = useState(false);
   const [movementError, setMovementError] = useState<string | null>(null);
   const [movementRefreshKey, setMovementRefreshKey] = useState(0);
+  const [report, setReport] = useState<InventoryMovementReport | null>(null);
+  const [reportFrom, setReportFrom] = useState('');
+  const [reportTo, setReportTo] = useState('');
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
   const [watchFilter, setWatchFilter] = useState<'all' | 'out' | 'risk' | 'low'>('all');
   const [watchSearch, setWatchSearch] = useState('');
   const MOVEMENT_PAGE_SIZE = 25;
@@ -176,6 +181,23 @@ export const AdminInventoryPage: React.FC = () => {
     });
     return () => { active = false; };
   }, [movementPage, movementSearch, movementFrom, movementTo, movementRefreshKey]);
+
+  useEffect(() => {
+    let active=true; setReportLoading(true); setReportError(null);
+    adminProductService.getInventoryMovementReport({from:reportFrom,to:reportTo})
+      .then(result=>{if(active)setReport(result);})
+      .catch(error=>{if(active)setReportError(error instanceof Error?error.message:'Inventory movement report could not be loaded.');})
+      .finally(()=>{if(active)setReportLoading(false);});
+    return ()=>{active=false;};
+  },[reportFrom,reportTo,movementRefreshKey]);
+
+  const exportMovementReportCsv=()=>{
+    if(!report)return;
+    const cell=(value:unknown)=>{const raw=String(value??'');const safe=['=','+','-','@',String.fromCharCode(9),String.fromCharCode(13)].includes(raw.charAt(0))?"'"+raw:raw;return '"'+safe.replace(/"/g,'""')+'"';};
+    const rows:unknown[][]=[['SARINE Inventory Movement Report'],['From (IST)',report.filters.from||'All dates','To (IST)',report.filters.to||'All dates'],[],['Summary','Value'],['Actual movements',report.summary.movementCount],['Stock in units',report.summary.stockInUnits],['Stock out units',report.summary.stockOutUnits],['Net change',report.summary.netChange],['Opening snapshots excluded',report.summary.excludedOpeningSnapshots],[],['Category','Movements','Stock in','Stock out'],...report.categories.map(x=>[x.category,x.movementCount,x.stockInUnits,x.stockOutUnits]),[],['Daily date (IST)','Movements','Stock in','Stock out','Net change'],...report.daily.map(x=>[x.movementDate,x.movementCount,x.stockInUnits,x.stockOutUnits,x.netChange]),[],['Product','SKU','Variant','Type','Movements','Stock in','Stock out','Net change'],...report.products.map(x=>[x.productName,x.sku,x.variantLabel||'',x.movementType,x.movementCount,x.stockInUnits,x.stockOutUnits,x.netChange]),[],['Reason','Movements','Stock in','Stock out'],...report.reasons.map(x=>[x.reason,x.movementCount,x.stockInUnits,x.stockOutUnits])];
+    const csv=rows.map(row=>row.map(cell).join(',')).join('\r\n');
+    const blob=new Blob(['\uFEFF',csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=`sarine-inventory-movement-report-${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
+  };
 
   const movementTotalPages = Math.max(1, Math.ceil(movementTotal / MOVEMENT_PAGE_SIZE));
   const exportMovementCsv = () => {
@@ -636,6 +658,17 @@ export const AdminInventoryPage: React.FC = () => {
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[#6F6475]"><span>Showing {sortedProducts.length ? (page - 1) * PAGE_SIZE + 1 : 0}–{Math.min(page * PAGE_SIZE, sortedProducts.length)} of {sortedProducts.length} matching designs</span><div className="flex items-center gap-2"><button type="button" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))} className="min-h-10 px-3 border border-[#E7DCEB] rounded-xs disabled:opacity-40">Previous</button><span>Page {page} of {totalPages}</span><button type="button" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))} className="min-h-10 px-3 border border-[#E7DCEB] rounded-xs disabled:opacity-40">Next</button></div></div>
+
+        <section className="bg-white border border-[#E7DCEB] rounded-xs shadow-2xs overflow-hidden" aria-labelledby="inventory-report-title">
+          <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E7DCEB]"><div><h2 id="inventory-report-title" className="font-serif text-xl text-[#302438]">Stock Movement Report</h2><p className="text-[11px] text-[#6F6475] mt-1">Date-wise stock flow, movement reasons and product / variant activity. Opening snapshots are excluded from movement totals.</p></div><button type="button" onClick={exportMovementReportCsv} disabled={!report||reportLoading} className="min-h-10 px-3 border border-[#563568] text-[#563568] rounded-xs text-xs font-medium disabled:opacity-40">Export full report CSV</button></div>
+          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3"><label className="text-[10px] text-[#6F6475]">Report from (IST)<input type="date" value={reportFrom} max={reportTo||undefined} onChange={e=>setReportFrom(e.target.value)} className="mt-1 block w-full min-h-10 px-3 border border-[#E7DCEB] bg-[#F7F0FA] rounded-xs text-xs"/></label><label className="text-[10px] text-[#6F6475]">Report to (IST)<input type="date" value={reportTo} min={reportFrom||undefined} onChange={e=>setReportTo(e.target.value)} className="mt-1 block w-full min-h-10 px-3 border border-[#E7DCEB] bg-[#F7F0FA] rounded-xs text-xs"/></label></div>
+          {reportError&&<p role="alert" className="px-4 pb-3 text-xs text-red-700">{reportError}</p>}{reportLoading&&<p className="px-4 pb-3 text-xs text-[#6F6475]">Refreshing movement report…</p>}
+          {report&&<><div className="grid grid-cols-2 xl:grid-cols-5 gap-3 p-4 pt-0">{[['Actual movements',report.summary.movementCount.toLocaleString('en-IN')],['Stock in',`+${report.summary.stockInUnits.toLocaleString('en-IN')} units`],['Stock out',`−${report.summary.stockOutUnits.toLocaleString('en-IN')} units`],['Net change',`${report.summary.netChange>0?'+':''}${report.summary.netChange.toLocaleString('en-IN')} units`],['Snapshots excluded',report.summary.excludedOpeningSnapshots.toLocaleString('en-IN')]].map(([label,value])=><div key={label} className="p-3 bg-[#FAF5FC] border border-[#E7DCEB] rounded-xs"><p className="text-[9px] uppercase tracking-wider text-[#806B8D]">{label}</p><p className="mt-1 text-base font-semibold text-[#302438]">{value}</p></div>)}</div>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 px-4 pb-4"><div className="border border-[#E7DCEB] rounded-xs overflow-hidden"><h3 className="px-3 py-2 bg-[#F7F0FA] text-xs font-semibold text-[#302438]">Movement by reason category</h3><div className="divide-y divide-[#E7DCEB]">{report.categories.length?report.categories.map(row=><div key={row.category} className="px-3 py-2 flex justify-between gap-3 text-xs"><span className="capitalize text-[#302438]">{row.category}</span><span className="text-right text-[#6F6475]">{row.movementCount} · +{row.stockInUnits} / −{row.stockOutUnits} units</span></div>):<p className="p-3 text-xs text-[#6F6475]">No stock movements in this date range.</p>}</div></div>
+          <div className="border border-[#E7DCEB] rounded-xs overflow-hidden"><h3 className="px-3 py-2 bg-[#F7F0FA] text-xs font-semibold text-[#302438]">Daily stock flow (IST)</h3><div className="max-h-64 overflow-auto divide-y divide-[#E7DCEB]">{report.daily.length?report.daily.map(row=><div key={row.movementDate} className="px-3 py-2 flex justify-between gap-3 text-xs"><span>{row.movementDate}</span><span className="text-right text-[#6F6475]">{row.movementCount} · +{row.stockInUnits} / −{row.stockOutUnits} · net {row.netChange>0?'+':''}{row.netChange}</span></div>):<p className="p-3 text-xs text-[#6F6475]">No daily activity to report.</p>}</div></div></div>
+          <div className="px-4 pb-4"><div className="border border-[#E7DCEB] rounded-xs overflow-hidden"><h3 className="px-3 py-2 bg-[#F7F0FA] text-xs font-semibold text-[#302438]">Most active products and variants</h3><div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="text-[10px] uppercase tracking-wider text-[#6F6475]"><tr><th className="p-2">Piece / Variant</th><th className="p-2">SKU</th><th className="p-2">Movements</th><th className="p-2">Stock in</th><th className="p-2">Stock out</th><th className="p-2">Net</th></tr></thead><tbody className="divide-y divide-[#E7DCEB]">{report.products.length?report.products.slice(0,10).map(row=><tr key={row.productId+row.sku}><td className="p-2"><span className="font-medium">{row.productName}</span>{row.variantLabel&&<span className="block text-[10px] text-[#6F6475]">{row.variantLabel}</span>}</td><td className="p-2 font-mono">{row.sku}</td><td className="p-2">{row.movementCount}</td><td className="p-2 text-emerald-700">+{row.stockInUnits}</td><td className="p-2 text-red-700">−{row.stockOutUnits}</td><td className="p-2 font-semibold">{row.netChange>0?'+':''}{row.netChange}</td></tr>):<tr><td colSpan={6} className="p-3 text-center text-[#6F6475]">No product activity in this date range.</td></tr>}</tbody></table></div></div></div>
+          <p className="px-4 pb-4 text-[10px] text-[#6F6475]">Reason categories are inferred from recorded reason text. Use the full audit history below for original reasons and administrator details. This is a ledger summary, not a demand forecast.</p></>}
+        </section>
 
         {/* Complete inventory movement and cost-valuation history */}
         <section className="bg-white border border-[#E7DCEB] rounded-xs shadow-2xs overflow-hidden">

@@ -106,6 +106,14 @@ export class HostingerAdminProductService implements IAdminProductService {
     return result.movement;
   }
 
+  async getInventoryMovementReport(options: { from?: string; to?: string } = {}): Promise<import('../interfaces').InventoryMovementReport> {
+    const params = new URLSearchParams();
+    if (options.from) params.set('from', options.from);
+    if (options.to) params.set('to', options.to);
+    const query = params.toString();
+    return request<import('../interfaces').InventoryMovementReport>(`/admin/inventory/reports${query ? `?${query}` : ''}`);
+  }
+
   async getInventoryMovements(options: InventoryMovementQuery = {}): Promise<InventoryMovementPage> {
     const params = new URLSearchParams();
     if (options.page !== undefined) params.set('page', String(options.page));

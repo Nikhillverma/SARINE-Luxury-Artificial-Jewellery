@@ -169,6 +169,26 @@ export class MockAdminProductService implements IAdminProductService {
     return movement;
   }
 
+  async getInventoryMovementReport(options: { from?: string; to?: string } = {}): Promise<import('../interfaces').InventoryMovementReport> {
+    await sleep(NETWORK_DELAY_MS);
+    const all = [...this.movements, ...this.variantMovements.map(item => ({
+      id:item.id, productId:item.productId, productName:item.productName, sku:item.variantSku,
+      adminName:item.adminName, adminEmail:item.adminEmail, previousStock:item.previousStock,
+      quantityDelta:item.quantityDelta, newStock:item.newStock, reason:item.reason,
+      createdAt:item.createdAt, movementType:'variant' as const, variantLabel:item.variantLabel
+    }))].filter(item => {
+      const date = new Date(item.createdAt).toISOString().slice(0,10);
+      return (!options.from || date >= options.from) && (!options.to || date <= options.to);
+    });
+    const classify=(reason:string)=>/return/i.test(reason)?'returns':/payment|checkout|order|sale/i.test(reason)?'sales':/restock|initial.*stock/i.test(reason)?'restocks':/damaged|inspection|reconciliation|adjust/i.test(reason)?'adjustments':'other';
+    const sum=(items:typeof all)=>({movementCount:items.length,stockInUnits:items.reduce((n,x)=>n+Math.max(0,Number(x.quantityDelta||0)),0),stockOutUnits:items.reduce((n,x)=>n+Math.max(0,-Number(x.quantityDelta||0)),0),netChange:items.reduce((n,x)=>n+Number(x.quantityDelta||0),0)});
+    const categories=[...new Set(all.map(x=>classify(x.reason)))].map(category=>({category,...sum(all.filter(x=>classify(x.reason)===category))}));
+    const daily=[...new Set(all.map(x=>x.createdAt.slice(0,10)))].sort().reverse().map(movementDate=>({movementDate,...sum(all.filter(x=>x.createdAt.slice(0,10)===movementDate))}));
+    const products=[...new Set(all.map(x=>[x.productId,x.sku,x.movementType||'product'].join('|')))].map(key=>{const items=all.filter(x=>[x.productId,x.sku,x.movementType||'product'].join('|')===key);const first=items[0];return {productId:first.productId,productName:first.productName,sku:first.sku,movementType:first.movementType||'product',variantLabel:first.variantLabel,...sum(items)};}).sort((a,b)=>(b.stockInUnits+b.stockOutUnits)-(a.stockInUnits+a.stockOutUnits)).slice(0,25);
+    const reasons=[...new Set(all.map(x=>x.reason))].map(reason=>({reason,...sum(all.filter(x=>x.reason===reason))}));
+    return {summary:{...sum(all),excludedOpeningSnapshots:0},categories,daily,products,reasons,filters:{from:options.from||null,to:options.to||null}};
+  }
+
   async getInventoryMovements(options: InventoryMovementQuery = {}): Promise<InventoryMovementPage> {
     await sleep(NETWORK_DELAY_MS);
     const page = Math.max(1, options.page ?? 1);
