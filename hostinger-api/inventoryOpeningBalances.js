@@ -61,10 +61,9 @@ export async function ensureOpeningStockSnapshots() {
       variantsByProduct.set(variant.product_id, list);
     }
 
-    const snapshotAt = new Date();
     const snapshotSql = `INSERT IGNORE INTO inventory_opening_balance_snapshots
       (id, entity_type, entity_id, product_id, product_name, sku, variant_label, stock_on_hand, snapshot_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(3))`;
     for (const product of products) {
       const productVariants = variantsByProduct.get(product.id) || [];
       if (productVariants.length) {
@@ -73,21 +72,21 @@ export async function ensureOpeningStockSnapshots() {
             crypto.randomUUID(), "variant", String(variant.id), String(product.id),
             String(product.name || "Product"), String(variant.sku || variant.id),
             formatVariantLabel(variant.option1_name, variant.option1_value, variant.option2_name, variant.option2_value),
-            Math.max(0, Number(variant.stock) || 0), snapshotAt
+            Math.max(0, Number(variant.stock) || 0)
           ]);
         }
       } else {
         await connection.execute(snapshotSql, [
           crypto.randomUUID(), "product", String(product.id), String(product.id),
           String(product.name || "Product"), String(product.id), null,
-          Math.max(0, Number(product.stock) || 0), snapshotAt
+          Math.max(0, Number(product.stock) || 0)
         ]);
       }
     }
 
     await connection.execute(
-      "INSERT INTO inventory_opening_balance_migrations (migration_key, completed_at) VALUES (?, ?)",
-      [MIGRATION_KEY, snapshotAt]
+      "INSERT INTO inventory_opening_balance_migrations (migration_key, completed_at) VALUES (?, UTC_TIMESTAMP(3))",
+      [MIGRATION_KEY]
     );
     await connection.commit();
   } catch (error) {
