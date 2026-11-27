@@ -179,6 +179,27 @@ test("admin account CRUD, login, persisted role authorization and session revoca
   assert.equal(remainingSessions.length, 0);
   assert.equal((await fetch(`${base}/api/admin/orders`, { headers: supportHeaders })).status, 401);
 
+  const remove = await fetch(`${base}/api/admin/auth/admins/${created.id}`, {
+    method: "DELETE", headers: ownerHeaders
+  });
+  assert.equal(remove.status, 200);
+  const [removedAdmin] = await pool.execute("SELECT id FROM admins WHERE id = ?", [created.id]);
+  assert.equal(removedAdmin.length, 0);
+  const [removedSessions] = await pool.execute("SELECT id FROM admin_sessions WHERE admin_id = ?", [created.id]);
+  assert.equal(removedSessions.length, 0);
+  const [removalAudit] = await pool.execute(
+    "SELECT action, summary FROM admin_activity_logs WHERE entity_id = ? ORDER BY id DESC LIMIT 1",
+    [created.id]
+  );
+  assert.equal(removalAudit.length, 1);
+  assert.equal(removalAudit[0].action, "delete");
+  assert.match(removalAudit[0].summary, /historical audit records retained/);
+
+  const removeOwner = await fetch(`${base}/api/admin/auth/admins/${OWNER_ID}`, {
+    method: "DELETE", headers: ownerHeaders
+  });
+  assert.equal(removeOwner.status, 403);
+
   const [ownerRows] = await pool.execute("SELECT role,status FROM admins WHERE id = ?", [OWNER_ID]);
   assert.equal(ownerRows[0].role, "admin");
   assert.equal(ownerRows[0].status, "active");
